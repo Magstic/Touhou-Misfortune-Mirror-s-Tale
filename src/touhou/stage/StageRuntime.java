@@ -126,7 +126,7 @@ public final class StageRuntime {
         void recordDialoguePageCount(int encounterIndex, int pageCount);
         int getRecordedDialoguePageCount(int encounterIndex);
 
-        void markBossStartAndCaptureCurrentFrame();
+        void markBossStart();
 
         void setResetFlag(int v);
         void setHFlash(int v);
@@ -863,7 +863,7 @@ public final class StageRuntime {
                     }
 
                     host.setTaCnt(tacnt);
-                    host.markBossStartAndCaptureCurrentFrame();
+                    host.markBossStart();
                     return;
                 }
                 if (op == 248) {
@@ -958,7 +958,7 @@ public final class StageRuntime {
             by[0] = 44;
         }
 
-        host.markBossStartAndCaptureCurrentFrame();
+        host.markBossStart();
     }
 
     // Persist stage progress for score/clear tracking.

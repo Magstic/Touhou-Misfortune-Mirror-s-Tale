@@ -2,9 +2,9 @@ package touhou.replay;
 
 public final class ReplayShareCodec {
     public static final int MAGIC = 0x50524854; // 'THRP' little-endian
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
 
-    private static final int FIXED_SIZE = 4 + 2 + 2 + 6 * 4 + 4;
+    private static final int FIXED_SIZE = 4 + 2 + 4 * 4 + 4;
     private static final int CHECKSUM_OFFSET = FIXED_SIZE - 4;
 
     private ReplayShareCodec() {
@@ -15,12 +15,8 @@ public final class ReplayShareCodec {
             return null;
         }
 
-        int flags = data.header.getPayloadFlags();
-        int bossLength = (data.bossInput != null) ? data.bossInput.length : 0;
-        int stageLength = (data.stageSnapshot != null) ? data.stageSnapshot.length : 0;
-        int bossSnapshotLength = (data.bossSnapshot != null) ? data.bossSnapshot.length : 0;
-        int total = FIXED_SIZE + ReplayHeader.SIZE + ReplayFormat.NAME_SIZE + ReplayCodec.ENCODED_SIZE
-                + bossLength + stageLength + bossSnapshotLength;
+        int stageLength = data.stageSnapshot.length;
+        int total = FIXED_SIZE + ReplayHeader.SIZE + ReplayFormat.NAME_SIZE + ReplayCodec.ENCODED_SIZE + stageLength;
         byte[] output = new byte[total];
 
         int position = 0;
@@ -28,19 +24,13 @@ public final class ReplayShareCodec {
         position += 4;
         writeI16LE(output, position, VERSION);
         position += 2;
-        writeI16LE(output, position, flags);
-        position += 2;
         writeI32LE(output, position, ReplayHeader.SIZE);
         position += 4;
         writeI32LE(output, position, ReplayFormat.NAME_SIZE);
         position += 4;
         writeI32LE(output, position, ReplayCodec.ENCODED_SIZE);
         position += 4;
-        writeI32LE(output, position, bossLength);
-        position += 4;
         writeI32LE(output, position, stageLength);
-        position += 4;
-        writeI32LE(output, position, bossSnapshotLength);
         position += 4;
         position += 4;
 
@@ -50,17 +40,7 @@ public final class ReplayShareCodec {
         position += ReplayFormat.NAME_SIZE;
         System.arraycopy(data.fullInput, 0, output, position, ReplayCodec.ENCODED_SIZE);
         position += ReplayCodec.ENCODED_SIZE;
-        if (bossLength > 0) {
-            System.arraycopy(data.bossInput, 0, output, position, bossLength);
-            position += bossLength;
-        }
-        if (stageLength > 0) {
-            System.arraycopy(data.stageSnapshot, 0, output, position, stageLength);
-            position += stageLength;
-        }
-        if (bossSnapshotLength > 0) {
-            System.arraycopy(data.bossSnapshot, 0, output, position, bossSnapshotLength);
-        }
+        System.arraycopy(data.stageSnapshot, 0, output, position, stageLength);
 
         writeI32LE(output, CHECKSUM_OFFSET, packetChecksum(output));
         return output;
@@ -74,31 +54,18 @@ public final class ReplayShareCodec {
             return null;
         }
 
-        int flags = readU16LE(packet, 6);
-        if ((flags & ~ReplaySlotIntegrity.FLAGS_MASK) != 0) {
-            return null;
-        }
-        int headerLength = readI32LE(packet, 8);
-        int nameLength = readI32LE(packet, 12);
-        int fullLength = readI32LE(packet, 16);
-        int bossLength = readI32LE(packet, 20);
-        int stageLength = readI32LE(packet, 24);
-        int bossSnapshotLength = readI32LE(packet, 28);
-
+        int headerLength = readI32LE(packet, 6);
+        int nameLength = readI32LE(packet, 10);
+        int fullLength = readI32LE(packet, 14);
+        int stageLength = readI32LE(packet, 18);
         if (headerLength != ReplayHeader.SIZE || nameLength != ReplayFormat.NAME_SIZE
                 || fullLength != ReplayCodec.ENCODED_SIZE
-                || (bossLength != 0 && bossLength != ReplayCodec.ENCODED_SIZE)
-                || stageLength <= 0 || stageLength > ReplayFormat.SNAPSHOT_MAX_SIZE
-                || bossSnapshotLength < 0 || bossSnapshotLength > ReplayFormat.SNAPSHOT_MAX_SIZE) {
-            return null;
-        }
-        if (((flags & ReplaySlotIntegrity.FLAG_HAS_BOSS_INPUT) != 0) != (bossLength > 0)
-                || ((flags & ReplaySlotIntegrity.FLAG_HAS_BOSS_SNAPSHOT) != 0) != (bossSnapshotLength > 0)) {
+                || stageLength <= 0 || stageLength > ReplayFormat.SNAPSHOT_MAX_SIZE) {
             return null;
         }
 
         long expectedLength = (long) FIXED_SIZE + headerLength + nameLength + fullLength
-                + bossLength + stageLength + bossSnapshotLength;
+                + stageLength;
         if (expectedLength != packet.length
                 || readI32LE(packet, CHECKSUM_OFFSET) != packetChecksum(packet)) {
             return null;
@@ -112,22 +79,8 @@ public final class ReplayShareCodec {
         position += nameLength;
         byte[] fullInput = copy(packet, position, fullLength);
         position += fullLength;
-        byte[] bossInput = null;
-        if (bossLength > 0) {
-            bossInput = copy(packet, position, bossLength);
-            position += bossLength;
-        }
-        byte[] stageSnapshot = null;
-        if (stageLength > 0) {
-            stageSnapshot = copy(packet, position, stageLength);
-            position += stageLength;
-        }
-        byte[] bossSnapshot = null;
-        if (bossSnapshotLength > 0) {
-            bossSnapshot = copy(packet, position, bossSnapshotLength);
-        }
-
-        ReplaySlotData data = new ReplaySlotData(header, name, fullInput, bossInput, stageSnapshot, bossSnapshot);
+        byte[] stageSnapshot = copy(packet, position, stageLength);
+        ReplaySlotData data = new ReplaySlotData(header, name, fullInput, stageSnapshot);
         return ReplaySlotIntegrity.isValid(data) ? data : null;
     }
 

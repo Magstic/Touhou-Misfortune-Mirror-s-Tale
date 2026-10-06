@@ -3,16 +3,15 @@ package touhou.replay;
 import javax.microedition.rms.RecordStore;
 
 final class ReplaySnapshotStore {
-    private final String storeName;
+    private static final String STORE = "th_replay_stage";
 
-    ReplaySnapshotStore(String storeName) {
-        this.storeName = storeName;
+    private ReplaySnapshotStore() {
     }
 
-    boolean warmup() {
+    static boolean warmup() {
         RecordStore store = null;
         try {
-            store = RecordStore.openRecordStore(storeName, true);
+            store = RecordStore.openRecordStore(STORE, true);
             ensureRecordCount(store);
             return true;
         } catch (Throwable error) {
@@ -22,7 +21,7 @@ final class ReplaySnapshotStore {
         }
     }
 
-    boolean loadPresence(boolean[] output) {
+    static boolean loadPresence(boolean[] output) {
         if (output == null || output.length != ReplayFormat.SLOT_COUNT) {
             return false;
         }
@@ -30,7 +29,7 @@ final class ReplaySnapshotStore {
 
         RecordStore store = null;
         try {
-            store = RecordStore.openRecordStore(storeName, true);
+            store = RecordStore.openRecordStore(STORE, true);
             ensureRecordCount(store);
             for (int slot = 0; slot < ReplayFormat.SLOT_COUNT; slot++) {
                 byte[] record = store.getRecord(recordId(slot));
@@ -45,29 +44,13 @@ final class ReplaySnapshotStore {
         }
     }
 
-    boolean hasSlot(int slot) {
-        if (!isValidSlot(slot)) {
-            return false;
-        }
-        RecordStore store = null;
-        try {
-            store = RecordStore.openRecordStore(storeName, true);
-            ensureRecordCount(store);
-            return hasValidRecord(store.getRecord(recordId(slot)));
-        } catch (Throwable error) {
-            return false;
-        } finally {
-            close(store);
-        }
-    }
-
-    byte[] loadSlot(int slot) {
+    static byte[] loadSlot(int slot) {
         if (!isValidSlot(slot)) {
             return null;
         }
         RecordStore store = null;
         try {
-            store = RecordStore.openRecordStore(storeName, true);
+            store = RecordStore.openRecordStore(STORE, true);
             ensureRecordCount(store);
             byte[] record = store.getRecord(recordId(slot));
             if (!hasValidRecord(record)) {
@@ -84,7 +67,7 @@ final class ReplaySnapshotStore {
         }
     }
 
-    boolean saveSlot(int slot, byte[] data) {
+    static boolean saveSlot(int slot, byte[] data) {
         if (!isValidSlot(slot) || (data != null && (data.length == 0 || data.length > ReplayFormat.SNAPSHOT_MAX_SIZE))) {
             return false;
         }
@@ -98,7 +81,7 @@ final class ReplaySnapshotStore {
 
         RecordStore store = null;
         try {
-            store = RecordStore.openRecordStore(storeName, true);
+            store = RecordStore.openRecordStore(STORE, true);
             ensureRecordCount(store);
             store.setRecord(recordId(slot), record, 0, record.length);
             return true;
@@ -109,7 +92,7 @@ final class ReplaySnapshotStore {
         }
     }
 
-    boolean clearSlot(int slot) {
+    static boolean clearSlot(int slot) {
         return saveSlot(slot, null);
     }
 

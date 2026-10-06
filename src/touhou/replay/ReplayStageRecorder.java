@@ -37,10 +37,6 @@ public final class ReplayStageRecorder {
         return recording;
     }
 
-    public int getBossStartFrame() {
-        return bossStartFrame;
-    }
-
     public int getFramePos() {
         return full.getPos();
     }
@@ -55,8 +51,8 @@ public final class ReplayStageRecorder {
         if (frameIndex < 0) {
             frameIndex = 0;
         }
-        if (frameIndex > ReplayInputBuffer.FRAME_COUNT) {
-            frameIndex = ReplayInputBuffer.FRAME_COUNT;
+        if (frameIndex >= ReplayInputBuffer.FRAME_COUNT) {
+            return;
         }
         bossStartFrame = frameIndex;
     }
@@ -90,25 +86,6 @@ public final class ReplayStageRecorder {
 
     public byte[] encodeFull() {
         return ReplayCodec.encode(full.raw());
-    }
-
-    public byte[] encodeBossOnly() {
-        int start = bossStartFrame;
-        if (start < 0) {
-            return null;
-        }
-        if (start > ReplayInputBuffer.FRAME_COUNT) {
-            return null;
-        }
-
-        byte[] bossFrames = new byte[ReplayInputBuffer.FRAME_COUNT];
-        byte[] src = full.raw();
-        int dst = 0;
-        for (int i = start; i < ReplayInputBuffer.FRAME_COUNT && dst < ReplayInputBuffer.FRAME_COUNT; i++) {
-            bossFrames[dst++] = src[i];
-        }
-
-        return ReplayCodec.encode(bossFrames);
     }
 
     public void fillHeaderForSave(ReplayHeader header, int flag, int difficulty, int chara, int stage, int score, int type, int mode, int spellId) {

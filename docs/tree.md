@@ -98,11 +98,9 @@ Touhou_Misfortune_MirrorS_Tale/
 │   │   ├── ReplayShareService.java  #     Bluetooth replay packet import/export service
 │   │   ├── ReplaySnapshotReader.java#     Snapshot deserialization
 │   │   ├── ReplaySnapshotWriter.java#     Snapshot serialization
-│   │   ├── ReplayBossSnapshotCodec.java   # Boss phase snapshot codec
-│   │   ├── ReplayBossSnapshotService.java # Boss snapshot orchestration
 │   │   ├── ReplayStageSnapshotCodec.java  # Stage snapshot codec
 │   │   ├── ReplayStageSnapshotService.java# Stage snapshot orchestration
-│   │   └── ReplaySnapshotStore.java       # Unified boss/stage snapshot persistence
+│   │   └── ReplaySnapshotStore.java       # Stage-start snapshot persistence
 │   │
 │   ├── i18n/                        #   -- Internationalization --
 │   │   ├── I18n.java                #     Static utility: language ID/code, resource path builder
@@ -343,9 +341,9 @@ flowchart LR
 | `ReplayCodec` | Fixed-size RLE codec for replay frames (30720 -> 7168) |
 | `ReplayChecksum` | Checksum calculation for replay payload integrity |
 | `ReplayFormat` | Current replay and share format constants plus strict validation |
-| `ReplayRecordingController` | Recording session: captures keys + snapshots during play |
-| `ReplayPlaybackController` | Playback session: feeds recorded keys back into engine |
-| `ReplayTimeScaleController` | Replay playback speed: slow/fast/auto fast-forward controller |
+| `ReplayRecordingController` | Recording session: captures full-stage input, dialogue timings, Boss start frame and stage-start snapshot |
+| `ReplayPlaybackController` | Feeds full-stage input back into the engine; Boss playback fast-forwards from stage start |
+| `ReplayTimeScaleController` | Replay playback speed: slow/fast; Boss playback fast-forwards from stage start |
 | `ReplayStageRecorder` | Per-stage recording lifecycle |
 | `ReplayRng` | Seeded LCG RNG (state * 1103515245 + 12345) for deterministic replay |
 | `ReplayRmsStore` | RMS persistence for replay slots |
@@ -357,11 +355,9 @@ flowchart LR
 | `ReplayShareService` | Imports and exports current-format Bluetooth replay packets |
 | `ReplaySnapshotReader` | Snapshot deserialization |
 | `ReplaySnapshotWriter` | Snapshot serialization |
-| `ReplayBossSnapshotCodec` | Boss phase snapshot codec |
-| `ReplayBossSnapshotService` | Boss snapshot orchestration |
 | `ReplayStageSnapshotCodec` | Stage snapshot codec |
 | `ReplayStageSnapshotService` | Stage snapshot orchestration |
-| `ReplaySnapshotStore` | Unified boss/stage snapshot persistence |
+| `ReplaySnapshotStore` | Stage-start snapshot persistence |
 
 ### I18N & Font
 

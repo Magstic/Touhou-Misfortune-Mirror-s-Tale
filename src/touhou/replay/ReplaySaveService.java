@@ -15,7 +15,7 @@ public final class ReplaySaveService {
     }
 
     public static boolean armPending(ReplayHeader header, byte[] name, ReplayStageRecorder recorder,
-            byte[] bossSnapshot, byte[] stageSnapshot) {
+            byte[] stageSnapshot) {
         if (header == null || recorder == null) {
             return false;
         }
@@ -24,11 +24,6 @@ public final class ReplaySaveService {
         if (fullInput == null) {
             return false;
         }
-        byte[] bossInput = recorder.encodeBossOnly();
-        if (recorder.getBossStartFrame() >= 0 && bossInput == null) {
-            return false;
-        }
-
         byte[] fixedName = new byte[ReplayFormat.NAME_SIZE];
         if (name != null) {
             int length = name.length;
@@ -38,7 +33,7 @@ public final class ReplaySaveService {
             System.arraycopy(name, 0, fixedName, 0, length);
         }
 
-        ReplaySlotData data = new ReplaySlotData(header, fixedName, fullInput, bossInput, stageSnapshot, bossSnapshot);
+        ReplaySlotData data = new ReplaySlotData(header, fixedName, fullInput, stageSnapshot);
         if (!ReplaySlotIntegrity.seal(data)) {
             return false;
         }

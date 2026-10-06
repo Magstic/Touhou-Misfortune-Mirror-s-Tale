@@ -7,8 +7,7 @@ final class ReplayRmsStore {
     private static final int DATA_SEGMENT_SIZE = 1024;
     private static final int DATA_SEGMENT_COUNT = ReplayCodec.ENCODED_SIZE / DATA_SEGMENT_SIZE;
     private static final int FULL_DATA_OFFSET = 2;
-    private static final int BOSS_DATA_OFFSET = FULL_DATA_OFFSET + DATA_SEGMENT_COUNT;
-    private static final int RECORDS_PER_SLOT = 2 + DATA_SEGMENT_COUNT + DATA_SEGMENT_COUNT;
+    private static final int RECORDS_PER_SLOT = 2 + DATA_SEGMENT_COUNT;
 
     private ReplayRmsStore() {
     }
@@ -44,13 +43,12 @@ final class ReplayRmsStore {
         }
     }
 
-    static boolean saveSlot(int slot, ReplayHeader header, byte[] name, byte[] fullInput, byte[] bossInput) {
+    static boolean saveSlot(int slot, ReplayHeader header, byte[] name, byte[] fullInput) {
         if (!isValidSlot(slot) || header == null || !header.hasCurrentFormat()) {
             return false;
         }
         if (name == null || name.length != ReplayFormat.NAME_SIZE
-                || fullInput == null || fullInput.length != ReplayCodec.ENCODED_SIZE
-                || (bossInput != null && bossInput.length != ReplayCodec.ENCODED_SIZE)) {
+                || fullInput == null || fullInput.length != ReplayCodec.ENCODED_SIZE) {
             return false;
         }
 
@@ -64,12 +62,6 @@ final class ReplayRmsStore {
             store.setRecord(base, emptyHeader, 0, emptyHeader.length);
             store.setRecord(base + 1, name, 0, name.length);
             writeSegments(store, base + FULL_DATA_OFFSET, fullInput);
-            if (bossInput != null) {
-                writeSegments(store, base + BOSS_DATA_OFFSET, bossInput);
-            } else {
-                writeEmptySegments(store, base + BOSS_DATA_OFFSET);
-            }
-
             byte[] headerBytes = header.bytes();
             store.setRecord(base, headerBytes, 0, ReplayHeader.SIZE);
             return true;
@@ -80,17 +72,16 @@ final class ReplayRmsStore {
         }
     }
 
-    static boolean loadSlot(int slot, ReplayHeader header, byte[] name, byte[] fullInput, byte[] bossInput) {
-        if (!isValidSlot(slot) || header == null || name == null || fullInput == null || bossInput == null) {
+    static boolean loadSlot(int slot, ReplayHeader header, byte[] name, byte[] fullInput) {
+        if (!isValidSlot(slot) || header == null || name == null || fullInput == null) {
             return false;
         }
         if (name.length != ReplayFormat.NAME_SIZE
-                || fullInput.length != ReplayCodec.ENCODED_SIZE
-                || bossInput.length != ReplayCodec.ENCODED_SIZE) {
+                || fullInput.length != ReplayCodec.ENCODED_SIZE) {
             return false;
         }
 
-        clearOutputs(header, name, fullInput, bossInput);
+        clearOutputs(header, name, fullInput);
         RecordStore store = null;
         try {
             store = RecordStore.openRecordStore(STORE, true);
@@ -103,24 +94,23 @@ final class ReplayRmsStore {
             }
             header.load(headerBytes);
             if (!header.hasCurrentFormat() || header.getFlag() == ReplayHeader.FLAG_NONE) {
-                clearOutputs(header, name, fullInput, bossInput);
+                clearOutputs(header, name, fullInput);
                 return false;
             }
 
             byte[] storedName = store.getRecord(base + 1);
             if (storedName == null || storedName.length != ReplayFormat.NAME_SIZE) {
-                clearOutputs(header, name, fullInput, bossInput);
+                clearOutputs(header, name, fullInput);
                 return false;
             }
             System.arraycopy(storedName, 0, name, 0, name.length);
-            if (!readSegments(store, base + FULL_DATA_OFFSET, fullInput)
-                    || !readSegments(store, base + BOSS_DATA_OFFSET, bossInput)) {
-                clearOutputs(header, name, fullInput, bossInput);
+            if (!readSegments(store, base + FULL_DATA_OFFSET, fullInput)) {
+                clearOutputs(header, name, fullInput);
                 return false;
             }
             return true;
         } catch (Throwable error) {
-            clearOutputs(header, name, fullInput, bossInput);
+            clearOutputs(header, name, fullInput);
             return false;
         } finally {
             close(store);
@@ -217,7 +207,6 @@ final class ReplayRmsStore {
             store.setRecord(base + 1, emptyName, 0, emptyName.length);
             for (int segment = 0; segment < DATA_SEGMENT_COUNT; segment++) {
                 store.setRecord(base + FULL_DATA_OFFSET + segment, emptySegment, 0, emptySegment.length);
-                store.setRecord(base + BOSS_DATA_OFFSET + segment, emptySegment, 0, emptySegment.length);
             }
             return true;
         } catch (Throwable error) {
@@ -232,13 +221,6 @@ final class ReplayRmsStore {
         for (int segment = 0; segment < DATA_SEGMENT_COUNT; segment++) {
             store.setRecord(firstRecordId + segment, data, offset, DATA_SEGMENT_SIZE);
             offset += DATA_SEGMENT_SIZE;
-        }
-    }
-
-    private static void writeEmptySegments(RecordStore store, int firstRecordId) throws Exception {
-        byte[] empty = new byte[DATA_SEGMENT_SIZE];
-        for (int segment = 0; segment < DATA_SEGMENT_COUNT; segment++) {
-            store.setRecord(firstRecordId + segment, empty, 0, empty.length);
         }
     }
 
@@ -281,11 +263,10 @@ final class ReplayRmsStore {
         }
     }
 
-    private static void clearOutputs(ReplayHeader header, byte[] name, byte[] fullInput, byte[] bossInput) {
+    private static void clearOutputs(ReplayHeader header, byte[] name, byte[] fullInput) {
         header.clear();
         clear(name);
         clear(fullInput);
-        clear(bossInput);
     }
 
     private static void clearSummaries(ReplayHeader[] headers, byte[][] names) {

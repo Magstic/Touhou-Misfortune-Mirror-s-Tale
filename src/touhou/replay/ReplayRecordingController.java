@@ -7,22 +7,15 @@ import touhou.battle.BattleHudData;
 
 public final class ReplayRecordingController {
     private final ReplayStageRecorder recorder = new ReplayStageRecorder();
-    private byte[] bossSnapshot;
     private byte[] stageSnapshot;
 
     // Cheat support: when disabled, no recording and no replay save.
     private boolean enabled = true;
 
-    public ReplayRecordingController() {
-        bossSnapshot = null;
-        stageSnapshot = null;
-    }
-
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
         if (!enabled) {
             recorder.stop();
-            bossSnapshot = null;
             stageSnapshot = null;
             ReplaySaveService.clearPending();
         }
@@ -35,7 +28,6 @@ public final class ReplayRecordingController {
     public void startSession(boolean bossAtStart) {
         if (!enabled) {
             recorder.stop();
-            bossSnapshot = null;
             stageSnapshot = null;
             return;
         }
@@ -43,7 +35,6 @@ public final class ReplayRecordingController {
         if (bossAtStart) {
             recorder.markBossStart(0);
         }
-        bossSnapshot = null;
         stageSnapshot = null;
     }
 
@@ -69,22 +60,10 @@ public final class ReplayRecordingController {
         recorder.recordDialoguePageCount(encounterIndex, pageCount);
     }
 
-    public void markBossStartAndCaptureCurrentFrame(ReplayRng random,
-            int fi, int bombCnt, int sBariacnt, int sDeadcnt, int mTacnt, boolean shooting, int ca, int timeStop, int mResetf,
-            int stageMissCount, int stageBombUsedCount, int stageSpellSeenCount, int stageSpellBonusCount, int stageLastSpellId,
-            int stageInitialContinueCount, BattleContinueSystem continueSystem, BattleHudData hud, ScoreSystem scoreSystem, Player player) {
-
-        if (!enabled) {
-            return;
+    public void markBossStart() {
+        if (enabled) {
+            recorder.markBossStart(recorder.getFramePos());
         }
-
-        recorder.markBossStart(recorder.getFramePos());
-
-        bossSnapshot = ReplayBossSnapshotService.captureIfNeeded(
-                recorder, bossSnapshot, random,
-                fi, bombCnt, sBariacnt, sDeadcnt, mTacnt, shooting, ca, timeStop, mResetf,
-                stageMissCount, stageBombUsedCount, stageSpellSeenCount, stageSpellBonusCount, stageLastSpellId,
-                stageInitialContinueCount, continueSystem, hud, scoreSystem, player);
     }
 
     public void captureStageStartSnapshot(ReplayRng random, BattleContinueSystem continueSystem, BattleHudData hud, ScoreSystem scoreSystem, Player player) {
@@ -104,6 +83,6 @@ public final class ReplayRecordingController {
 
         ReplayHeader h = new ReplayHeader();
         recorder.fillHeaderForSave(h, flag, difficulty, chara, stage, score, type, mode, spellId);
-        return ReplaySaveService.armPending(h, name32, recorder, bossSnapshot, stageSnapshot);
+        return ReplaySaveService.armPending(h, name32, recorder, stageSnapshot);
     }
 }

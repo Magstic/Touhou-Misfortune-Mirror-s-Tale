@@ -217,8 +217,8 @@ public final class BattleStageHost implements StageRuntime.Host {
         return core.stageHostGetRecordedDialoguePageCount(encounterIndex);
     }
 
-    public void markBossStartAndCaptureCurrentFrame() {
-        core.stageHostMarkBossStartAndCaptureCurrentFrame();
+    public void markBossStart() {
+        core.stageHostMarkBossStart();
     }
 
     public void setResetFlag(int v) {

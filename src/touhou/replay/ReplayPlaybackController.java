@@ -8,6 +8,7 @@ public final class ReplayPlaybackController {
         public int type;
         public int startStage;
         public int spellId;
+        public boolean practiceBoss;
     }
 
     public static final class FrameInput {
@@ -17,7 +18,6 @@ public final class ReplayPlaybackController {
     }
 
     private boolean active;
-    private boolean bossOnly;
     private int framePos;
     private byte[] frames;
 
@@ -45,7 +45,6 @@ public final class ReplayPlaybackController {
 
     public void stop() {
         active = false;
-        bossOnly = false;
         framePos = 0;
         frames = null;
 
@@ -57,7 +56,7 @@ public final class ReplayPlaybackController {
 
     public StartParams startFromSlot(int slot, boolean bossOnly) {
         ReplaySlotData data = ReplaySlotStore.loadSlot(slot);
-        if (data == null) {
+        if (data == null || (bossOnly && (data.header.getBossStartFrame() < 0 || data.header.getMode() == 3))) {
             stop();
             return null;
         }
@@ -70,22 +69,13 @@ public final class ReplayPlaybackController {
             dialoguePageCounts[i] = (byte) ((v < 0) ? 0 : (v & 0xFF));
         }
 
-        byte[] encoded = bossOnly ? data.bossInput : data.fullInput;
-        if (bossOnly && ReplayBossOnlyPolicy.isFastForwardBossOnlyStage(header.getStage())) {
-            encoded = data.fullInput;
-        }
-        if (encoded == null) {
-            stop();
-            return null;
-        }
-        frames = ReplayCodec.decode(encoded);
+        frames = ReplayCodec.decode(data.fullInput);
         if (frames == null) {
             stop();
             return null;
         }
 
         active = true;
-        this.bossOnly = bossOnly;
         framePos = 0;
 
         StartParams sp = new StartParams();
@@ -95,6 +85,8 @@ public final class ReplayPlaybackController {
         sp.type = header.getType();
         sp.startStage = header.getStage();
         sp.spellId = header.getSpellId();
+        // A practice recording marked at frame zero starts in Boss practice, not at the stage intro.
+        sp.practiceBoss = sp.gamemode == 2 && header.getBossStartFrame() == 0;
         return sp;
     }
 

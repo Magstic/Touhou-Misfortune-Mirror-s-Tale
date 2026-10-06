@@ -5,7 +5,7 @@ public final class ReplayHeader {
     static final int INTEGRITY_OFFSET = 8;
     static final int INTEGRITY_SIZE = 16;
 
-    private static final int FORMAT_MAGIC = 0x33504852; // 'RHP3'
+    private static final int FORMAT_MAGIC = 0x34504852; // 'RHP4'
     private static final int FORMAT_VERSION = 1;
 
     public static final int DIALOGUE_MAX = 31;
@@ -101,24 +101,19 @@ public final class ReplayHeader {
     boolean hasCurrentFormat() {
         return readI32LE(data, INTEGRITY_OFFSET) == FORMAT_MAGIC
                 && (data[INTEGRITY_OFFSET + 4] & 0xFF) == FORMAT_VERSION
-                && ((data[INTEGRITY_OFFSET + 5] & 0xFF) & ~ReplaySlotIntegrity.FLAGS_MASK) == 0;
-    }
-
-    int getPayloadFlags() {
-        return data[INTEGRITY_OFFSET + 5] & 0xFF;
+                && data[INTEGRITY_OFFSET + 5] == 0;
     }
 
     int getPayloadChecksum() {
         return readI32LE(data, INTEGRITY_OFFSET + 6);
     }
 
-    void setPayloadIntegrity(int flags, int checksum) {
+    void setPayloadIntegrity(int checksum) {
         for (int i = 0; i < INTEGRITY_SIZE; i++) {
             data[INTEGRITY_OFFSET + i] = 0;
         }
         writeI32LE(data, INTEGRITY_OFFSET, FORMAT_MAGIC);
         data[INTEGRITY_OFFSET + 4] = (byte) FORMAT_VERSION;
-        data[INTEGRITY_OFFSET + 5] = (byte) (flags & ReplaySlotIntegrity.FLAGS_MASK);
         writeI32LE(data, INTEGRITY_OFFSET + 6, checksum);
     }
 

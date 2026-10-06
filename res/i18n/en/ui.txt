@@ -47,8 +47,6 @@ Staff (2)
 Deleted.
 Not implemented.
 Empty slot.
-No boss segment.
-No boss snapshot.
 Unknown action.
 Play
 Play (Boss)

@@ -15,9 +15,6 @@ import touhou.battle.BattleStageFlow;
 import touhou.battle.BattleStageHost;
 import touhou.battle.BattleVisualState;
 import touhou.battle.SpellPracticeCatalog;
-import touhou.replay.ReplayBossSnapshotCodec;
-import touhou.replay.ReplayBossSnapshotService;
-import touhou.replay.ReplayBossOnlyPolicy;
 import touhou.replay.ReplayHeader;
 import touhou.replay.ReplayPlaybackController;
 import touhou.replay.ReplayRecordingController;
@@ -757,7 +754,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
                     return;
                 }
             } else {
-                replaySession = BattleSessionConfig.standard(sp.gamemode, sp.level, sp.chara, sp.type, sp.startStage, false);
+                replaySession = BattleSessionConfig.standard(sp.gamemode, sp.level, sp.chara, sp.type, sp.startStage, sp.practiceBoss);
             }
         } catch (IllegalArgumentException e) {
             returnReplayToMenu("Invalid replay session.");
@@ -765,53 +762,13 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         }
         startBattleSession(replaySession);
 
-        if (!bossOnly) {
-            boolean ok = ReplayStageSnapshotService.loadAndApplyFromSlot(slot, random, continueSystem, hud, scoreSystem, player);
-            if (!ok) {
-                returnReplayToMenu("Invalid stage snapshot.");
-                return;
-            }
+        boolean ok = ReplayStageSnapshotService.loadAndApplyFromSlot(slot, random, continueSystem, hud, scoreSystem, player);
+        if (!ok) {
+            returnReplayToMenu("Invalid stage snapshot.");
+            return;
         }
-
         if (bossOnly) {
-            int stageIndex = sp.startStage;
-            if (ReplayBossOnlyPolicy.isFastForwardBossOnlyStage(stageIndex)) {
-                boolean ok = ReplayStageSnapshotService.loadAndApplyFromSlot(slot, random, continueSystem, hud, scoreSystem, player);
-                if (!ok) {
-                    returnReplayToMenu("Invalid stage snapshot.");
-                    return;
-                }
-
-                replayTimeScale.startAutoFastForwardToFrame(replayPlayback.getBossStartFrame());
-                return;
-            }
-
-            stageCe();
-            ensureTalkTableLoaded();
-
-            ReplayBossSnapshotCodec.Decoded d = ReplayBossSnapshotService.loadAndApplyFromSlot(
-                    slot, random, continueSystem, hud, scoreSystem, player);
-            if (d == null) {
-                returnReplayToMenu("Invalid boss snapshot.");
-                return;
-            }
-
-            fi = d.fi;
-            bombCnt = d.bombCnt;
-            sBariacnt = d.sBariacnt;
-            sDeadcnt = d.sDeadcnt;
-            mTacnt = d.mTacnt;
-            shooting = d.shooting;
-            ca = d.ca;
-            timeStop = d.timeStop;
-            mResetf = d.mResetf;
-
-            stageMissCount = d.stageMissCount;
-            stageBombUsedCount = d.stageBombUsedCount;
-            stageSpellSeenCount = d.stageSpellSeenCount;
-            stageSpellBonusCount = d.stageSpellBonusCount;
-            stageLastSpellId = d.stageLastSpellId;
-            stageInitialContinueCount = d.stageInitialContinueCount;
+            replayTimeScale.startAutoFastForwardToFrame(replayPlayback.getBossStartFrame());
         }
     }
 
@@ -901,7 +858,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
     private void startSessionRecording() {
         if (!replayPlayback.isActive()) {
-            replayRecording.startSession(session.isSpellPractice());
+            replayRecording.startSession(session.isPracticeBoss());
             replayRecording.captureStageStartSnapshot(random, continueSystem, hud, scoreSystem, player);
         } else {
             replayRecording.stop();
@@ -1809,11 +1766,8 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         return session.getDifficulty();
     }
 
-    public void stageHostMarkBossStartAndCaptureCurrentFrame() {
-        replayRecording.markBossStartAndCaptureCurrentFrame(random,
-                fi, bombCnt, sBariacnt, sDeadcnt, mTacnt, shooting, ca, timeStop, mResetf,
-                stageMissCount, stageBombUsedCount, stageSpellSeenCount, stageSpellBonusCount, stageLastSpellId,
-                stageInitialContinueCount, continueSystem, hud, scoreSystem, player);
+    public void stageHostMarkBossStart() {
+        replayRecording.markBossStart();
     }
 
     public void stageHostSetHFlash(int v) {
