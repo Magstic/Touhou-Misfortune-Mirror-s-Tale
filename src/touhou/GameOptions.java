@@ -1,9 +1,6 @@
 package touhou;
 
-import javax.microedition.rms.RecordStore;
-
 public final class GameOptions {
-    private static final String STORE = "th_opt";
     private static final int SP_OFFSET = 3;
 
     public static final int SIZE = 16;
@@ -21,25 +18,24 @@ public final class GameOptions {
     public static final int LANG_EN = 1;
     public static final int LANG_ZHT = 2;
 
-    // Compat option slot (existing unused index).
+    // Rendering option slot.
     public static final int IDX_DYNAMIC_CUTIN = 9;
 
-    // Compat: alpha feature switches packed into opt[3].
-    private static final int IDX_COMPAT_ALPHA_FLAGS = 3;
-    private static final int COMPAT_ALPHA_INIT = 0x80;
-    private static final int COMPAT_ALPHA_MASK = 0x07;
-    private static final int COMPAT_ALPHA_BOMB = 0x01;
-    private static final int COMPAT_ALPHA_BOSS_CUTIN = 0x02;
-    private static final int COMPAT_ALPHA_PLAYER_SHOT = 0x04;
+    // Rendering and debug switches packed into opt[3].
+    private static final int IDX_RENDER_FLAGS = 3;
+    private static final int ALPHA_MASK = 0x07;
+    private static final int ALPHA_BOMB = 0x01;
+    private static final int ALPHA_BOSS_CUTIN = 0x02;
+    private static final int ALPHA_PLAYER_SHOT = 0x04;
 
-    // Compat: misc feature switches packed into opt[10].
-    private static final int IDX_COMPAT_MISC_FLAGS = 10;
-    private static final int COMPAT_MISC_HEAVY_BG_OFF = 0x01;
-    private static final int COMPAT_MISC_BLIND_MASK_NO_FADE = 0x02;
-    private static final int COMPAT_MISC_HIT_SPARK_OFF = 0x04;
+    // Other rendering switches packed into opt[10].
+    private static final int IDX_RENDER_MISC_FLAGS = 10;
+    private static final int RENDER_HEAVY_BG_OFF = 0x01;
+    private static final int RENDER_BLIND_MASK_NO_FADE = 0x02;
+    private static final int RENDER_HIT_SPARK_OFF = 0x04;
+    private static final int RENDER_MISC_MASK = RENDER_HEAVY_BG_OFF | RENDER_BLIND_MASK_NO_FADE | RENDER_HIT_SPARK_OFF;
 
-    // Debug: overlay switches packed into opt[3] high bits.
-    private static final int DEBUG_INIT = 0x40;
+    // Debug overlay switches packed into opt[3].
     private static final int DEBUG_MASK = 0x38;
     private static final int DEBUG_FPS = 0x08;
     private static final int DEBUG_PERF = 0x10;
@@ -60,41 +56,31 @@ public final class GameOptions {
     }
 
     public static boolean isDynamicCutInEnabled(int[] opt) {
-        return opt != null && opt.length > IDX_DYNAMIC_CUTIN && opt[IDX_DYNAMIC_CUTIN] != 0;
+        return opt[IDX_DYNAMIC_CUTIN] != 0;
     }
 
     public static boolean isBombOverlayAlphaEnabled(int[] opt) {
-        return (compatAlphaFlags(opt) & COMPAT_ALPHA_BOMB) != 0;
+        return (alphaFlags(opt) & ALPHA_BOMB) != 0;
     }
 
     public static boolean isBossSpellCutInAlphaEnabled(int[] opt) {
-        return (compatAlphaFlags(opt) & COMPAT_ALPHA_BOSS_CUTIN) != 0;
+        return (alphaFlags(opt) & ALPHA_BOSS_CUTIN) != 0;
     }
 
     public static boolean isPlayerShotAlphaEnabled(int[] opt) {
-        return (compatAlphaFlags(opt) & COMPAT_ALPHA_PLAYER_SHOT) != 0;
+        return (alphaFlags(opt) & ALPHA_PLAYER_SHOT) != 0;
     }
 
     public static boolean isHeavyBgEnabled(int[] opt) {
-        if (opt == null || opt.length <= IDX_COMPAT_MISC_FLAGS) {
-            return true;
-        }
-        return (opt[IDX_COMPAT_MISC_FLAGS] & COMPAT_MISC_HEAVY_BG_OFF) == 0;
+        return (opt[IDX_RENDER_MISC_FLAGS] & RENDER_HEAVY_BG_OFF) == 0;
     }
 
     public static boolean isBlindMaskFadeEnabled(int[] opt) {
-        if (opt == null || opt.length <= IDX_COMPAT_MISC_FLAGS) {
-            return true;
-        }
-        // Legacy behavior: when flag not present (0), fade is enabled.
-        return (opt[IDX_COMPAT_MISC_FLAGS] & COMPAT_MISC_BLIND_MASK_NO_FADE) == 0;
+        return (opt[IDX_RENDER_MISC_FLAGS] & RENDER_BLIND_MASK_NO_FADE) == 0;
     }
 
     public static boolean isHitSparkEnabled(int[] opt) {
-        if (opt == null || opt.length <= IDX_COMPAT_MISC_FLAGS) {
-            return true;
-        }
-        return (opt[IDX_COMPAT_MISC_FLAGS] & COMPAT_MISC_HIT_SPARK_OFF) == 0;
+        return (opt[IDX_RENDER_MISC_FLAGS] & RENDER_HIT_SPARK_OFF) == 0;
     }
 
     public static boolean isDebugFpsEnabled(int[] opt) {
@@ -110,36 +96,27 @@ public final class GameOptions {
     }
 
     public static void toggleBombOverlayAlpha(int[] opt) {
-        toggleCompatAlphaBit(opt, COMPAT_ALPHA_BOMB);
+        toggleAlphaBit(opt, ALPHA_BOMB);
     }
 
     public static void toggleBossSpellCutInAlpha(int[] opt) {
-        toggleCompatAlphaBit(opt, COMPAT_ALPHA_BOSS_CUTIN);
+        toggleAlphaBit(opt, ALPHA_BOSS_CUTIN);
     }
 
     public static void togglePlayerShotAlpha(int[] opt) {
-        toggleCompatAlphaBit(opt, COMPAT_ALPHA_PLAYER_SHOT);
+        toggleAlphaBit(opt, ALPHA_PLAYER_SHOT);
     }
 
     public static void toggleHeavyBg(int[] opt) {
-        if (opt == null || opt.length <= IDX_COMPAT_MISC_FLAGS) {
-            return;
-        }
-        opt[IDX_COMPAT_MISC_FLAGS] ^= COMPAT_MISC_HEAVY_BG_OFF;
+        opt[IDX_RENDER_MISC_FLAGS] ^= RENDER_HEAVY_BG_OFF;
     }
 
     public static void toggleBlindMaskFade(int[] opt) {
-        if (opt == null || opt.length <= IDX_COMPAT_MISC_FLAGS) {
-            return;
-        }
-        opt[IDX_COMPAT_MISC_FLAGS] ^= COMPAT_MISC_BLIND_MASK_NO_FADE;
+        opt[IDX_RENDER_MISC_FLAGS] ^= RENDER_BLIND_MASK_NO_FADE;
     }
 
     public static void toggleHitSpark(int[] opt) {
-        if (opt == null || opt.length <= IDX_COMPAT_MISC_FLAGS) {
-            return;
-        }
-        opt[IDX_COMPAT_MISC_FLAGS] ^= COMPAT_MISC_HIT_SPARK_OFF;
+        opt[IDX_RENDER_MISC_FLAGS] ^= RENDER_HIT_SPARK_OFF;
     }
 
     public static void toggleDebugFps(int[] opt) {
@@ -154,54 +131,20 @@ public final class GameOptions {
         toggleDebugBit(opt, DEBUG_RESOURCE);
     }
 
-    private static void toggleCompatAlphaBit(int[] opt, int bit) {
-        if (opt == null || opt.length <= IDX_COMPAT_ALPHA_FLAGS) {
-            return;
-        }
-        int v = opt[IDX_COMPAT_ALPHA_FLAGS] & 0xFF;
-        if ((v & COMPAT_ALPHA_INIT) == 0) {
-            if ((v & DEBUG_INIT) == 0) {
-                v &= ~DEBUG_MASK;
-            }
-            v = (v & ~COMPAT_ALPHA_MASK) | COMPAT_ALPHA_INIT | COMPAT_ALPHA_MASK;
-        }
-        v ^= bit;
-        v |= COMPAT_ALPHA_INIT;
-        opt[IDX_COMPAT_ALPHA_FLAGS] = v;
+    private static void toggleAlphaBit(int[] opt, int bit) {
+        opt[IDX_RENDER_FLAGS] ^= bit;
     }
 
     private static void toggleDebugBit(int[] opt, int bit) {
-        if (opt == null || opt.length <= IDX_COMPAT_ALPHA_FLAGS) {
-            return;
-        }
-        int v = opt[IDX_COMPAT_ALPHA_FLAGS] & 0xFF;
-        v ^= bit;
-        v |= DEBUG_INIT;
-        opt[IDX_COMPAT_ALPHA_FLAGS] = v;
+        opt[IDX_RENDER_FLAGS] ^= bit;
     }
 
-    private static int compatAlphaFlags(int[] opt) {
-        if (opt == null || opt.length <= IDX_COMPAT_ALPHA_FLAGS) {
-            return COMPAT_ALPHA_MASK;
-        }
-        int v = opt[IDX_COMPAT_ALPHA_FLAGS] & 0xFF;
-        if ((v & COMPAT_ALPHA_INIT) == 0) {
-            // Legacy storage: treat as not initialized -> default ON.
-            return COMPAT_ALPHA_MASK;
-        }
-        return v & COMPAT_ALPHA_MASK;
+    private static int alphaFlags(int[] opt) {
+        return opt[IDX_RENDER_FLAGS] & ALPHA_MASK;
     }
 
     private static int debugFlags(int[] opt) {
-        if (opt == null || opt.length <= IDX_COMPAT_ALPHA_FLAGS) {
-            return 0;
-        }
-        int v = opt[IDX_COMPAT_ALPHA_FLAGS] & 0xFF;
-        if ((v & DEBUG_INIT) == 0) {
-            // Legacy storage: treat as not initialized -> default OFF.
-            return 0;
-        }
-        return v & DEBUG_MASK;
+        return opt[IDX_RENDER_FLAGS] & DEBUG_MASK;
     }
 
     public static int[] defaults() {
@@ -210,18 +153,17 @@ public final class GameOptions {
         opt[0] = 3;
         opt[1] = 70;
         opt[2] = 100;
-        // Compat alpha feature flags.
-        opt[3] = COMPAT_ALPHA_INIT | COMPAT_ALPHA_MASK;
+        opt[IDX_RENDER_FLAGS] = ALPHA_MASK;
         opt[4] = 0;
         opt[5] = 0;
         opt[6] = 10;
         opt[7] = 11;
         opt[8] = 12;
-        // Compat defaults by runtime (emulator vs real device).
+        // Rendering defaults by runtime (emulator vs real device).
         opt[9] = emu ? 1 : 0;
         // HeavyBG: always ON; Mistia Fade: ON for emulator, OFF for real device.
         // Hit Spark: always ON.
-        opt[10] = emu ? 0 : COMPAT_MISC_BLIND_MASK_NO_FADE;
+        opt[IDX_RENDER_MISC_FLAGS] = emu ? 0 : RENDER_BLIND_MASK_NO_FADE;
         opt[IDX_LANGUAGE] = LANG_JA;
 
         opt[IDX_CHEAT_DISABLE_BOSS_BOMB_SHIELD] = 0;
@@ -236,196 +178,69 @@ public final class GameOptions {
     }
 
     public static int[] load() {
-        int[] sp = loadFromSp();
-        if (sp != null) {
-            return sp;
+        int[] opt = loadFromSp();
+        if (opt != null) {
+            return opt;
         }
-
-        int[] legacy = loadLegacy();
-        if (legacy != null) {
-            saveToSp(legacy);
-            return legacy;
-        }
-
         int[] def = defaults();
         saveToSp(def);
-        saveLegacy(def);
         return def;
     }
 
     public static void save(int[] opt) {
-        if (opt == null) {
-            return;
-        }
-
-        saveToSp(opt);
-        saveLegacy(opt);
-    }
-
-    public static void saveFast(int[] opt) {
-        if (opt == null) {
-            return;
+        if (!isValid(opt)) {
+            throw new IllegalArgumentException("Invalid options");
         }
         saveToSp(opt);
     }
 
     public static boolean isCheatDisableBossBombShield(int[] opt) {
-        return opt != null && opt.length > IDX_CHEAT_DISABLE_BOSS_BOMB_SHIELD && opt[IDX_CHEAT_DISABLE_BOSS_BOMB_SHIELD] != 0;
+        return opt[IDX_CHEAT_DISABLE_BOSS_BOMB_SHIELD] != 0;
     }
 
     public static boolean isCheatDisableItemCollectLimit(int[] opt) {
-        return opt != null && opt.length > IDX_CHEAT_DISABLE_ITEM_COLLECT_LIMIT && opt[IDX_CHEAT_DISABLE_ITEM_COLLECT_LIMIT] != 0;
+        return opt[IDX_CHEAT_DISABLE_ITEM_COLLECT_LIMIT] != 0;
     }
 
     private static byte[] toBytes(int[] opt) {
         byte[] data = new byte[SIZE];
-        int[] v = normalizeOrDefault(opt);
         for (int i = 0; i < SIZE; i++) {
-            data[i] = (byte) v[i];
+            data[i] = (byte) opt[i];
         }
         return data;
     }
 
-    private static int[] normalizeOrDefault(int[] opt) {
-        int[] def = defaults();
-        if (opt == null) {
-            return def;
-        }
-
-        int n = (opt.length < SIZE) ? opt.length : SIZE;
-        for (int i = 0; i < n; i++) {
-            def[i] = opt[i];
-        }
-        // Migrate legacy storage: compat alpha defaults ON; debug defaults OFF.
-        int v = def[IDX_COMPAT_ALPHA_FLAGS] & 0xFF;
-        int alphaBits;
-        int debugInitBit;
-        int debugBits;
-        if ((v & COMPAT_ALPHA_INIT) == 0) {
-            alphaBits = COMPAT_ALPHA_MASK;
-            debugInitBit = 0;
-            debugBits = 0;
-        } else {
-            alphaBits = v & COMPAT_ALPHA_MASK;
-            if ((v & DEBUG_INIT) == 0) {
-                debugInitBit = 0;
-                debugBits = 0;
-            } else {
-                debugInitBit = DEBUG_INIT;
-                debugBits = v & DEBUG_MASK;
-            }
-        }
-        def[IDX_COMPAT_ALPHA_FLAGS] = COMPAT_ALPHA_INIT | alphaBits | debugInitBit | debugBits;
-        if (opt.length <= IDX_SE_MASK_HI) {
-            def[IDX_SE_MASK_HI] = 0;
-        }
-
-        def[IDX_CHEAT_DISABLE_BOSS_BOMB_SHIELD] = (def[IDX_CHEAT_DISABLE_BOSS_BOMB_SHIELD] == 0) ? 0 : 1;
-        def[IDX_CHEAT_DISABLE_ITEM_COLLECT_LIMIT] = (def[IDX_CHEAT_DISABLE_ITEM_COLLECT_LIMIT] == 0) ? 0 : 1;
-        if (!isValid(def)) {
-            return defaults();
-        }
-        return def;
-    }
-
     private static int[] loadFromSp() {
-        try {
-            byte[] data = SpStore.read(SP_OFFSET, SIZE);
-            if (data == null || data.length <= 0) {
-                return null;
+        byte[] data = SpStore.read(SP_OFFSET, SIZE);
+        boolean empty = true;
+        int[] opt = new int[SIZE];
+        for (int i = 0; i < SIZE; i++) {
+            opt[i] = data[i] & 0xFF;
+            if (data[i] != 0) {
+                empty = false;
             }
-
-            int[] opt = new int[SIZE];
-            int[] def = defaults();
-            for (int i = 0; i < SIZE; i++) {
-                opt[i] = def[i];
-            }
-            int n = (data.length < SIZE) ? data.length : SIZE;
-            for (int i = 0; i < n; i++) {
-                opt[i] = data[i] & 0xFF;
-            }
-            if (!isValid(opt)) {
-                return null;
-            }
-            return opt;
-        } catch (Throwable t) {
-            return null;
         }
+        if (empty) {
+            return null; // The untouched initialization block, not an I/O failure.
+        }
+        if (!isValid(opt)) {
+            throw new StorageException("Invalid stored game options");
+        }
+        return opt;
     }
 
     private static void saveToSp(int[] opt) {
-        try {
-            byte[] data = toBytes(opt);
-            SpStore.write(SP_OFFSET, data);
-        } catch (Throwable t) {
-        }
-    }
-
-    private static int[] loadLegacy() {
-        RecordStore rs = null;
-        try {
-            rs = RecordStore.openRecordStore(STORE, true);
-            if (rs.getNumRecords() <= 0) {
-                return null;
-            }
-
-            byte[] data = rs.getRecord(1);
-            if (data == null || data.length <= 0) {
-                return null;
-            }
-
-            int[] opt = new int[SIZE];
-            int[] def = defaults();
-            for (int i = 0; i < SIZE; i++) {
-                opt[i] = def[i];
-            }
-            int n = (data.length < SIZE) ? data.length : SIZE;
-            for (int i = 0; i < n; i++) {
-                opt[i] = data[i] & 0xFF;
-            }
-            if (data.length <= IDX_SE_MASK_HI) {
-                opt[IDX_SE_MASK_HI] = 0;
-            }
-            if (!isValid(opt)) {
-                return null;
-            }
-            return opt;
-        } catch (Throwable t) {
-            return null;
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.closeRecordStore();
-                } catch (Throwable ignore) {
-                }
-            }
-        }
-    }
-
-    private static void saveLegacy(int[] opt) {
-        RecordStore rs = null;
-        try {
-            rs = RecordStore.openRecordStore(STORE, true);
-            byte[] data = toBytes(opt);
-            if (rs.getNumRecords() <= 0) {
-                rs.addRecord(data, 0, data.length);
-            } else {
-                rs.setRecord(1, data, 0, data.length);
-            }
-        } catch (Throwable t) {
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.closeRecordStore();
-                } catch (Throwable ignore) {
-                }
-            }
-        }
+        SpStore.write(SP_OFFSET, toBytes(opt));
     }
 
     private static boolean isValid(int[] opt) {
-        if (opt == null || opt.length < SIZE) {
+        if (opt == null || opt.length != SIZE) {
             return false;
+        }
+        for (int i = 0; i < SIZE; i++) {
+            if (opt[i] < 0 || opt[i] > 255) {
+                return false;
+            }
         }
         if (opt[0] < 1 || opt[0] > 6) {
             return false;
@@ -434,6 +249,9 @@ public final class GameOptions {
             return false;
         }
         if (opt[2] < 0 || opt[2] > 100) {
+            return false;
+        }
+        if ((opt[IDX_RENDER_FLAGS] & ~(ALPHA_MASK | DEBUG_MASK)) != 0) {
             return false;
         }
         if (opt[6] < 0 || opt[6] > 13) {
@@ -458,6 +276,9 @@ public final class GameOptions {
             return false;
         }
         if (opt[IDX_DYNAMIC_CUTIN] != 0 && opt[IDX_DYNAMIC_CUTIN] != 1) {
+            return false;
+        }
+        if ((opt[IDX_RENDER_MISC_FLAGS] & ~RENDER_MISC_MASK) != 0) {
             return false;
         }
         if (opt[IDX_LANGUAGE] < 0 || opt[IDX_LANGUAGE] > LANG_ZHT) {

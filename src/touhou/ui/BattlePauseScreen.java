@@ -2,7 +2,6 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
@@ -53,23 +52,23 @@ public final class BattlePauseScreen {
     }
 
     private Result updatePause(int pressed) {
-        if ((pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+        if (UiInput.cancel(pressed)) {
             return new Result(Result.KIND_RESUME);
         }
-        if ((pressed & GameCanvas.GAME_B_PRESSED) != 0) {
+        if (UiInput.secondary(pressed)) {
             return new Result(Result.KIND_TOGGLE_BGM);
         }
 
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-            cursor = (cursor + 1) % 3;
+        if (UiInput.down(pressed)) {
+            cursor = MenuCursor.move(cursor, 1, 3);
             return null;
         }
-        if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-            cursor = (cursor - 1 + 3) % 3;
+        if (UiInput.up(pressed)) {
+            cursor = MenuCursor.move(cursor, -1, 3);
             return null;
         }
 
-        if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+        if (UiInput.confirm(pressed)) {
             if (cursor == 0) {
                 return new Result(Result.KIND_RESUME);
             }
@@ -83,16 +82,16 @@ public final class BattlePauseScreen {
     }
 
     private Result updateContinue(int pressed) {
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-            cursor = (cursor + 1) % 2;
+        if (UiInput.down(pressed)) {
+            cursor = MenuCursor.move(cursor, 1, 2);
             return null;
         }
-        if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-            cursor = (cursor - 1 + 2) % 2;
+        if (UiInput.up(pressed)) {
+            cursor = MenuCursor.move(cursor, -1, 2);
             return null;
         }
 
-        if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+        if (UiInput.confirm(pressed)) {
             if (cursor == 0) {
                 return new Result(Result.KIND_CONTINUE_YES);
             }

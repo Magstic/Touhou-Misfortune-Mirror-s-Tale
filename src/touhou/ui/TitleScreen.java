@@ -2,7 +2,6 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.BulletSprites;
 import touhou.ImageBank;
@@ -54,19 +53,19 @@ public final class TitleScreen {
             count++;
         }
 
-        if ((pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+        if (UiInput.cancel(pressed)) {
             return ACTION_HELP;
         }
 
-        if ((pressed & GameCanvas.GAME_B_PRESSED) != 0) {
+        if (UiInput.secondary(pressed)) {
             return ACTION_STORY;
         }
 
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
+        if (UiInput.down(pressed)) {
             cursor = nextCursor(cursor, 1);
-        } else if ((pressed & GameCanvas.UP_PRESSED) != 0) {
+        } else if (UiInput.up(pressed)) {
             cursor = nextCursor(cursor, -1);
-        } else if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+        } else if (UiInput.confirm(pressed)) {
             if (cursor == 0) {
                 return ACTION_START;
             }
@@ -101,13 +100,8 @@ public final class TitleScreen {
 
     private int nextCursor(int cur, int delta) {
         int next = cur;
-        for (int i = 0; i < 16; i++) {
-            next += delta;
-            if (next < 0) {
-                next = 8;
-            } else if (next > 8) {
-                next = 0;
-            }
+        for (int i = 0; i < 9; i++) {
+            next = MenuCursor.move(next, delta, 9);
             if (!extraUnlocked && next == 1) {
                 continue;
             }

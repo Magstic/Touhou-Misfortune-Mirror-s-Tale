@@ -2,7 +2,6 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
@@ -27,28 +26,21 @@ public final class QuitScreen {
     }
 
     public Result update(int pressed) {
-        if ((pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+        if (UiInput.cancel(pressed)) {
             return new Result(Result.KIND_BACK_TO_TITLE);
         }
 
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-            cursor++;
-            if (cursor == 2) {
-                cursor = 0;
-            }
+        if (UiInput.down(pressed)) {
+            cursor = MenuCursor.move(cursor, 1, 2);
             return null;
         }
 
-        if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-            if (cursor != 0) {
-                cursor--;
-                return null;
-            }
-            cursor = 1;
+        if (UiInput.up(pressed)) {
+            cursor = MenuCursor.move(cursor, -1, 2);
             return null;
         }
 
-        if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+        if (UiInput.confirm(pressed)) {
             if (cursor == 0) {
                 return new Result(Result.KIND_BACK_TO_TITLE);
             }

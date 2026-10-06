@@ -10,11 +10,17 @@ public final class MainMidlet extends MIDlet {
 
     protected void startApp() {
         System.out.println("TouhouMIDPPort BUILD " + BUILD_STAMP);
-        ResultStats.INSTANCE.onAppStart();
         if (canvas == null) {
             canvas = new GameCore(this);
         }
         Display.getDisplay(this).setCurrent(canvas);
+        if (!canvas.hasFailure()) {
+            try {
+                ResultStats.INSTANCE.onAppStart();
+            } catch (StorageException e) {
+                canvas.reportFailure(e);
+            }
+        }
         canvas.start();
     }
 
@@ -27,16 +33,27 @@ public final class MainMidlet extends MIDlet {
     }
 
     protected void pauseApp() {
-        ResultStats.INSTANCE.onAppPauseOrStop();
         if (canvas != null) {
             canvas.pause();
+            commitLifecycleStats();
         }
     }
 
     protected void destroyApp(boolean unconditional) {
-        ResultStats.INSTANCE.onAppPauseOrStop();
         if (canvas != null) {
             canvas.stop();
+            commitLifecycleStats();
+        }
+    }
+
+    private void commitLifecycleStats() {
+        if (canvas.hasFailure()) {
+            return;
+        }
+        try {
+            ResultStats.INSTANCE.onAppPauseOrStop();
+        } catch (StorageException e) {
+            canvas.reportFailure(e);
         }
     }
 }

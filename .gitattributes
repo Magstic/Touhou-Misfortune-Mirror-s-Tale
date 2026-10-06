@@ -1,0 +1,17 @@
+# Keep text files consistent across Windows and Linux.
+* text=auto eol=lf
+
+*.java text eol=lf
+*.xml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+res/i18n/**/*.dat text eol=lf
+
+*.gif binary
+*.png binary
+*.wav binary
+*.mid binary
+*.ttf binary
+*.jar binary
+res/cc.dat binary
+res/stage.dat binary

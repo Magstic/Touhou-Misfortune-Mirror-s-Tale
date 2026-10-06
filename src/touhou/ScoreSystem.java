@@ -10,6 +10,7 @@ import touhou.replay.ReplaySnapshotWriter;
 import touhou.ui.UiDraw;
 
 public final class ScoreSystem {
+    public static final int SNAPSHOT_SIZE = 69;
     public interface Listener {
         void onLifeOrBombIncreased();
     }
@@ -91,35 +92,6 @@ public final class ScoreSystem {
 
     public void setListener(Listener listener) {
         this.listener = listener;
-    }
-
-    public void reset(int initialHiScore) {
-        score = 0;
-        stageScore = 0;
-        hiScore = initialHiScore;
-
-        scoreRate = 100;
-        crisis = 0;
-        graze = 0;
-
-        if (hud != null) {
-            player = hud.getPlayer();
-            bomb = hud.getBomb();
-        } else {
-            player = 0;
-            bomb = 0;
-        }
-
-        currentSpellId = -1;
-        spellBonusArmed = false;
-        spellBonusDisplayTicks = 0;
-        lastSpellBonusScore = 0;
-
-        lastNotifiedSpellId = -1;
-        extendCnt = 50;
-        extendRank = 0;
-
-        syncHud();
     }
 
     // Reset score-related fields for a new run.
@@ -267,59 +239,19 @@ public final class ScoreSystem {
             return;
         }
 
-        int unit = currentUnit;
-        if (unit < 0 || unit >= progress.scoreList.length) {
-            return;
-        }
-
-        int base;
-        if (currentLevel == 4) {
-            base = 12;
-        } else {
-            base = currentLevel * 3;
-        }
-        if (base < 0 || base + 2 >= progress.scoreList[unit].length) {
-            return;
-        }
-
-        int s = score;
-        int[] scores = progress.scoreList[unit];
-        if (s > scores[base + 0]) {
-            scores[base + 2] = scores[base + 1];
-            scores[base + 1] = scores[base + 0];
-            scores[base + 0] = s;
-        } else if (s > scores[base + 1]) {
-            scores[base + 2] = scores[base + 1];
-            scores[base + 1] = s;
-        } else if (s > scores[base + 2]) {
-            scores[base + 2] = s;
-        }
-
-        progress.saveScoreListToSp();
+        progress.recordScore(currentUnit, currentLevel, score);
     }
 
     public int getScore() {
         return score;
     }
 
-    public int getStageScore() {
-        return stageScore;
-    }
-
     public int getHiScore() {
         return hiScore;
     }
 
-    public int getScoreRate() {
-        return scoreRate;
-    }
-
     public int getCrisis() {
         return crisis;
-    }
-
-    public int getGraze() {
-        return graze;
     }
 
     public int getPlayer() {
@@ -389,11 +321,6 @@ public final class ScoreSystem {
         syncHud();
     }
 
-    // Mirrors DoJa : host.setQ(true/false) controls whether SpellCard Bonus can be granted.
-    public void setSpellBonusArmed(boolean v) {
-        post(EVT_SET_SPELL_BONUS_ARMED, v ? 1 : 0, 0, 0);
-    }
-
     public boolean isSpellBonusArmed() {
         return spellBonusArmed;
     }
@@ -410,8 +337,7 @@ public final class ScoreSystem {
         if (spellId < 0 || spellId >= GameProgress.SPELL_COUNT) {
             return;
         }
-        progress.scChareCnt[currentUnit][spellId] += 1;
-        progress.saveSpellCountsToSp();
+        progress.recordSpellAttempt(currentUnit, spellId);
     }
 
     // Mirrors DoJa : qc() (SpellCard Bonus calculation and bookkeeping).
@@ -438,8 +364,7 @@ public final class ScoreSystem {
         addScore(s);
 
         if (progressWriteEnabled && progress != null && currentSpellId >= 0 && currentSpellId < GameProgress.SPELL_COUNT) {
-            progress.scBonusCnt[currentUnit][currentSpellId] += 1;
-            progress.saveSpellCountsToSp();
+            progress.recordSpellCapture(currentUnit, currentSpellId);
         }
         currentSpellId = -1;
     }

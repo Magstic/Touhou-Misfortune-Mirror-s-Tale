@@ -501,36 +501,8 @@ public final class CcDatCropViewer {
             return null;
         }
 
-        // Try simple NNN.gif format (e.g. 010.gif)
-        String simple = pad3(imgIndex) + ".gif";
-        if (new File(spDir, simple).isFile()) {
-            return simple;
-        }
-
-        // Fallback: scan for NNNN_*.gif patterns (legacy extracted names)
-        String p1 = pad4(imgIndex + 1) + "_";
-        String p0 = pad4(imgIndex) + "_";
-
-        File[] files = spDir.listFiles();
-        if (files == null) {
-            return null;
-        }
-
-        for (int i = 0; i < files.length; i++) {
-            String n = files[i].getName();
-            if (n.endsWith(".gif") && n.startsWith(p1)) {
-                return n;
-            }
-        }
-
-        for (int i = 0; i < files.length; i++) {
-            String n = files[i].getName();
-            if (n.endsWith(".gif") && n.startsWith(p0)) {
-                return n;
-            }
-        }
-
-        return null;
+        String fileName = pad3(imgIndex) + ".gif";
+        return new File(spDir, fileName).isFile() ? fileName : null;
     }
 
     private static String pad3(int n) {
@@ -629,19 +601,6 @@ public final class CcDatCropViewer {
         }
     }
 
-    private static String pad4(int n) {
-        if (n < 10) {
-            return "000" + n;
-        }
-        if (n < 100) {
-            return "00" + n;
-        }
-        if (n < 1000) {
-            return "0" + n;
-        }
-        return String.valueOf(n);
-    }
-
     public void show() {
         frame.setVisible(true);
     }
@@ -658,7 +617,7 @@ public final class CcDatCropViewer {
         if (parent != null && new File(parent, "res/cc.dat").isFile()) {
             return parent;
         }
-        // Fallback: try to resolve from class source location
+        // Also resolve from the compiled class location.
         try {
             java.net.URL url = CcDatCropViewer.class.getProtectionDomain().getCodeSource().getLocation();
             File classDir = new File(url.toURI());

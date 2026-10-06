@@ -5,7 +5,6 @@ import java.util.Vector;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.ImageBank;
 import touhou.i18n.I18n;
@@ -25,11 +24,7 @@ public final class StoryScreen {
     }
 
     private static String[] loadStoryLines() {
-        String text = I18n.readUtf8TextResource(I18n.path("story.txt"));
-        if (text == null) {
-            return null;
-        }
-        return I18n.splitLinesSimple(text);
+        return I18n.splitLines(I18n.loadText("story.txt"));
     }
 
     private static final int BG_IMG_INDEX = 54;
@@ -56,7 +51,8 @@ public final class StoryScreen {
     private Font font;
     private int lineH;
 
-    private Vector wrapped;
+    private String[] wrapped;
+    private final FontTextMeasurer textMeasurer = new FontTextMeasurer(null);
     private int maxTopLine;
 
     // Smooth scroll state (line fixed-point, 8 bits fraction).
@@ -74,22 +70,28 @@ public final class StoryScreen {
 
     public void enter() {
         font = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
+        textMeasurer.setFont(font);
         lineH = UiDraw.fontHeight(font) + 1;
 
-        wrapped = new Vector();
+        Vector wrappedLines = new Vector();
         String[] lines = loadStoryLines();
         if (lines != null) {
             for (int i = 0; i < lines.length; i++) {
-                wrapLine(wrapped, font, lines[i], TEXT_W);
+                String[] lineParts = UiTextLayout.wrapCharacters(lines[i], TEXT_W, textMeasurer);
+                for (int j = 0; j < lineParts.length; j++) {
+                    wrappedLines.addElement(lineParts[j]);
+                }
             }
         }
+        wrapped = new String[wrappedLines.size()];
+        wrappedLines.copyInto(wrapped);
 
         maxTopLine = 0;
         int visible = TEXT_H / lineH;
         if (visible < 1) {
             visible = 1;
         }
-        int total = wrapped.size();
+        int total = wrapped.length;
         int max = total - visible;
         if (max > 0) {
             maxTopLine = max;
@@ -113,19 +115,19 @@ public final class StoryScreen {
     public Result update(int pressed) {
         flakeTick++;
 
-        if ((pressed & (GameCanvas.GAME_A_PRESSED | GameCanvas.GAME_B_PRESSED)) != 0) {
+        if (UiInput.cancel(pressed) || UiInput.secondary(pressed)) {
             return new Result(Result.KIND_BACK_TO_TITLE);
         }
 
-        boolean up = (pressed & GameCanvas.UP_PRESSED) != 0;
-        boolean down = (pressed & GameCanvas.DOWN_PRESSED) != 0;
-        boolean left = (pressed & GameCanvas.LEFT_PRESSED) != 0;
-        boolean right = (pressed & GameCanvas.RIGHT_PRESSED) != 0;
+        boolean up = UiInput.up(pressed);
+        boolean down = UiInput.down(pressed);
+        boolean left = UiInput.left(pressed);
+        boolean right = UiInput.right(pressed);
 
-        boolean edgeUp = up && ((prevPressed & GameCanvas.UP_PRESSED) == 0);
-        boolean edgeDown = down && ((prevPressed & GameCanvas.DOWN_PRESSED) == 0);
-        boolean edgeLeft = left && ((prevPressed & GameCanvas.LEFT_PRESSED) == 0);
-        boolean edgeRight = right && ((prevPressed & GameCanvas.RIGHT_PRESSED) == 0);
+        boolean edgeUp = up && !UiInput.up(prevPressed);
+        boolean edgeDown = down && !UiInput.down(prevPressed);
+        boolean edgeLeft = left && !UiInput.left(prevPressed);
+        boolean edgeRight = right && !UiInput.right(prevPressed);
 
         if (edgeUp) {
             requestScrollByLines(-1);
@@ -276,10 +278,10 @@ public final class StoryScreen {
             int maxLines = (TEXT_H / lineH) + 3;
 
             for (int i = 0; i < maxLines; i++) {
-                if (idx >= wrapped.size()) {
+                if (idx >= wrapped.length) {
                     break;
                 }
-                String s = (String) wrapped.elementAt(idx);
+                String s = wrapped[idx];
                 if (s == null) {
                     s = "";
                 }
@@ -303,7 +305,7 @@ public final class StoryScreen {
             return;
         }
 
-        int total = wrapped.size();
+        int total = wrapped.length;
         if (total <= 0) {
             return;
         }
@@ -431,33 +433,4 @@ public final class StoryScreen {
         return s * 1103515245 + 12345;
     }
 
-    private static void wrapLine(Vector out, Font font, String s, int maxWidth) {
-        if (out == null || font == null) {
-            return;
-        }
-        if (s == null) {
-            out.addElement("");
-            return;
-        }
-        if (s.length() == 0) {
-            out.addElement("");
-            return;
-        }
-
-        int lineStart = 0;
-        int w = 0;
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            int cw = UiDraw.charWidth(font, c);
-            if (w + cw > maxWidth && i > lineStart) {
-                out.addElement(s.substring(lineStart, i));
-                lineStart = i;
-                w = 0;
-            }
-            w += cw;
-        }
-        if (lineStart < s.length()) {
-            out.addElement(s.substring(lineStart));
-        }
-    }
 }

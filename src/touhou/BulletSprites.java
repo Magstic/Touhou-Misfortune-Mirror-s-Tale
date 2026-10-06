@@ -3,12 +3,8 @@ package touhou;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
-import touhou.ui.UiDraw;
-
 public final class BulletSprites {
-    private boolean debugDrawBounds = false;
-
-    // Compat option: if disabled, player bullets are drawn without runtime alpha.
+    // Rendering option: if disabled, player bullets are drawn without runtime alpha.
     private boolean playerShotAlphaEnabled = true;
 
     private final CcTable cc;
@@ -17,10 +13,6 @@ public final class BulletSprites {
     public BulletSprites(CcTable cc, ImageBank images) {
         this.cc = cc;
         this.images = images;
-    }
-
-    public void setDebugDrawBounds(boolean enabled) {
-        debugDrawBounds = enabled;
     }
 
     public void setPlayerShotAlphaEnabled(boolean enabled) {
@@ -112,8 +104,8 @@ public final class BulletSprites {
             return false;
         }
 
-        int drawSrcX = srcX;
-        int drawSrcY = srcY;
+        int drawSrcX = images.toPhysicalSourceX(imgIndex, srcX);
+        int drawSrcY = images.toPhysicalSourceY(imgIndex, srcY);
         if (isFromPlayer && playerShotAlphaEnabled) {
             // Player bullets are drawn with alpha=128.
             Image alphaImg = images.getAlphaImage(imgIndex, 128);
@@ -177,8 +169,8 @@ public final class BulletSprites {
                 a = 255;
             }
         }
-        int drawSrcX = srcX;
-        int drawSrcY = srcY;
+        int drawSrcX = images.toPhysicalSourceX(imgIndex, srcX);
+        int drawSrcY = images.toPhysicalSourceY(imgIndex, srcY);
         if (a != 255) {
             if (isFromPlayer) {
                 // Avoid alpha region cache churn for high-rate player shots.
@@ -202,8 +194,7 @@ public final class BulletSprites {
             }
         }
 
-        if (drawRegionSafe(g, img, drawSrcX, drawSrcY, w, h, ax, ay, x, y, 1)) {
-            drawDebug(g, bulletId, img, x, y, srcX, srcY, w, h, ax, ay, 1);
+        if (drawRegionSafe(g, img, drawSrcX, drawSrcY, w, h, ax, ay, x, y)) {
             return true;
         }
         return false;
@@ -250,8 +241,8 @@ public final class BulletSprites {
             return false;
         }
 
-        int drawSrcX = srcX;
-        int drawSrcY = srcY;
+        int drawSrcX = images.toPhysicalSourceX(imgIndex, srcX);
+        int drawSrcY = images.toPhysicalSourceY(imgIndex, srcY);
         if (isFromPlayer && playerShotAlphaEnabled) {
             // Avoid alpha region cache churn for high-rate player shots.
             Image alphaImg = images.getAlphaImage(imgIndex, 128);
@@ -260,78 +251,13 @@ public final class BulletSprites {
             }
         }
 
-        if (drawRegionSafe(g, img, drawSrcX, drawSrcY, w, h, ax, ay, x, y, 1)) {
-            drawDebug(g, bulletId, img, x, y, srcX, srcY, w, h, ax, ay, 1);
+        if (drawRegionSafe(g, img, drawSrcX, drawSrcY, w, h, ax, ay, x, y)) {
             return true;
         }
         return false;
     }
 
-    private void drawDebug(Graphics g, int bulletId, Image img, int x, int y, int srcX, int srcY, int w, int h, int ax, int ay, int scale) {
-        if (!debugDrawBounds) {
-            return;
-        }
-        if (scale != 1) {
-            w *= scale;
-            h *= scale;
-            ax *= scale;
-            ay *= scale;
-            srcX *= scale;
-            srcY *= scale;
-        }
-
-        int imgW = img.getWidth();
-        int imgH = img.getHeight();
-
-        int dx = x - ax;
-        int dy = y - ay;
-
-        if (srcX < 0) {
-            int cut = -srcX;
-            srcX = 0;
-            dx += cut;
-            w -= cut;
-        }
-        if (srcY < 0) {
-            int cut = -srcY;
-            srcY = 0;
-            dy += cut;
-            h -= cut;
-        }
-        if (w <= 0 || h <= 0) {
-            return;
-        }
-
-        if (srcX >= imgW || srcY >= imgH) {
-            return;
-        }
-        if (srcX + w > imgW) {
-            w = imgW - srcX;
-        }
-        if (srcY + h > imgH) {
-            h = imgH - srcY;
-        }
-        if (w <= 0 || h <= 0) {
-            return;
-        }
-
-        g.setColor(0x00FF00);
-        g.drawRect(dx, dy, w - 1, h - 1);
-        // Keep TOP alignment behavior while allowing BitmapFont rendering.
-        int textY = dy + UiDraw.fontBaseline(null);
-        UiDraw.drawStringPlain(g, null, String.valueOf(bulletId), dx, textY, 0, 0x00FF00);
-    }
-
-    private static boolean drawRegionSafe(Graphics g, Image img, int srcX, int srcY, int w, int h, int ax, int ay, int x, int y, int scale) {
-        if (scale != 1) {
-            srcX *= scale;
-            srcY *= scale;
-            w *= scale;
-            h *= scale;
-            ax *= scale;
-            ay *= scale;
-        }
-
+    private static boolean drawRegionSafe(Graphics g, Image img, int srcX, int srcY, int w, int h, int ax, int ay, int x, int y) {
         int imgW = img.getWidth();
         int imgH = img.getHeight();
 

@@ -2,8 +2,7 @@ package touhou;
 
 import javax.microedition.lcdui.Graphics;
 
-import touhou.replay.ReplaySnapshotReader;
-import touhou.replay.ReplaySnapshotWriter;
+import touhou.battle.BattleMath;
 
 public final class BulletSystem {
     // Callback for stage effects (mirrors DoJa kc(effectId, x, y)).
@@ -15,6 +14,7 @@ public final class BulletSystem {
 
     private final int max;
 
+    private final FixedSlotPool slots;
     private final boolean[] active;
     private final boolean[] fromPlayer;
     private final int[] bulletId;
@@ -31,8 +31,6 @@ public final class BulletSystem {
     private final int[] slotLockStamp;
     private int updateStamp;
     private boolean updateRunning;
-
-    private int allocHint;
 
     // Perf counters (per frame).
     private int perfSpawnCount;
@@ -58,11 +56,12 @@ public final class BulletSystem {
 
     private BulletSprites sprites;
 
-    private EnemySystem enemies;
+    private EnemyTargetRegistry enemies;
 
     public BulletSystem(int maxBullets) {
-        this.max = maxBullets;
-        this.active = new boolean[maxBullets];
+        this.slots = new FixedSlotPool(maxBullets);
+        this.max = slots.capacity();
+        this.active = slots.activeArray();
         this.fromPlayer = new boolean[maxBullets];
         this.bulletId = new int[maxBullets];
         this.animFrames = new int[maxBullets];
@@ -88,14 +87,13 @@ public final class BulletSystem {
         this.t = new int[maxBullets];
 
         this.globalDir = 270;
-        this.allocHint = 0;
     }
 
     public void setEffectSpawner(EffectSpawner spawner) {
         this.effectSpawner = spawner;
     }
 
-    public int getMax() {
+    public int capacity() {
         return max;
     }
 
@@ -112,59 +110,50 @@ public final class BulletSystem {
     }
 
     public boolean isFromPlayer(int idx) {
-        if (idx < 0 || idx >= max) {
-            return false;
-        }
+        requireIndex(idx);
         return fromPlayer[idx];
     }
 
     public int getBulletId(int idx) {
-        if (idx < 0 || idx >= max) {
-            return 0;
-        }
+        requireIndex(idx);
         return bulletId[idx];
     }
 
     public int getMoveType(int idx) {
-        if (idx < 0 || idx >= max) {
-            return 0;
-        }
+        requireIndex(idx);
         return moveType[idx];
     }
 
     public int getXFixed(int idx) {
-        if (idx < 0 || idx >= max) {
-            return 0;
-        }
+        requireIndex(idx);
         return x[idx];
     }
 
     public int getYFixed(int idx) {
-        if (idx < 0 || idx >= max) {
-            return 0;
-        }
+        requireIndex(idx);
         return y[idx];
     }
 
-    public void deactivate(int idx) {
+    public boolean deactivate(int idx) {
         if (idx < 0 || idx >= max) {
-            return;
+            return false;
         }
-        kill(idx);
+        return kill(idx);
     }
 
-    private void kill(int idx) {
-        if (active[idx]) {
-            perfKillCount++;
+    private boolean kill(int idx) {
+        if (!slots.release(idx)) {
+            return false;
         }
-        active[idx] = false;
+        perfKillCount++;
         if (updateRunning) {
             slotLockStamp[idx] = updateStamp;
         }
+        return true;
     }
 
     private void deactivateNoLock(int idx) {
-        active[idx] = false;
+        slots.release(idx);
     }
 
     // Begin a new perf frame (reset per-frame counters).
@@ -193,7 +182,7 @@ public final class BulletSystem {
     }
 
     public void setGlobalDir(int deg) {
-        globalDir = normalizeDeg(deg);
+        globalDir = BattleMath.normalizeDeg(deg);
     }
 
     public void setEnemyLevel(int level) {
@@ -207,7 +196,7 @@ public final class BulletSystem {
 
     public void setEnemyBulletLock(int idx, int value) {
         if (idx < 0 || idx >= enemyBulletLock.length) {
-            return;
+            throw new IllegalArgumentException("Invalid enemy bullet lock index: " + idx);
         }
         enemyBulletLock[idx] = value;
     }
@@ -249,30 +238,22 @@ public final class BulletSystem {
         this.sprites = sprites;
     }
 
-    public void setEnemies(EnemySystem enemies) {
+    public void setEnemies(EnemyTargetRegistry enemies) {
         this.enemies = enemies;
     }
 
-    public void spawn(int bId, int mType, int angDeg, int accelOrSpeed, int spawnX, int spawnY) {
-        spawnExOwner(bId, 1, mType, angDeg, accelOrSpeed, spawnX, spawnY, 0, false);
+    public int spawn(int bId, int mType, int angDeg, int accelOrSpeed, int spawnX, int spawnY) {
+        return spawnExOwner(bId, 1, mType, angDeg, accelOrSpeed, spawnX, spawnY, 0, false);
     }
 
-    public void spawnPlayer(int bId, int mType, int angDeg, int accelOrSpeed, int spawnX, int spawnY) {
-        spawnExOwner(bId, 1, mType, angDeg, accelOrSpeed, spawnX, spawnY, 0, true);
+    public int spawnPlayerEx(int baseBulletId, int frames, int mType, int angDeg, int accelOrSpeed, int spawnX, int spawnY, int shotPower) {
+        return spawnExOwner(baseBulletId, frames, mType, angDeg, accelOrSpeed, spawnX, spawnY, shotPower, true);
     }
 
-    public void spawnEx(int baseBulletId, int frames, int mType, int angDeg, int accelOrSpeed, int spawnX, int spawnY, int shotPower) {
-        spawnExOwner(baseBulletId, frames, mType, angDeg, accelOrSpeed, spawnX, spawnY, shotPower, false);
-    }
-
-    public void spawnPlayerEx(int baseBulletId, int frames, int mType, int angDeg, int accelOrSpeed, int spawnX, int spawnY, int shotPower) {
-        spawnExOwner(baseBulletId, frames, mType, angDeg, accelOrSpeed, spawnX, spawnY, shotPower, true);
-    }
-
-    public void spawnEnemyDecel(int bId, int angDeg, int speed, int decel, int minSpeed, int spawnX, int spawnY) {
+    public int spawnEnemyDecel(int bId, int angDeg, int speed, int decel, int minSpeed, int spawnX, int spawnY) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -283,7 +264,7 @@ public final class BulletSystem {
         power[idx] = 0;
 
         moveType[idx] = 12;
-        angleDeg[idx] = normalizeDeg(angDeg);
+        angleDeg[idx] = BattleMath.normalizeDeg(angDeg);
         delta[idx] = 0;
         savedDelta[idx] = decel;
         stageFlag[idx] = speed;
@@ -296,12 +277,13 @@ public final class BulletSystem {
         y[idx] = spawnY;
 
         t[idx] = 0;
+        return idx;
     }
 
-    private void spawnEnemyOrbitBullet(int bId, int angDeg, int speedParam, int parentIdx) {
+    private int spawnEnemyOrbitBullet(int bId, int angDeg, int speedParam, int parentIdx) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -312,7 +294,7 @@ public final class BulletSystem {
         power[idx] = 0;
 
         moveType[idx] = 5;
-        angleDeg[idx] = normalizeDeg(angDeg);
+        angleDeg[idx] = BattleMath.normalizeDeg(angDeg);
         delta[idx] = 0;
         savedDelta[idx] = 0;
         stageFlag[idx] = speedParam;
@@ -331,12 +313,13 @@ public final class BulletSystem {
         y[idx] = py;
 
         t[idx] = 0;
+        return idx;
     }
 
-    public void spawnEnemyChild91(int bId, int angDeg, int speedParam, int parentIdx, int angleDelta) {
+    public int spawnEnemyChild91(int bId, int angDeg, int speedParam, int parentIdx, int angleDelta) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -347,7 +330,7 @@ public final class BulletSystem {
         power[idx] = 0;
 
         moveType[idx] = 91;
-        angleDeg[idx] = normalizeDeg(angDeg);
+        angleDeg[idx] = BattleMath.normalizeDeg(angDeg);
         delta[idx] = 0;
         savedDelta[idx] = angleDelta;
         stageFlag[idx] = speedParam;
@@ -366,12 +349,13 @@ public final class BulletSystem {
         y[idx] = py;
 
         t[idx] = 0;
+        return idx;
     }
 
-    public void spawnEnemyChild52(int bId, int angDeg, int speedParam, int parentIdx, int angleDelta) {
+    public int spawnEnemyChild52(int bId, int angDeg, int speedParam, int parentIdx, int angleDelta) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -382,7 +366,7 @@ public final class BulletSystem {
         power[idx] = 0;
 
         moveType[idx] = 52;
-        angleDeg[idx] = normalizeDeg(angDeg);
+        angleDeg[idx] = BattleMath.normalizeDeg(angDeg);
         delta[idx] = 0;
         savedDelta[idx] = angleDelta;
         stageFlag[idx] = speedParam;
@@ -401,12 +385,13 @@ public final class BulletSystem {
         y[idx] = py;
 
         t[idx] = 0;
+        return idx;
     }
 
-    public void spawnEnemyChild(int bId, int mType, int angDeg, int speedParam, int parentIdx) {
+    public int spawnEnemyChild(int bId, int mType, int angDeg, int speedParam, int parentIdx) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -417,7 +402,7 @@ public final class BulletSystem {
         power[idx] = 0;
 
         moveType[idx] = mType;
-        angleDeg[idx] = normalizeDeg(angDeg);
+        angleDeg[idx] = BattleMath.normalizeDeg(angDeg);
         delta[idx] = 0;
         savedDelta[idx] = 0;
         stageFlag[idx] = speedParam;
@@ -436,12 +421,13 @@ public final class BulletSystem {
         y[idx] = py;
 
         t[idx] = 0;
+        return idx;
     }
 
-    public void spawnEnemyAccel40(int bId, int angDeg, int speedParam, int spawnX, int spawnY) {
+    public int spawnEnemyAccel40(int bId, int angDeg, int speedParam, int spawnX, int spawnY) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -452,7 +438,7 @@ public final class BulletSystem {
         power[idx] = 0;
 
         moveType[idx] = 40;
-        angleDeg[idx] = normalizeDeg(angDeg);
+        angleDeg[idx] = BattleMath.normalizeDeg(angDeg);
 
         delta[idx] = 0;
         savedDelta[idx] = 0;
@@ -465,12 +451,13 @@ public final class BulletSystem {
         y[idx] = spawnY;
 
         t[idx] = 0;
+        return idx;
     }
 
-    public void spawnEnemySpiral43_44(int bId, int mType, int angDeg, int speedParam, int spawnX, int spawnY) {
+    public int spawnEnemySpiral43_44(int bId, int mType, int angDeg, int speedParam, int spawnX, int spawnY) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -481,7 +468,7 @@ public final class BulletSystem {
         power[idx] = 0;
 
         moveType[idx] = mType;
-        angleDeg[idx] = normalizeDeg(angDeg);
+        angleDeg[idx] = BattleMath.normalizeDeg(angDeg);
 
         delta[idx] = 0;
         savedDelta[idx] = 0;
@@ -494,12 +481,13 @@ public final class BulletSystem {
         y[idx] = spawnY;
 
         t[idx] = 0;
+        return idx;
     }
 
-    public void spawnEnemyRamp41(int bId, int angDeg, int speedParam, int spawnX, int spawnY) {
+    public int spawnEnemyRamp41(int bId, int angDeg, int speedParam, int spawnX, int spawnY) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -510,7 +498,7 @@ public final class BulletSystem {
         power[idx] = 0;
 
         moveType[idx] = 41;
-        angleDeg[idx] = normalizeDeg(angDeg);
+        angleDeg[idx] = BattleMath.normalizeDeg(angDeg);
 
         delta[idx] = 0;
         savedDelta[idx] = 0;
@@ -523,12 +511,13 @@ public final class BulletSystem {
         y[idx] = spawnY;
 
         t[idx] = 0;
+        return idx;
     }
 
-    public void spawnEnemyAccel(int bId, int mType, int angDeg, int speedParam, int spawnX, int spawnY) {
+    public int spawnEnemyAccel(int bId, int mType, int angDeg, int speedParam, int spawnX, int spawnY) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -539,7 +528,7 @@ public final class BulletSystem {
         power[idx] = 0;
 
         moveType[idx] = mType;
-        angleDeg[idx] = normalizeDeg(angDeg);
+        angleDeg[idx] = BattleMath.normalizeDeg(angDeg);
 
         delta[idx] = 0;
         savedDelta[idx] = 0;
@@ -552,12 +541,13 @@ public final class BulletSystem {
         y[idx] = spawnY;
 
         t[idx] = 0;
+        return idx;
     }
 
-    public void spawnEnemyStopTurnAccel(int bId, int mType, int angDeg, int speedParam, int spawnX, int spawnY) {
+    public int spawnEnemyStopTurnAccel(int bId, int mType, int angDeg, int speedParam, int spawnX, int spawnY) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -568,7 +558,7 @@ public final class BulletSystem {
         power[idx] = 0;
 
         moveType[idx] = mType;
-        angleDeg[idx] = normalizeDeg(angDeg);
+        angleDeg[idx] = BattleMath.normalizeDeg(angDeg);
 
         delta[idx] = 0;
         savedDelta[idx] = speedParam;
@@ -581,12 +571,13 @@ public final class BulletSystem {
         y[idx] = spawnY;
 
         t[idx] = 0;
+        return idx;
     }
 
-    public void spawnEnemyCurve(int bId, int mType, int angDeg, int accel, int spawnX, int spawnY) {
+    public int spawnEnemyCurve(int bId, int mType, int angDeg, int accel, int spawnX, int spawnY) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -597,7 +588,7 @@ public final class BulletSystem {
         power[idx] = 0;
 
         moveType[idx] = mType;
-        angleDeg[idx] = normalizeDeg(angDeg);
+        angleDeg[idx] = BattleMath.normalizeDeg(angDeg);
         delta[idx] = 0;
         savedDelta[idx] = 0;
         stageFlag[idx] = accel;
@@ -609,12 +600,13 @@ public final class BulletSystem {
         y[idx] = spawnY;
 
         t[idx] = 0;
+        return idx;
     }
 
-    private void spawnExOwner(int baseBulletId, int frames, int mType, int angDeg, int accelOrSpeed, int spawnX, int spawnY, int shotPower, boolean isFromPlayer) {
+    private int spawnExOwner(int baseBulletId, int frames, int mType, int angDeg, int accelOrSpeed, int spawnX, int spawnY, int shotPower, boolean isFromPlayer) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -625,7 +617,7 @@ public final class BulletSystem {
         power[idx] = shotPower;
 
         moveType[idx] = mType;
-        angleDeg[idx] = normalizeDeg(angDeg);
+        angleDeg[idx] = BattleMath.normalizeDeg(angDeg);
         delta[idx] = accelOrSpeed;
         savedDelta[idx] = accelOrSpeed;
         int initStage = 0;
@@ -667,12 +659,13 @@ public final class BulletSystem {
         y[idx] = spawnY;
 
         t[idx] = 0;
+        return idx;
     }
 
-    public void spawnEffectTagged(int baseBulletId, int frames, int life, int spawnX, int spawnY, int tagValue) {
+    public int spawnEffectTagged(int baseBulletId, int frames, int life, int spawnX, int spawnY, int tagValue) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
         active[idx] = true;
         fromPlayer[idx] = false;
@@ -694,6 +687,7 @@ public final class BulletSystem {
         y[idx] = spawnY;
 
         t[idx] = 0;
+        return idx;
     }
 
     public int getLaserStageFlag(int baseBulletId, int mType, int tagValue, boolean isFromPlayer) {
@@ -725,15 +719,11 @@ public final class BulletSystem {
         return 0;
     }
 
-    public void spawnOrUpdateLaser(int baseBulletId, int mType, int tagValue, int spawnX, int spawnY, int shotPower) {
-        spawnOrUpdateLaserOwner(baseBulletId, mType, tagValue, spawnX, spawnY, shotPower, false);
+    public int spawnOrUpdatePlayerLaser(int baseBulletId, int mType, int tagValue, int spawnX, int spawnY, int shotPower) {
+        return spawnOrUpdateLaserOwner(baseBulletId, mType, tagValue, spawnX, spawnY, shotPower, true);
     }
 
-    public void spawnOrUpdatePlayerLaser(int baseBulletId, int mType, int tagValue, int spawnX, int spawnY, int shotPower) {
-        spawnOrUpdateLaserOwner(baseBulletId, mType, tagValue, spawnX, spawnY, shotPower, true);
-    }
-
-    private void spawnOrUpdateLaserOwner(int baseBulletId, int mType, int tagValue, int spawnX, int spawnY, int shotPower, boolean isFromPlayer) {
+    private int spawnOrUpdateLaserOwner(int baseBulletId, int mType, int tagValue, int spawnX, int spawnY, int shotPower, boolean isFromPlayer) {
         int keep = isFromPlayer ? 32 : 2;
         boolean isMarisaALaser = isFromPlayer && mType == 2 && baseBulletId == 103;
         boolean isMarisaBombLaser = isFromPlayer && mType == 3 && baseBulletId == 105;
@@ -786,13 +776,13 @@ public final class BulletSystem {
                 } else {
                     stageFlag[i] = keep;
                 }
-                return;
+                return i;
             }
         }
 
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
 
         active[idx] = true;
@@ -821,6 +811,7 @@ public final class BulletSystem {
         y[idx] = yAdj;
 
         t[idx] = 0;
+        return idx;
     }
 
     public void update(int areaX, int areaY, int areaW, int areaH) {
@@ -884,7 +875,7 @@ public final class BulletSystem {
 
             int dx = targetXFixed - x[i];
             int dy = targetYFixed - y[i];
-            angleDeg[i] = arcTan2Deg(dy, dx) % 360;
+            angleDeg[i] = BattleMath.arcTan2Deg(dy, dx) % 360;
 
             x0[i] = x[i];
             y0[i] = y[i];
@@ -907,12 +898,12 @@ public final class BulletSystem {
 
             bulletId[i] = 81;
 
-            int ang = normalizeDeg(angleDeg[i] + 180);
+            int ang = BattleMath.normalizeDeg(angleDeg[i] + 180);
             if (gc >= 100) {
                 if (ang > 90 && ang <= 270) {
-                    ang = normalizeDeg(ang - 60);
+                    ang = BattleMath.normalizeDeg(ang - 60);
                 } else {
-                    ang = normalizeDeg(ang + 60);
+                    ang = BattleMath.normalizeDeg(ang + 60);
                 }
             }
             angleDeg[i] = ang;
@@ -929,170 +920,14 @@ public final class BulletSystem {
     }
 
     public int activeCount() {
-        int c = 0;
-        for (int i = 0; i < max; i++) {
-            if (active[i]) {
-                c++;
-            }
-        }
-        return c;
+        return slots.activeCount();
     }
 
     public void clear() {
+        slots.clear();
         for (int i = 0; i < max; i++) {
-            active[i] = false;
             keepAlive[i] = 0;
             slotLockStamp[i] = 0;
-        }
-        allocHint = 0;
-    }
-
-    // Replay snapshot I/O.
-    public void writeSnapshot(ReplaySnapshotWriter w) {
-        if (w == null) {
-            return;
-        }
-
-        w.writeI32LE(max);
-        w.writeI32LE(updateStamp);
-        w.writeBool(updateRunning);
-
-        w.writeI32LE(globalDir);
-        w.writeI32LE(enemyLevel);
-        w.writeI32LE(enemyAimTargetX);
-        w.writeI32LE(enemyAimTargetY);
-
-        for (int i = 0; i < enemyBulletLock.length; i++) {
-            w.writeI32LE(enemyBulletLock[i]);
-        }
-
-        for (int i = 0; i < max; i++) {
-            w.writeBool(active[i]);
-            w.writeBool(fromPlayer[i]);
-
-            w.writeI32LE(bulletId[i]);
-            w.writeI32LE(animFrames[i]);
-            w.writeI32LE(animTick[i]);
-            w.writeI32LE(moveType[i]);
-            w.writeI32LE(angleDeg[i]);
-            w.writeI32LE(delta[i]);
-            w.writeI32LE(savedDelta[i]);
-            w.writeI32LE(stageFlag[i]);
-            w.writeI32LE(keepAlive[i]);
-            w.writeI32LE(tag[i]);
-            w.writeI32LE(slotLockStamp[i]);
-            w.writeI32LE(power[i]);
-
-            w.writeI32LE(x0[i]);
-            w.writeI32LE(y0[i]);
-            w.writeI32LE(x[i]);
-            w.writeI32LE(y[i]);
-            w.writeI32LE(t[i]);
-        }
-    }
-
-    public void readSnapshot(ReplaySnapshotReader r) {
-        if (r == null) {
-            return;
-        }
-
-        int storedMax = r.readI32LE();
-        updateStamp = r.readI32LE();
-        r.readBool();
-        updateRunning = false;
-
-        globalDir = r.readI32LE();
-        enemyLevel = r.readI32LE();
-        enemyAimTargetX = r.readI32LE();
-        enemyAimTargetY = r.readI32LE();
-
-        for (int i = 0; i < enemyBulletLock.length; i++) {
-            enemyBulletLock[i] = r.readI32LE();
-        }
-
-        int readCount = storedMax;
-        if (readCount < 0) {
-            readCount = 0;
-        }
-        for (int i = 0; i < readCount; i++) {
-            boolean a = r.readBool();
-            boolean fp = r.readBool();
-
-            int bId = r.readI32LE();
-            int aFrames = r.readI32LE();
-            int aTick = r.readI32LE();
-            int mType = r.readI32LE();
-            int ang = r.readI32LE();
-            int d = r.readI32LE();
-            int sd = r.readI32LE();
-            int sf = r.readI32LE();
-            int ka = r.readI32LE();
-            int tg = r.readI32LE();
-            int lock = r.readI32LE();
-            int pow = r.readI32LE();
-
-            int xx0 = r.readI32LE();
-            int yy0 = r.readI32LE();
-            int xx = r.readI32LE();
-            int yy = r.readI32LE();
-            int tt = r.readI32LE();
-
-            if (i >= max) {
-                continue;
-            }
-
-            active[i] = a;
-            fromPlayer[i] = fp;
-            bulletId[i] = bId;
-            animFrames[i] = aFrames;
-            animTick[i] = aTick;
-            moveType[i] = mType;
-            angleDeg[i] = ang;
-            delta[i] = d;
-            savedDelta[i] = sd;
-            stageFlag[i] = sf;
-            keepAlive[i] = ka;
-            tag[i] = tg;
-            slotLockStamp[i] = lock;
-            power[i] = pow;
-            x0[i] = xx0;
-            y0[i] = yy0;
-            x[i] = xx;
-            y[i] = yy;
-            t[i] = tt;
-        }
-
-        for (int i = readCount; i < max; i++) {
-            active[i] = false;
-            fromPlayer[i] = false;
-            bulletId[i] = 0;
-            animFrames[i] = 0;
-            animTick[i] = 0;
-            moveType[i] = 0;
-            angleDeg[i] = 0;
-            delta[i] = 0;
-            savedDelta[i] = 0;
-            stageFlag[i] = 0;
-            keepAlive[i] = 0;
-            tag[i] = 0;
-            slotLockStamp[i] = 0;
-            power[i] = 0;
-            x0[i] = 0;
-            y0[i] = 0;
-            x[i] = 0;
-            y[i] = 0;
-            t[i] = 0;
-        }
-    }
-
-    public void clearEnemyBullets() {
-        for (int i = 0; i < max; i++) {
-            if (!active[i]) {
-                continue;
-            }
-            if (!fromPlayer[i]) {
-                active[i] = false;
-            }
         }
     }
 
@@ -1109,27 +944,7 @@ public final class BulletSystem {
 
             int id = bulletId[i];
             if (id == 103 || id == 104 || id == 105) {
-                active[i] = false;
-            }
-        }
-    }
-
-    public void clearEnemyBulletsWithEffect(int effectBulletId, int effectLife) {
-        for (int i = 0; i < max; i++) {
-            if (!active[i] || fromPlayer[i]) {
-                continue;
-            }
-            if (moveType[i] == 2 && power[i] == 0 && tag[i] != 0) {
-                continue;
-            }
-            if (bulletId[i] == effectBulletId && power[i] == 0 && moveType[i] == 2 && tag[i] == 0) {
-                continue;
-            }
-            int ex = x[i];
-            int ey = y[i];
-            active[i] = false;
-            if ((i & 1) == 0) {
-                spawnEffect(effectBulletId, 1, effectLife, ex, ey);
+                deactivateNoLock(i);
             }
         }
     }
@@ -1151,10 +966,10 @@ public final class BulletSystem {
         }
     }
 
-    public void spawnEffect(int baseBulletId, int frames, int life, int spawnX, int spawnY) {
+    public int spawnEffect(int baseBulletId, int frames, int life, int spawnX, int spawnY) {
         int idx = alloc();
         if (idx < 0) {
-            return;
+            return FixedSlotPool.NO_SLOT;
         }
         active[idx] = true;
         fromPlayer[idx] = false;
@@ -1177,20 +992,23 @@ public final class BulletSystem {
         y[idx] = spawnY;
 
         t[idx] = 0;
+        return idx;
     }
 
     public int getPower(int idx) {
-        if (idx < 0 || idx >= max) {
-            return 0;
-        }
+        requireIndex(idx);
         return power[idx];
     }
 
     public int getStageFlag(int idx) {
-        if (idx < 0 || idx >= max) {
-            return 0;
-        }
+        requireIndex(idx);
         return stageFlag[idx];
+    }
+
+    private void requireIndex(int idx) {
+        if (idx < 0 || idx >= max) {
+            throw new IllegalArgumentException("Invalid bullet index: " + idx);
+        }
     }
 
     private void step(int i) {
@@ -1242,11 +1060,11 @@ public final class BulletSystem {
 
                 if (dist < 5) {
                     if (mt == 6) {
-                        angleDeg[i] = normalizeDeg(ang + 10);
+                        angleDeg[i] = BattleMath.normalizeDeg(ang + 10);
                     } else if (mt == 8) {
-                        angleDeg[i] = normalizeDeg(ang + 350);
+                        angleDeg[i] = BattleMath.normalizeDeg(ang + 350);
                     } else if (mt == 9) {
-                        angleDeg[i] = arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]) % 360;
+                        angleDeg[i] = BattleMath.arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]) % 360;
                     }
                     tag[i] = 2;
                 }
@@ -1325,9 +1143,9 @@ public final class BulletSystem {
             if (spd <= 0) {
                 stageFlag[i] = 8;
                 if (mt == 43) {
-                    angleDeg[i] = normalizeDeg(ang + 30);
+                    angleDeg[i] = BattleMath.normalizeDeg(ang + 30);
                 } else {
-                    angleDeg[i] = normalizeDeg(ang - 30);
+                    angleDeg[i] = BattleMath.normalizeDeg(ang - 30);
                 }
                 moveType[i] = 1;
                 delta[i] = 0;
@@ -1411,7 +1229,7 @@ public final class BulletSystem {
             }
 
             if (tt == 12) {
-                angleDeg[i] = arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]) % 360;
+                angleDeg[i] = BattleMath.arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]) % 360;
                 x0[i] = x[i];
                 y0[i] = y[i];
                 delta[i] = 0;
@@ -1451,7 +1269,7 @@ public final class BulletSystem {
             dist += stageFlag[i];
             delta[i] = dist;
 
-            angleDeg[i] = normalizeDeg(ang + savedDelta[i]);
+            angleDeg[i] = BattleMath.normalizeDeg(ang + savedDelta[i]);
             if (tt > 5) {
                 stageFlag[i] = 0;
             }
@@ -1578,7 +1396,7 @@ public final class BulletSystem {
                 spd -= 8;
                 if (spd <= 0) {
                     spd = -20;
-                    angleDeg[i] = normalizeDeg(ang + 180);
+                    angleDeg[i] = BattleMath.normalizeDeg(ang + 180);
                 }
                 stageFlag[i] = spd;
             }
@@ -1609,7 +1427,7 @@ public final class BulletSystem {
             } else {
                 newAng = ang - 1;
             }
-            angleDeg[i] = normalizeDeg(newAng);
+            angleDeg[i] = BattleMath.normalizeDeg(newAng);
 
             int spd = stageFlag[i];
             if (tt < 20) {
@@ -1700,7 +1518,7 @@ public final class BulletSystem {
                 } else {
                     a += 90;
                 }
-                angleDeg[i] = normalizeDeg(a);
+                angleDeg[i] = BattleMath.normalizeDeg(a);
 
                 bulletId[i] = 621;
                 moveType[i] = 28;
@@ -1832,7 +1650,7 @@ public final class BulletSystem {
                     }
                 }
 
-                int aim = arcTan2Deg(enemyAimTargetY - by, enemyAimTargetX - bx);
+                int aim = BattleMath.arcTan2Deg(enemyAimTargetY - by, enemyAimTargetX - bx);
                 for (int n = 0; n < 13; n++) {
                     int spd = 16 + (n << 3);
                     spawn(603, 74, aim, spd, bx, by);
@@ -1851,24 +1669,24 @@ public final class BulletSystem {
                     }
                 }
 
-                int offAng1 = normalizeDeg(ang + 90);
+                int offAng1 = BattleMath.normalizeDeg(ang + 90);
                 int se = (int) (((long) Trig.cos(offAng1) * 50L) >> 3);
                 int x1 = bx + se;
                 int y1 = by + se;
 
-                int aim1 = arcTan2Deg(enemyAimTargetY - y1, enemyAimTargetX - x1);
+                int aim1 = BattleMath.arcTan2Deg(enemyAimTargetY - y1, enemyAimTargetX - x1);
                 for (int n = 0; n < 13; n++) {
                     int spd = 16 + (n << 3);
                     spawn(603, 74, aim1, spd, x1, y1);
                     spawn(603, 74, aim1 + 180, spd, x1, y1);
                 }
 
-                int offAng2 = normalizeDeg(ang + 270);
+                int offAng2 = BattleMath.normalizeDeg(ang + 270);
                 se = (int) (((long) Trig.cos(offAng2) * 50L) >> 3);
                 int x2 = bx + se;
                 int y2 = by + se;
 
-                int aim2 = arcTan2Deg(enemyAimTargetY - y2, enemyAimTargetX - x2);
+                int aim2 = BattleMath.arcTan2Deg(enemyAimTargetY - y2, enemyAimTargetX - x2);
                 for (int n = 0; n < 13; n++) {
                     int spd = 16 + (n << 3);
                     spawn(603, 74, aim2, spd, x2, y2);
@@ -1928,7 +1746,7 @@ public final class BulletSystem {
 
                 moveType[i] = 0;
                 tag[i] = 1;
-                angleDeg[i] = normalizeDeg(a + 360 + jitter);
+                angleDeg[i] = BattleMath.normalizeDeg(a + 360 + jitter);
                 delta[i] = 0;
                 bulletId[i] = 81;
                 x0[i] = x[i];
@@ -1953,7 +1771,7 @@ public final class BulletSystem {
             if (tt == 78) {
                 moveType[i] = 0;
                 tag[i] = 1;
-                angleDeg[i] = normalizeDeg(ang + 180);
+                angleDeg[i] = BattleMath.normalizeDeg(ang + 180);
                 delta[i] = 0;
                 bulletId[i] = 81;
                 animTick[i] = 0;
@@ -1992,7 +1810,7 @@ public final class BulletSystem {
 
             if ((tt & 0x1) == 0) {
                 if (tt < 10) {
-                    int want = arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]) % 360;
+                    int want = BattleMath.arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]) % 360;
                     int diff = want - ang;
                     if (diff > 180) {
                         diff -= 360;
@@ -2000,7 +1818,7 @@ public final class BulletSystem {
                     if (diff < -180) {
                         diff += 360;
                     }
-                    angleDeg[i] = normalizeDeg(ang + (diff * 3) / 10);
+                    angleDeg[i] = BattleMath.normalizeDeg(ang + (diff * 3) / 10);
 
                     x0[i] = x[i];
                     y0[i] = y[i];
@@ -2062,7 +1880,7 @@ public final class BulletSystem {
             if (dist > 1000) {
                 moveType[i] = 66;
                 // DoJa effectively applies +150 for both 79 and 80 here.
-                angleDeg[i] = normalizeDeg(ang + 150);
+                angleDeg[i] = BattleMath.normalizeDeg(ang + 150);
                 delta[i] = 0;
                 animTick[i] = 0;
                 x0[i] = x[i];
@@ -2111,7 +1929,7 @@ public final class BulletSystem {
                 dist += accel;
                 delta[i] = dist;
 
-                int aim = arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]) % 360;
+                int aim = BattleMath.arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]) % 360;
                 for (int n = 0; n < 5; n++) {
                     int spd = 52 - (n << 2);
                     spawnEnemyStopTurnAccel(537, 7, aim, spd, x[i], y[i]);
@@ -2159,7 +1977,7 @@ public final class BulletSystem {
             y[i] = y0[i] + Fixed.mul(s, distFixed);
 
             if (x[i] < 0 || x[i] > 12713984 || y[i] > 15335424) {
-                angleDeg[i] = arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]) % 360;
+                angleDeg[i] = BattleMath.arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]) % 360;
                 x0[i] = x[i];
                 y0[i] = y[i];
                 dist = 0;
@@ -2222,7 +2040,7 @@ public final class BulletSystem {
             }
 
             if (((tt + 1) & 0x7) == 0 && y[i] < 15335424) {
-                int a = normalizeDeg(ang - 45);
+                int a = BattleMath.normalizeDeg(ang - 45);
                 spawn(81, 0, a, 24, x[i], y[i]);
             }
 
@@ -2245,7 +2063,7 @@ public final class BulletSystem {
             dist += stageFlag[i];
             delta[i] = dist;
 
-            angleDeg[i] = normalizeDeg(ang + savedDelta[i]);
+            angleDeg[i] = BattleMath.normalizeDeg(ang + savedDelta[i]);
             if (tt > 5) {
                 stageFlag[i] = 0;
             }
@@ -2305,7 +2123,7 @@ public final class BulletSystem {
 
                 int ex = enemies.getXFixed(tgt);
                 int ey = enemies.getYFixed(tgt);
-                int want = arcTan2Deg(ey - y[i], ex - x[i]);
+                int want = BattleMath.arcTan2Deg(ey - y[i], ex - x[i]);
                 int diff = want - ang;
                 if (diff > 180) {
                     diff -= 360;
@@ -2313,7 +2131,7 @@ public final class BulletSystem {
                 if (diff < -180) {
                     diff += 360;
                 }
-                ang = normalizeDeg(ang + ((diff << 2) / 10));
+                ang = BattleMath.normalizeDeg(ang + ((diff << 2) / 10));
                 angleDeg[i] = ang;
 
                 if (bulletId[i] != 48) {
@@ -2332,7 +2150,7 @@ public final class BulletSystem {
 
             if (fromPlayer[i] && mt == 2 && (bulletId[i] == 103 || bulletId[i] == 104)) {
                 if (stageFlag[i] < 0) {
-                    active[i] = false;
+                    deactivateNoLock(i);
                     return;
                 }
                 if (stageFlag[i] < 5) {
@@ -2346,7 +2164,7 @@ public final class BulletSystem {
 
             if (fromPlayer[i] && mt == 3 && (bulletId[i] >= 105 && bulletId[i] <= 110)) {
                 if (stageFlag[i] < 0) {
-                    active[i] = false;
+                    deactivateNoLock(i);
                     return;
                 }
                 if (stageFlag[i] < 2) {
@@ -2367,7 +2185,7 @@ public final class BulletSystem {
             if (stageFlag[i] > 0) {
                 stageFlag[i] -= 1;
             } else {
-                active[i] = false;
+                deactivateNoLock(i);
             }
             return;
         }
@@ -2380,7 +2198,7 @@ public final class BulletSystem {
                 x[i] = x0[i] + Fixed.mul(c, distFixed);
                 y[i] = y0[i] + Fixed.mul(s, distFixed);
                 stageFlag[i] = dist + spd;
-                angleDeg[i] = normalizeDeg(ang + ((mt == 10) ? 1 : -1));
+                angleDeg[i] = BattleMath.normalizeDeg(ang + ((mt == 10) ? 1 : -1));
             }
             t[i] = tt + 1;
             return;
@@ -2481,17 +2299,17 @@ public final class BulletSystem {
             int n72;
             if (x[i] < 0) {
                 n72 = (ang + 90) % 360 - 270;
-                angleDeg[i] = normalizeDeg(90 - n72 + 270);
+                angleDeg[i] = BattleMath.normalizeDeg(90 - n72 + 270);
                 bounced = true;
             }
             if (x[i] > 12713984) {
                 n72 = (ang + 90) % 360 - 90;
-                angleDeg[i] = normalizeDeg(270 - n72 + 270);
+                angleDeg[i] = BattleMath.normalizeDeg(270 - n72 + 270);
                 bounced = true;
             }
             if (y[i] < 524288) {
                 n72 = (ang + 90) % 360 - 0;
-                angleDeg[i] = normalizeDeg(180 - n72 + 270);
+                angleDeg[i] = BattleMath.normalizeDeg(180 - n72 + 270);
                 bounced = true;
             }
             if (bounced) {
@@ -2574,7 +2392,7 @@ public final class BulletSystem {
                 power[i] -= 1;
             }
             if (mt == 11 && newT > 3) {
-                active[i] = false;
+                deactivateNoLock(i);
             }
             return;
         }
@@ -2673,9 +2491,9 @@ public final class BulletSystem {
             y[i] = y0[i] + Fixed.mul(s, distFixed);
 
             if (mt == 18) {
-                angleDeg[i] = normalizeDeg(ang - 1);
+                angleDeg[i] = BattleMath.normalizeDeg(ang - 1);
             } else if (mt == 19) {
-                angleDeg[i] = normalizeDeg(ang + 1);
+                angleDeg[i] = BattleMath.normalizeDeg(ang + 1);
             }
 
             step += 1;
@@ -2704,7 +2522,7 @@ public final class BulletSystem {
 
             if (mt == 18 || mt == 19) {
                 if (step % 15 == 0) {
-                    int aim = arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]);
+                    int aim = BattleMath.arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]);
                     spawn(239, 13, aim, 24, x[i], y[i]);
                     spawn(239, 13, aim + 180, 24, x[i], y[i]);
                 }
@@ -2757,7 +2575,7 @@ public final class BulletSystem {
 
             if (mt == 23) {
                 moveType[i] = 0;
-                angleDeg[i] = normalizeDeg(ang + 180);
+                angleDeg[i] = BattleMath.normalizeDeg(ang + 180);
                 bulletId[i] = 239;
                 delta[i] = spd;
                 stageFlag[i] = 0;
@@ -2768,7 +2586,7 @@ public final class BulletSystem {
                 return;
             }
 
-            active[i] = false;
+            deactivateNoLock(i);
             int base = 0;
             if (x[i] < 0) {
                 base = 90;
@@ -2852,7 +2670,7 @@ public final class BulletSystem {
                 moveType[i] = 0;
                 tag[i] = 1;
                 stageFlag[i] = 32;
-                angleDeg[i] = normalizeDeg(450);
+                angleDeg[i] = BattleMath.normalizeDeg(450);
                 delta[i] = 0;
                 t[i] = tt + 1;
                 return;
@@ -2864,7 +2682,7 @@ public final class BulletSystem {
             x[i] = x[parent] + Fixed.mul(c, distFixedX);
             y[i] = y[parent] + Fixed.mul(s, distFixedY);
 
-            angleDeg[i] = normalizeDeg(ang + stageFlag[i]);
+            angleDeg[i] = BattleMath.normalizeDeg(ang + stageFlag[i]);
 
             if (dist < 160) {
                 dist += 16;
@@ -2888,8 +2706,8 @@ public final class BulletSystem {
                 dist += spd;
                 delta[i] = dist;
             } else {
-                active[i] = false;
-                int aim = arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]);
+                deactivateNoLock(i);
+                int aim = BattleMath.arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]);
                 int div;
                 switch (enemyLevel) {
                     case 0:
@@ -2968,7 +2786,7 @@ public final class BulletSystem {
                 if (n68 < 180) {
                     n68 += 2;
                 }
-                angleDeg[i] = normalizeDeg(n68 + 270);
+                angleDeg[i] = BattleMath.normalizeDeg(n68 + 270);
             }
             spd += 1;
             delta[i] = dist;
@@ -2986,7 +2804,7 @@ public final class BulletSystem {
             t[i] = tt + 1;
 
             int angDelta = (mt == 21) ? 6 : -6;
-            angleDeg[i] = normalizeDeg(ang + angDelta);
+            angleDeg[i] = BattleMath.normalizeDeg(ang + angDelta);
 
             int spd = stageFlag[i];
             dist += spd;
@@ -3077,7 +2895,7 @@ public final class BulletSystem {
                     break;
                 }
                 case 18: {
-                    angleDeg[i] = arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]) % 360;
+                    angleDeg[i] = BattleMath.arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]) % 360;
                     moveType[i] = 0;
                     x0[i] = x[i];
                     y0[i] = y[i];
@@ -3097,7 +2915,7 @@ public final class BulletSystem {
                 int distFixed = dist << 13;
                 x[i] = x[parent] + Fixed.mul(c, distFixed);
                 y[i] = y[parent] + Fixed.mul(s, distFixed);
-                angleDeg[i] = normalizeDeg(ang + stageFlag[i]);
+                angleDeg[i] = BattleMath.normalizeDeg(ang + stageFlag[i]);
                 delta[i] = dist + 1;
                 t[i] = tt + 1;
                 return;
@@ -3115,7 +2933,7 @@ public final class BulletSystem {
                 bulletId[i] = 81;
                 int spd = stageFlag[i] >> 1;
                 if (spd < 0) {
-                    angleDeg[i] = normalizeDeg(ang + 180);
+                    angleDeg[i] = BattleMath.normalizeDeg(ang + 180);
                     spd = -spd;
                 }
                 tag[i] = 0;
@@ -3133,9 +2951,9 @@ public final class BulletSystem {
             y[i] = y0[i] + Fixed.mul(s, distFixed);
 
             if (mt == 4) {
-                angleDeg[i] = normalizeDeg(ang + 7);
+                angleDeg[i] = BattleMath.normalizeDeg(ang + 7);
             } else {
-                angleDeg[i] = normalizeDeg(ang + 353);
+                angleDeg[i] = BattleMath.normalizeDeg(ang + 353);
             }
 
             x0[i] = x[i];
@@ -3155,7 +2973,7 @@ public final class BulletSystem {
                         }
                     }
                 }
-                active[i] = false;
+                deactivateNoLock(i);
                 return;
             }
             stageFlag[i] = sf + 1;
@@ -3170,9 +2988,9 @@ public final class BulletSystem {
             y[i] = y0[i] + Fixed.mul(s, distFixed);
 
             if (mt == 6) {
-                angleDeg[i] = normalizeDeg(ang + 8);
+                angleDeg[i] = BattleMath.normalizeDeg(ang + 8);
             } else {
-                angleDeg[i] = normalizeDeg(ang + 352);
+                angleDeg[i] = BattleMath.normalizeDeg(ang + 352);
             }
 
             int sf = stageFlag[i];
@@ -3278,14 +3096,6 @@ public final class BulletSystem {
         return (int) (term1 + term2 + n);
     }
 
-    private static int normalizeDeg(int deg) {
-        deg %= 360;
-        if (deg < 0) {
-            deg += 360;
-        }
-        return deg;
-    }
-
     private static final byte[] DIR_MODE_TABLE = new byte[1024];
     static {
         // Directional sprites (mode 16).
@@ -3327,7 +3137,7 @@ public final class BulletSystem {
 
         int ang = angleDeg;
         if (ang < 0 || ang >= 360) {
-            ang = normalizeDeg(ang);
+            ang = BattleMath.normalizeDeg(ang);
         }
         if (speed < 0) {
             ang += 180;
@@ -3348,68 +3158,6 @@ public final class BulletSystem {
         return (d0 / 10) % 18;
     }
 
-    private static int mul16(final int a, final int b) {
-        return (int) ((a * (long) b) >> 16);
-    }
-
-    private static int div16(final int a, final int b) {
-        if (b == 0) {
-            return 0;
-        }
-        return (int) (((long) a << 16) / b);
-    }
-
-    private static int arcTan16(final int x) {
-        final int xx = mul16(x, x);
-        int t = mul16(1365, xx);
-        t = mul16(t - 5579, xx);
-        t = mul16(t + 11805, xx);
-        t = mul16(t - 21646, xx);
-        t = mul16(t + 65527, x);
-        return t;
-    }
-
-    private static int arcTan2Deg(int yFixed, int xFixed) {
-        int x = xFixed >> 16;
-        int y = yFixed >> 16;
-
-        final int div = div16((y << 16), (x << 16));
-        int arcTan;
-
-        if (x == 0 && y == 0) {
-            arcTan = 0;
-        } else if (x == 0 && y > 0) {
-            arcTan = 102943;
-        } else if (x < 0 && y == 0) {
-            arcTan = 205887;
-        } else if (x == 0 && y < 0) {
-            arcTan = 308830;
-        } else if (x > 0 && y == 0) {
-            arcTan = 0;
-        } else {
-            if (div > 65536) {
-                arcTan = 102943 - arcTan16(div16(65536, div));
-            } else if (div < -65536) {
-                arcTan = -102943 - arcTan16(div16(65536, div));
-            } else {
-                arcTan = arcTan16(div);
-            }
-
-            if (x < 0 && y > 0) {
-                arcTan += 205887;
-            } else if (x < 0 && y < 0) {
-                arcTan += 205887;
-            } else if (x > 0 && y < 0) {
-                arcTan += 411774;
-            }
-        }
-
-        int i = mul16(arcTan, div16(11796480, 205887)) >> 16;
-        for (; i < 0; i = (i + 360) % 360) {
-        }
-        return i;
-    }
-
     public void renderPlayerBullets(Graphics g) {
         renderInternal(g, 1);
     }
@@ -3418,11 +3166,7 @@ public final class BulletSystem {
         renderInternal(g, 0);
     }
 
-    public void render(Graphics g) {
-        renderInternal(g, -1);
-    }
-
-    // mode: -1=all, 0=enemy, 1=player.
+    // mode: 0=enemy, 1=player.
     private void renderInternal(Graphics g, int mode) {
         // Cache global clip once (BattleRenderer sets playfield clip before calling this).
         int clipX = 0;
@@ -3523,25 +3267,18 @@ public final class BulletSystem {
     }
 
     private int alloc() {
-        int start = allocHint;
-        for (int j = 0; j < max; j++) {
-            int i = start + j;
-            if (i >= max) {
-                i -= max;
-            }
-            if (!active[i]) {
-                if (!updateRunning || slotLockStamp[i] != updateStamp) {
-                    keepAlive[i] = 0;
-                    perfSpawnCount++;
-                    allocHint = i + 1;
-                    if (allocHint >= max) {
-                        allocHint = 0;
-                    }
-                    return i;
-                }
-            }
+        int index;
+        if (updateRunning) {
+            index = slots.allocateExcluding(slotLockStamp, updateStamp);
+        } else {
+            index = slots.allocate();
+        }
+        if (index != FixedSlotPool.NO_SLOT) {
+            keepAlive[index] = 0;
+            perfSpawnCount++;
+            return index;
         }
         perfAllocFailCount++;
-        return -1;
+        return FixedSlotPool.NO_SLOT;
     }
 }

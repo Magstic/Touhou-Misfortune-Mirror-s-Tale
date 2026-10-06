@@ -27,10 +27,6 @@ public final class StagePreloader {
         bombOverlayAlphaEnabled = enabled;
     }
 
-    public void enter(int nextStage) {
-        enter(nextStage, 0, 0);
-    }
-
     public void enter(int nextStage, int chara, int type) {
         enter(nextStage, chara, type, playerShotAlphaEnabled);
     }
@@ -48,10 +44,6 @@ public final class StagePreloader {
 
     public boolean isDone() {
         return done;
-    }
-
-    public int getStep() {
-        return step;
     }
 
     public int getStepMax() {

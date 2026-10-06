@@ -32,24 +32,15 @@ import touhou.ui.UiDraw;
  */
 public final class BattleRenderer {
 
-    // Logical screen layout (centered by GameCore.render()).
-    private static final int LOGICAL_W = 240;
-    private static final int LOGICAL_H = 240;
-
-    // Playfield (main gameplay area) inside the logical screen.
-    private static final int PLAY_X = 0;
-    private static final int PLAY_Y = 8;
-    private static final int PLAY_W = 194;
-    private static final int PLAY_H = 226;
-
-    // Spell effect: blind mask fade-out duration.
-    private static final int BLIND_MASK_E_FADE_OUT_FRAMES = 4;
+    private static final int LOGICAL_W = BattleRenderRules.LOGICAL_WIDTH;
+    private static final int LOGICAL_H = BattleRenderRules.LOGICAL_HEIGHT;
+    private static final int PLAY_X = BattleRenderRules.PLAY_X;
+    private static final int PLAY_Y = BattleRenderRules.PLAY_Y;
+    private static final int PLAY_W = BattleRenderRules.PLAY_WIDTH;
+    private static final int PLAY_H = BattleRenderRules.PLAY_HEIGHT;
 
     // Stage 5 background particle shuffle table.
     private static final int[] BG_STAGE5_TABLE = new int[] { 0, 5, 6, 5, 2, 9, 8, 1, 4, 6, 3, 4, 7, 2, 4, 8 };
-
-    // Enemy type 20 animation frame order.
-    private static final int[] ENEMY20_ANIM = new int[] { 0, 1, 2, 3, 2, 1, 0, 4, 5, 6, 5, 4 };
 
     // Pre-built timer strings "00".."99" to avoid per-frame String concatenation.
     private static final String[] TIMER_STRINGS = {
@@ -66,19 +57,10 @@ public final class BattleRenderer {
     };
 
     // Boss spell cut-in (screen overlay) timing.
-    private static final int BOSS_SPELL_CUTIN_PHASE_FADE_IN = 1;
-    private static final int BOSS_SPELL_CUTIN_PHASE_HOLD = 2;
-    private static final int BOSS_SPELL_CUTIN_PHASE_FADE_OUT = 3;
-    private static final int BOSS_SPELL_CUTIN_ALPHA_MAX = 128;
-    private static final int BOSS_SPELL_CUTIN_FADE_IN_FRAMES = 4;
-    private static final int BOSS_SPELL_CUTIN_FADE_OUT_FRAMES = 8;
+    private static final int BOSS_SPELL_CUTIN_PHASE_FADE_OUT = BattleRenderRules.CUT_IN_PHASE_FADE_OUT;
 
     // Boss display names used by the boss HUD.
     private static final String[] BOSS_NAMES = new String[] { "Sunny Milk", "Luna Child", "Star Sapphire", "Sunny Luna Star", "Mystia Lorelei", "Chen", "Keine Kamishirasawa", "Sakuya Izayoi", "Marisa Vision", "Alice Vision" };
-
-    // Spell effect: current blind mask alpha and the spell id that owns the mask.
-    private int blindMaskE;
-    private int blindMaskESpellId;
 
     // Stage 6 (Extra Stage) background: caches for additive RGB blending.
     // We cache RGB arrays to avoid calling Image.getRGB every frame.
@@ -110,6 +92,9 @@ public final class BattleRenderer {
     private final int[] bgRanks3 = new int[3];
     private final int[] bgKeys24 = new int[24];
     private final int[] bgRanks24 = new int[24];
+    private final int[] dialoguePortrait = new int[8];
+    private final int[] clippedSourceRegion = new int[6];
+    private final int[] clippedPlayfieldRegion = new int[6];
 
     /**
      * Entry point for battle rendering.
@@ -234,35 +219,16 @@ public final class BattleRenderer {
                 g.setColor(0x000000);
             }
             g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
-            a.clearHFlash();
         }
 
         if (a.endingFadeToWhite() > 0) {
-            int phase = a.endingFadeToWhite();
-            if (phase < 0) {
-                phase = 0;
-            }
-            if (phase > 15) {
-                phase = 15;
-            }
-
-            int alpha = 128 + (phase << 2);
-            if (alpha > 255) {
-                alpha = 255;
-            }
+            int alpha = BattleRenderRules.endingFadeAlpha(a.endingFadeToWhite());
             UiDraw.fillRectAlpha(g, 0, 0, LOGICAL_W, LOGICAL_H, 0xFFFFFF, alpha);
         }
 
         if (a.iFlash() != 0) {
-            int alpha = 255;
-            if (a.iFlash() < 10) {
-                alpha = 128 + (128 * a.iFlash()) / 10;
-                if (alpha > 255) {
-                    alpha = 255;
-                }
-            }
+            int alpha = BattleRenderRules.screenFadeAlpha(a.iFlash());
             UiDraw.fillRectAlpha(g, 0, 0, LOGICAL_W, LOGICAL_H, 0x000000, alpha);
-            a.decIFlash();
         }
 
         renderBattleDebugText(a, g);
@@ -278,539 +244,32 @@ public final class BattleRenderer {
      * to select the correct animation frames.
      */
     private void stageHb(final GameCore.BattleRenderAccess a, final Graphics g) {
-        CcTable cc = a.cc();
-        ImageBank imgs = a.imgs();
-        if (cc == null || imgs == null) {
+        if (a.cc() == null || a.imgs() == null) {
             return;
         }
-
         int[][] enemylist = a.enemylist();
-        int[] mBossWrk = a.bossWrk();
-        int[] sBossx = a.bossX();
-
-        for (int i = 0; i != 32; ++i) {
+        for (int i = 0; i < 32; i++) {
             if (enemylist[i][0] == 0) {
                 continue;
             }
-            int spriteId = 0;
-            int x = a.originX() + (enemylist[i][5] >> 16);
-            int y = a.originY() + (enemylist[i][6] >> 16);
-            switch (enemylist[i][1]) {
-                case 0:
-                    spriteId = 0 + ((enemylist[i][2] / 3) & 0x3);
-                    break;
-                case 1:
-                    spriteId = 4 + ((enemylist[i][2] / 3) & 0x3);
-                    break;
-                case 2:
-                    spriteId = 8 + ((enemylist[i][2] / 3) & 0x3);
-                    break;
-                case 3:
-                    spriteId = 12 + ((enemylist[i][2] / 3) & 0x3);
-                    break;
-                case 4:
-                    spriteId = 16 + ((enemylist[i][2] / 3) & 0x1);
-                    break;
-                case 5:
-                    spriteId = 18 + ((enemylist[i][2] / 3) & 0x1);
-                    break;
-                case 6:
-                    spriteId = 20 + ((enemylist[i][2] / 3) & 0x1);
-                    break;
-                case 7:
-                    spriteId = 22 + ((enemylist[i][2] / 3) & 0x1);
-                    break;
-                case 8:
-                    spriteId = 24 + ((enemylist[i][2] / 3) % 3);
-                    break;
-                case 9:
-                    if (enemylist[i][5] < ((sBossx[0] - 10) << 16)) {
-                        spriteId = 167;
-                    } else if (enemylist[i][5] > ((sBossx[0] + 10) << 16)) {
-                        spriteId = 168;
-                    } else {
-                        spriteId = 166;
-                    }
-                    switch (enemylist[i][3]) {
-                        case 1:
-                            spriteId = 169;
-                            break;
-                        case 2:
-                            spriteId = 170;
-                            break;
-                        case 3:
-                            spriteId = 171;
-                            break;
-                        case 4:
-                            spriteId = 172;
-                            break;
-                    }
-                    break;
-                case 10:
-                    if (enemylist[i][5] < ((sBossx[2] - 10) << 16)) {
-                        spriteId = 180;
-                    } else if (enemylist[i][5] > ((sBossx[2] + 10) << 16)) {
-                        spriteId = 181;
-                    } else {
-                        spriteId = 179;
-                    }
-                    switch (enemylist[i][3]) {
-                        case 1:
-                            spriteId = 182;
-                            break;
-                        case 2:
-                            spriteId = 183;
-                            break;
-                        case 3:
-                            spriteId = 184;
-                            break;
-                    }
-                    break;
-                case 11:
-                    if (enemylist[i][5] < ((sBossx[1] - 10) << 16)) {
-                        spriteId = 174;
-                    } else if (enemylist[i][5] > ((sBossx[1] + 10) << 16)) {
-                        spriteId = 175;
-                    } else {
-                        spriteId = 173;
-                    }
-                    switch (enemylist[i][3]) {
-                        case 1:
-                            spriteId = 176;
-                            break;
-                        case 2:
-                            spriteId = 177;
-                            break;
-                        case 3:
-                            spriteId = 178;
-                            break;
-                    }
-                    break;
-                case 13:
-                    if (enemylist[i][5] < ((sBossx[0] - 10) << 16)) {
-                        if (mBossWrk[0] < 0) {
-                            mBossWrk[0] = 0;
-                        }
-                        mBossWrk[0] += 2;
-                    } else if (enemylist[i][5] > ((sBossx[0] + 10) << 16)) {
-                        if (mBossWrk[0] > 0) {
-                            mBossWrk[0] = 0;
-                        }
-                        mBossWrk[0] -= 2;
-                    }
-                    if (mBossWrk[0] < 0) {
-                        mBossWrk[0] += 1;
-                    }
-                    if (mBossWrk[0] > 1) {
-                        mBossWrk[0] -= 1;
-                    }
-                    if (mBossWrk[0] > 0) {
-                        spriteId = 196 + ((enemylist[i][2] >> 1) % 3);
-                        if (mBossWrk[0] > 3) {
-                            spriteId = 200;
-                        } else if (mBossWrk[0] > 1) {
-                            spriteId = 199;
-                        }
-                    } else {
-                        spriteId = 206 + ((enemylist[i][2] >> 1) % 3);
-                        if (mBossWrk[0] < -3) {
-                            spriteId = 210;
-                        } else if (mBossWrk[0] < -1) {
-                            spriteId = 209;
-                        }
-                    }
-                    switch (enemylist[i][3]) {
-                        case 5:
-                            if (mBossWrk[0] > 0) {
-                                spriteId = 205;
-                                break;
-                            }
-                            spriteId = 215;
-                            break;
-                        case 1:
-                            spriteId = 201;
-                            break;
-                        case 2:
-                            spriteId = 202;
-                            break;
-                        case 3:
-                            spriteId = 203;
-                            break;
-                        case 4:
-                            spriteId = 204;
-                            break;
-                    }
-                    break;
-                case 14:
-                    if (enemylist[i][5] < ((sBossx[0] - 10) << 16)) {
-                        mBossWrk[24] = 0;
-                        if (mBossWrk[0] < 0) {
-                            mBossWrk[0] = 0;
-                        }
-                        mBossWrk[0] += 2;
-                    } else if (enemylist[i][5] > ((sBossx[0] + 10) << 16)) {
-                        mBossWrk[24] = 0;
-                        if (mBossWrk[0] > 0) {
-                            mBossWrk[0] = 0;
-                        }
-                        mBossWrk[0] -= 2;
-                    }
-                    if (mBossWrk[0] > 15) {
-                        mBossWrk[0] = 15;
-                    }
-                    if (mBossWrk[0] < -15) {
-                        mBossWrk[0] = -15;
-                    }
-                    if (mBossWrk[0] < 0) {
-                        mBossWrk[0] += 1;
-                    }
-                    if (mBossWrk[0] > 1) {
-                        mBossWrk[0] -= 1;
-                    }
-                    spriteId = 216;
-                    if (mBossWrk[0] > 1) {
-                        spriteId = 221 + ((enemylist[i][2] >> 1) & 0x7);
-                        if (mBossWrk[0] > 10) {
-                            mBossWrk[24] = 1;
-                        }
-                    } else if (mBossWrk[0] < -1) {
-                        spriteId = 229 + ((enemylist[i][2] >> 1) & 0x7);
-                        if (mBossWrk[0] < -10) {
-                            mBossWrk[24] = 1;
-                        }
-                    } else if (mBossWrk[24] == 1) {
-                        mBossWrk[24] = 2;
-                    } else if (mBossWrk[24] > 1) {
-                        mBossWrk[24] += 1;
-                        spriteId = 237;
-                        if (mBossWrk[24] > 3) {
-                            spriteId += 1;
-                        }
-                        if (mBossWrk[24] > 10) {
-                            spriteId = 237;
-                            mBossWrk[24] = 0;
-                        }
-                    }
-                    switch (enemylist[i][3]) {
-                        case 1:
-                            spriteId = 217;
-                            if (mBossWrk[0] == 0) {
-                                spriteId += 2;
-                            }
-                            break;
-                        case 2:
-                            spriteId = 218;
-                            if (mBossWrk[0] == 0) {
-                                spriteId += 2;
-                            }
-                            break;
-                        case 3:
-                            spriteId = 237;
-                            break;
-                        case 4:
-                            spriteId = 238;
-                            break;
-                        case 5:
-                            spriteId = 221 + ((enemylist[i][2] >> 1) & 0x7);
-                            break;
-                    }
-                    break;
-                case 15:
-                    if (enemylist[i][5] < ((sBossx[0] - 10) << 16)) {
-                        if (mBossWrk[0] < 0) {
-                            mBossWrk[0] = 0;
-                        }
-                        mBossWrk[0] += 2;
-                    } else if (enemylist[i][5] > ((sBossx[0] + 10) << 16)) {
-                        if (mBossWrk[0] > 0) {
-                            mBossWrk[0] = 0;
-                        }
-                        mBossWrk[0] -= 2;
-                    }
-                    if (mBossWrk[0] > 15) {
-                        mBossWrk[0] = 15;
-                    }
-                    if (mBossWrk[0] < -15) {
-                        mBossWrk[0] = -15;
-                    }
-                    if (mBossWrk[0] < 0) {
-                        mBossWrk[0] += 1;
-                    }
-                    if (mBossWrk[0] > 1) {
-                        mBossWrk[0] -= 1;
-                    }
-                    if (mBossWrk[0] > 0) {
-                        spriteId = 356;
-                        if (mBossWrk[0] > 3) {
-                            spriteId = 359;
-                        } else if (mBossWrk[0] > 1) {
-                            spriteId = 358;
-                        }
-                    } else {
-                        spriteId = 357;
-                        if (mBossWrk[0] < -3) {
-                            spriteId = 361;
-                        } else if (mBossWrk[0] < -1) {
-                            spriteId = 360;
-                        }
-                    }
-                    switch (enemylist[i][3]) {
-                        case 1:
-                            spriteId = 362;
-                            break;
-                        case 2:
-                            spriteId = 363;
-                            break;
-                        case 3:
-                            spriteId = 364;
-                            break;
-                        case 4:
-                            spriteId = 365;
-                            mBossWrk[0] = 1;
-                            break;
-                        case 5:
-                            spriteId = 366;
-                            break;
-                        case 6:
-                            spriteId = 367;
-                            break;
-                        case 7:
-                            spriteId = 368;
-                            break;
-                        case 8:
-                            spriteId = 369;
-                            mBossWrk[24] = 1;
-                            break;
-                    }
-                    if (enemylist[i][3] <= 4 && mBossWrk[24] == 1) {
-                        spriteId += 14;
-                    }
-                    break;
-                case 16:
-                    if (enemylist[i][5] < ((sBossx[0] - 10) << 16)) {
-                        if (mBossWrk[0] < 0) {
-                            mBossWrk[0] = 0;
-                        }
-                        mBossWrk[0] += 2;
-                    } else if (enemylist[i][5] > ((sBossx[0] + 10) << 16)) {
-                        if (mBossWrk[0] > 0) {
-                            mBossWrk[0] = 0;
-                        }
-                        mBossWrk[0] -= 2;
-                    }
-                    if (mBossWrk[0] > 15) {
-                        mBossWrk[0] = 15;
-                    }
-                    if (mBossWrk[0] < -15) {
-                        mBossWrk[0] = -15;
-                    }
-                    if (mBossWrk[0] < 0) {
-                        mBossWrk[0] += 1;
-                    }
-                    if (mBossWrk[0] > 1) {
-                        mBossWrk[0] -= 1;
-                    }
-                    if (mBossWrk[0] > 0) {
-                        spriteId = 504;
-                        if (mBossWrk[0] > 3) {
-                            spriteId = 508;
-                        } else if (mBossWrk[0] > 1) {
-                            spriteId = 507;
-                        }
-                    } else {
-                        spriteId = 504;
-                        if (mBossWrk[0] < -3) {
-                            spriteId = 506;
-                        } else if (mBossWrk[0] < -1) {
-                            spriteId = 505;
-                        }
-                    }
-                    switch (enemylist[i][3]) {
-                        case 1:
-                            spriteId = 509;
-                            break;
-                        case 2:
-                            spriteId = 510;
-                            break;
-                        case 3:
-                            spriteId = 511;
-                            break;
-                        case 4:
-                            spriteId = 512;
-                            break;
-                        case 5:
-                            spriteId = 513;
-                            break;
-                        case 6:
-                            spriteId = 514;
-                            break;
-                        case 7:
-                            spriteId = 515;
-                            break;
-                        case 8:
-                            spriteId = 516;
-                            break;
-                        case 9:
-                            spriteId = 517;
-                            break;
-                        case 10:
-                            spriteId = 518;
-                            break;
-                        case 11:
-                            spriteId = 519;
-                            break;
-                        case 12:
-                            spriteId = 520;
-                            break;
-                    }
-                    break;
-                case 17:
-                    if (enemylist[i][5] < ((sBossx[0] - 10) << 16)) {
-                        if (mBossWrk[0] < 0) {
-                            mBossWrk[0] = 0;
-                        }
-                        mBossWrk[0] += 2;
-                    } else if (enemylist[i][5] > ((sBossx[0] + 10) << 16)) {
-                        if (mBossWrk[0] > 0) {
-                            mBossWrk[0] = 0;
-                        }
-                        mBossWrk[0] -= 2;
-                    }
-                    if (mBossWrk[0] > 15) {
-                        mBossWrk[0] = 15;
-                    }
-                    if (mBossWrk[0] < -15) {
-                        mBossWrk[0] = -15;
-                    }
-                    if (mBossWrk[0] < 0) {
-                        mBossWrk[0] += 1;
-                    }
-                    if (mBossWrk[0] > 1) {
-                        mBossWrk[0] -= 1;
-                    }
-                    if (mBossWrk[0] > 0) {
-                        spriteId = 711;
-                        if (mBossWrk[0] > 3) {
-                            spriteId = 715;
-                        } else if (mBossWrk[0] > 1) {
-                            spriteId = 714;
-                        }
-                    } else {
-                        spriteId = 711;
-                        if (mBossWrk[0] < -3) {
-                            spriteId = 713;
-                        } else if (mBossWrk[0] < -1) {
-                            spriteId = 712;
-                        }
-                    }
-                    switch (enemylist[i][3]) {
-                        case 1:
-                            spriteId = 716;
-                            break;
-                        case 2:
-                            spriteId = 717;
-                            break;
-                    }
-
-                    if (!a.disableBossBombShieldCheat() && mBossWrk[2] != 0 && a.bombCnt() > 0) {
-                        // DoJa : kind 17/19 flicker alpha during bomb/spell (s_sccnt).
-                        int alpha = (a.bombCnt() << 4) & 0x7F;
-                        if (alpha > 63) {
-                            alpha = 127 - alpha;
-                        }
-                        alpha += 63;
-                        drawCcIconAlphaSafe(a, g, spriteId, x, y, alpha);
-                        continue;
-                    }
-                    break;
-                case 18:
-                    spriteId = 718;
-                    break;
-                case 19:
-                    if (enemylist[i][5] < ((sBossx[0] - 10) << 16)) {
-                        if (mBossWrk[0] < 0) {
-                            mBossWrk[0] = 0;
-                        }
-                        mBossWrk[0] += 2;
-                    } else if (enemylist[i][5] > ((sBossx[0] + 10) << 16)) {
-                        if (mBossWrk[0] > 0) {
-                            mBossWrk[0] = 0;
-                        }
-                        mBossWrk[0] -= 2;
-                    }
-                    if (mBossWrk[0] > 10) {
-                        mBossWrk[0] = 10;
-                    }
-                    if (mBossWrk[0] < -10) {
-                        mBossWrk[0] = -10;
-                    }
-                    if (mBossWrk[0] < 0) {
-                        mBossWrk[0] += 1;
-                    }
-                    if (mBossWrk[0] > 1) {
-                        mBossWrk[0] -= 1;
-                    }
-                    if (mBossWrk[0] > 0) {
-                        spriteId = 719;
-                        if (mBossWrk[0] > 3) {
-                            spriteId = 721;
-                        } else if (mBossWrk[0] > 1) {
-                            spriteId = 720;
-                        }
-                    } else {
-                        spriteId = 719;
-                        if (mBossWrk[0] < -3) {
-                            spriteId = 723;
-                        } else if (mBossWrk[0] < -1) {
-                            spriteId = 722;
-                        }
-                    }
-                    switch (enemylist[i][3]) {
-                        case 1:
-                            spriteId = 724;
-                            break;
-                        case 2:
-                            spriteId = 725;
-                            break;
-                        case 3:
-                            spriteId = 726;
-                            break;
-                        case 4:
-                            spriteId = 727;
-                            break;
-                    }
-
-                    if (!a.disableBossBombShieldCheat() && mBossWrk[2] != 0 && a.bombCnt() > 0) {
-                        // DoJa : kind 17/19 flicker alpha during bomb/spell (s_sccnt).
-                        int alpha = (a.bombCnt() << 4) & 0x7F;
-                        if (alpha > 63) {
-                            alpha = 127 - alpha;
-                        }
-                        alpha += 63;
-                        drawCcIconAlphaSafe(a, g, spriteId, x, y, alpha);
-                        continue;
-                    }
-                    break;
-                case 20:
-                case 21: {
-                    int n4;
-                    if (enemylist[i][1] == 20) {
-                        n4 = 388 + ((enemylist[i][2] >> 1) & 0x3);
-                    } else {
-                        n4 = 388 + (3 - ((enemylist[i][2] >> 1) & 0x3));
-                    }
-                    drawCcIconAlphaSafe(a, g, n4, x, y, 127);
-                    int idx = (enemylist[i][2] / 3) % 12;
-                    spriteId = 380 + ENEMY20_ANIM[idx];
-                    break;
-                }
-                case 22:
-                    spriteId = 494 + (i % 6);
-                    break;
-                default:
-                    continue;
+            int x = BattleRenderRules.fixedToScreen(a.originX(), enemylist[i][5]);
+            int y = BattleRenderRules.fixedToScreen(a.originY(), enemylist[i][6]);
+            int auraSprite = a.enemyAuraSpriteId(i);
+            if (auraSprite != BattleEnemyVisuals.NO_SPRITE) {
+                drawCcIconAlphaSafe(a, g, auraSprite, x, y, 127);
             }
-            drawCcIconSafe(a, g, spriteId, x, y);
+            int spriteId = a.enemySpriteId(i);
+            if (spriteId == BattleEnemyVisuals.NO_SPRITE) {
+                continue;
+            }
+            int type = enemylist[i][1];
+            if ((type == 17 || type == 19) && !a.disableBossBombShieldCheat()
+                    && a.bossVisualShieldActive() && a.bombCnt() > 0) {
+                drawCcIconAlphaSafe(a, g, spriteId, x, y,
+                        BattleEnemyVisuals.bossShieldAlpha(a.bombCnt()));
+            } else {
+                drawCcIconSafe(a, g, spriteId, x, y);
+            }
         }
     }
 
@@ -818,7 +277,6 @@ public final class BattleRenderer {
     private void renderBattleDebugText(GameCore.BattleRenderAccess a, Graphics g) {
         Debug.renderBattleDebugText(g,
                 a.debugFpsEnabled(), a.debugPerfEnabled(), a.debugResourceEnabled(),
-                a.resourceError(),
                 PLAY_X, PLAY_Y, PLAY_W,
                 a.bullets(), a.enemylist(), a.effectlist(), a.cc(), a.effectTable(), a.imgs(),
                 a.debugLine(), a.debugLine2(), a.debugLine3(), a.debugLine4(), a.debugLine5());
@@ -840,8 +298,6 @@ public final class BattleRenderer {
         }
 
         int d0 = 60 - a.bombCnt();
-        int d1 = 70 + 6 * d0;
-        int d2 = d1 >> 5;
 
         int oldClipX = g.getClipX();
         int oldClipY = g.getClipY();
@@ -851,7 +307,7 @@ public final class BattleRenderer {
         try {
             g.setClip(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
 
-            int imgIndex = 12 + a.currentChara();
+            int imgIndex = BattleRenderRules.bombOverlayImage(a.currentChara());
             if (imgIndex >= 12 && imgIndex <= 14 && d0 < 25) {
                 Image overlay;
                 if (a.bombOverlayAlphaEnabled()) {
@@ -863,11 +319,8 @@ public final class BattleRenderer {
                     overlay = imgs.get(imgIndex);
                 }
                 if (overlay != null) {
-                    int x = 0;
-                    if (a.currentChara() != 0) {
-                        x = 0 - d2;
-                    }
-                    int y = 8 + d2;
+                    int x = BattleRenderRules.bombOverlayX(a.currentChara(), d0);
+                    int y = BattleRenderRules.bombOverlayY(d0);
                     g.drawImage(overlay, x, y, Graphics.TOP | Graphics.LEFT);
                 }
             }
@@ -891,12 +344,7 @@ public final class BattleRenderer {
                 }
             }
 
-            int ty = 226;
-            if (d0 < 5) {
-                ty -= 60;
-            } else if (d0 < 15) {
-                ty -= 60 - (d0 - 5) * 6;
-            }
+            int ty = BattleRenderRules.bombTitleY(d0);
 
             String s;
             int main;
@@ -913,7 +361,7 @@ public final class BattleRenderer {
 
             Image title = getBombSpellTitleImage(a.currentChara(), s, main);
             if (title != null) {
-                int yOff = bombSpellTitleImgYOffset[safeCharaIndex(a.currentChara())];
+                int yOff = bombSpellTitleImgYOffset[BattleRenderRules.safeCharacterIndex(a.currentChara())];
                 g.drawImage(title, 5, ty - yOff, Graphics.TOP | Graphics.LEFT);
             } else {
                 UiDraw.drawString2(g, null, s, 5, ty, 0, main, 16777215);
@@ -923,18 +371,8 @@ public final class BattleRenderer {
         }
     }
 
-    private int safeCharaIndex(int chara) {
-        if (chara < 0) {
-            return 0;
-        }
-        if (chara >= bombSpellTitleImg.length) {
-            return bombSpellTitleImg.length - 1;
-        }
-        return chara;
-    }
-
     private Image getBombSpellTitleImage(int chara, String s, int mainRgb) {
-        int idx = safeCharaIndex(chara);
+        int idx = BattleRenderRules.safeCharacterIndex(chara);
         if (s == null) {
             s = "";
         }
@@ -1009,203 +447,19 @@ public final class BattleRenderer {
             return;
         }
 
-        touhou.stage.StageRuntime rt = a.stageRuntime();
-        short[][][] stageTable = rt.getStageTable();
-        if (stageTable == null) {
+        if (!a.dialogueVisible()) {
             return;
         }
 
-        int na = a.stageNa();
-        if (na < 0 || na >= stageTable.length) {
-            return;
-        }
-        int step = a.step();
-        if (step < 0 || step >= stageTable[na].length) {
-            return;
-        }
-        if (stageTable[na][step].length < 5) {
-            return;
-        }
-        if (stageTable[na][step][1] != 246) {
-            return;
-        }
-        if (stageTable[na][step][0] > a.gcnt() + 1) {
-            return;
-        }
+        int talkCnt = a.dialogueCounter();
+        int portraitType = a.dialoguePortraitType();
 
-        rt.ensureTalkTableLoaded(a.stage(), a.currentChara());
-
-        String[] talkTable = rt.getTalkTable();
-        int talkCnt = rt.getTalkCnt();
-
-        int portraitType = stageTable[na][step][2];
-
-        int imgIndex = 0;
-        int srcX = 0;
-        int srcY = 0;
-        int w = 0;
-        int h = 0;
-        int dx = 0;
-        int dy = 0;
-        int w2 = 0;
-        int h2 = 0;
-
-        if (portraitType == 0) {
-            imgIndex = 8;
-            dx = 0 - talkCnt;
-            dy = 110;
-            srcX = 0;
-            srcY = 72;
-            w = 71;
-            h = 124;
-        } else if (portraitType == 1) {
-            imgIndex = 9;
-            dx = 0 - talkCnt;
-            dy = 110;
-            srcX = 0;
-            srcY = 72;
-            w = 76;
-            h = 124;
-        } else if (portraitType == 2) {
-            imgIndex = 10;
-            dx = 0 - talkCnt;
-            dy = 110;
-            srcX = 0;
-            srcY = 72;
-            w = 76;
-            h = 124;
-        } else {
-            if (portraitType == 3) {
-                imgIndex = 28;
-                srcX = 0;
-                srcY = 7;
-                w = 76;
-                h = 117;
-                w2 = 76;
-                h2 = 117;
-            } else if (portraitType == 4) {
-                imgIndex = 28;
-                srcX = 152;
-                srcY = 5;
-                w = 76;
-                h = 119;
-                w2 = 76;
-                h2 = 119;
-            } else if (portraitType == 5 || portraitType == 6) {
-                imgIndex = 28;
-                srcX = 76;
-                srcY = 10;
-                w = 76;
-                h = 114;
-                w2 = 76;
-                h2 = 114;
-            } else if (portraitType == 7) {
-                imgIndex = 39;
-                srcX = 0;
-                srcY = 0;
-                w = 75;
-                h = 123;
-                w2 = 75;
-                h2 = 123;
-            } else if (portraitType == 8) {
-                imgIndex = 50;
-                srcX = 1;
-                srcY = 3;
-                w = 75;
-                h = 121;
-                w2 = 75;
-                h2 = 121;
-            } else if (portraitType == 9) {
-                imgIndex = 53;
-                srcX = 0;
-                srcY = 0;
-                w = 76;
-                h = 124;
-                w2 = 76;
-                h2 = 124;
-            } else if (portraitType == 10) {
-                imgIndex = 60;
-                srcX = 0;
-                srcY = 0;
-                w = 72;
-                h = 124;
-                w2 = 72;
-                h2 = 124;
-            } else if (portraitType == 11) {
-                imgIndex = 72;
-                srcX = 0;
-                srcY = 0;
-                w = 76;
-                h = 124;
-                w2 = 76;
-                h2 = 124;
-            } else if (portraitType == 12) {
-                imgIndex = 74;
-                srcX = 0;
-                srcY = 0;
-                w = 75;
-                h = 123;
-                w2 = 75;
-                h2 = 123;
-            }
-            dx = 194 - w2 + talkCnt;
-            dy = 234 - h2;
-        }
-
-        Image img = imgs.get(imgIndex);
-        if (img != null) {
-            drawEkiImage(g, img, dx, dy, srcX, srcY, w, h);
-            if (portraitType == 6) {
-                drawEkiImage(g, img, dx, dy + 46, 76, 124, 76, 8);
-            }
-        }
+        int colorMain = renderDialoguePortrait(g, imgs, portraitType, talkCnt);
 
         UiDraw.fillRectAlpha(g, PLAY_X + 10, PLAY_Y + 183, 174, 38, 0x000000, 128);
 
-        int colorMain = 0xFFFFFF;
-        switch (portraitType) {
-            case 0:
-                colorMain = 16731983;
-                break;
-            case 1:
-                colorMain = 10461087;
-                break;
-            case 2:
-                colorMain = 8355839;
-                break;
-            case 3:
-                colorMain = 16744319;
-                break;
-            case 4:
-                colorMain = 12566463;
-                break;
-            case 5:
-            case 6:
-                colorMain = 5197823;
-                break;
-            case 7:
-                colorMain = 14614751;
-                break;
-            case 8:
-                colorMain = 16740207;
-                break;
-            case 9:
-                colorMain = 4161455;
-                break;
-            case 10:
-                colorMain = 8355711;
-                break;
-            case 11:
-                colorMain = 4145151;
-                break;
-            case 12:
-                colorMain = 10461183;
-                break;
-        }
-
-        if (talkCnt < 1 && talkTable != null && stageTable[na][step].length > 3) {
-            int idx = stageTable[na][step][3];
-            String s = talkTable[idx];
+        String text = a.dialogueText();
+        if (talkCnt < 1 && text != null) {
 
             int oldClipX = g.getClipX();
             int oldClipY = g.getClipY();
@@ -1215,15 +469,15 @@ public final class BattleRenderer {
             try {
                 g.setClip(PLAY_X + 10, PLAY_Y + 183, 174, 38);
 
-                int page = rt.getDialoguePage();
-                int prevPage = rt.getDialoguePrevPage();
-                int scrollY = rt.getDialogueScrollY();
+                int page = a.dialoguePage();
+                int prevPage = a.dialoguePreviousPage();
+                int scrollY = a.dialogueScrollY();
 
                 if (scrollY > 0 && prevPage != page) {
-                    drawDialoguePageLines(g, s, prevPage, PLAY_X + 13, PLAY_Y + 199 + scrollY - 32, colorMain);
-                    drawDialoguePageLines(g, s, page, PLAY_X + 13, PLAY_Y + 199 + scrollY, colorMain);
+                    drawDialoguePageLines(g, text, prevPage, PLAY_X + 13, PLAY_Y + 199 + scrollY - 32, colorMain);
+                    drawDialoguePageLines(g, text, page, PLAY_X + 13, PLAY_Y + 199 + scrollY, colorMain);
                 } else {
-                    drawDialoguePageLines(g, s, page, PLAY_X + 13, PLAY_Y + 199, colorMain);
+                    drawDialoguePageLines(g, text, page, PLAY_X + 13, PLAY_Y + 199, colorMain);
                 }
             } finally {
                 g.setClip(oldClipX, oldClipY, oldClipW, oldClipH);
@@ -1231,39 +485,26 @@ public final class BattleRenderer {
         }
     }
 
-    // Split dialogue string by '|' and return the Nth line (0-based). Returns null if not found.
-    private static String dialogueGetLine(String s, int lineIndex) {
-        if (s == null) {
-            return null;
+    private int renderDialoguePortrait(Graphics g, ImageBank imgs, int portraitType, int talkCounter) {
+        if (!BattleRenderRules.dialoguePortrait(portraitType, talkCounter, dialoguePortrait)) {
+            return 0xFFFFFF;
         }
-        if (lineIndex < 0) {
-            return null;
-        }
-
-        int cur = 0;
-        int start = 0;
-        for (int i = 0; i <= s.length(); i++) {
-            boolean end = (i == s.length());
-            if (!end && s.charAt(i) != '|') {
-                continue;
+        Image image = imgs.get(dialoguePortrait[0]);
+        if (image != null) {
+            drawEkiImage(g, image, dialoguePortrait[5], dialoguePortrait[6],
+                    dialoguePortrait[1], dialoguePortrait[2], dialoguePortrait[3], dialoguePortrait[4]);
+            if (portraitType == 6) {
+                drawEkiImage(g, image, dialoguePortrait[5], dialoguePortrait[6] + 46, 76, 124, 76, 8);
             }
-
-            if (cur == lineIndex) {
-                return s.substring(start, i);
-            }
-
-            cur++;
-            start = i + 1;
         }
-
-        return null;
+        return dialoguePortrait[7];
     }
 
     private void drawDialoguePageLines(Graphics g, String s, int page, int x, int y, int colorMain) {
         int line0 = page * 2;
 
-        String s1 = dialogueGetLine(s, line0);
-        String s2 = dialogueGetLine(s, line0 + 1);
+        String s1 = BattleRenderRules.dialogueLine(s, line0);
+        String s2 = BattleRenderRules.dialogueLine(s, line0 + 1);
 
         if (s1 != null) {
             UiDraw.drawStringOutline(g, null, s1.trim(), x, y, 0, colorMain, 0x000000);
@@ -1352,7 +593,7 @@ public final class BattleRenderer {
         g.setColor(0x7F7F7F);
         g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
 
-        Image bg = imgs.get(25);
+        Image bg = imgs.get(BattleRenderRules.backgroundBaseImage(0, 0));
         if (bg != null) {
             int scroll = a.bgMoveSpd() % 240;
             int x0 = PLAY_X + a.originX();
@@ -1372,7 +613,7 @@ public final class BattleRenderer {
             keys[1] = a.bgMoveSpd() % 404;
             keys[2] = a.bgMoveSpd() % 434;
             keys[3] = a.bgMoveSpd() % 312;
-            buildRanks(ranks, keys, 4);
+            BattleRenderRules.buildStableRanks(ranks, keys, 4);
 
             for (int target = 0; target < 4; target++) {
                 int idx = -1;
@@ -1423,7 +664,7 @@ public final class BattleRenderer {
         g.setColor(0x7F7F7F);
         g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
 
-        Image bg = imgs.get(25);
+        Image bg = imgs.get(BattleRenderRules.backgroundBaseImage(1, 0));
         if (bg != null) {
             int scroll = a.bgMoveSpd() % 240;
             int x0 = PLAY_X + a.originX();
@@ -1464,7 +705,7 @@ public final class BattleRenderer {
             keys[22] = (a.bgMoveSpd() + 70) % 254;
             keys[23] = (a.bgMoveSpd() + 150) % 254;
 
-            buildRanks(ranks, keys, 24);
+            BattleRenderRules.buildStableRanks(ranks, keys, 24);
 
             for (int target = 0; target < 24; target++) {
                 int idx = -1;
@@ -1500,9 +741,10 @@ public final class BattleRenderer {
                 drawCcIconSafe(a, g, spriteId, x, y);
             }
 
-            Image overlay = imgs.getAlphaImage(32, 128);
+            int overlayImage = BattleRenderRules.backgroundOverlayImage(1, 0);
+            Image overlay = imgs.getAlphaImage(overlayImage, 128);
             if (overlay == null) {
-                overlay = imgs.get(32);
+                overlay = imgs.get(overlayImage);
             }
             if (overlay != null) {
                 int scroll = a.bgMoveSpd() % 240;
@@ -1526,7 +768,7 @@ public final class BattleRenderer {
         g.setColor(0x7F7F7F);
         g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
 
-        Image bg = imgs.get(25);
+        Image bg = imgs.get(BattleRenderRules.backgroundBaseImage(2, 0));
         if (bg != null) {
             int scroll = a.bgMoveSpd() % 240;
             int x0 = PLAY_X + a.originX();
@@ -1545,7 +787,7 @@ public final class BattleRenderer {
             keys[0] = a.bgMoveSpd() % 640;
             keys[1] = (a.bgMoveSpd() + 160) % 640;
             keys[2] = (a.bgMoveSpd() + 340) % 640;
-            buildRanks(ranks, keys, 3);
+            BattleRenderRules.buildStableRanks(ranks, keys, 3);
 
             for (int target = 0; target < 3; target++) {
                 int idx = -1;
@@ -1617,7 +859,7 @@ public final class BattleRenderer {
             return;
         }
 
-        Image bg = imgs.get(59);
+        Image bg = imgs.get(BattleRenderRules.backgroundBaseImage(3, 0));
         if (bg != null) {
             int scroll = (a.bgMoveSpd() >> 1) % 240;
             int x0 = PLAY_X + a.originX();
@@ -1632,9 +874,10 @@ public final class BattleRenderer {
         // Two semi-transparent scrolling overlays at different speeds.
         // Skipped in simplified-background mode.
         if (a.heavyBgEnabled()) {
-            Image overlay = imgs.getAlphaImage(54, 127);
+            int overlayImage = BattleRenderRules.backgroundOverlayImage(3, 0);
+            Image overlay = imgs.getAlphaImage(overlayImage, 127);
             if (overlay == null) {
-                overlay = imgs.get(54);
+                overlay = imgs.get(overlayImage);
             }
             if (overlay != null) {
                 int x0 = PLAY_X + a.originX();
@@ -1666,8 +909,8 @@ public final class BattleRenderer {
             d0 = 240;
         }
 
-        Image a0 = imgs.get(62);
-        Image a1 = imgs.get(63);
+        Image a0 = imgs.get(BattleRenderRules.backgroundBaseImage(4, 0));
+        Image a1 = imgs.get(BattleRenderRules.backgroundSecondaryImage(4));
         if (a0 != null) {
             int x0 = PLAY_X + a.originX();
             int y0 = PLAY_Y + a.originY() + d0;
@@ -1686,9 +929,10 @@ public final class BattleRenderer {
         // Semi-transparent scrolling overlay layer.
         // Skipped in simplified-background mode.
         if (a.heavyBgEnabled()) {
-            Image overlay = imgs.getAlphaImage(64, 128);
+            int overlayImage = BattleRenderRules.backgroundOverlayImage(4, 0);
+            Image overlay = imgs.getAlphaImage(overlayImage, 128);
             if (overlay == null) {
-                overlay = imgs.get(64);
+                overlay = imgs.get(overlayImage);
             }
             if (overlay != null) {
                 int scroll = a.bgMoveSpd() % 240;
@@ -1725,7 +969,7 @@ public final class BattleRenderer {
             return;
         }
 
-        Image bg = imgs.get(70);
+        Image bg = imgs.get(BattleRenderRules.backgroundBaseImage(5, 0));
         if (bg != null) {
             int scroll = (a.bgMoveSpd() >> 3) % 240;
             int x0 = PLAY_X + a.originX();
@@ -1831,7 +1075,7 @@ public final class BattleRenderer {
 
         this.stage6CacheD4 = d4;
 
-        Image base = imgs.get(77 + d4);
+        Image base = imgs.get(BattleRenderRules.backgroundBaseImage(6, d4));
         if (base != null) {
             try {
                 if (base.getWidth() <= 1 || base.getHeight() <= 1) {
@@ -1842,12 +1086,12 @@ public final class BattleRenderer {
             }
         }
         if (base == null) {
-            base = imgs.get(77);
+            base = imgs.get(BattleRenderRules.backgroundBaseImage(6, 0));
         }
 
         this.stage6CacheBaseImg = base;
 
-        Image overlay = imgs.get(81 + d4);
+        Image overlay = imgs.get(BattleRenderRules.backgroundOverlayImage(6, d4));
         if (overlay != null) {
             try {
                 if (overlay.getWidth() <= 1 || overlay.getHeight() <= 1) {
@@ -1858,7 +1102,7 @@ public final class BattleRenderer {
             }
         }
         if (overlay == null) {
-            overlay = imgs.get(81);
+            overlay = imgs.get(BattleRenderRules.backgroundOverlayImage(6, 0));
         }
 
         this.stage6CacheOverlayImg = overlay;
@@ -1927,7 +1171,7 @@ public final class BattleRenderer {
         }
     }
 
-    // CPU-side additive blend for Stage 6 (Extra Stage) background (fallback to base image on failure).
+    // CPU-side additive blend for the Extra Stage background; draw the base image when blending is unavailable.
     private void blendStage6Add(GameCore.BattleRenderAccess a, Graphics g, int ratio, int scroll) {
         if (this.stage6BlendOutRgb == null) {
             g.drawImage(this.stage6CacheBaseImg, 0, 0, Graphics.TOP | Graphics.LEFT);
@@ -2034,19 +1278,15 @@ public final class BattleRenderer {
         int ax = cc.getAx(ccIndex);
         int ay = cc.getAy(ccIndex);
 
+        srcX = imgs.toPhysicalSourceX(imgIndex, srcX);
+        srcY = imgs.toPhysicalSourceY(imgIndex, srcY);
+
         Image img = imgs.get(imgIndex);
         if (img == null) {
             return;
         }
 
-        if (imgIndex == 6) {
-            if (drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay, 1)) {
-                return;
-            }
-            drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay, 2);
-            return;
-        }
-        drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay, 1);
+        drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay);
     }
 
     // Alpha variant of drawCcIconSafe using ImageBank alpha cache.
@@ -2068,6 +1308,9 @@ public final class BattleRenderer {
         int ax = cc.getAx(ccIndex);
         int ay = cc.getAy(ccIndex);
 
+        srcX = imgs.toPhysicalSourceX(imgIndex, srcX);
+        srcY = imgs.toPhysicalSourceY(imgIndex, srcY);
+
         Image img = imgs.get(imgIndex);
         if (img == null) {
             return;
@@ -2087,14 +1330,7 @@ public final class BattleRenderer {
             }
         }
 
-        if (imgIndex == 6) {
-            if (drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay, 1)) {
-                return;
-            }
-            drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay, 2);
-            return;
-        }
-        drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay, 1);
+        drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay);
     }
 
     /**
@@ -2102,87 +1338,18 @@ public final class BattleRenderer {
      *
      * Clamps the source rect to the source image bounds and avoids exceptions.
      */
-    private static boolean drawRegionSafe(Graphics g, Image img, int x, int y, int srcX, int srcY, int w, int h, int ax, int ay, int scale) {
+    private boolean drawRegionSafe(Graphics g, Image img, int x, int y, int srcX, int srcY, int w, int h, int ax, int ay) {
         if (img == null) {
             return false;
         }
-        if (scale != 1) {
-            srcX *= scale;
-            srcY *= scale;
-            w *= scale;
-            h *= scale;
-            ax *= scale;
-            ay *= scale;
-        }
-
-        int imgW = img.getWidth();
-        int imgH = img.getHeight();
-        if (w <= 0 || h <= 0) {
+        if (!BattleRenderRules.clipSourceRegion(x, y, srcX, srcY, w, h, ax, ay, 1,
+                img.getWidth(), img.getHeight(), clippedSourceRegion)) {
             return false;
         }
-
-        int dx = x - ax;
-        int dy = y - ay;
-
-        if (srcX < 0) {
-            int cut = -srcX;
-            srcX = 0;
-            dx += cut;
-            w -= cut;
-        }
-        if (srcY < 0) {
-            int cut = -srcY;
-            srcY = 0;
-            dy += cut;
-            h -= cut;
-        }
-        if (w <= 0 || h <= 0) {
-            return false;
-        }
-
-        if (srcX >= imgW || srcY >= imgH) {
-            return false;
-        }
-        if (srcX + w > imgW) {
-            w = imgW - srcX;
-        }
-        if (srcY + h > imgH) {
-            h = imgH - srcY;
-        }
-        if (w <= 0 || h <= 0) {
-            return false;
-        }
-
-        UiDraw.drawRegion(g, img, dx, dy, srcX, srcY, w, h);
+        UiDraw.drawRegion(g, img, clippedSourceRegion[0], clippedSourceRegion[1],
+                clippedSourceRegion[2], clippedSourceRegion[3],
+                clippedSourceRegion[4], clippedSourceRegion[5]);
         return true;
-    }
-
-    // Computes stable ranks for background draw order.
-    private static void buildRanks(int[] ranks, int[] keys, int count) {
-        // Stable ranking by key (ascending).
-        // Tie-break by index to guarantee ranks form a full permutation 0..count-1.
-        for (int i = 0; i < count; i++) {
-            ranks[i] = -1;
-        }
-
-        for (int r = 0; r < count; r++) {
-            int best = -1;
-            int bestKey = 0;
-            for (int i = 0; i < count; i++) {
-                if (ranks[i] != -1) {
-                    continue;
-                }
-                int k = keys[i];
-                if (best == -1 || k < bestKey || (k == bestKey && i < best)) {
-                    best = i;
-                    bestKey = k;
-                }
-            }
-            if (best < 0) {
-                break;
-            }
-            ranks[best] = r;
-        }
     }
 
     /**
@@ -2218,10 +1385,10 @@ public final class BattleRenderer {
         drawStars(g, sheet, 7, hud.getBomb(), 196, 78);
 
         UiDraw.drawRegion(g, sheet, 196, 87, 2, 81, 30, 9);
-        drawDigitsFixed(g, sheet, hud.getPower(), digitCount3(hud.getPower()), 197, 97);
+        drawDigitsFixed(g, sheet, hud.getPower(), BattleRenderRules.digitCount(hud.getPower(), 3), 197, 97);
 
         UiDraw.drawRegion(g, sheet, 196, 106, 2, 90, 27, 9);
-        drawDigitsFixed(g, sheet, hud.getGraze(), digitCount5(hud.getGraze()), 197, 116);
+        drawDigitsFixed(g, sheet, hud.getGraze(), BattleRenderRules.digitCount(hud.getGraze(), 5), 197, 116);
     }
 
     // Boss spell cut-in overlay (black fade + character cut-in image).
@@ -2234,7 +1401,7 @@ public final class BattleRenderer {
         if (imgs == null) {
             return;
         }
-        if (a.isDialogueActiveForInput(a.gcnt() + 1) || a.taCnt() != 0) {
+        if (a.dialogueVisible() || a.taCnt() != 0) {
             return;
         }
 
@@ -2247,9 +1414,11 @@ public final class BattleRenderer {
             g.setClip(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
 
             boolean alphaEnabled = a.bossSpellCutInAlphaEnabled();
-            int alpha = BOSS_SPELL_CUTIN_ALPHA_MAX;
+            int alpha = BattleRenderRules.CUT_IN_ALPHA_MAX;
             if (alphaEnabled) {
-                alpha = resolveBossSpellCutInAlpha(a);
+                alpha = BattleRenderRules.bossSpellCutInAlpha(
+                        a.bossSpellCutInCnt(), a.dynamicCutInEnabled(),
+                        a.fi() - a.bossSpellCutInPhaseStartFi());
                 if (alpha <= 0) {
                     return;
                 }
@@ -2260,10 +1429,9 @@ public final class BattleRenderer {
                 }
             }
 
-            int imgIndex = bossSpellCutInImgIndexForStage(a.bossSpellCutInStage());
-            if (a.bossSpellCutInStage() == 3 && a.gameMode() == 3 && a.bossController().host().getSpellPracticeBossStep() == 37) {
-                imgIndex = 58;
-            }
+            int imgIndex = BattleRenderRules.bossSpellCutInImage(
+                    a.bossSpellCutInStage(), a.gameMode(),
+                    a.bossController().host().getSpellPracticeBossStep());
 
             Image overlay;
             if (alphaEnabled) {
@@ -2372,126 +1540,54 @@ public final class BattleRenderer {
 
     // Spell effect: "blind service" vignette mask around the player.
     private void renderBlindServiceOverlay(GameCore.BattleRenderAccess a, Graphics g) {
+        int maskAlpha = a.blindMaskAlpha();
+        int spellId = a.blindMaskSpellId();
+        if (maskAlpha <= 0 || spellId < 26 || spellId > 29) {
+            return;
+        }
         ImageBank imgs = a.imgs();
         if (imgs == null) {
-            this.blindMaskE = 0;
-            this.blindMaskESpellId = -1;
             return;
-        }
-
-        // Stage2 only (0-based stage index = 1).
-        if (a.stage() != 1) {
-            this.blindMaskE = 0;
-            this.blindMaskESpellId = -1;
-            return;
-        }
-
-        int sid = -1;
-        boolean active = false;
-        if (a.bossMode() && a.bossController() != null) {
-            sid = a.bossController().getSpellId();
-            if (sid >= 26 && sid <= 29 && (a.bossF() == 17 || a.bossF() == 18)) {
-                active = true;
-            }
-        }
-
-        if (active) {
-            this.blindMaskESpellId = sid;
-            if (!a.blindMaskFadeEnabled()) {
-                this.blindMaskE = 128;
-            } else {
-                if (this.blindMaskE < 128) {
-                    this.blindMaskE += 2;
-                    if (this.blindMaskE > 128) {
-                        this.blindMaskE = 128;
-                    }
-                }
-            }
-        } else {
-            if (!a.blindMaskFadeEnabled()) {
-                this.blindMaskE = 0;
-                this.blindMaskESpellId = -1;
-                return;
-            }
-            if (this.blindMaskE > 0) {
-                int step = 128 / BLIND_MASK_E_FADE_OUT_FRAMES;
-                if (step <= 0) {
-                    step = 1;
-                }
-                this.blindMaskE -= step;
-                if (this.blindMaskE < 0) {
-                    this.blindMaskE = 0;
-                }
-            }
-
-            if (this.blindMaskE <= 0) {
-                this.blindMaskE = 0;
-                this.blindMaskESpellId = -1;
-                return;
-            }
-
-            sid = this.blindMaskESpellId;
-            if (sid < 26 || sid > 29) {
-                this.blindMaskE = 0;
-                this.blindMaskESpellId = -1;
-                return;
-            }
         }
 
         int cx = PLAY_X + (PLAY_W / 2);
         int cy = PLAY_Y + (PLAY_H / 2);
-        Player p = a.player();
-        if (p != null) {
-            cx = p.getXFixed() >> 16;
-            cy = p.getYFixed() >> 16;
+        Player player = a.player();
+        if (player != null) {
+            cx = player.getXFixed() >> 16;
+            cy = player.getYFixed() >> 16;
         }
 
-        int imgIndex;
-        int size;
-        if (sid < 28) {
-            imgIndex = 38;
-            size = 140;
-        } else {
-            imgIndex = 37;
-            size = 120;
-        }
+        int imageIndex = spellId < 28 ? 38 : 37;
+        int size = spellId < 28 ? 140 : 120;
         int half = size >> 1;
-
-        int alpha = this.blindMaskE << 1;
+        int alpha = maskAlpha << 1;
         if (alpha > 255) {
             alpha = 255;
         }
 
-        Image overlay = imgs.getAlphaImageColorKey(imgIndex, alpha, 0xFF00FF);
+        Image overlay = imgs.getAlphaImageColorKey(imageIndex, alpha, 0xFF00FF);
         if (overlay == null) {
-            overlay = imgs.getAlphaImage(imgIndex, alpha);
+            overlay = imgs.getAlphaImage(imageIndex, alpha);
         }
         if (overlay != null) {
             drawEkiImage(g, overlay, cx - half, cy - half, 0, 0, size, size);
         }
 
-        int blackAlpha = alpha;
-
-        int yTop = cy - half;
-        if (yTop > PLAY_Y) {
-            UiDraw.fillRectAlpha(g, PLAY_X, PLAY_Y, PLAY_W, yTop - PLAY_Y, 0x000000, blackAlpha);
+        int top = cy - half;
+        int bottom = cy + half;
+        int right = cx + half;
+        if (top > PLAY_Y) {
+            UiDraw.fillRectAlpha(g, PLAY_X, PLAY_Y, PLAY_W, top - PLAY_Y, 0x000000, alpha);
         }
-
-        int yBottom = cy + half;
-        int playBottom = PLAY_Y + PLAY_H;
-        if (yBottom < playBottom) {
-            UiDraw.fillRectAlpha(g, PLAY_X, yBottom, PLAY_W, playBottom - yBottom, 0x000000, blackAlpha);
+        if (bottom < PLAY_Y + PLAY_H) {
+            UiDraw.fillRectAlpha(g, PLAY_X, bottom, PLAY_W, PLAY_Y + PLAY_H - bottom, 0x000000, alpha);
         }
-
-        int xLeft = cx - half;
-        if (xLeft > PLAY_X) {
-            UiDraw.fillRectAlpha(g, PLAY_X, yTop, xLeft - PLAY_X, size, 0x000000, blackAlpha);
+        if (cx - half > PLAY_X) {
+            UiDraw.fillRectAlpha(g, PLAY_X, top, cx - half - PLAY_X, size, 0x000000, alpha);
         }
-
-        int xRight = cx + half;
-        int playRight = PLAY_X + PLAY_W;
-        if (xRight < playRight) {
-            UiDraw.fillRectAlpha(g, xRight, yTop, playRight - xRight, size, 0x000000, blackAlpha);
+        if (right < PLAY_X + PLAY_W) {
+            UiDraw.fillRectAlpha(g, right, top, PLAY_X + PLAY_W - right, size, 0x000000, alpha);
         }
     }
 
@@ -2529,7 +1625,7 @@ public final class BattleRenderer {
             return;
         }
 
-        if (a.isDialogueActiveForInput(a.gcnt() + 1) || a.taCnt() != 0) {
+        if (a.dialogueVisible() || a.taCnt() != 0) {
             return;
         }
 
@@ -2815,64 +1911,6 @@ public final class BattleRenderer {
         return null;
     }
 
-    private int resolveBossSpellCutInAlpha(GameCore.BattleRenderAccess a) {
-        if (a.bossSpellCutInCnt() == 0) {
-            return 0;
-        }
-
-        if (!a.dynamicCutInEnabled()) {
-            return BOSS_SPELL_CUTIN_ALPHA_MAX;
-        }
-        int dt = a.fi() - a.bossSpellCutInPhaseStartFi();
-        if (dt < 0) {
-            dt = 0;
-        }
-
-        int alpha;
-        if (a.bossSpellCutInCnt() == BOSS_SPELL_CUTIN_PHASE_FADE_IN) {
-            alpha = (BOSS_SPELL_CUTIN_ALPHA_MAX * dt) / BOSS_SPELL_CUTIN_FADE_IN_FRAMES;
-        } else if (a.bossSpellCutInCnt() == BOSS_SPELL_CUTIN_PHASE_FADE_OUT) {
-            alpha = BOSS_SPELL_CUTIN_ALPHA_MAX - ((BOSS_SPELL_CUTIN_ALPHA_MAX * dt) / BOSS_SPELL_CUTIN_FADE_OUT_FRAMES);
-        } else if (a.bossSpellCutInCnt() == BOSS_SPELL_CUTIN_PHASE_HOLD) {
-            alpha = BOSS_SPELL_CUTIN_ALPHA_MAX;
-        } else {
-            alpha = BOSS_SPELL_CUTIN_ALPHA_MAX;
-        }
-
-        if (alpha < 0) {
-            alpha = 0;
-        }
-        if (alpha > BOSS_SPELL_CUTIN_ALPHA_MAX) {
-            alpha = BOSS_SPELL_CUTIN_ALPHA_MAX;
-        }
-        alpha = (alpha + 15) & ~15;
-        if (alpha > 255) {
-            alpha = 255;
-        }
-        return alpha;
-    }
-
-    private static int bossSpellCutInImgIndexForStage(int stage) {
-        switch (stage) {
-            case 0:
-                return 30;
-            case 1:
-                return 40;
-            case 2:
-                return 51;
-            case 3:
-                return 56;
-            case 4:
-                return 65;
-            case 5:
-                return 69;
-            case 6:
-                return 76;
-            default:
-                return -1;
-        }
-    }
-
     // Digit renderer for HUD numbers (right-aligned fixed width).
     private static void drawDigitsFixed(Graphics g, Image sheet, int v, int digits, int x, int y) {
         int[] arr = new int[digits];
@@ -2905,66 +1943,18 @@ public final class BattleRenderer {
         }
     }
 
-    private static int digitCount3(int v) {
-        if (v >= 100) {
-            return 3;
-        }
-        if (v >= 10) {
-            return 2;
-        }
-        return 1;
-    }
-
-    private static int digitCount5(int v) {
-        if (v >= 10000) {
-            return 5;
-        }
-        if (v >= 1000) {
-            return 4;
-        }
-        if (v >= 100) {
-            return 3;
-        }
-        if (v >= 10) {
-            return 2;
-        }
-        return 1;
-    }
-
     // Clipped draw helper for large images (portraits / overlays) limited to the playfield.
     private void drawEkiImage(Graphics g, Image img, int x, int y, int srcX, int srcY, int w, int h) {
-        if (img == null || w <= 0 || h <= 0) {
+        if (img == null || !BattleRenderRules.clipToPlayfield(
+                x, y, srcX, srcY, w, h, clippedPlayfieldRegion)) {
             return;
         }
-
-        int dx = x;
-        int dy = y;
-
-        int rx = dx + w;
-        int ry = dy + h;
-        if (rx <= 0 || dx >= PLAY_W || ry <= PLAY_Y || dy >= (PLAY_Y + PLAY_H)) {
-            return;
-        }
-
-        if (rx > PLAY_W) {
-            w -= rx - PLAY_W;
-        }
-        if (ry > (PLAY_Y + PLAY_H)) {
-            h -= ry - (PLAY_Y + PLAY_H);
-        }
-        if (dx < 0) {
-            srcX += 0 - dx;
-            w -= 0 - dx;
-            dx = 0;
-        }
-        if (dy < PLAY_Y) {
-            srcY += PLAY_Y - dy;
-            h -= PLAY_Y - dy;
-            dy = PLAY_Y;
-        }
-        if (w <= 0 || h <= 0) {
-            return;
-        }
+        int dx = clippedPlayfieldRegion[0];
+        int dy = clippedPlayfieldRegion[1];
+        srcX = clippedPlayfieldRegion[2];
+        srcY = clippedPlayfieldRegion[3];
+        w = clippedPlayfieldRegion[4];
+        h = clippedPlayfieldRegion[5];
 
         int oldClipX = g.getClipX();
         int oldClipY = g.getClipY();

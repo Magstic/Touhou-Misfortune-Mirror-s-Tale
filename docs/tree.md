@@ -3,22 +3,31 @@
 ## Directory Structure
 
 ```
-Touhou Misfortune MirrorS Tale/
-├── build.xml                        # Ant build script (compile, pack, obfuscate, preverify, JAD)
-├── .gitignore                       # Git ignore rules (build output, emulator runtime, etc.)
+Touhou_Misfortune_MirrorS_Tale/
+├── build.xml                        # Ant build script (Ivy dependencies, ProGuard CLDC preverification, JAD)
+├── ivy.xml                          # Pinned J2ME APIs and ProGuard dependencies
+├── ivysettings.xml                  # Maven Central resolver and local dependency cache
+├── .gitignore                       # Git ignore rules (build output, dependencies, emulator runtime, etc.)
 ├── README.md                        # Project overview
 ├── TODO.MD                          # Development task tracker
 │
 ├── src/touhou/                      # ---- Java source (MIDP 2.0 / CLDC 1.1) ----
-│   ├── MainMidlet.java              #   MIDlet entry point
+│   ├── MainMidlet.java              #   MIDlet entry point (packaged as root-level ThMirror.class)
 │   ├── GameCore.java                #   Main game loop, core orchestrator (GameCanvas + Runnable)
 │   ├── SceneController.java         #   Scene routing: UI / Battle / Ending / StaffRoll
 │   ├── ImageBank.java               #   Sprite image loader, cache, StageEX color variant generator
+│   ├── SpriteSheetCatalog.java       #   Canonical sprite path and logical-canvas layout catalog
+│   ├── SpriteSheetLayout.java        #   Logical-to-cropped sprite coordinate mapping
+│   ├── ResourceLoader.java           #   Single required/optional classpath resource loader
+│   ├── ResourcePaths.java            #   Canonical classpath resource paths
+│   ├── ResourceException.java        #   CLDC-compatible required-resource failure
+│   ├── BgmCatalog.java               #   Current 18-track BGMP schema
 │   ├── CcTable.java                 #   cc.dat parser: maps spriteId to (imgIndex, srcRect, anchor)
 │   ├── BulletSprites.java           #   Draws sprites by spriteId using CcTable + ImageBank
-│   ├── BulletSystem.java            #   Player bullet / laser / effect pool
-│   ├── EnemyBulletSystem.java       #   Enemy bullet pool
-│   ├── EnemySystem.java             #   Enemy instance pool
+│   ├── BulletSystem.java            #   Shared player/enemy bullet, laser and effect store
+│   ├── EnemyBulletSystem.java       #   Enemy bullet spawning and player-collision rules
+│   ├── EnemyTargetRegistry.java     #   Targeting projection of StageRuntime enemies
+│   ├── FixedSlotPool.java           #   Deterministic fixed-capacity slot allocator
 │   ├── DropItemSystem.java          #   Drop item pool (power, point, bomb, life, etc.)
 │   ├── Player.java                  #   Player character: movement, shooting, bomb, death/respawn
 │   ├── ScoreSystem.java             #   Score events, graze, life/bomb awards, spell bonus
@@ -38,7 +47,12 @@ Touhou Misfortune MirrorS Tale/
 │   ├── battle/                      #   -- Battle subsystem --
 │   │   ├── BattleScene.java         #     Battle-state coordinator: handles stage clear panel, pause flow, spell practice end flow; delegates gameplay ticks to `GameCore` (battleMain* methods) and delegates rendering to `BattleRenderer`
 │   │   ├── BattleEngine.java        #     Core gameplay tick: collision, bullets, bombs, death
-│   │   ├── BattleRenderer.java      #     Full battle-frame rendering pipeline
+│   │   ├── BattleRenderer.java      #     Read-only battle-frame drawing pipeline
+│   │   ├── BattleRenderRules.java   #     Pure resource selection, layout, fade and clipping rules
+│   │   ├── BattleEnemyVisuals.java  #     Enemy sprite resolution and update-time animation transitions
+│   │   ├── BattleVisualState.java   #     Update-owned flash, fade, mask and resolved sprite state
+│   │   ├── BattleSessionConfig.java #     Immutable battle mode, stage, difficulty and character configuration
+│   │   ├── SpellPracticeCatalog.java#     Single spell-practice metadata catalog
 │   │   ├── BattleStageFlow.java     #     Adapter: implements StageRuntime.StageFlow -> GameCore
 │   │   ├── BattleStageHost.java     #     Adapter: implements StageRuntime.Host -> GameCore
 │   │   ├── BattleBossHost.java      #     Adapter: implements BossController.Host -> GameCore
@@ -68,29 +82,34 @@ Touhou Misfortune MirrorS Tale/
 │   │   ├── ReplayInputBuffer.java   #     Fixed-size per-frame key buffer (pos 0..FRAME_COUNT)
 │   │   ├── ReplayKeyCodec.java      #     Per-frame key bit-packing (keys/pressed -> byte)
 │   │   ├── ReplayCodec.java         #     Fixed-size RLE codec for replay frames (30720 -> 7168)
+│   │   ├── ReplayChecksum.java      #     Replay payload checksum
+│   │   ├── ReplayFormat.java        #     Current replay/share format constants and validation
 │   │   ├── ReplayRecordingController.java # Recording session controller
 │   │   ├── ReplayPlaybackController.java  # Playback session controller
 │   │   ├── ReplayTimeScaleController.java # Replay playback speed (slow/fast/auto-FF)
 │   │   ├── ReplayStageRecorder.java #     Per-stage recording helper
 │   │   ├── ReplayRng.java           #     Deterministic LCG RNG for replay sync
 │   │   ├── ReplayRmsStore.java      #     Replay save/load via RMS
+│   │   ├── ReplaySlotData.java      #     Complete replay slot value object
+│   │   ├── ReplaySlotIntegrity.java #     Slot-wide integrity validation
+│   │   ├── ReplaySlotStore.java     #     Atomic replay slot persistence contract
 │   │   ├── ReplaySaveService.java   #     Save workflow orchestration
 │   │   ├── ReplayShareCodec.java    #     Bluetooth share protocol codec
-│   │   ├── ReplayShareService.java  #     Bluetooth share session manager
-│   │   ├── ReplayBtShareManager.java#     Bluetooth discovery & connection
+│   │   ├── ReplayShareService.java  #     Bluetooth replay packet import/export service
 │   │   ├── ReplaySnapshotReader.java#     Snapshot deserialization
 │   │   ├── ReplaySnapshotWriter.java#     Snapshot serialization
 │   │   ├── ReplayBossSnapshotCodec.java   # Boss phase snapshot codec
 │   │   ├── ReplayBossSnapshotService.java # Boss snapshot orchestration
-│   │   ├── ReplayBossSnapshotStore.java   # Boss snapshot persistence
 │   │   ├── ReplayStageSnapshotCodec.java  # Stage snapshot codec
 │   │   ├── ReplayStageSnapshotService.java# Stage snapshot orchestration
-│   │   └── ReplayStageSnapshotStore.java  # Stage snapshot persistence
+│   │   └── ReplaySnapshotStore.java       # Unified boss/stage snapshot persistence
 │   │
 │   ├── i18n/                        #   -- Internationalization --
 │   │   ├── I18n.java                #     Static utility: language ID/code, resource path builder
 │   │   ├── I18nBootstrap.java       #     Init I18N from saved options (loads pack, text, font)
 │   │   ├── I18nPack.java            #     Binary .dat resource pack reader
+│   │   ├── I18nSchema.java          #     UI/spell line-count schema
+│   │   ├── SpellText.java           #     Current-language spell names and comments
 │   │   ├── TextId.java              #     All text ID constants
 │   │   └── UiText.java              #     Static UI text table loaded from ui.txt, indexed by TextId
 │   │
@@ -101,8 +120,12 @@ Touhou Misfortune MirrorS Tale/
 │   │   └── BtSppLink.java           #     JSR-82 SPP serial link for replay sharing
 │   │
 │   └── ui/                          #   -- UI screens --
-│       ├── UiController.java        #     UI screen state machine & navigation
+│       ├── UiController.java        #     UI screen lifecycle, state dispatch & navigation
+│       ├── UiInput.java             #     Semantic confirm/cancel/direction input queries
+│       ├── MenuCursor.java          #     Shared cursor wrapping, clamping & visible-window rules
 │       ├── UiDraw.java              #     Shared UI drawing primitives
+│       ├── UiTextLayout.java        #     Testable character/word wrapping & text effects
+│       ├── FontTextMeasurer.java    #     MIDP/bitmap font adapter for UiTextLayout
 │       ├── InputSystem.java         #     Per-frame key state capture, edge detection, softkey/tenkey
 │       ├── StartupLanguageMenu.java #     First-launch language selection
 │       ├── TitleScreen.java         #     Title menu
@@ -120,7 +143,11 @@ Touhou Misfortune MirrorS Tale/
 │       ├── SpellPracticeScreen.java #     Spell practice selection
 │       ├── SpellPracticeEndScreen.java#   Spell practice result
 │       ├── ReplayScreen.java        #     Replay list & playback
-│       ├── ReplaySaveUi.java        #     Replay save dialog
+│       ├── ReplayUi.java            #     Shared replay background, slot, preview & message rendering
+│       ├── ReplaySlotListModel.java #     Per-screen replay slot metadata and Boss-only availability
+│       ├── ReplayPreview.java       #     Cached replay preview presentation model
+│       ├── ReplayTransferProgress.java#   Update-owned transfer percentage and speed rules
+│       ├── ReplayTransferUi.java    #     Shared Bluetooth status/progress presentation
 │       ├── ReplaySendScreen.java    #     Bluetooth send UI
 │       ├── ReplayReceiveScreen.java #     Bluetooth receive UI
 │       └── QuitScreen.java          #     Quit confirmation
@@ -130,6 +157,9 @@ Touhou Misfortune MirrorS Tale/
 │   ├── cc.dat                       #   Sprite crop table (spriteId -> imgIndex + srcRect + anchor)
 │   ├── stage.dat                    #   Stage wave script (enemy type, position, timing)
 │   ├── sp/                          #   Sprite images (GIF): 000.gif ~ 095.gif (missing 078-080, 082-084: generated at runtime)
+│   ├── bgm/                         #   Source MIDI, tracks 0–17 (packed, not copied into the JAR)
+│   │   ├── <id>/intro.mid + loop.mid #     Split looping track
+│   │   └── <id>.mid                  #     Single-file track
 │   ├── se/                          #   Sound effects (WAV)
 │   │   ├── shot.wav                 #     Player shot
 │   │   ├── graze.wav                #     Graze
@@ -140,9 +170,6 @@ Touhou Misfortune MirrorS Tale/
 │   │   ├── nav.wav / select.wav / back.wav     # Menu navigation
 │   │   ├── pause.wav                #     Pause
 │   │   └── cd.wav                   #     Countdown
-│   ├── snd/                         #   BGM packs (MIDI bundle)
-│   │   ├── bgm.dat                  #     Full quality (18 tracks)
-│   │   └── bgm_s.dat               #     Simplified 12-polyphony version
 │   └── i18n/                        #   Localization source (per-language)
 │       ├── en/ ja/ zht/             #     Each contains:
 │       │   ├── ui.txt               #       UI text lines (indexed by TextId)
@@ -150,29 +177,25 @@ Touhou Misfortune MirrorS Tale/
 │       │   ├── ending_*.txt         #       Per-character ending text
 │       │   ├── spcard.dat           #       Spell card names
 │       │   ├── sprac.dat            #       Spell practice metadata
-│       │   ├── dialog/              #       In-game dialog scripts
-│       │   └── font/                #       (optional source dir; ignored by packer)
-│       └── *.dat                    #     (build-time generated, cleaned after JAR packing)
+│       │   └── dialog/              #       In-game dialog scripts
+│       └── (generated packs are never written here)
 │
 ├── font/                            # ---- TTF source fonts (for font.dat generation) ----
 │   ├── ja.ttf                       #   Japanese glyphs
 │   ├── zh_hant.ttf                  #   Traditional Chinese (used by en & zht)
-│   ├── zh_hans.ttf                  #   Simplified Chinese (reserved)
-│   ├── OFL.txt                      #   SIL Open Font License
-│   └── LICENSE/                     #   Per-font license files
-│       ├── ark-pixel.txt
-│       ├── cubic-11.txt
-│       └── galmuri.txt
+│   └── OFL.txt                      #   SIL Open Font License
 │
-├── lib/                             # ---- Build-time libraries ----
-│   ├── antenna-bin-1.2.1-beta.jar   #   Antenna: WTK task wrappers (wtkpreverify, wtkjad)
-│   └── proguard.jar                 #   ProGuard: bytecode shrink & obfuscation
+├── .deps/                           # ---- Downloaded dependencies (gitignored) ----
+│   ├── ivy/                         #   Apache Ivy 2.5.3 bootstrap JAR
+│   ├── cache/                       #   Ivy resolution and artifact cache
+│   └── lib/                         #   CLDC 1.1, MIDP 2.0, JSR-82 APIs and ProGuard 6.0.3
 │
 ├── tools/                           # ---- Build tools (used by ant) ----
 │   ├── CcDatCropViewer.java         #   cc.dat crop viewer (debug / resource inspection)
 │   ├── I18nPackBuilder.java         #   Packs res/i18n/<lang>/ into <lang>.dat; generates font.dat
+│   ├── BgmPackBuilder.java          #   Packs res/bgm into the current 18-track BGMP
 │   ├── FontDatBuilder.java          #   Scans text files for used characters, rasterizes from TTF, outputs font.dat
-│   └── dev/                         #   (gitignored) Dev-only tools: BGM builder, MIDI simplifier, etc.
+│   └── dev/                         #   (gitignored) Dev-only helper tools
 │
 ├── docs/                            # ---- Documentation ----
 │   ├── build.md                     #   Build instructions
@@ -190,17 +213,20 @@ Touhou Misfortune MirrorS Tale/
 
 ```mermaid
 flowchart TD
-    ANT["ant (default: package)"] --> CLEAN["clean<br/>build/ dist/ tmp*/"]
-    CLEAN --> INIT["init<br/>mkdir build/ dist/"]
-    INIT --> COMPILE["compile<br/>javac src/ -> build/classes/<br/>(bootclasspath: WTK cldc+midp+jsr082)"]
-    INIT --> TOOLS["compile-tools-i18n<br/>javac tools/ -> build/tools-classes/"]
-    TOOLS --> I18N["i18n-pack<br/>I18nPackBuilder -> res/i18n/<lang>.dat<br/>(+ build/i18n-font/<lang>-font.dat)"]
+    CLEAN["ant clean (explicit)<br/>remove build/ dist/"]
+    CLEAN -. "optional before package" .-> ANT
+    ANT["ant (default: package)"] --> INIT["init<br/>mkdir build/classes/"]
+    ANT --> DEPS["dependencies<br/>bootstrap Ivy; resolve APIs + ProGuard<br/>Maven Central -> .deps/"]
+    DEPS --> COMPILE
+    INIT --> COMPILE["compile<br/>JDK 8 javac src/ -> build/classes/<br/>(bootclasspath: Ivy cldc+midp+jsr82)"]
+    INIT --> TOOLS["compile-tools-resources<br/>javac resource tools -> build/tools-classes/"]
+    TOOLS --> I18N["i18n-pack<br/>validate UTF-8/schema and generate<br/>build/generated-res/i18n/<lang>.dat"]
+    TOOLS --> BGM["bgm-pack<br/>validate res/bgm tracks 0–17 and generate<br/>build/generated-res/snd/bgm.dat"]
     COMPILE --> JAR
     I18N --> JAR
-    BGM["-init-bgm / -bgm-lite<br/>bgm.dat or bgm_s.dat"] --> JAR
-    JAR["jar<br/>classes + res + bgm + i18n<br/>-> build/raw.jar<br/>then delete res/i18n/*.dat"] --> PG
-    PG["proguard<br/>shrink & obfuscate<br/>-> build/obf.jar"] --> PV
-    PV["preverify<br/>WTK preverify<br/>-> dist/name.jar"] --> JAD
+    BGM --> JAR
+    JAR["jar<br/>classes + source res + generated res<br/>resources at JAR root<br/>-> build/raw.jar"] --> PG
+    PG["proguard 6.0.3<br/>shrink, obfuscate and CLDC preverify<br/>root ThMirror.class + short class names<br/>-> dist/name.jar"] --> JAD
     JAD["write-jad<br/>generate dist/name.jad"]
 ```
 
@@ -237,7 +263,7 @@ graph TD
 
     SR -->|Host| BSH["BattleStageHost<br/>(StageRuntime.Host)"]
     BSH --> GC
-    SR --> SDAT["StageDat<br/>loads /res/stage.dat"]
+    SR --> SDAT["StageDat<br/>loads /stage.dat"]
 
     BC -->|Host| BBH["BattleBossHost<br/>(BossController.Host)"]
     BBH --> GC
@@ -271,7 +297,7 @@ flowchart LR
 | File | Role |
 |------|------|
 | `MainMidlet` | MIDlet lifecycle; creates `GameCore`, hands it to `Display` |
-| `GameCore` | Central orchestrator: game loop, state ownership, and module wiring. Contains legacy/bridge logic while gradually pushing responsibilities into modules |
+| `GameCore` | Central orchestrator: game loop, scene and battle state ownership, and typed module wiring |
 | `SceneController` | Routes each frame's `update()` / `render()` to the active scene (UI, Battle, Ending, StaffRoll) |
 
 ### Battle Layer
@@ -280,7 +306,12 @@ flowchart LR
 |------|------|
 | `BattleScene` | Battle-state coordinator: handles stage clear panel, pause flow, spell practice end flow; delegates gameplay ticks to `GameCore` (battleMain* methods) and delegates rendering to `BattleRenderer` |
 | `BattleEngine` | Pure gameplay tick: player input -> bullet advance -> collision -> death -> score. Stateless about scene flow |
-| `BattleRenderer` | Full-frame battle rendering: playfield, HUD, effects, dialog, boss cut-in, fade |
+| `BattleRenderer` | Read-only drawing pipeline: playfield, HUD, effects, dialog, boss cut-in and local image caches |
+| `BattleRenderRules` | Pure battle resource, layout, fade, dialogue and clipping rules |
+| `BattleEnemyVisuals` | Resolves enemy sprite/aura IDs and advances their visual animation once per update |
+| `BattleVisualState` | Owns update-time flash, fade, blind mask and resolved enemy visual state |
+| `BattleSessionConfig` | Immutable battle mode, stage, difficulty, character and spell-practice configuration |
+| `SpellPracticeCatalog` | Canonical spell-practice metadata and lookup rules |
 | `BattleStageFlow` | Adapter: implements `StageRuntime.StageFlow`, bridges stage flow events to `GameCore` |
 | `BattleStageHost` | Adapter: implements `StageRuntime.Host`, bridges stage runtime events to `GameCore` |
 | `BattleBossHost` | Adapter: implements `BossController.Host`, bridges boss events to `GameCore` |
@@ -310,24 +341,27 @@ flowchart LR
 | `ReplayInputBuffer` | Fixed-size per-frame key buffer (FRAME_COUNT = 30720) |
 | `ReplayKeyCodec` | Per-frame key bit-packing (keys/pressed -> byte) |
 | `ReplayCodec` | Fixed-size RLE codec for replay frames (30720 -> 7168) |
+| `ReplayChecksum` | Checksum calculation for replay payload integrity |
+| `ReplayFormat` | Current replay and share format constants plus strict validation |
 | `ReplayRecordingController` | Recording session: captures keys + snapshots during play |
 | `ReplayPlaybackController` | Playback session: feeds recorded keys back into engine |
 | `ReplayTimeScaleController` | Replay playback speed: slow/fast/auto fast-forward controller |
 | `ReplayStageRecorder` | Per-stage recording lifecycle |
 | `ReplayRng` | Seeded LCG RNG (state * 1103515245 + 12345) for deterministic replay |
 | `ReplayRmsStore` | RMS persistence for replay slots |
+| `ReplaySlotData` | Complete replay slot value object |
+| `ReplaySlotIntegrity` | Validates all records belonging to a replay slot |
+| `ReplaySlotStore` | Atomic replay slot persistence contract |
 | `ReplaySaveService` | Save workflow orchestration |
 | `ReplayShareCodec` | Bluetooth share protocol codec |
-| `ReplayShareService` | Bluetooth share session manager |
-| `ReplayBtShareManager` | Bluetooth discovery & connection |
+| `ReplayShareService` | Imports and exports current-format Bluetooth replay packets |
 | `ReplaySnapshotReader` | Snapshot deserialization |
 | `ReplaySnapshotWriter` | Snapshot serialization |
 | `ReplayBossSnapshotCodec` | Boss phase snapshot codec |
 | `ReplayBossSnapshotService` | Boss snapshot orchestration |
-| `ReplayBossSnapshotStore` | Boss snapshot persistence |
 | `ReplayStageSnapshotCodec` | Stage snapshot codec |
 | `ReplayStageSnapshotService` | Stage snapshot orchestration |
-| `ReplayStageSnapshotStore` | Stage snapshot persistence |
+| `ReplaySnapshotStore` | Unified boss/stage snapshot persistence |
 
 ### I18N & Font
 
@@ -344,16 +378,17 @@ flowchart LR
 
 | File | Role |
 |------|------|
-| `ImageBank` | Loads GIF sprites from `/res/sp/`, caches, generates StageEX color variants |
+| `ImageBank` | Loads GIF sprites from `/sp/`, caches, generates StageEX color variants |
 | `CcTable` | Parses `cc.dat`: maps spriteId -> (imgIndex, srcX, srcY, w, h, anchorX, anchorY) |
 | `BulletSprites` | Draws a sprite by spriteId (method param is often named bulletId) using `CcTable` + `ImageBank` |
-| `BulletSystem` | Player bullet / laser / effect object pool (capacity 1024) |
-| `EnemyBulletSystem` | Enemy bullet object pool |
-| `EnemySystem` | Enemy instance pool |
+| `BulletSystem` | Shared player/enemy bullet, laser and effect state store (capacity 1024) |
+| `EnemyBulletSystem` | Enemy bullet spawning policy and player collision/graze rules over `BulletSystem` |
+| `EnemyTargetRegistry` | Targeting projection of the enemy table owned by `StageRuntime` |
+| `FixedSlotPool` | Deterministic allocation and recycling contract for fixed-capacity entity stores |
 | `DropItemSystem` | Drop item pool |
 | `Player` | Player character: position, shot type, bomb, death, respawn, graze |
 | `AudioSystem` | BGM: reads `bgm.dat` bundle, plays MIDI tracks via `Manager`/`Player` |
-| `SoundEffectSystem` | SE: plays WAV files from `/res/se/` |
+| `SoundEffectSystem` | SE: plays WAV files from `/se/` |
 | `ScoreSystem` | Event-driven scoring: graze, spell bonus, life/bomb awards, miss penalty |
 | `GameOptions` | User settings (key config, volume, difficulty) persisted to RMS |
 | `GameProgress` | Save data: high scores, clears, unlocks |
@@ -368,8 +403,12 @@ flowchart LR
 
 | File | Role |
 |------|------|
-| `UiController` | Screen state machine: manages which screen is active, handles transitions |
+| `UiController` | Owns screen lifecycle, update/render dispatch and all UI transitions |
+| `UiInput` | Gives UI screens semantic confirm, cancel, secondary and direction queries |
+| `MenuCursor` | Shared wrapping, clamping and visible-window cursor rules |
 | `UiDraw` | Shared drawing: text, boxes, list menus, bitmap font integration |
+| `UiTextLayout` | Testable character/word wrapping and text animation rules |
+| `FontTextMeasurer` | Adapts MIDP and bitmap fonts to `UiTextLayout` width measurement |
 | `InputSystem` | Per-frame key state capture, edge detection, softkey/tenkey handling |
 | `StartupLanguageMenu` | Startup language picker (shown after `LoadingScreen`, before entering `TitleScreen`) |
 | `TitleScreen` | Main menu: Start / Continue / Practice / Replay / Option / Help / Quit |
@@ -387,7 +426,11 @@ flowchart LR
 | `SpellPracticeScreen` | Spell card practice selection |
 | `SpellPracticeEndScreen` | Spell practice result |
 | `ReplayScreen` | Saved replay list & playback launch |
-| `ReplaySaveUi` | Replay save dialog after stage clear |
+| `ReplayUi` | Shared replay background, slot list, preview, save result and message rendering |
+| `ReplaySlotListModel` | Per-screen replay slot metadata and Boss-only playback availability |
+| `ReplayPreview` | Cached replay preview presentation data |
+| `ReplayTransferProgress` | Update-owned Bluetooth transfer percentage and speed calculation |
+| `ReplayTransferUi` | Shared Bluetooth device, status and progress rendering |
 | `ReplaySendScreen` | Bluetooth send UI |
 | `ReplayReceiveScreen` | Bluetooth receive UI |
 | `QuitScreen` | Exit confirmation |
@@ -398,6 +441,7 @@ flowchart LR
 |------|------|
 | `I18nPackBuilder` | Scans `res/i18n/<lang>/` and packs resources into `<lang>.dat`; generates font.dat |
 | `FontDatBuilder` | Scans text files for used characters, rasterizes from TTF, outputs font.dat |
+| `BgmPackBuilder` | Validates `res/bgm` tracks 0–17 and builds the deterministic BGMP |
 
 ### Resource Files
 
@@ -407,10 +451,10 @@ flowchart LR
 | `res/stage.dat` | Binary | Stage wave script: enemy type, position, timing, formation |
 | `res/sp/*.gif` | GIF | Sprite sheets indexed by imgIndex (000.gif ~ 095.gif; missing 078-080, 082-084 are runtime-generated StageEX variants) |
 | `res/se/*.wav` | WAV | Sound effects |
-| `res/snd/bgm.dat` | Custom | MIDI bundle: intro + loop segments for 18 BGM tracks |
-| `res/snd/bgm_s.dat` | Custom | Same format, reduced polyphony (12 voices) for weaker devices |
-| `res/i18n/<lang>.dat` | Binary | I18N resource pack built by `I18nPackBuilder` and embedded into the final JAR; contains text data + generated `/res/i18n/<lang>/font/font.dat` |
+| `res/bgm/` | MIDI | Source tracks 0–17; each is either `id.mid` or `id/intro.mid + loop.mid` |
+| `build/generated-res/snd/bgm.dat` | Custom | Generated current 18-track MIDI bundle embedded as `/snd/bgm.dat` |
+| `build/generated-res/i18n/<lang>.dat` | Binary | Generated deterministic I18N pack; contains validated text and `/i18n/<lang>/font/font.dat` |
 | `res/i18n/<lang>/ui.txt` | Text | UI string lines, indexed by `TextId` constants |
 | `res/i18n/<lang>/dialog/` | Text | In-game dialog scripts per stage |
 | `res/i18n/<lang>/spcard.dat` | Text | Spell card name list |
-| `/res/i18n/<lang>/font/font.dat` | Binary | Bitmap font glyph atlas (generated at build time and stored inside `res/i18n/<lang>.dat`) |
+| `/i18n/<lang>/font/font.dat` | Binary | Bitmap font glyph atlas (generated at build time and stored inside `i18n/<lang>.dat`) |

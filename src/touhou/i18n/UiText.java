@@ -1,33 +1,28 @@
 package touhou.i18n;
 
+import touhou.ResourceException;
+
 public final class UiText {
     private static String[] table;
-    private static int warnCount;
 
     private UiText() {
     }
 
     public static void load() {
-        table = I18n.splitLinesSimple(I18n.readUtf8TextResource(I18n.path("ui.txt")));
+        String[] loaded = I18n.splitLines(I18n.loadText("ui.txt"));
+        if (loaded.length != TextId.COUNT) {
+            throw new ResourceException("ui.txt lines=" + loaded.length + " expected=" + TextId.COUNT);
+        }
+        table = loaded;
     }
 
     public static String get(int id) {
-        String[] t = table;
-        if (t == null) {
-            if (warnCount < 8) {
-                warnCount++;
-                System.out.println("WARN: UiText.get before load: id=" + id);
-            }
-            return "";
+        if (table == null) {
+            throw new ResourceException("UiText not loaded");
         }
-        if (id < 0 || id >= t.length) {
-            if (warnCount < 8) {
-                warnCount++;
-                System.out.println("WARN: UiText.get out of range: id=" + id + " table=" + t.length + " (check TextId vs ui.txt lines)");
-            }
-            return "";
+        if (id < 0 || id >= table.length) {
+            throw new IllegalArgumentException("textId=" + id);
         }
-        String s = t[id];
-        return (s != null) ? s : "";
+        return table[id];
     }
 }

@@ -1,6 +1,8 @@
 package touhou.i18n;
 
 public final class TextId {
+    public static final int COUNT = I18nSchema.UI_LINE_COUNT;
+
     public static final int OPTION_TITLE = 0;
 
     public static final int OPTION_MENU_BGM_VOL = 1;
@@ -214,21 +216,21 @@ public final class TextId {
     public static final int OPTION_CHEAT_DESC_1 = 192;
     public static final int OPTION_CHEAT_DESC_2 = 193;
 
-    public static final int OPTION_COMPAT_TITLE = 194;
-    public static final int OPTION_COMPAT_MENU_0 = 195;
-    public static final int OPTION_COMPAT_MENU_1 = 196;
-    public static final int OPTION_COMPAT_MENU_2 = 197;
-    public static final int OPTION_COMPAT_MENU_3 = 198;
-    public static final int OPTION_COMPAT_MENU_4 = 199;
-    public static final int OPTION_COMPAT_MENU_5 = 200;
-    public static final int OPTION_COMPAT_MENU_6 = 201;
-    public static final int OPTION_COMPAT_DESC_0 = 202;
-    public static final int OPTION_COMPAT_DESC_1 = 203;
-    public static final int OPTION_COMPAT_DESC_2 = 204;
-    public static final int OPTION_COMPAT_DESC_3 = 205;
-    public static final int OPTION_COMPAT_DESC_4 = 206;
-    public static final int OPTION_COMPAT_DESC_5 = 207;
-    public static final int OPTION_COMPAT_DESC_6 = 208;
+    public static final int OPTION_RENDER_TITLE = 194;
+    public static final int OPTION_RENDER_MENU_0 = 195;
+    public static final int OPTION_RENDER_MENU_1 = 196;
+    public static final int OPTION_RENDER_MENU_2 = 197;
+    public static final int OPTION_RENDER_MENU_3 = 198;
+    public static final int OPTION_RENDER_MENU_4 = 199;
+    public static final int OPTION_RENDER_MENU_5 = 200;
+    public static final int OPTION_RENDER_MENU_6 = 201;
+    public static final int OPTION_RENDER_DESC_0 = 202;
+    public static final int OPTION_RENDER_DESC_1 = 203;
+    public static final int OPTION_RENDER_DESC_2 = 204;
+    public static final int OPTION_RENDER_DESC_3 = 205;
+    public static final int OPTION_RENDER_DESC_4 = 206;
+    public static final int OPTION_RENDER_DESC_5 = 207;
+    public static final int OPTION_RENDER_DESC_6 = 208;
 
     public static final int OPTION_DEBUG_TITLE = 209;
     public static final int OPTION_DEBUG_MENU_0 = 210;
@@ -645,8 +647,8 @@ public final class TextId {
     public static final int ENDING_NUMBER = 560;
     public static final int ENDING_EXTRA_UNLOCK = 561;
 
-    public static final int OPTION_COMPAT_HIT_SPARK_MENU = 563;
-    public static final int OPTION_COMPAT_HIT_SPARK_DESC = 564;
+    public static final int OPTION_RENDER_HIT_SPARK_MENU = 563;
+    public static final int OPTION_RENDER_HIT_SPARK_DESC = 564;
 
 // BT replay share - receive confirmation
     public static final int BT_RECV_FROM_PREFIX = 576;

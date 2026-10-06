@@ -40,8 +40,6 @@ public final class BattleScene {
             return false;
         }
 
-        prepareBattleFrame(core);
-
         if (core.battleFlowTickSpellPracticeEndCountdownIfNeeded()) {
             core.battleMainHandleResetFlagSideEffects();
             return true;
@@ -56,14 +54,15 @@ public final class BattleScene {
             return true;
         }
 
-        tickMain(core, keys, pressed, fireActionPressed);
-        core.battleMainHandleResetFlagSideEffects();
-        return true;
-    }
-
-    // Battle hook: per-frame origin reset.
-    private static void prepareBattleFrame(GameCore core) {
         core.battleFrameResetOrigin();
+        core.battleVisualBeginFrame();
+        try {
+            tickMain(core, keys, pressed, fireActionPressed);
+            core.battleMainHandleResetFlagSideEffects();
+            return true;
+        } finally {
+            core.battleVisualEndFrame();
+        }
     }
 
     public void render(GameCore core, Graphics g) {

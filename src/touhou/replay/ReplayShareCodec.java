@@ -1,449 +1,162 @@
 package touhou.replay;
 
 public final class ReplayShareCodec {
-    public static final int MAGIC_THRP = 0x50524854; // 'THRP' little-endian
-    public static final int VERSION_1 = 1;
-    public static final int VERSION_2 = 2;
+    public static final int MAGIC = 0x50524854; // 'THRP' little-endian
+    public static final int VERSION = 3;
 
-    public static final int FLAG_HAS_BOSS_DATA = 0x0001;
-    public static final int FLAG_HAS_STAGE_SNAPSHOT = 0x0002;
-    public static final int FLAG_HAS_BOSS_SNAPSHOT = 0x0004;
+    private static final int FIXED_SIZE = 4 + 2 + 2 + 6 * 4 + 4;
+    private static final int CHECKSUM_OFFSET = FIXED_SIZE - 4;
 
     private ReplayShareCodec() {
     }
 
-    public static final class Decoded {
-        public final int version;
-        public final int flags;
-        public final ReplayHeader header;
-        public final byte[] name32;
-        public final byte[] full7168;
-        public final byte[] boss7168;
-        public final byte[] stageSnapshot;
-        public final byte[] bossSnapshot;
-
-        public Decoded(int version, int flags, ReplayHeader header, byte[] name32, byte[] full7168, byte[] boss7168, byte[] stageSnapshot, byte[] bossSnapshot) {
-            this.version = version;
-            this.flags = flags;
-            this.header = header;
-            this.name32 = name32;
-            this.full7168 = full7168;
-            this.boss7168 = boss7168;
-            this.stageSnapshot = stageSnapshot;
-            this.bossSnapshot = bossSnapshot;
+    public static byte[] encode(ReplaySlotData data) {
+        if (!ReplaySlotIntegrity.isValid(data)) {
+            return null;
         }
+
+        int flags = data.header.getPayloadFlags();
+        int bossLength = (data.bossInput != null) ? data.bossInput.length : 0;
+        int stageLength = (data.stageSnapshot != null) ? data.stageSnapshot.length : 0;
+        int bossSnapshotLength = (data.bossSnapshot != null) ? data.bossSnapshot.length : 0;
+        int total = FIXED_SIZE + ReplayHeader.SIZE + ReplayFormat.NAME_SIZE + ReplayCodec.ENCODED_SIZE
+                + bossLength + stageLength + bossSnapshotLength;
+        byte[] output = new byte[total];
+
+        int position = 0;
+        writeI32LE(output, position, MAGIC);
+        position += 4;
+        writeI16LE(output, position, VERSION);
+        position += 2;
+        writeI16LE(output, position, flags);
+        position += 2;
+        writeI32LE(output, position, ReplayHeader.SIZE);
+        position += 4;
+        writeI32LE(output, position, ReplayFormat.NAME_SIZE);
+        position += 4;
+        writeI32LE(output, position, ReplayCodec.ENCODED_SIZE);
+        position += 4;
+        writeI32LE(output, position, bossLength);
+        position += 4;
+        writeI32LE(output, position, stageLength);
+        position += 4;
+        writeI32LE(output, position, bossSnapshotLength);
+        position += 4;
+        position += 4;
+
+        System.arraycopy(data.header.bytes(), 0, output, position, ReplayHeader.SIZE);
+        position += ReplayHeader.SIZE;
+        System.arraycopy(data.name, 0, output, position, ReplayFormat.NAME_SIZE);
+        position += ReplayFormat.NAME_SIZE;
+        System.arraycopy(data.fullInput, 0, output, position, ReplayCodec.ENCODED_SIZE);
+        position += ReplayCodec.ENCODED_SIZE;
+        if (bossLength > 0) {
+            System.arraycopy(data.bossInput, 0, output, position, bossLength);
+            position += bossLength;
+        }
+        if (stageLength > 0) {
+            System.arraycopy(data.stageSnapshot, 0, output, position, stageLength);
+            position += stageLength;
+        }
+        if (bossSnapshotLength > 0) {
+            System.arraycopy(data.bossSnapshot, 0, output, position, bossSnapshotLength);
+        }
+
+        writeI32LE(output, CHECKSUM_OFFSET, packetChecksum(output));
+        return output;
     }
 
-    public static byte[] encodeV2(ReplayHeader header, byte[] name32, byte[] full7168, byte[] boss7168, byte[] stageSnapshot, byte[] bossSnapshot) {
-        if (header == null || name32 == null || full7168 == null) {
+    public static ReplaySlotData decode(byte[] packet) {
+        if (packet == null || packet.length < FIXED_SIZE) {
             return null;
         }
-        if (name32.length < ReplayRmsStore.NAME_SIZE) {
-            return null;
-        }
-        if (full7168.length < ReplayRmsStore.DATA_SIZE) {
+        if (readI32LE(packet, 0) != MAGIC || readU16LE(packet, 4) != VERSION) {
             return null;
         }
 
-        int flags = 0;
-        int bossLen = 0;
-        if (boss7168 != null && boss7168.length >= ReplayRmsStore.DATA_SIZE) {
-            flags |= FLAG_HAS_BOSS_DATA;
-            bossLen = ReplayRmsStore.DATA_SIZE;
-        }
-
-        int stageLen = 0;
-        if (stageSnapshot != null && stageSnapshot.length > 0) {
-            flags |= FLAG_HAS_STAGE_SNAPSHOT;
-            stageLen = stageSnapshot.length;
-        }
-
-        int bossSnapLen = 0;
-        if (bossSnapshot != null && bossSnapshot.length > 0) {
-            flags |= FLAG_HAS_BOSS_SNAPSHOT;
-            bossSnapLen = bossSnapshot.length;
-        }
-
-        int headerLen = ReplayHeader.SIZE;
-        int nameLen = ReplayRmsStore.NAME_SIZE;
-        int fullLen = ReplayRmsStore.DATA_SIZE;
-
-        int fixed = 4 + 2 + 2 + 6 * 4;
-        int total = fixed + headerLen + nameLen + fullLen + bossLen + stageLen + bossSnapLen;
-        byte[] out = new byte[total];
-
-        int p = 0;
-        writeI32LE(out, p, MAGIC_THRP);
-        p += 4;
-        writeI16LE(out, p, VERSION_2);
-        p += 2;
-        writeI16LE(out, p, flags);
-        p += 2;
-
-        writeI32LE(out, p, headerLen);
-        p += 4;
-        writeI32LE(out, p, nameLen);
-        p += 4;
-        writeI32LE(out, p, fullLen);
-        p += 4;
-        writeI32LE(out, p, bossLen);
-        p += 4;
-        writeI32LE(out, p, stageLen);
-        p += 4;
-        writeI32LE(out, p, bossSnapLen);
-        p += 4;
-
-        byte[] hb = header.bytes();
-        if (hb == null || hb.length < ReplayHeader.SIZE) {
+        int flags = readU16LE(packet, 6);
+        if ((flags & ~ReplaySlotIntegrity.FLAGS_MASK) != 0) {
             return null;
         }
-        System.arraycopy(hb, 0, out, p, headerLen);
-        p += headerLen;
+        int headerLength = readI32LE(packet, 8);
+        int nameLength = readI32LE(packet, 12);
+        int fullLength = readI32LE(packet, 16);
+        int bossLength = readI32LE(packet, 20);
+        int stageLength = readI32LE(packet, 24);
+        int bossSnapshotLength = readI32LE(packet, 28);
 
-        System.arraycopy(name32, 0, out, p, nameLen);
-        p += nameLen;
-
-        System.arraycopy(full7168, 0, out, p, fullLen);
-        p += fullLen;
-
-        if (bossLen > 0) {
-            System.arraycopy(boss7168, 0, out, p, bossLen);
-            p += bossLen;
-        }
-
-        if (stageLen > 0) {
-            System.arraycopy(stageSnapshot, 0, out, p, stageLen);
-            p += stageLen;
-        }
-
-        if (bossSnapLen > 0) {
-            System.arraycopy(bossSnapshot, 0, out, p, bossSnapLen);
-            p += bossSnapLen;
-        }
-
-        return out;
-    }
-
-    public static byte[] encodeV1(ReplayHeader header, byte[] name32, byte[] full7168, byte[] boss7168, byte[] stageSnapshot, byte[] bossSnapshot) {
-        if (header == null || name32 == null || full7168 == null) {
+        if (headerLength != ReplayHeader.SIZE || nameLength != ReplayFormat.NAME_SIZE
+                || fullLength != ReplayCodec.ENCODED_SIZE
+                || (bossLength != 0 && bossLength != ReplayCodec.ENCODED_SIZE)
+                || stageLength <= 0 || stageLength > ReplayFormat.SNAPSHOT_MAX_SIZE
+                || bossSnapshotLength < 0 || bossSnapshotLength > ReplayFormat.SNAPSHOT_MAX_SIZE) {
             return null;
         }
-        if (name32.length < ReplayRmsStore.NAME_SIZE) {
-            return null;
-        }
-        if (full7168.length < ReplayRmsStore.DATA_SIZE) {
+        if (((flags & ReplaySlotIntegrity.FLAG_HAS_BOSS_INPUT) != 0) != (bossLength > 0)
+                || ((flags & ReplaySlotIntegrity.FLAG_HAS_BOSS_SNAPSHOT) != 0) != (bossSnapshotLength > 0)) {
             return null;
         }
 
-        int flags = 0;
-        int bossLen = 0;
-        if (boss7168 != null && boss7168.length >= ReplayRmsStore.DATA_SIZE) {
-            flags |= FLAG_HAS_BOSS_DATA;
-            bossLen = ReplayRmsStore.DATA_SIZE;
-        }
-
-        int stageLen = 0;
-        if (stageSnapshot != null && stageSnapshot.length > 0) {
-            flags |= FLAG_HAS_STAGE_SNAPSHOT;
-            stageLen = stageSnapshot.length;
-        }
-
-        int bossSnapLen = 0;
-        if (bossSnapshot != null && bossSnapshot.length > 0) {
-            flags |= FLAG_HAS_BOSS_SNAPSHOT;
-            bossSnapLen = bossSnapshot.length;
-        }
-
-        int headerLen = 32;
-        int nameLen = ReplayRmsStore.NAME_SIZE;
-        int fullLen = ReplayRmsStore.DATA_SIZE;
-
-        int fixed = 4 + 2 + 2 + 6 * 4;
-        int total = fixed + headerLen + nameLen + fullLen + bossLen + stageLen + bossSnapLen;
-        byte[] out = new byte[total];
-
-        int p = 0;
-        writeI32LE(out, p, MAGIC_THRP);
-        p += 4;
-        writeI16LE(out, p, VERSION_1);
-        p += 2;
-        writeI16LE(out, p, flags);
-        p += 2;
-
-        writeI32LE(out, p, headerLen);
-        p += 4;
-        writeI32LE(out, p, nameLen);
-        p += 4;
-        writeI32LE(out, p, fullLen);
-        p += 4;
-        writeI32LE(out, p, bossLen);
-        p += 4;
-        writeI32LE(out, p, stageLen);
-        p += 4;
-        writeI32LE(out, p, bossSnapLen);
-        p += 4;
-
-        byte[] hb = header.bytes();
-        if (hb == null || hb.length < headerLen) {
-            return null;
-        }
-        System.arraycopy(hb, 0, out, p, headerLen);
-        p += headerLen;
-
-        System.arraycopy(name32, 0, out, p, nameLen);
-        p += nameLen;
-
-        System.arraycopy(full7168, 0, out, p, fullLen);
-        p += fullLen;
-
-        if (bossLen > 0) {
-            System.arraycopy(boss7168, 0, out, p, bossLen);
-            p += bossLen;
-        }
-
-        if (stageLen > 0) {
-            System.arraycopy(stageSnapshot, 0, out, p, stageLen);
-            p += stageLen;
-        }
-
-        if (bossSnapLen > 0) {
-            System.arraycopy(bossSnapshot, 0, out, p, bossSnapLen);
-            p += bossSnapLen;
-        }
-
-        return out;
-    }
-
-    public static final class DecodedV1 {
-        public final int flags;
-        public final ReplayHeader header;
-        public final byte[] name32;
-        public final byte[] full7168;
-        public final byte[] boss7168;
-        public final byte[] stageSnapshot;
-        public final byte[] bossSnapshot;
-
-        public DecodedV1(int flags, ReplayHeader header, byte[] name32, byte[] full7168, byte[] boss7168, byte[] stageSnapshot, byte[] bossSnapshot) {
-            this.flags = flags;
-            this.header = header;
-            this.name32 = name32;
-            this.full7168 = full7168;
-            this.boss7168 = boss7168;
-            this.stageSnapshot = stageSnapshot;
-            this.bossSnapshot = bossSnapshot;
-        }
-    }
-
-    public static DecodedV1 decodeV1(byte[] b) {
-        if (b == null) {
-            return null;
-        }
-        int p = 0;
-        if (b.length < 4 + 2 + 2 + 6 * 4) {
+        long expectedLength = (long) FIXED_SIZE + headerLength + nameLength + fullLength
+                + bossLength + stageLength + bossSnapshotLength;
+        if (expectedLength != packet.length
+                || readI32LE(packet, CHECKSUM_OFFSET) != packetChecksum(packet)) {
             return null;
         }
 
-        int magic = readI32LE(b, p);
-        p += 4;
-        if (magic != MAGIC_THRP) {
-            return null;
-        }
-
-        int ver = readU16LE(b, p);
-        p += 2;
-        if (ver != VERSION_1) {
-            return null;
-        }
-
-        int flags = readU16LE(b, p);
-        p += 2;
-
-        int headerLen = readI32LE(b, p);
-        p += 4;
-        int nameLen = readI32LE(b, p);
-        p += 4;
-        int fullLen = readI32LE(b, p);
-        p += 4;
-        int bossLen = readI32LE(b, p);
-        p += 4;
-        int stageLen = readI32LE(b, p);
-        p += 4;
-        int bossSnapLen = readI32LE(b, p);
-        p += 4;
-
-        if (headerLen != 32) {
-            return null;
-        }
-        if (nameLen != ReplayRmsStore.NAME_SIZE) {
-            return null;
-        }
-        if (fullLen != ReplayRmsStore.DATA_SIZE) {
-            return null;
-        }
-        if (bossLen != 0 && bossLen != ReplayRmsStore.DATA_SIZE) {
-            return null;
-        }
-        if (stageLen < 0 || stageLen > ReplayStageSnapshotStore.MAX_SIZE) {
-            return null;
-        }
-        if (bossSnapLen < 0 || bossSnapLen > ReplayBossSnapshotStore.MAX_SIZE) {
-            return null;
-        }
-
-        int need = (4 + 2 + 2 + 6 * 4) + headerLen + nameLen + fullLen + bossLen + stageLen + bossSnapLen;
-        if (b.length < need) {
-            return null;
-        }
-
+        int position = FIXED_SIZE;
         ReplayHeader header = new ReplayHeader();
-        header.load(sliceCopy(b, p, headerLen));
-        p += headerLen;
-
-        byte[] name32 = sliceCopy(b, p, nameLen);
-        p += nameLen;
-
-        byte[] full7168 = sliceCopy(b, p, fullLen);
-        p += fullLen;
-
-        byte[] boss7168 = null;
-        if (bossLen > 0) {
-            boss7168 = sliceCopy(b, p, bossLen);
-            p += bossLen;
+        header.load(copy(packet, position, headerLength));
+        position += headerLength;
+        byte[] name = copy(packet, position, nameLength);
+        position += nameLength;
+        byte[] fullInput = copy(packet, position, fullLength);
+        position += fullLength;
+        byte[] bossInput = null;
+        if (bossLength > 0) {
+            bossInput = copy(packet, position, bossLength);
+            position += bossLength;
         }
-
         byte[] stageSnapshot = null;
-        if (stageLen > 0) {
-            stageSnapshot = sliceCopy(b, p, stageLen);
-            p += stageLen;
+        if (stageLength > 0) {
+            stageSnapshot = copy(packet, position, stageLength);
+            position += stageLength;
         }
-
         byte[] bossSnapshot = null;
-        if (bossSnapLen > 0) {
-            bossSnapshot = sliceCopy(b, p, bossSnapLen);
-            p += bossSnapLen;
+        if (bossSnapshotLength > 0) {
+            bossSnapshot = copy(packet, position, bossSnapshotLength);
         }
 
-        return new DecodedV1(flags, header, name32, full7168, boss7168, stageSnapshot, bossSnapshot);
+        ReplaySlotData data = new ReplaySlotData(header, name, fullInput, bossInput, stageSnapshot, bossSnapshot);
+        return ReplaySlotIntegrity.isValid(data) ? data : null;
     }
 
-    public static Decoded decode(byte[] b) {
-        if (b == null) {
-            return null;
-        }
-        int p = 0;
-        if (b.length < 4 + 2 + 2 + 6 * 4) {
-            return null;
-        }
-
-        int magic = readI32LE(b, p);
-        p += 4;
-        if (magic != MAGIC_THRP) {
-            return null;
-        }
-
-        int ver = readU16LE(b, p);
-        p += 2;
-        if (ver != VERSION_1 && ver != VERSION_2) {
-            return null;
-        }
-
-        int flags = readU16LE(b, p);
-        p += 2;
-
-        int headerLen = readI32LE(b, p);
-        p += 4;
-        int nameLen = readI32LE(b, p);
-        p += 4;
-        int fullLen = readI32LE(b, p);
-        p += 4;
-        int bossLen = readI32LE(b, p);
-        p += 4;
-        int stageLen = readI32LE(b, p);
-        p += 4;
-        int bossSnapLen = readI32LE(b, p);
-        p += 4;
-
-        if (headerLen != 32 && headerLen != ReplayHeader.SIZE) {
-            return null;
-        }
-        if (nameLen != ReplayRmsStore.NAME_SIZE) {
-            return null;
-        }
-        if (fullLen != ReplayRmsStore.DATA_SIZE) {
-            return null;
-        }
-        if (bossLen != 0 && bossLen != ReplayRmsStore.DATA_SIZE) {
-            return null;
-        }
-        if (stageLen < 0 || stageLen > ReplayStageSnapshotStore.MAX_SIZE) {
-            return null;
-        }
-        if (bossSnapLen < 0 || bossSnapLen > ReplayBossSnapshotStore.MAX_SIZE) {
-            return null;
-        }
-
-        int need = (4 + 2 + 2 + 6 * 4) + headerLen + nameLen + fullLen + bossLen + stageLen + bossSnapLen;
-        if (b.length < need) {
-            return null;
-        }
-
-        ReplayHeader header = new ReplayHeader();
-        header.load(sliceCopy(b, p, headerLen));
-        p += headerLen;
-
-        byte[] name32 = sliceCopy(b, p, nameLen);
-        p += nameLen;
-
-        byte[] full7168 = sliceCopy(b, p, fullLen);
-        p += fullLen;
-
-        byte[] boss7168 = null;
-        if (bossLen > 0) {
-            boss7168 = sliceCopy(b, p, bossLen);
-            p += bossLen;
-        }
-
-        byte[] stageSnapshot = null;
-        if (stageLen > 0) {
-            stageSnapshot = sliceCopy(b, p, stageLen);
-            p += stageLen;
-        }
-
-        byte[] bossSnapshot = null;
-        if (bossSnapLen > 0) {
-            bossSnapshot = sliceCopy(b, p, bossSnapLen);
-            p += bossSnapLen;
-        }
-
-        return new Decoded(ver, flags, header, name32, full7168, boss7168, stageSnapshot, bossSnapshot);
+    private static int packetChecksum(byte[] packet) {
+        int checksum = ReplayChecksum.update(ReplayChecksum.INITIAL, packet, 0, CHECKSUM_OFFSET);
+        return ReplayChecksum.update(checksum, packet, CHECKSUM_OFFSET + 4,
+                packet.length - CHECKSUM_OFFSET - 4);
     }
 
-    private static byte[] sliceCopy(byte[] b, int off, int len) {
-        if (len <= 0) {
-            return new byte[0];
-        }
-        byte[] out = new byte[len];
-        System.arraycopy(b, off, out, 0, len);
-        return out;
+    private static byte[] copy(byte[] source, int offset, int length) {
+        byte[] output = new byte[length];
+        System.arraycopy(source, offset, output, 0, length);
+        return output;
     }
 
-    private static int readU16LE(byte[] b, int p) {
-        return (b[p] & 0xFF) | ((b[p + 1] & 0xFF) << 8);
+    private static int readU16LE(byte[] data, int offset) {
+        return (data[offset] & 0xFF) | ((data[offset + 1] & 0xFF) << 8);
     }
 
-    private static int readI32LE(byte[] b, int p) {
-        return (b[p] & 0xFF) | ((b[p + 1] & 0xFF) << 8) | ((b[p + 2] & 0xFF) << 16) | ((b[p + 3] & 0xFF) << 24);
+    private static int readI32LE(byte[] data, int offset) {
+        return ReplayChecksum.readI32LE(data, offset);
     }
 
-    private static void writeI16LE(byte[] b, int p, int v) {
-        b[p] = (byte) (v & 0xFF);
-        b[p + 1] = (byte) ((v >> 8) & 0xFF);
+    private static void writeI16LE(byte[] data, int offset, int value) {
+        data[offset] = (byte) (value & 0xFF);
+        data[offset + 1] = (byte) ((value >> 8) & 0xFF);
     }
 
-    private static void writeI32LE(byte[] b, int p, int v) {
-        b[p] = (byte) (v & 0xFF);
-        b[p + 1] = (byte) ((v >> 8) & 0xFF);
-        b[p + 2] = (byte) ((v >> 16) & 0xFF);
-        b[p + 3] = (byte) ((v >> 24) & 0xFF);
+    private static void writeI32LE(byte[] data, int offset, int value) {
+        ReplayChecksum.writeI32LE(data, offset, value);
     }
 }

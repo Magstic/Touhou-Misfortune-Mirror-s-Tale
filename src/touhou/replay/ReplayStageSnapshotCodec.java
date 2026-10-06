@@ -9,7 +9,9 @@ import touhou.battle.BattleHudModel;
 public final class ReplayStageSnapshotCodec {
     // Magic/version for stage-start snapshot.
     public static final int MAGIC = 0x53534E50; // 'SSNP'
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
+    private static final int BODY_SIZE_WITHOUT_HUD = 18 + ScoreSystem.SNAPSHOT_SIZE + Player.SNAPSHOT_SIZE;
+    private static final int BODY_SIZE_WITH_HUD = BODY_SIZE_WITHOUT_HUD + 8;
 
     private ReplayStageSnapshotCodec() {
     }
@@ -41,19 +43,23 @@ public final class ReplayStageSnapshotCodec {
         w.writeBool(true);
         player.writeSnapshot(w);
 
-        return w.toByteArray();
+        byte[] body = w.toByteArray();
+        int expectedSize = hasHud ? BODY_SIZE_WITH_HUD : BODY_SIZE_WITHOUT_HUD;
+        return (body.length == expectedSize) ? ReplayChecksum.append(body) : null;
     }
 
     // Decode snapshot and apply state. Returns false if data is invalid.
     public static boolean decodeAndApply(byte[] snap, ReplayRng random, BattleContinueSystem continueSystem, BattleHudData hud, ScoreSystem scoreSystem, Player player) {
-        if (snap == null || snap.length < 8) {
+        if (snap == null
+                || (snap.length != BODY_SIZE_WITHOUT_HUD + 4 && snap.length != BODY_SIZE_WITH_HUD + 4)
+                || !ReplayChecksum.hasValidFooter(snap)) {
             return false;
         }
         if (random == null || continueSystem == null || scoreSystem == null || player == null) {
             return false;
         }
 
-        ReplaySnapshotReader r = new ReplaySnapshotReader(snap);
+        ReplaySnapshotReader r = new ReplaySnapshotReader(snap, snap.length - 4);
         int magic = r.readI32LE();
         int ver = r.readI32LE();
         if (magic != MAGIC || ver != VERSION) {
@@ -91,6 +97,6 @@ public final class ReplayStageSnapshotCodec {
         }
         player.readSnapshot(r);
 
-        return true;
+        return r.isAtEnd();
     }
 }

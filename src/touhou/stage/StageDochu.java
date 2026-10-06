@@ -28,13 +28,13 @@ public class StageDochu {
         // Stage 1/2: enemyType 10 simple aimed shots.
         if (enemyType == 10 && ey < 14680064 && (enemylist[enemyIndex][2] == 10 || enemylist[enemyIndex][2] == 25)) {
             if (level != 0) {
-                enemyBullets.cc(81, 3, 0, 48, ex, ey, px, py);
+                enemyBullets.spawn(81, 3, 0, 48, ex, ey, px, py);
             }
             if (level >= 2) {
-                enemyBullets.cc(81, 3, 0, 56, ex + 196608, ey, px, py);
-                enemyBullets.cc(81, 3, 0, 64, ex, ey + 196608, px, py);
-                enemyBullets.cc(81, 3, 0, 72, ex - 196608, ey, px, py);
-                enemyBullets.cc(81, 3, 0, 80, ex, ey - 196608, px, py);
+                enemyBullets.spawn(81, 3, 0, 56, ex + 196608, ey, px, py);
+                enemyBullets.spawn(81, 3, 0, 64, ex, ey + 196608, px, py);
+                enemyBullets.spawn(81, 3, 0, 72, ex - 196608, ey, px, py);
+                enemyBullets.spawn(81, 3, 0, 80, ex, ey - 196608, px, py);
             }
         }
 
@@ -43,17 +43,17 @@ public class StageDochu {
             int ang = BattleMath.arcTan2Deg(py - ey, px - ex);
             if (enemylist[enemyIndex][2] == 20) {
                 if (level == 1) {
-                    enemyBullets.cc(81, 0, ang, 40, ex, ey, px, py);
+                    enemyBullets.spawn(81, 0, ang, 40, ex, ey, px, py);
                 } else if (level == 2) {
-                    enemyBullets.cc(81, 0, ang, 40, ex, ey, px, py);
-                    enemyBullets.cc(81, 0, ang + 15, 40, ex, ey, px, py);
-                    enemyBullets.cc(81, 0, ang - 15, 40, ex, ey, px, py);
+                    enemyBullets.spawn(81, 0, ang, 40, ex, ey, px, py);
+                    enemyBullets.spawn(81, 0, ang + 15, 40, ex, ey, px, py);
+                    enemyBullets.spawn(81, 0, ang - 15, 40, ex, ey, px, py);
                 } else if (level >= 3) {
-                    enemyBullets.cc(81, 0, ang, 40, ex, ey, px, py);
-                    enemyBullets.cc(81, 0, ang + 10, 40, ex, ey, px, py);
-                    enemyBullets.cc(81, 0, ang - 10, 40, ex, ey, px, py);
-                    enemyBullets.cc(81, 0, ang + 20, 40, ex, ey, px, py);
-                    enemyBullets.cc(81, 0, ang - 20, 40, ex, ey, px, py);
+                    enemyBullets.spawn(81, 0, ang, 40, ex, ey, px, py);
+                    enemyBullets.spawn(81, 0, ang + 10, 40, ex, ey, px, py);
+                    enemyBullets.spawn(81, 0, ang - 10, 40, ex, ey, px, py);
+                    enemyBullets.spawn(81, 0, ang + 20, 40, ex, ey, px, py);
+                    enemyBullets.spawn(81, 0, ang - 20, 40, ex, ey, px, py);
                 }
             }
         }
@@ -72,40 +72,40 @@ public class StageDochu {
                 div = 36;
             }
             for (int i = 0; i < 360; i += 360 / div) {
-                enemyBullets.cc(81, 2, i, 80, ex, ey, px, py);
+                enemyBullets.spawn(81, 2, i, 80, ex, ey, px, py);
             }
         }
 
         if (enemyType == 22 && (level >= 2 || (enemylist[enemyIndex][2] & 1) == 0)) {
             if (enemylist[enemyIndex][2] > 15 && enemylist[enemyIndex][2] < 25) {
                 int a = enemylist[enemyIndex][2] * 10;
-                enemyBullets.cc(81, 1, a, 8, ex, ey, px, py);
-                enemyBullets.cc(81, 1, a + 90, 8, ex, ey, px, py);
-                enemyBullets.cc(81, 1, a + 180, 8, ex, ey, px, py);
-                enemyBullets.cc(81, 1, a + 270, 8, ex, ey, px, py);
+                enemyBullets.spawn(81, 1, a, 8, ex, ey, px, py);
+                enemyBullets.spawn(81, 1, a + 90, 8, ex, ey, px, py);
+                enemyBullets.spawn(81, 1, a + 180, 8, ex, ey, px, py);
+                enemyBullets.spawn(81, 1, a + 270, 8, ex, ey, px, py);
             } else if (enemylist[enemyIndex][2] > 25 && enemylist[enemyIndex][2] < 35) {
                 int a = (enemylist[enemyIndex][2] * 10) % 360;
-                enemyBullets.cc(81, 1, 360 - a, 24, ex, ey, px, py);
-                enemyBullets.cc(81, 1, 360 - (a + 90), 24, ex, ey, px, py);
-                enemyBullets.cc(81, 1, 360 - (a + 180), 24, ex, ey, px, py);
-                enemyBullets.cc(81, 1, 360 - (a + 270), 24, ex, ey, px, py);
+                enemyBullets.spawn(81, 1, 360 - a, 24, ex, ey, px, py);
+                enemyBullets.spawn(81, 1, 360 - (a + 90), 24, ex, ey, px, py);
+                enemyBullets.spawn(81, 1, 360 - (a + 180), 24, ex, ey, px, py);
+                enemyBullets.spawn(81, 1, 360 - (a + 270), 24, ex, ey, px, py);
             }
         }
 
         if (enemyType == 23 && (level >= 2 || (enemylist[enemyIndex][2] & 1) == 0) && enemylist[enemyIndex][2] > 15 && enemylist[enemyIndex][2] < 25) {
             int a = enemylist[enemyIndex][2] * 10;
-            enemyBullets.cc(82, 1, a, 24, ex, ey, px, py);
-            enemyBullets.cc(82, 1, a + 90, 24, ex, ey, px, py);
-            enemyBullets.cc(82, 1, a + 180, 24, ex, ey, px, py);
-            enemyBullets.cc(82, 1, a + 270, 24, ex, ey, px, py);
+            enemyBullets.spawn(82, 1, a, 24, ex, ey, px, py);
+            enemyBullets.spawn(82, 1, a + 90, 24, ex, ey, px, py);
+            enemyBullets.spawn(82, 1, a + 180, 24, ex, ey, px, py);
+            enemyBullets.spawn(82, 1, a + 270, 24, ex, ey, px, py);
         }
 
         if (enemyType == 24 && (level >= 2 || (enemylist[enemyIndex][2] & 1) == 0) && enemylist[enemyIndex][2] > 15 && enemylist[enemyIndex][2] < 25) {
             int a = (enemylist[enemyIndex][2] * 10) % 360;
-            enemyBullets.cc(82, 1, 360 - a, 24, ex, ey, px, py);
-            enemyBullets.cc(82, 1, 360 - (a + 90), 24, ex, ey, px, py);
-            enemyBullets.cc(82, 1, 360 - (a + 180), 24, ex, ey, px, py);
-            enemyBullets.cc(82, 1, 360 - (a + 270), 24, ex, ey, px, py);
+            enemyBullets.spawn(82, 1, 360 - a, 24, ex, ey, px, py);
+            enemyBullets.spawn(82, 1, 360 - (a + 90), 24, ex, ey, px, py);
+            enemyBullets.spawn(82, 1, 360 - (a + 180), 24, ex, ey, px, py);
+            enemyBullets.spawn(82, 1, 360 - (a + 270), 24, ex, ey, px, py);
         }
     }
 
@@ -125,16 +125,16 @@ public class StageDochu {
             if (enemylist[enemyIndex][7] == 1 && enemylist[enemyIndex][2] % 20 == 0) {
                 if (level == 4) {
                     for (int j = 0; j < 360; j += 15) {
-                        enemyBullets.cc(82, 0, j, 40, ex, ey + 524288, px, py);
-                        enemyBullets.cc(82, 0, j, 56, ex, ey + 262144, px, py);
-                        enemyBullets.cc(82, 0, j, 72, ex, ey, px, py);
+                        enemyBullets.spawn(82, 0, j, 40, ex, ey + 524288, px, py);
+                        enemyBullets.spawn(82, 0, j, 56, ex, ey + 262144, px, py);
+                        enemyBullets.spawn(82, 0, j, 72, ex, ey, px, py);
                     }
                 } else {
-                    enemyBullets.cc(82, 0, 270, 40, ex, ey + 524288, px, py);
-                    enemyBullets.cc(82, 0, 270, 48, ex, ey + 393216, px, py);
-                    enemyBullets.cc(82, 0, 270, 56, ex, ey + 262144, px, py);
-                    enemyBullets.cc(82, 0, 270, 64, ex, ey + 131072, px, py);
-                    enemyBullets.cc(82, 0, 270, 72, ex, ey, px, py);
+                    enemyBullets.spawn(82, 0, 270, 40, ex, ey + 524288, px, py);
+                    enemyBullets.spawn(82, 0, 270, 48, ex, ey + 393216, px, py);
+                    enemyBullets.spawn(82, 0, 270, 56, ex, ey + 262144, px, py);
+                    enemyBullets.spawn(82, 0, 270, 64, ex, ey + 131072, px, py);
+                    enemyBullets.spawn(82, 0, 270, 72, ex, ey, px, py);
                 }
             }
             enemylist[enemyIndex][15] -= 1;
@@ -149,20 +149,20 @@ public class StageDochu {
                 int d3 = 7;
                 int base = enemylist[enemyIndex][10];
                 int step = (enemylist[enemyIndex][9] << 2);
-                enemyBullets.cc(84, 0, base + 180 + step, d3 << 3, ex, ey, px, py);
-                enemyBullets.cc(84, 0, base + 180 - step, d3 << 3, ex, ey, px, py);
+                enemyBullets.spawn(84, 0, base + 180 + step, d3 << 3, ex, ey, px, py);
+                enemyBullets.spawn(84, 0, base + 180 - step, d3 << 3, ex, ey, px, py);
                 if (level > 0) {
                     d3--;
-                    enemyBullets.cc(84, 0, base + 180 + step + 5, d3 << 3, ex, ey, px, py);
-                    enemyBullets.cc(84, 0, base + 180 - step - 5, d3 << 3, ex, ey, px, py);
+                    enemyBullets.spawn(84, 0, base + 180 + step + 5, d3 << 3, ex, ey, px, py);
+                    enemyBullets.spawn(84, 0, base + 180 - step - 5, d3 << 3, ex, ey, px, py);
                     if (level > 1) {
                         d3--;
-                        enemyBullets.cc(84, 0, base + 180 + step + 10, d3 << 3, ex, ey, px, py);
-                        enemyBullets.cc(84, 0, base + 180 - step - 10, d3 << 3, ex, ey, px, py);
+                        enemyBullets.spawn(84, 0, base + 180 + step + 10, d3 << 3, ex, ey, px, py);
+                        enemyBullets.spawn(84, 0, base + 180 - step - 10, d3 << 3, ex, ey, px, py);
                         if (level > 2) {
                             d3--;
-                            enemyBullets.cc(84, 0, base + 180 + step + 15, d3 << 3, ex, ey, px, py);
-                            enemyBullets.cc(84, 0, base + 180 - step - 15, d3 << 3, ex, ey, px, py);
+                            enemyBullets.spawn(84, 0, base + 180 + step + 15, d3 << 3, ex, ey, px, py);
+                            enemyBullets.spawn(84, 0, base + 180 - step - 15, d3 << 3, ex, ey, px, py);
                         }
                     }
                 }
@@ -201,12 +201,12 @@ public class StageDochu {
             int slot = 0;
             for (int ang = -60; ang <= 60; ang += 120 / div) {
                 int aim = (enemylist[enemyIndex][10] + 360 + ang) % 360;
-                enemyBullets.cc(603, 0, aim, 48, ex, ey, px, py);
+                enemyBullets.spawn(603, 0, aim, 48, ex, ey, px, py);
                 if ((slot & 1) == 0) {
-                    enemyBullets.cc(603, 26, aim, 32, ex, ey, px, py);
-                    enemyBullets.cc(603, 26, aim, 40, ex, ey, px, py);
-                    enemyBullets.cc(603, 26, aim, 56, ex, ey, px, py);
-                    enemyBullets.cc(603, 26, aim, 64, ex, ey, px, py);
+                    enemyBullets.spawn(603, 26, aim, 32, ex, ey, px, py);
+                    enemyBullets.spawn(603, 26, aim, 40, ex, ey, px, py);
+                    enemyBullets.spawn(603, 26, aim, 56, ex, ey, px, py);
+                    enemyBullets.spawn(603, 26, aim, 64, ex, ey, px, py);
                 }
                 slot++;
             }
@@ -219,15 +219,15 @@ public class StageDochu {
             if (enemylist[enemyIndex][9] < 10 && (enemylist[enemyIndex][9] & 1) == 0) {
                 int spd = -8;
                 int base = enemylist[enemyIndex][10];
-                enemyBullets.cc(639, 1, base, spd << 3, ex, ey, px, py);
-                enemyBullets.cc(639, 1, base + 20, spd << 3, ex, ey, px, py);
-                enemyBullets.cc(639, 1, base - 20, spd << 3, ex, ey, px, py);
+                enemyBullets.spawn(639, 1, base, spd << 3, ex, ey, px, py);
+                enemyBullets.spawn(639, 1, base + 20, spd << 3, ex, ey, px, py);
+                enemyBullets.spawn(639, 1, base - 20, spd << 3, ex, ey, px, py);
                 if (level > 1) {
-                    enemyBullets.cc(639, 1, base + 40, spd << 3, ex, ey, px, py);
-                    enemyBullets.cc(639, 1, base - 40, spd << 3, ex, ey, px, py);
+                    enemyBullets.spawn(639, 1, base + 40, spd << 3, ex, ey, px, py);
+                    enemyBullets.spawn(639, 1, base - 40, spd << 3, ex, ey, px, py);
                     if (level > 2) {
-                        enemyBullets.cc(639, 1, base + 60, spd << 3, ex, ey, px, py);
-                        enemyBullets.cc(639, 1, base - 60, spd << 3, ex, ey, px, py);
+                        enemyBullets.spawn(639, 1, base + 60, spd << 3, ex, ey, px, py);
+                        enemyBullets.spawn(639, 1, base - 60, spd << 3, ex, ey, px, py);
                     }
                 }
             }
@@ -259,7 +259,7 @@ public class StageDochu {
                 d1 = 8;
             }
             if ((enemylist[enemyIndex][9] & 1) == 0 && enemylist[enemyIndex][9] % 20 < (d1 << 1)) {
-                enemyBullets.cc(86, 0, 450, 56, ex, ey, px, py);
+                enemyBullets.spawn(86, 0, 450, 56, ex, ey, px, py);
             }
             enemylist[enemyIndex][9] += 1;
         }
@@ -278,8 +278,8 @@ public class StageDochu {
             if ((enemylist[enemyIndex][9] & 1) == 0) {
                 for (int a = 0; a < 360; a += 360 / d1) {
                     int shift = (enemylist[enemyIndex][9] << 2);
-                    enemyBullets.cc(86, 41, a - shift, 0, ex, ey, px, py);
-                    enemyBullets.cc(86, 41, a + shift + 180, 0, ex, ey, px, py);
+                    enemyBullets.spawn(86, 41, a - shift, 0, ex, ey, px, py);
+                    enemyBullets.spawn(86, 41, a + shift + 180, 0, ex, ey, px, py);
                 }
             }
             enemylist[enemyIndex][9] += 1;
@@ -310,11 +310,11 @@ public class StageDochu {
                 for (int a = 0; a < 360; a += 360 / d1) {
                     int ang = a + (enemylist[enemyIndex][9] * d4) + 270;
                     if (level != 1) {
-                        enemyBullets.cc(585, 0, ang, 56, ex, ey, px, py);
+                        enemyBullets.spawn(585, 0, ang, 56, ex, ey, px, py);
                     }
                     if (level >= 1) {
-                        enemyBullets.cc(585, 0, ang + 8, 56, ex, ey, px, py);
-                        enemyBullets.cc(585, 0, ang - 8, 56, ex, ey, px, py);
+                        enemyBullets.spawn(585, 0, ang + 8, 56, ex, ey, px, py);
+                        enemyBullets.spawn(585, 0, ang - 8, 56, ex, ey, px, py);
                     }
                 }
             }
@@ -346,11 +346,11 @@ public class StageDochu {
                 for (int a = 0; a < 360; a += 360 / d1) {
                     int ang = a - (enemylist[enemyIndex][9] * d4) + 270;
                     if (level != 1) {
-                        enemyBullets.cc(585, 0, ang, 56, ex, ey, px, py);
+                        enemyBullets.spawn(585, 0, ang, 56, ex, ey, px, py);
                     }
                     if (level >= 1) {
-                        enemyBullets.cc(585, 0, ang + 8, 56, ex, ey, px, py);
-                        enemyBullets.cc(585, 0, ang - 8, 56, ex, ey, px, py);
+                        enemyBullets.spawn(585, 0, ang + 8, 56, ex, ey, px, py);
+                        enemyBullets.spawn(585, 0, ang - 8, 56, ex, ey, px, py);
                     }
                 }
             }
@@ -393,10 +393,10 @@ public class StageDochu {
                 for (int i = 0; i < 6; i++) {
                     int spd = 32 + (i << 2);
                     if (enemylist[enemyIndex][9] == 0) {
-                        enemyBullets.cc(335, 0, 450, spd, ex, ey, px, py);
+                        enemyBullets.spawn(335, 0, 450, spd, ex, ey, px, py);
                     } else {
-                        enemyBullets.cc(335, 0, (180 + offset + 360) % 360 + 270, spd, ex, ey, px, py);
-                        enemyBullets.cc(335, 0, (180 - offset + 360) % 360 + 270, spd, ex, ey, px, py);
+                        enemyBullets.spawn(335, 0, (180 + offset + 360) % 360 + 270, spd, ex, ey, px, py);
+                        enemyBullets.spawn(335, 0, (180 - offset + 360) % 360 + 270, spd, ex, ey, px, py);
                     }
                 }
                 enemylist[enemyIndex][9] += 1;
@@ -415,8 +415,8 @@ public class StageDochu {
                 }
                 for (int ang = 0; ang < 360; ang += 360 / div) {
                     int offset = enemylist[enemyIndex][9] << 1;
-                    enemyBullets.cc(81, 2, (ang + offset + 360) % 360, 64, ex, ey, px, py);
-                    enemyBullets.cc(81, 2, (ang - offset + 360) % 360, 64, ex, ey, px, py);
+                    enemyBullets.spawn(81, 2, (ang + offset + 360) % 360, 64, ex, ey, px, py);
+                    enemyBullets.spawn(81, 2, (ang - offset + 360) % 360, 64, ex, ey, px, py);
                 }
                 enemylist[enemyIndex][9] += 1;
             }
@@ -449,9 +449,9 @@ public class StageDochu {
                 enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
                 for (int ang = 0; ang < 360; ang += 360 / div) {
                     if ((enemylist[enemyIndex][9] & 1) == 0) {
-                        enemyBullets.cc(86, 9, enemylist[enemyIndex][10] + ang, 64 + (enemylist[enemyIndex][9] << 1), ex, ey, px, py);
+                        enemyBullets.spawn(86, 9, enemylist[enemyIndex][10] + ang, 64 + (enemylist[enemyIndex][9] << 1), ex, ey, px, py);
                     } else {
-                        enemyBullets.cc(86, 0, enemylist[enemyIndex][10] + ang, 48 + (enemylist[enemyIndex][9] << 1), ex, ey, px, py);
+                        enemyBullets.spawn(86, 0, enemylist[enemyIndex][10] + ang, 48 + (enemylist[enemyIndex][9] << 1), ex, ey, px, py);
                     }
                 }
                 enemylist[enemyIndex][9] += 1;
@@ -479,13 +479,13 @@ public class StageDochu {
             if (enemylist[enemyIndex][9] < 10 && (enemylist[enemyIndex][9] & 1) == 0) {
                 int d3 = 3 + enemylist[enemyIndex][9];
                 int base = enemylist[enemyIndex][10];
-                enemyBullets.cc(86, 0, base, d3 << 3, ex, ey, px, py);
+                enemyBullets.spawn(86, 0, base, d3 << 3, ex, ey, px, py);
                 if (level > 1) {
-                    enemyBullets.cc(86, 0, base + 20, d3 << 3, ex, ey, px, py);
-                    enemyBullets.cc(86, 0, base - 20, d3 << 3, ex, ey, px, py);
+                    enemyBullets.spawn(86, 0, base + 20, d3 << 3, ex, ey, px, py);
+                    enemyBullets.spawn(86, 0, base - 20, d3 << 3, ex, ey, px, py);
                     if (level > 2) {
-                        enemyBullets.cc(86, 0, base + 40, d3 << 3, ex, ey, px, py);
-                        enemyBullets.cc(86, 0, base - 40, d3 << 3, ex, ey, px, py);
+                        enemyBullets.spawn(86, 0, base + 40, d3 << 3, ex, ey, px, py);
+                        enemyBullets.spawn(86, 0, base - 40, d3 << 3, ex, ey, px, py);
                     }
                 }
             }
@@ -498,24 +498,24 @@ public class StageDochu {
             int d3 = 7;
 
             if (level == 0) {
-                enemyBullets.cc(82, 0, ang + 10, d3 << 3, ex, ey, px, py);
-                enemyBullets.cc(82, 0, ang - 10, d3 << 3, ex, ey, px, py);
+                enemyBullets.spawn(82, 0, ang + 10, d3 << 3, ex, ey, px, py);
+                enemyBullets.spawn(82, 0, ang - 10, d3 << 3, ex, ey, px, py);
             } else {
-                enemyBullets.cc(82, 0, ang, d3 << 3, ex, ey, px, py);
+                enemyBullets.spawn(82, 0, ang, d3 << 3, ex, ey, px, py);
                 d3--;
-                enemyBullets.cc(82, 0, ang + 10, d3 << 3, ex, ey, px, py);
-                enemyBullets.cc(82, 0, ang - 10, d3 << 3, ex, ey, px, py);
+                enemyBullets.spawn(82, 0, ang + 10, d3 << 3, ex, ey, px, py);
+                enemyBullets.spawn(82, 0, ang - 10, d3 << 3, ex, ey, px, py);
                 if (level > 1) {
                     d3--;
-                    enemyBullets.cc(82, 0, ang + 20, d3 << 3, ex, ey, px, py);
-                    enemyBullets.cc(82, 0, ang, d3 << 3, ex, ey, px, py);
-                    enemyBullets.cc(82, 0, ang - 20, d3 << 3, ex, ey, px, py);
+                    enemyBullets.spawn(82, 0, ang + 20, d3 << 3, ex, ey, px, py);
+                    enemyBullets.spawn(82, 0, ang, d3 << 3, ex, ey, px, py);
+                    enemyBullets.spawn(82, 0, ang - 20, d3 << 3, ex, ey, px, py);
                     if (level > 2) {
                         d3--;
-                        enemyBullets.cc(82, 0, ang + 30, d3 << 3, ex, ey, px, py);
-                        enemyBullets.cc(82, 0, ang + 10, d3 << 3, ex, ey, px, py);
-                        enemyBullets.cc(82, 0, ang - 10, d3 << 3, ex, ey, px, py);
-                        enemyBullets.cc(82, 0, ang - 30, d3 << 3, ex, ey, px, py);
+                        enemyBullets.spawn(82, 0, ang + 30, d3 << 3, ex, ey, px, py);
+                        enemyBullets.spawn(82, 0, ang + 10, d3 << 3, ex, ey, px, py);
+                        enemyBullets.spawn(82, 0, ang - 10, d3 << 3, ex, ey, px, py);
+                        enemyBullets.spawn(82, 0, ang - 30, d3 << 3, ex, ey, px, py);
                     }
                 }
             }
@@ -542,7 +542,7 @@ public class StageDochu {
                 step = 4;
             }
             if (enemylist[enemyIndex][2] % step == 0 && enemylist[enemyIndex][2] > 20) {
-                enemyBullets.cc(82, 0, 0, 48, ex, ey, px, py);
+                enemyBullets.spawn(82, 0, 0, 48, ex, ey, px, py);
             }
         }
 
@@ -558,7 +558,7 @@ public class StageDochu {
                 angStep = 20;
             }
             for (int a = 0; a < 360; a += angStep) {
-                enemyBullets.cc(82, 0, a, 48, ex, ey, px, py);
+                enemyBullets.spawn(82, 0, a, 48, ex, ey, px, py);
             }
         }
 
@@ -582,8 +582,8 @@ public class StageDochu {
 
                 int rot = (enemylist[enemyIndex][9] << 2);
                 for (int angBase = 0; angBase < 360; angBase += 360 / div) {
-                    enemyBullets.cc(82, 2, angBase + rot, 88, ex, ey, px, py);
-                    enemyBullets.cc(82, 2, angBase - rot, 88, ex, ey, px, py);
+                    enemyBullets.spawn(82, 2, angBase + rot, 88, ex, ey, px, py);
+                    enemyBullets.spawn(82, 2, angBase - rot, 88, ex, ey, px, py);
                 }
                 enemylist[enemyIndex][9] += 1;
             }
@@ -632,7 +632,7 @@ public class StageDochu {
             }
 
             while (ang < 360) {
-                enemyBullets.cc(82, moveType, base + ang, d3 << 3, ex, ey, px, py);
+                enemyBullets.spawn(82, moveType, base + ang, d3 << 3, ex, ey, px, py);
                 ang += 360 / div;
             }
             enemylist[enemyIndex][9] += 1;
@@ -664,7 +664,7 @@ public class StageDochu {
                 ang = (360 / div >> 1) + (enemylist[enemyIndex][9] << 3);
             }
             while (ang < 360) {
-                enemyBullets.cc(82, moveType, base + ang, d3 << 3, ex, ey, px, py);
+                enemyBullets.spawn(82, moveType, base + ang, d3 << 3, ex, ey, px, py);
                 ang += 360 / div;
             }
             enemylist[enemyIndex][9] += 1;
@@ -702,29 +702,29 @@ public class StageDochu {
 
                 int base = enemylist[enemyIndex][10] + ((360 / div) >> 1);
                 for (int ang = 0; ang < 360; ang += 360 / div) {
-                    enemyBullets.cc(82, 1, base + ang, 24, ex, ey, px, py);
+                    enemyBullets.spawn(82, 1, base + ang, 24, ex, ey, px, py);
                 }
             }
             if (enemylist[enemyIndex][2] % 10 == 0) {
                 int base = (BattleMath.arcTan2Deg(py - ey, px - ex) + 180) % 360;
                 if (level == 0) {
-                    enemyBullets.cc(86, 9, base + 30, 64, ex, ey, px, py);
-                    enemyBullets.cc(86, 9, base - 30, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base + 30, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base - 30, 64, ex, ey, px, py);
                 } else if (level == 1) {
-                    enemyBullets.cc(86, 9, base + 40, 64, ex, ey, px, py);
-                    enemyBullets.cc(86, 9, base, 64, ex, ey, px, py);
-                    enemyBullets.cc(86, 9, base - 40, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base + 40, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base - 40, 64, ex, ey, px, py);
                 } else if (level == 2) {
-                    enemyBullets.cc(86, 9, base + 50, 64, ex, ey, px, py);
-                    enemyBullets.cc(86, 9, base + 25, 64, ex, ey, px, py);
-                    enemyBullets.cc(86, 9, base - 25, 64, ex, ey, px, py);
-                    enemyBullets.cc(86, 9, base - 50, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base + 50, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base + 25, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base - 25, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base - 50, 64, ex, ey, px, py);
                 } else {
-                    enemyBullets.cc(86, 9, base + 60, 64, ex, ey, px, py);
-                    enemyBullets.cc(86, 9, base + 30, 64, ex, ey, px, py);
-                    enemyBullets.cc(86, 9, base, 64, ex, ey, px, py);
-                    enemyBullets.cc(86, 9, base - 30, 64, ex, ey, px, py);
-                    enemyBullets.cc(86, 9, base - 60, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base + 60, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base + 30, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base - 30, 64, ex, ey, px, py);
+                    enemyBullets.spawn(86, 9, base - 60, 64, ex, ey, px, py);
                 }
             }
         }
@@ -747,7 +747,7 @@ public class StageDochu {
             }
 
             if (enemylist[enemyIndex][9] <= limit) {
-                enemyBullets.cc(90, 1, enemylist[enemyIndex][10], 24, ex, ey, px, py);
+                enemyBullets.spawn(90, 1, enemylist[enemyIndex][10], 24, ex, ey, px, py);
             }
             enemylist[enemyIndex][9] += 1;
         }
@@ -778,7 +778,7 @@ public class StageDochu {
             int phase = 0;
             for (int ang = 0; ang < 360; ang += 360 / div) {
                 int spd = baseSpeed + (enemylist[enemyIndex][9] << 2) + (phase << 2);
-                enemyBullets.cc(81, 28, enemylist[enemyIndex][10] + ang, spd, ex, ey, px, py);
+                enemyBullets.spawn(81, 28, enemylist[enemyIndex][10] + ang, spd, ex, ey, px, py);
 
                 if ((enemylist[enemyIndex][9] & 1) == 0) {
                     phase = (phase + 1) % mod;
@@ -803,11 +803,11 @@ public class StageDochu {
         }
 
         if (enemyType == 70 && (enemylist[enemyIndex][2] & 1) == 0 && enemylist[enemyIndex][2] > 5 && enemylist[enemyIndex][2] < 15) {
-            enemyBullets.cc(81, 3, 0, 56, ex, ey, px, py);
-            enemyBullets.cc(81, 3, 0, 64, ex, ey, px, py);
-            enemyBullets.cc(81, 3, 0, 72, ex, ey, px, py);
-            enemyBullets.cc(81, 3, 0, 80, ex, ey, px, py);
-            enemyBullets.cc(81, 3, 0, 88, ex, ey, px, py);
+            enemyBullets.spawn(81, 3, 0, 56, ex, ey, px, py);
+            enemyBullets.spawn(81, 3, 0, 64, ex, ey, px, py);
+            enemyBullets.spawn(81, 3, 0, 72, ex, ey, px, py);
+            enemyBullets.spawn(81, 3, 0, 80, ex, ey, px, py);
+            enemyBullets.spawn(81, 3, 0, 88, ex, ey, px, py);
         }
     }
 
@@ -829,7 +829,7 @@ public class StageDochu {
                 for (int a = 0; a < 360; a += 45) {
                     int base = enemylist[enemyIndex][10] + a;
                     for (int k = 0; k < 5; k++) {
-                        enemyBullets.cc(319, 0, base, 40 + (k << 3), ex, ey, px, py);
+                        enemyBullets.spawn(319, 0, base, 40 + (k << 3), ex, ey, px, py);
                     }
                 }
             }
@@ -840,7 +840,7 @@ public class StageDochu {
             if ((enemylist[enemyIndex][9] & 1) == 0) {
                 enemylist[enemyIndex][10] = 450;
                 for (int off = -80; off <= 80; off += 20) {
-                    enemyBullets.cc(84, 0, enemylist[enemyIndex][10] + off, 46, ex, ey, px, py);
+                    enemyBullets.spawn(84, 0, enemylist[enemyIndex][10] + off, 46, ex, ey, px, py);
                 }
             }
             enemylist[enemyIndex][9] += 1;
@@ -854,7 +854,7 @@ public class StageDochu {
                     int ang = ((d5 << 3) + (k * 90)) % 360;
                     int sx = ex + BattleMath.speedCos(100, ang);
                     int sy = ey + BattleMath.speedSin(100, ang);
-                    enemyBullets.cc(82, 0, enemylist[enemyIndex][10] + (k * 60), 46, sx, sy, px, py);
+                    enemyBullets.spawn(82, 0, enemylist[enemyIndex][10] + (k * 60), 46, sx, sy, px, py);
                 }
             }
             enemylist[enemyIndex][9] += 1;
@@ -868,7 +868,7 @@ public class StageDochu {
                     int ang = 360 - (((d5 << 3) + (k * 90)) % 360);
                     int sx = ex + BattleMath.speedCos(100, ang);
                     int sy = ey + BattleMath.speedSin(100, ang);
-                    enemyBullets.cc(82, 0, enemylist[enemyIndex][10] + (k * 60), 46, sx, sy, px, py);
+                    enemyBullets.spawn(82, 0, enemylist[enemyIndex][10] + (k * 60), 46, sx, sy, px, py);
                 }
             }
             enemylist[enemyIndex][9] += 1;
@@ -878,7 +878,7 @@ public class StageDochu {
             if ((enemylist[enemyIndex][9] & 1) == 0) {
                 enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
                 for (int off = -60; off <= 20; off += 60) {
-                    enemyBullets.cc(81, 40, enemylist[enemyIndex][10] + off, 48, ex, ey, px, py);
+                    enemyBullets.spawn(81, 40, enemylist[enemyIndex][10] + off, 48, ex, ey, px, py);
                 }
             }
             enemylist[enemyIndex][9] += 1;
@@ -897,7 +897,7 @@ public class StageDochu {
                     ang = (360 / div) >> 1;
                 }
                 while (ang < 360) {
-                    enemyBullets.cc(86, mt, enemylist[enemyIndex][10] + ang, 40, ex, ey, px, py);
+                    enemyBullets.spawn(86, mt, enemylist[enemyIndex][10] + ang, 40, ex, ey, px, py);
                     ang += 360 / div;
                 }
             } else if (enemylist[enemyIndex][9] % 10 == 0) {
@@ -905,7 +905,7 @@ public class StageDochu {
                 for (int off = -20; off <= 20; off += 20) {
                     int base = enemylist[enemyIndex][10] + off;
                     for (int k = 0; k < 3; k++) {
-                        enemyBullets.cc(81, 0, base, 40 + (k << 2), ex, ey, px, py);
+                        enemyBullets.spawn(81, 0, base, 40 + (k << 2), ex, ey, px, py);
                     }
                 }
             }
@@ -916,10 +916,10 @@ public class StageDochu {
             if ((enemylist[enemyIndex][9] & 1) == 0) {
                 int shift = enemylist[enemyIndex][9] << 2;
                 for (int a = 0; a < 360; a += 60) {
-                    enemyBullets.cc(83, 43, a - shift, 0, ex, ey, px, py);
-                    enemyBullets.cc(83, 44, a - shift, 0, ex, ey, px, py);
-                    enemyBullets.cc(83, 43, a + shift + 180, 0, ex, ey, px, py);
-                    enemyBullets.cc(83, 44, a + shift + 180, 0, ex, ey, px, py);
+                    enemyBullets.spawn(83, 43, a - shift, 0, ex, ey, px, py);
+                    enemyBullets.spawn(83, 44, a - shift, 0, ex, ey, px, py);
+                    enemyBullets.spawn(83, 43, a + shift + 180, 0, ex, ey, px, py);
+                    enemyBullets.spawn(83, 44, a + shift + 180, 0, ex, ey, px, py);
                 }
             }
             enemylist[enemyIndex][9] += 1;
@@ -929,7 +929,7 @@ public class StageDochu {
             if (enemylist[enemyIndex][9] < 15) {
                 for (int a = 0; a < 360; a += 45) {
                     for (int k = 4; k <= 9; k++) {
-                        enemyBullets.cc(603, 0, a, k << 3, ex, ey, px, py);
+                        enemyBullets.spawn(603, 0, a, k << 3, ex, ey, px, py);
                     }
                 }
             }
@@ -965,8 +965,8 @@ public class StageDochu {
             int ang = BattleMath.arcTan2Deg(py - ey, px - ex);
             for (int n8 = 0; n8 < 360; n8 += 360 / div) {
                 for (int n9 = 8; n9 <= 11; n9++) {
-                    enemyBullets.cc(82, 2, ang + n8 + 2, n9 << 3, ex, ey, px, py);
-                    enemyBullets.cc(82, 2, ang + n8 - 2, n9 << 3, ex, ey, px, py);
+                    enemyBullets.spawn(82, 2, ang + n8 + 2, n9 << 3, ex, ey, px, py);
+                    enemyBullets.spawn(82, 2, ang + n8 - 2, n9 << 3, ex, ey, px, py);
                 }
             }
         }

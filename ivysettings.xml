@@ -1,0 +1,7 @@
+<ivysettings>
+    <settings defaultResolver="central"/>
+    <caches defaultCacheDir="${ivy.cache.dir}"/>
+    <resolvers>
+        <ibiblio name="central" m2compatible="true" root="https://repo.maven.apache.org/maven2/"/>
+    </resolvers>
+</ivysettings>

@@ -7,8 +7,6 @@ import touhou.BulletSprites;
 import touhou.GameCore;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
-import touhou.replay.ReplayHeader;
-import touhou.replay.ReplayRmsStore;
 import touhou.replay.ReplaySaveService;
 
 public final class SpellPracticeEndScreen {
@@ -37,18 +35,9 @@ public final class SpellPracticeEndScreen {
     private int cursor;
 
     private int replayCursor;
+    private int replayAnimationTick;
 
-    private final ReplayHeader[] slotHeaders = new ReplayHeader[ReplayRmsStore.SLOT_COUNT];
-    private final byte[][] slotNames = new byte[ReplayRmsStore.SLOT_COUNT][];
-    private final byte[] tmpFull = new byte[ReplayRmsStore.DATA_SIZE];
-    private final byte[] tmpBoss = new byte[ReplayRmsStore.DATA_SIZE];
-
-    public SpellPracticeEndScreen() {
-        for (int i = 0; i < ReplayRmsStore.SLOT_COUNT; i++) {
-            slotHeaders[i] = new ReplayHeader();
-            slotNames[i] = new byte[ReplayRmsStore.NAME_SIZE];
-        }
-    }
+    private final ReplaySlotListModel slots = new ReplaySlotListModel();
 
     public void enter(boolean won) {
         scene = SCENE_RETRY_ASK;
@@ -57,15 +46,17 @@ public final class SpellPracticeEndScreen {
         // - loss: default "Yes"
         cursor = won ? 1 : 0;
         replayCursor = 0;
+        replayAnimationTick = 0;
     }
 
     public Result update(int pressed) {
+        replayAnimationTick++;
         if (scene == SCENE_RETRY_ASK) {
-            if ((pressed & (GameCore.UP_PRESSED | GameCore.DOWN_PRESSED)) != 0) {
-                cursor ^= 1;
+            if (UiInput.anyVertical(pressed)) {
+                cursor = MenuCursor.toggleTwo(cursor);
                 return null;
             }
-            if ((pressed & GameCore.FIRE_PRESSED) != 0) {
+            if (UiInput.confirm(pressed)) {
                 if (cursor == 0) {
                     return new Result(Result.KIND_RETRY);
                 }
@@ -83,45 +74,44 @@ public final class SpellPracticeEndScreen {
             if (!ReplaySaveService.hasPending()) {
                 return new Result(Result.KIND_EXIT);
             }
-            if ((pressed & (GameCore.UP_PRESSED | GameCore.DOWN_PRESSED)) != 0) {
-                cursor ^= 1;
+            if (UiInput.anyVertical(pressed)) {
+                cursor = MenuCursor.toggleTwo(cursor);
                 return null;
             }
-            if ((pressed & GameCore.FIRE_PRESSED) != 0) {
+            if (UiInput.confirm(pressed)) {
                 if (cursor == 0) {
                     return new Result(Result.KIND_EXIT);
                 }
                 enterReplaySlotScene();
             }
-            if ((pressed & GameCore.GAME_A_PRESSED) != 0) {
+            if (UiInput.cancel(pressed)) {
                 return new Result(Result.KIND_EXIT);
             }
             return null;
         }
 
         if (scene == SCENE_REPLAY_SLOT) {
-            int max = ReplayRmsStore.SLOT_COUNT;
-            if ((pressed & GameCore.DOWN_PRESSED) != 0) {
-                replayCursor = (replayCursor + 1) % max;
-            } else if ((pressed & GameCore.UP_PRESSED) != 0) {
-                replayCursor = (replayCursor - 1 + max) % max;
-            } else if ((pressed & GameCore.FIRE_PRESSED) != 0) {
+            if (UiInput.down(pressed)) {
+                replayCursor = MenuCursor.move(replayCursor, 1, slots.size());
+            } else if (UiInput.up(pressed)) {
+                replayCursor = MenuCursor.move(replayCursor, -1, slots.size());
+            } else if (UiInput.confirm(pressed)) {
                 scene = SCENE_REPLAY_SAVE;
-            } else if ((pressed & GameCore.GAME_A_PRESSED) != 0) {
+            } else if (UiInput.cancel(pressed)) {
                 return new Result(Result.KIND_EXIT);
             }
         } else if (scene == SCENE_REPLAY_OK) {
-            if ((pressed & GameCore.FIRE_PRESSED) != 0) {
+            if (UiInput.confirm(pressed)) {
                 enterReplaySlotScene();
             }
-            if ((pressed & GameCore.GAME_A_PRESSED) != 0) {
+            if (UiInput.cancel(pressed)) {
                 return new Result(Result.KIND_EXIT);
             }
         } else if (scene == SCENE_REPLAY_FAIL) {
-            if ((pressed & GameCore.FIRE_PRESSED) != 0) {
+            if (UiInput.confirm(pressed)) {
                 enterReplaySlotScene();
             }
-            if ((pressed & GameCore.GAME_A_PRESSED) != 0) {
+            if (UiInput.cancel(pressed)) {
                 enterReplaySlotScene();
             }
         }
@@ -132,10 +122,6 @@ public final class SpellPracticeEndScreen {
         }
 
         return null;
-    }
-
-    public void render(Graphics g) {
-        render(g, null);
     }
 
     public void render(Graphics g, BulletSprites sprites) {
@@ -160,7 +146,7 @@ public final class SpellPracticeEndScreen {
         }
 
         if (scene == SCENE_REPLAY_ASK_SAVE) {
-            StageClearResultPanel.renderReplayListBackgroundOrFallback(g, sprites);
+            ReplayUi.renderBackground(g, sprites);
             UiDraw.drawString2(g, FONT, UiText.get(TextId.STAGECLEAR_ASK_SAVE_REPLAY), 120, 105, 1, 0xFFFFFF, 0x777777);
             if (cursor == 0) {
                 UiDraw.drawString2(g, FONT, UiText.get(TextId.STAGECLEAR_SAVE_NO), 120, 130, 1, 0xFFFFFF, 0x777777);
@@ -178,14 +164,8 @@ public final class SpellPracticeEndScreen {
     private void enterReplaySlotScene() {
         scene = SCENE_REPLAY_SLOT;
 
-        if (replayCursor < 0) {
-            replayCursor = 0;
-        }
-        if (replayCursor >= ReplayRmsStore.SLOT_COUNT) {
-            replayCursor = ReplayRmsStore.SLOT_COUNT - 1;
-        }
-
-        ReplaySaveUi.loadAllSlots(slotHeaders, slotNames, tmpFull, tmpBoss);
+        replayCursor = slots.clampCursor(replayCursor);
+        slots.reload();
     }
 
     private void renderReplayOverlay(Graphics g, BulletSprites sprites) {
@@ -194,11 +174,12 @@ public final class SpellPracticeEndScreen {
             return;
         }
 
-        StageClearResultPanel.renderReplayListBackgroundOrFallback(g, sprites);
-        ReplaySaveUi.renderSlotListCompact(g, FONT, replayCursor, slotHeaders, UiText.get(TextId.COMMON_SLOT_PREFIX));
+        ReplayUi.renderBackground(g, sprites);
+        ReplayUi.renderSlotListCompact(g, FONT, replayCursor, slots,
+                UiText.get(TextId.COMMON_SLOT_PREFIX), replayAnimationTick);
 
         if (scene == SCENE_REPLAY_OK || scene == SCENE_REPLAY_FAIL) {
-            ReplaySaveUi.renderSaveResultBox(g, FONT, scene == SCENE_REPLAY_OK, 104);
+            ReplayUi.renderSaveResultBox(g, FONT, scene == SCENE_REPLAY_OK, 104);
         }
     }
 

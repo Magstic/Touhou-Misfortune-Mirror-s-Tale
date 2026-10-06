@@ -2,9 +2,10 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.ResultStats;
+import touhou.GameProgress;
+import touhou.i18n.SpellText;
 import touhou.i18n.I18n;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
@@ -75,7 +76,6 @@ public final class ResultScreen {
     private int effect2;
 
     public void enter() {
-        ResultStats.INSTANCE.onResultScreenEnter();
         scene = SCENE_MENU;
         cursorUD = 0;
         cursorLR = 0;
@@ -99,7 +99,7 @@ public final class ResultScreen {
             }
         }
 
-        if ((pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+        if (UiInput.cancel(pressed)) {
             if (scene == SCENE_MENU) {
                 return new Result(Result.KIND_BACK_TO_TITLE);
             }
@@ -110,11 +110,11 @@ public final class ResultScreen {
         }
 
         if (scene == SCENE_MENU) {
-            if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-                cursorUD = (cursorUD - 1 + 5) % 5;
-            } else if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-                cursorUD = (cursorUD + 1) % 5;
-            } else if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+            if (UiInput.up(pressed)) {
+                cursorUD = MenuCursor.move(cursorUD, -1, 5);
+            } else if (UiInput.down(pressed)) {
+                cursorUD = MenuCursor.move(cursorUD, 1, 5);
+            } else if (UiInput.confirm(pressed)) {
                 if (cursorUD == 0) {
                     scene = SCENE_SPELLCARD;
                     cursorLR = 0;
@@ -137,36 +137,36 @@ public final class ResultScreen {
         }
 
         if (scene == SCENE_SPELLCARD) {
-            int pageCount = (ResultStats.SPELL_COUNT - 1) / PAGE_SIZE + 1;
-            if ((pressed & GameCanvas.LEFT_PRESSED) != 0) {
+            int pageCount = (GameProgress.SPELL_COUNT - 1) / PAGE_SIZE + 1;
+            if (UiInput.left(pressed)) {
                 if (cursorLR > 0) {
                     cursorLR--;
                 }
-            } else if ((pressed & GameCanvas.RIGHT_PRESSED) != 0) {
+            } else if (UiInput.right(pressed)) {
                 if (cursorLR < pageCount - 1) {
                     cursorLR++;
                 }
-            } else if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-                cursor2 = (cursor2 - 1 + 7) % 7;
-            } else if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-                cursor2 = (cursor2 + 1) % 7;
+            } else if (UiInput.up(pressed)) {
+                cursor2 = MenuCursor.move(cursor2, -1, 7);
+            } else if (UiInput.down(pressed)) {
+                cursor2 = MenuCursor.move(cursor2, 1, 7);
             }
             return null;
         }
 
         if (scene == SCENE_SCORE) {
-            if ((pressed & GameCanvas.LEFT_PRESSED) != 0) {
+            if (UiInput.left(pressed)) {
                 if (cursorLR != 0) {
                     cursorLR = 0;
                 }
-            } else if ((pressed & GameCanvas.RIGHT_PRESSED) != 0) {
+            } else if (UiInput.right(pressed)) {
                 if (cursorLR != 1) {
                     cursorLR = 1;
                 }
-            } else if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-                cursor2 = (cursor2 - 1 + 6) % 6;
-            } else if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-                cursor2 = (cursor2 + 1) % 6;
+            } else if (UiInput.up(pressed)) {
+                cursor2 = MenuCursor.move(cursor2, -1, 6);
+            } else if (UiInput.down(pressed)) {
+                cursor2 = MenuCursor.move(cursor2, 1, 6);
             }
             return null;
         }
@@ -235,18 +235,18 @@ public final class ResultScreen {
     }
 
     private void renderSpellCard(Graphics g, Font font) {
-        int spellTotal = ResultStats.SPELL_COUNT;
+        int spellTotal = GameProgress.SPELL_COUNT;
         int pageCount = (spellTotal - 1) / PAGE_SIZE + 1;
 
         UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_SPELLCARD_TITLE_PREFIX) + charaText(cursor2) + UiText.get(TextId.RESULT_SPELLCARD_TITLE_SUFFIX), 120 + effect1, 22, 1, 16711680);
         UiDraw.drawString2(g, font, String.valueOf(cursorLR + 1) + "/" + pageCount, 220 + effect1, 40, 2, 16720418, 7807522);
 
-        int[] bonus = new int[ResultStats.SPELL_COUNT];
-        int[] seen = new int[ResultStats.SPELL_COUNT];
-        ResultStats.INSTANCE.buildSpellArrays(bonus, seen, cursor2);
+        int[] bonus = new int[GameProgress.SPELL_COUNT];
+        int[] seen = new int[GameProgress.SPELL_COUNT];
+        GameProgress.INSTANCE.copySpellCounts(cursor2 - 1, bonus, seen);
 
         int captured = 0;
-        for (int i = 0; i < ResultStats.SPELL_COUNT; i++) {
+        for (int i = 0; i < GameProgress.SPELL_COUNT; i++) {
             if (bonus[i] != 0) {
                 captured++;
             }
@@ -257,7 +257,7 @@ public final class ResultScreen {
         int start = cursorLR * PAGE_SIZE;
         for (int i = 0; i < PAGE_SIZE && start + i < spellTotal; i++) {
             int id = start + i;
-            String name = ResultStats.INSTANCE.getSpellDisplayName(id, seen[id] != 0);
+            String name = getSpellDisplayName(id, seen[id] != 0);
 
             // Only ellipsize spell names for languages that can overflow horizontally.
             boolean ellipsize = (I18n.getLanguageId() == I18n.LANG_EN);
@@ -289,7 +289,7 @@ public final class ResultScreen {
 
         UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_SCORE_TITLE_PREFIX) + charaText(unit + 1) + UiText.get(TextId.RESULT_SCORE_TITLE_SUFFIX), 120 + effect1, 22, 1, 16733525);
 
-        int[] scores = ResultStats.INSTANCE.getScoreList(unit);
+        int[] scores = GameProgress.INSTANCE.getScoreList(unit);
         int baseY = 40;
 
         if (cursorLR == 0) {
@@ -309,7 +309,7 @@ public final class ResultScreen {
     private void renderOther(Graphics g, Font font) {
         UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_OTHER_TITLE), 120 + effect1, 22, 1, 16711680);
 
-        int[] ud = ResultStats.INSTANCE.getUserData();
+        int[] ud = GameProgress.INSTANCE.getUserData();
 
         g.setColor(0xFFFFFF);
         g.drawRect(30 + effect1, 35, 180, 80);
@@ -329,10 +329,10 @@ public final class ResultScreen {
         int sh = 8355711;
 
         UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_BOOT_TIME), 115 + effect1, 48, 2, main, sh);
-        UiDraw.drawString2(g, font, ResultStats.INSTANCE.formatBootTimeSecondsNow(ud[0]), 205 + effect1, 48, 2, main, sh);
+        UiDraw.drawString2(g, font, formatTimeSeconds(ResultStats.INSTANCE.getBootTimeSecondsNow()), 205 + effect1, 48, 2, main, sh);
 
         UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_PLAY_TIME), 115 + effect1, 64, 2, main, sh);
-        UiDraw.drawString2(g, font, ResultStats.INSTANCE.formatTimeSeconds(ud[1]), 205 + effect1, 64, 2, main, sh);
+        UiDraw.drawString2(g, font, formatTimeSeconds(ud[1]), 205 + effect1, 64, 2, main, sh);
 
         UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_TOTAL_CLEAR), 115 + effect1, 80, 2, main, sh);
         UiDraw.drawString2(g, font, String.valueOf(ud[2]), 205 + effect1, 80, 2, main, sh);
@@ -354,6 +354,31 @@ public final class ResultScreen {
         UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_EXTRA), 85 + effect1, 218, 2, main, sh);
         UiDraw.drawString2(g, font, String.valueOf(ud[13]), 145 + effect1, 218, 2, main, sh);
         UiDraw.drawString2(g, font, "-", 205 + effect1, 218, 2, main, sh);
+    }
+
+    private static String getSpellDisplayName(int id, boolean seen) {
+        if (!seen) {
+            return "\uff1f\uff1f\uff1f\uff1f\uff1f\uff1f\uff1f\uff1f\uff1f\uff1f\uff1f\uff1f";
+        }
+        String name = SpellText.getName(id);
+        if (name != null) {
+            return name;
+        }
+        return "SpellNo." + (id + 1);
+    }
+
+    private static String formatTimeSeconds(int seconds) {
+        if (seconds < 0) {
+            seconds = 0;
+        }
+        int h = seconds / 3600;
+        int m = (seconds / 60) % 60;
+        int s = seconds % 60;
+
+        String hh = (h < 10) ? ("0" + h) : String.valueOf(h);
+        String mm = (m < 10) ? ("0" + m) : String.valueOf(m);
+        String ss = (s < 10) ? ("0" + s) : String.valueOf(s);
+        return hh + ":" + mm + ":" + ss;
     }
 
     private void drawPlayCountRow(Graphics g, Font font, String label, int y, int normal, int practice, int main, int sh) {

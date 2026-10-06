@@ -61,11 +61,7 @@ public final class StaffRollScreen {
         }
         ccLoaded = true;
         try {
-            try {
-                cc = CcTable.loadFromResource("/res/cc.dat");
-            } catch (Exception e) {
-                cc = CcTable.loadFromResource("/cc.dat");
-            }
+            cc = CcTable.load();
         } catch (Throwable t) {
             cc = null;
         }
@@ -88,20 +84,16 @@ public final class StaffRollScreen {
         back = null;
     }
 
-    public Result update(int pressed) {
-        return update(pressed, pressed);
-    }
-
     public Result update(int keys, int pressed) {
         if (count < STAFF_MAX) {
             if ((keys & GameCore.FIRE_PRESSED) != 0) {
                 count += 3;
-            } else if ((pressed & GameCore.GAME_A_PRESSED) != 0) {
+            } else if (UiInput.cancel(pressed)) {
                 count = STAFF_MAX;
             }
             count++;
         } else {
-            if ((pressed & GameCore.FIRE_PRESSED) != 0 || (pressed & GameCore.GAME_A_PRESSED) != 0) {
+            if (UiInput.confirm(pressed) || UiInput.cancel(pressed)) {
                 return new Result(Result.KIND_DONE);
             }
         }
@@ -407,12 +399,8 @@ public final class StaffRollScreen {
         if (imgs == null) {
             return;
         }
-        Image i = imgs.get(imgIndex);
-        if (i == null) {
-            return;
-        }
         try {
-            g.drawImage(i, 0, 0, Graphics.TOP | Graphics.LEFT);
+            imgs.draw(g, imgIndex, 0, 0, Graphics.TOP | Graphics.LEFT);
         } catch (Throwable t) {
         }
     }
@@ -442,35 +430,21 @@ public final class StaffRollScreen {
         int ax = cc.getAx(ccIndex);
         int ay = cc.getAy(ccIndex);
 
+        srcX = imgs.toPhysicalSourceX(imgIndex, srcX);
+        srcY = imgs.toPhysicalSourceY(imgIndex, srcY);
+
         Image img = imgs.get(imgIndex);
         if (img == null) {
             return;
         }
 
-        // Match original behavior: some sprite sheets (imgIndex==6) may require a 2x scale fallback.
-        if (imgIndex == 6) {
-            if (drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay, 1)) {
-                return;
-            }
-            drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay, 2);
-            return;
-        }
-        drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay, 1);
+        drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay);
     }
 
-    private static boolean drawRegionSafe(Graphics g, Image img, int x, int y, int srcX, int srcY, int w, int h, int ax, int ay, int scale) {
+    private static boolean drawRegionSafe(Graphics g, Image img, int x, int y, int srcX, int srcY, int w, int h, int ax, int ay) {
         if (img == null) {
             return false;
         }
-        if (scale != 1) {
-            srcX *= scale;
-            srcY *= scale;
-            w *= scale;
-            h *= scale;
-            ax *= scale;
-            ay *= scale;
-        }
-
         int imgW = img.getWidth();
         int imgH = img.getHeight();
         if (w <= 0 || h <= 0) {

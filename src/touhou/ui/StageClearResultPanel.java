@@ -5,13 +5,10 @@ import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
 import touhou.BulletSprites;
-import touhou.GameCore;
 import touhou.GameOptions;
 import touhou.ImageBank;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
-import touhou.replay.ReplayHeader;
-import touhou.replay.ReplayRmsStore;
 import touhou.replay.ReplaySaveService;
 import touhou.stage.StagePreloader;
 
@@ -76,11 +73,9 @@ public final class StageClearResultPanel {
     private boolean allowReplaySave;
 
     private int replayCursor;
+    private int replayAnimationTick;
 
-    private final ReplayHeader[] slotHeaders = new ReplayHeader[ReplayRmsStore.SLOT_COUNT];
-    private final byte[][] slotNames = new byte[ReplayRmsStore.SLOT_COUNT][];
-    private final byte[] tmpFull = new byte[ReplayRmsStore.DATA_SIZE];
-    private final byte[] tmpBoss = new byte[ReplayRmsStore.DATA_SIZE];
+    private final ReplaySlotListModel slots = new ReplaySlotListModel();
 
     private int[] photoRgb;
     private int[] scaledRgb;
@@ -92,13 +87,6 @@ public final class StageClearResultPanel {
 
     // Stage-to-stage preloading (no separate loading screen).
     private final StagePreloader stagePreloader = new StagePreloader();
-
-    public StageClearResultPanel() {
-        for (int i = 0; i < ReplayRmsStore.SLOT_COUNT; i++) {
-            slotHeaders[i] = new ReplayHeader();
-            slotNames[i] = new byte[ReplayRmsStore.NAME_SIZE];
-        }
-    }
 
     public void enter(Image photo, int hiScore, int score, int continuesUsed, int missCount, int bombUsedCount, int spellBonusCount, int spellSeenCount,
             boolean allowReplaySave, int chara) {
@@ -121,6 +109,7 @@ public final class StageClearResultPanel {
 
         this.allowReplaySave = allowReplaySave;
         this.replayCursor = 0;
+        this.replayAnimationTick = 0;
 
         photoRgb = null;
         scaledRgb = null;
@@ -150,6 +139,7 @@ public final class StageClearResultPanel {
 
         this.allowReplaySave = false;
         this.replayCursor = 0;
+        this.replayAnimationTick = 0;
 
         photoRgb = null;
         scaledRgb = null;
@@ -158,6 +148,7 @@ public final class StageClearResultPanel {
     }
 
     public Result update(int pressed) {
+        replayAnimationTick++;
         if (mode == MODE_FINAL) {
             return updateFinal(pressed);
         }
@@ -167,6 +158,7 @@ public final class StageClearResultPanel {
     // Update stage clear panel with preloading support.
     // nextStage: 0..5 for Stage1..Stage6, or -1 if unavailable.
     public Result updateWithStagePreload(int pressed, int nextStage, int chara, int type, ImageBank imgs, BulletSprites sprites) {
+        replayAnimationTick++;
         if (mode == MODE_FINAL) {
             return updateFinal(pressed);
         }
@@ -177,7 +169,7 @@ public final class StageClearResultPanel {
         // DoJa  if():
         // - After count > 10, OK triggers either replay save flow (if enabled) or return to title.
         if (scene == SCENE_MAIN) {
-            if (finalCount > 10 && (pressed & GameCore.FIRE_PRESSED) != 0) {
+            if (finalCount > 10 && UiInput.confirm(pressed)) {
                 if (ReplaySaveService.hasPending()) {
                     scene = SCENE_FINAL_ASK_SAVE;
                     replayCursor = 0;
@@ -190,11 +182,11 @@ public final class StageClearResultPanel {
         }
 
         if (scene == SCENE_FINAL_ASK_SAVE) {
-            if ((pressed & (GameCore.UP_PRESSED | GameCore.DOWN_PRESSED)) != 0) {
-                replayCursor ^= 1;
+            if (UiInput.anyVertical(pressed)) {
+                replayCursor = MenuCursor.toggleTwo(replayCursor);
                 return null;
             }
-            if ((pressed & GameCore.FIRE_PRESSED) != 0) {
+            if (UiInput.confirm(pressed)) {
                 if (replayCursor == 0) {
                     return new Result(Result.KIND_BACK_TO_TITLE);
                 }
@@ -204,21 +196,20 @@ public final class StageClearResultPanel {
         }
 
         if (scene == SCENE_FINAL_REPLAY_SLOT) {
-            int max = ReplayRmsStore.SLOT_COUNT;
-            if ((pressed & GameCore.DOWN_PRESSED) != 0) {
-                replayCursor = (replayCursor + 1) % max;
-            } else if ((pressed & GameCore.UP_PRESSED) != 0) {
-                replayCursor = (replayCursor - 1 + max) % max;
-            } else if ((pressed & GameCore.FIRE_PRESSED) != 0) {
+            if (UiInput.down(pressed)) {
+                replayCursor = MenuCursor.move(replayCursor, 1, slots.size());
+            } else if (UiInput.up(pressed)) {
+                replayCursor = MenuCursor.move(replayCursor, -1, slots.size());
+            } else if (UiInput.confirm(pressed)) {
                 scene = SCENE_FINAL_REPLAY_SAVE;
-            } else if ((pressed & GameCore.GAME_A_PRESSED) != 0) {
+            } else if (UiInput.cancel(pressed)) {
                 return new Result(Result.KIND_BACK_TO_TITLE);
             }
         } else if (scene == SCENE_FINAL_REPLAY_OK || scene == SCENE_FINAL_REPLAY_FAIL) {
-            if ((pressed & GameCore.FIRE_PRESSED) != 0) {
+            if (UiInput.confirm(pressed)) {
                 enterReplaySlotScene(SCENE_FINAL_REPLAY_SLOT);
             }
-            if ((pressed & GameCore.GAME_A_PRESSED) != 0) {
+            if (UiInput.cancel(pressed)) {
                 enterReplaySlotScene(SCENE_FINAL_REPLAY_SLOT);
             }
         }
@@ -238,7 +229,7 @@ public final class StageClearResultPanel {
     private Result updateStageClearWithPreload(int pressed, int nextStage, int chara, int type, ImageBank imgs, BulletSprites sprites) {
         if (scene == SCENE_MAIN) {
             if (!leaving && slide >= SLIDE_MAX) {
-                if ((pressed & (GameCore.FIRE_PRESSED | GameCore.GAME_A_PRESSED)) != 0) {
+                if (UiInput.dismiss(pressed)) {
                     if (nextStage < 0) {
                         // Practice mode: no next stage, skip slide-out animation (DoJa: u()).
                         return new Result(Result.KIND_ADVANCE_STAGE);
@@ -246,9 +237,6 @@ public final class StageClearResultPanel {
                     if (imgs != null && sprites != null) {
                         // Synchronous preload: keep the panel frozen and allow a short stall.
                         int[] opt = GameOptions.load();
-                        if (opt == null) {
-                            opt = GameOptions.defaults();
-                        }
                         boolean playerShotAlphaEnabled = GameOptions.isPlayerShotAlphaEnabled(opt);
                         boolean bossSpellCutInAlphaEnabled = GameOptions.isBossSpellCutInAlphaEnabled(opt);
                         boolean bombOverlayAlphaEnabled = GameOptions.isBombOverlayAlphaEnabled(opt);
@@ -262,22 +250,22 @@ public final class StageClearResultPanel {
                         }
                     }
                     leaving = true;
-                } else if (allowReplaySave && (pressed & GameCore.KEY_POUND_PRESSED) != 0) {
+                } else if (allowReplaySave && UiInput.replaySave(pressed)) {
                     enterReplaySlotScene(SCENE_REPLAY_SLOT);
                 }
             }
         } else if (scene == SCENE_REPLAY_SLOT) {
-            if ((pressed & GameCore.FIRE_PRESSED) != 0) {
+            if (UiInput.confirm(pressed)) {
                 scene = SCENE_REPLAY_SAVE;
-            } else if ((pressed & GameCore.DOWN_PRESSED) != 0) {
-                replayCursor = (replayCursor + 1) % ReplayRmsStore.SLOT_COUNT;
-            } else if ((pressed & GameCore.UP_PRESSED) != 0) {
-                replayCursor = (replayCursor - 1 + ReplayRmsStore.SLOT_COUNT) % ReplayRmsStore.SLOT_COUNT;
-            } else if ((pressed & GameCore.GAME_A_PRESSED) != 0) {
+            } else if (UiInput.down(pressed)) {
+                replayCursor = MenuCursor.move(replayCursor, 1, slots.size());
+            } else if (UiInput.up(pressed)) {
+                replayCursor = MenuCursor.move(replayCursor, -1, slots.size());
+            } else if (UiInput.cancel(pressed)) {
                 scene = SCENE_MAIN;
             }
         } else if (scene == SCENE_REPLAY_OK || scene == SCENE_REPLAY_FAIL) {
-            if ((pressed & (GameCore.FIRE_PRESSED | GameCore.GAME_A_PRESSED)) != 0) {
+            if (UiInput.dismiss(pressed)) {
                 enterReplaySlotScene(SCENE_REPLAY_SLOT);
             }
         }
@@ -327,7 +315,7 @@ public final class StageClearResultPanel {
 
     private void renderFinal(Graphics g, BulletSprites sprites) {
         // DoJa  jf(): full screen gradation + centered layout.
-        renderReplayListBackgroundOrFallback(g, sprites);
+        ReplayUi.renderBackground(g, sprites);
         UiDraw.drawGradation(g, 0, 0, 240, 240, 0, 16736609, 32);
         UiDraw.drawStringPlain(g, FONT, UiText.get(TextId.STAGECLEAR_TITLE), 120, 22, 1, 0xFFFFFF);
 
@@ -362,7 +350,7 @@ public final class StageClearResultPanel {
     private void renderFinalReplayOverlay(Graphics g, BulletSprites sprites) {
         // Replay overlay for final result.
         // Keep the replay list visible even when showing save result popup.
-        renderReplayListBackgroundOrFallback(g, sprites);
+        ReplayUi.renderBackground(g, sprites);
 
         if (scene == SCENE_FINAL_ASK_SAVE) {
             int baseY = 80;
@@ -378,11 +366,12 @@ public final class StageClearResultPanel {
         }
 
         if (scene == SCENE_FINAL_REPLAY_SLOT || scene == SCENE_FINAL_REPLAY_OK || scene == SCENE_FINAL_REPLAY_FAIL) {
-            ReplaySaveUi.renderSlotListFinal(g, FONT, replayCursor, slotHeaders, UiText.get(TextId.COMMON_SLOT_PREFIX));
+            ReplayUi.renderSlotListCompact(g, FONT, replayCursor, slots,
+                    UiText.get(TextId.COMMON_SLOT_PREFIX), replayAnimationTick);
         }
 
         if (scene == SCENE_FINAL_REPLAY_OK || scene == SCENE_FINAL_REPLAY_FAIL) {
-            ReplaySaveUi.renderSaveResultBox(g, FONT, scene == SCENE_FINAL_REPLAY_OK, 104);
+            ReplayUi.renderSaveResultBox(g, FONT, scene == SCENE_FINAL_REPLAY_OK, 104);
         }
     }
 
@@ -615,14 +604,8 @@ public final class StageClearResultPanel {
     private void enterReplaySlotScene(int targetScene) {
         scene = targetScene;
 
-        if (replayCursor < 0) {
-            replayCursor = 0;
-        }
-        if (replayCursor >= ReplayRmsStore.SLOT_COUNT) {
-            replayCursor = ReplayRmsStore.SLOT_COUNT - 1;
-        }
-
-        ReplaySaveUi.loadAllSlots(slotHeaders, slotNames, tmpFull, tmpBoss);
+        replayCursor = slots.clampCursor(replayCursor);
+        slots.reload();
     }
 
     private void renderReplayOverlay(Graphics g, BulletSprites sprites) {
@@ -631,35 +614,13 @@ public final class StageClearResultPanel {
             return;
         }
 
-        renderReplayListBackgroundOrFallback(g, sprites);
-        ReplaySaveUi.renderSlotListCompact(g, FONT, replayCursor, slotHeaders, UiText.get(TextId.COMMON_SLOT_PREFIX));
+        ReplayUi.renderBackground(g, sprites);
+        ReplayUi.renderSlotListCompact(g, FONT, replayCursor, slots,
+                UiText.get(TextId.COMMON_SLOT_PREFIX), replayAnimationTick);
 
         if (scene == SCENE_REPLAY_OK || scene == SCENE_REPLAY_FAIL) {
-            ReplaySaveUi.renderSaveResultBox(g, FONT, scene == SCENE_REPLAY_OK, 104);
+            ReplayUi.renderSaveResultBox(g, FONT, scene == SCENE_REPLAY_OK, 104);
         }
-    }
-
-    static void renderReplayListBackgroundOrFallback(Graphics g, BulletSprites sprites) {
-        ImageBank imgs = (sprites != null) ? sprites.getImages() : null;
-        renderReplayListBackgroundOrFallback(g, imgs);
-    }
-
-    static void renderReplayListBackgroundOrFallback(Graphics g, ImageBank imgs) {
-        Image bg = (imgs != null) ? imgs.get(18) : null;
-        if (bg != null) {
-            UiDraw.drawRegion(g, bg, 0, 0, 0, 0, 240, 240);
-            UiDraw.fillRectAlpha(g, 0, 0, 240, 240, 0x000000, 96);
-        } else {
-            g.setColor(0x000000);
-            g.fillRect(0, 0, 240, 240);
-        }
-
-        g.setColor(0x005500);
-        g.drawRect(3, 3, 234, 234);
-        g.setColor(0x00AA00);
-        g.drawRect(6, 6, 228, 228);
-        g.setColor(0x00FF00);
-        g.drawRect(9, 9, 222, 222);
     }
 
     // Expose leaving state so GameCanvas can pre-initialize the next stage and render it under the exit animation.

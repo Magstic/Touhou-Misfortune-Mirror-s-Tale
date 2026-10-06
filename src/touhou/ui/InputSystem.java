@@ -38,18 +38,15 @@ public final class InputSystem {
         this.canvas = canvas;
         prevKeyStates = 0;
         prevFireActionKeyStates = 0;
-        refreshKeyOptions();
+        // Options are loaded explicitly inside GameCore's initialization failure boundary.
     }
 
     public void refreshKeyOptions() {
         int[] opt = GameOptions.load();
-        if (opt == null) {
-            opt = GameOptions.defaults();
-        }
-        optShotKey = (opt.length > 6) ? opt[6] : 13;
-        optSlowKey = (opt.length > 7) ? opt[7] : 13;
-        optSpellKey = (opt.length > 8) ? opt[8] : 13;
-        optTenkeyMove = (opt.length > 5) ? opt[5] : 0;
+        optShotKey = opt[6];
+        optSlowKey = opt[7];
+        optSpellKey = opt[8];
+        optTenkeyMove = opt[5];
     }
 
     public boolean onKeyPressed(int keyCode,
@@ -66,7 +63,7 @@ public final class InputSystem {
 
         if (inGame && !battlePaused && optTenkeyMove != 0 && isTenkeyMoveDirectionKeyCode(keyCode)) {
             applyTenkeyMoveDown(keyCode, inGame);
-            return false; // keep legacy behavior: skip super.keyPressed
+            return false; // Numeric movement is fully consumed here.
         }
 
         applyOptionKeyDown(keyCode, inGame, battlePaused, stageClearPanelActive, startSpellPractice, spellPracticeEndFlg, spellPracticeEndActive);
@@ -93,7 +90,7 @@ public final class InputSystem {
 
         if (inGame && !battlePaused && optTenkeyMove != 0 && isTenkeyMoveDirectionKeyCode(keyCode)) {
             applyTenkeyMoveUp(keyCode, inGame);
-            return false; // keep legacy behavior: skip super.keyReleased
+            return false; // Numeric movement is fully consumed here.
         }
 
         applyOptionKeyUp(keyCode, inGame, battlePaused);

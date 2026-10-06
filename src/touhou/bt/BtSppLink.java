@@ -7,6 +7,7 @@ import javax.bluetooth.BluetoothStateException;
 import javax.bluetooth.DiscoveryAgent;
 import javax.bluetooth.LocalDevice;
 import javax.bluetooth.RemoteDevice;
+import javax.bluetooth.ServiceRecord;
 import javax.bluetooth.UUID;
 import javax.microedition.io.Connector;
 import javax.microedition.io.StreamConnection;
@@ -76,10 +77,6 @@ public final class BtSppLink {
         } catch (Throwable t) {
             return false;
         }
-    }
-
-    public static void sendPacket(byte[] packet) throws Exception {
-        sendPacket(packet, null, null, null);
     }
 
     public static void sendPacket(byte[] packet, ProgressListener progress, CancelRef cancel, StatusListener status) throws Exception {
@@ -170,14 +167,6 @@ public final class BtSppLink {
                 }
             }
         }
-    }
-
-    public static byte[] waitAndReceivePacket() throws Exception {
-        return waitAndReceivePacket(null, null, null);
-    }
-
-    public static byte[] waitAndReceivePacket(ProgressListener progress, CancelRef cancel) throws Exception {
-        return waitAndReceivePacket(progress, cancel, null);
     }
 
     public static byte[] waitAndReceivePacket(ProgressListener progress, CancelRef cancel, StatusListener status) throws Exception {
@@ -322,11 +311,7 @@ public final class BtSppLink {
         DiscoveryAgent da = ld.getDiscoveryAgent();
 
         // Let the platform handle device/service selection UI.
-        return da.selectService(SERVICE_UUID, ServiceSecurity.NOAUTH_NOENC, false);
-    }
-
-    private static final class ServiceSecurity {
-        private static final int NOAUTH_NOENC = 0;
+        return da.selectService(SERVICE_UUID, ServiceRecord.NOAUTHENTICATE_NOENCRYPT, false);
     }
 
     private static boolean readFully(InputStream in, byte[] b, int off, int len,

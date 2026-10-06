@@ -14,20 +14,13 @@ public final class AudioSystem implements PlayerListener {
     private static final int STATE_UNREALIZED = 100;
     private static final int STATE_PREFETCHED = 300;
 
-    private static final int TRACK_CACHE_SIZE = 32;
+    private static final int TRACK_CACHE_SIZE = BgmCatalog.TRACK_COUNT;
 
     // MIDI only: load BGM from one packed resource with indexed segments.
     private static final String PACK_PREFIX = "pack:";
-    private static final String PACK_PATH_MIDI = "/res/snd/bgm.dat";
-
-    private static final int PACK_PART_COUNT = 3;
-    private static final int PACK_PART_INTRO = 0;
-    private static final int PACK_PART_LOOP = 1;
-    private static final int PACK_PART_SINGLE = 2;
 
     // Offsets and lengths are read lazily from the BGMP file header.
-    // Both full and simplified bgm.dat share the same code path.
-    private static final BgmPack PACK_MIDI = new BgmPack(PACK_PATH_MIDI);
+    private static final BgmPack PACK_MIDI = new BgmPack(ResourcePaths.BGM_PACK);
 
     // Some real devices have expensive JSR-135 Player.getState().
     // When native looping is unavailable, we only need to poll state periodically
@@ -159,6 +152,9 @@ public final class AudioSystem implements PlayerListener {
             desiredLoop = loop;
             stopBgm();
             return;
+        }
+        if (!BgmCatalog.isTrack(trackId)) {
+            throw new IllegalArgumentException("trackId=" + trackId);
         }
         if (desiredTrack == trackId && desiredLoop == loop) {
             return;
@@ -319,10 +315,10 @@ public final class AudioSystem implements PlayerListener {
 
         ensurePackAvailabilityChecked();
         if (midiPackAvailable) {
-            int base = trackId * PACK_PART_COUNT;
-            introPath = resolvePackEntryPath(base + PACK_PART_INTRO);
-            loopPath = resolvePackEntryPath(base + PACK_PART_LOOP);
-            singlePath = resolvePackEntryPath(base + PACK_PART_SINGLE);
+            int base = trackId * BgmCatalog.PART_COUNT;
+            introPath = resolvePackEntryPath(base + BgmCatalog.PART_INTRO);
+            loopPath = resolvePackEntryPath(base + BgmCatalog.PART_LOOP);
+            singlePath = resolvePackEntryPath(base + BgmCatalog.PART_SINGLE);
         }
 
         if (trackId >= 0 && trackId < TRACK_CACHE_SIZE) {
@@ -351,7 +347,7 @@ public final class AudioSystem implements PlayerListener {
             return true;
         }
 
-        // Fallback: create player synchronously.
+        // Create synchronously when no pre-created player is available.
         if (!currentLoop && singlePath != null) {
             createPlayerFromPath(singlePath);
             return player != null;
@@ -426,7 +422,7 @@ public final class AudioSystem implements PlayerListener {
             return;
         }
         packAvailabilityChecked = true;
-        midiPackAvailable = resourceExists(PACK_PATH_MIDI);
+        midiPackAvailable = ResourceLoader.exists(ResourcePaths.BGM_PACK);
     }
 
     private static boolean isPackPath(String path) {
@@ -612,7 +608,7 @@ public final class AudioSystem implements PlayerListener {
             }
             InputStream raw = null;
             try {
-                raw = AudioSystem.class.getResourceAsStream(resourcePath);
+                raw = ResourceLoader.openOptional(resourcePath);
                 if (raw == null) {
                     headerFailed = true;
                     return;
@@ -626,12 +622,18 @@ public final class AudioSystem implements PlayerListener {
                     return;
                 }
 
-                dis.readShort(); // version
-                dis.readByte();  // codec
-                dis.readByte();  // partCount (always 3)
+                int version = dis.readShort() & 0xFFFF;
+                int codec = dis.readByte() & 0xFF;
+                int partCount = dis.readByte() & 0xFF;
                 trackCount = dis.readShort() & 0xFFFF;
                 int entryCount = dis.readShort() & 0xFFFF;
-                dis.readInt();   // reserved
+                int reserved = dis.readInt();
+                if (version != 1 || codec != 0 || partCount != BgmCatalog.PART_COUNT
+                        || trackCount != BgmCatalog.TRACK_COUNT
+                        || entryCount != BgmCatalog.TRACK_COUNT * BgmCatalog.PART_COUNT || reserved != 0) {
+                    headerFailed = true;
+                    return;
+                }
 
                 offsets = new int[entryCount];
                 lengths = new int[entryCount];
@@ -640,6 +642,21 @@ public final class AudioSystem implements PlayerListener {
                 }
                 for (int i = 0; i < entryCount; i++) {
                     lengths[i] = dis.readInt();
+                    if (lengths[i] < 0 || (lengths[i] == 0 && offsets[i] != -1) || (lengths[i] > 0 && offsets[i] < 0)) {
+                        headerFailed = true;
+                        return;
+                    }
+                }
+                int dataPosition = 16 + entryCount * 8;
+                for (int i = 0; i < entryCount; i++) {
+                    if (lengths[i] == 0) {
+                        continue;
+                    }
+                    if (offsets[i] != dataPosition || dataPosition > Integer.MAX_VALUE - lengths[i]) {
+                        headerFailed = true;
+                        return;
+                    }
+                    dataPosition += lengths[i];
                 }
                 headerLoaded = true;
             } catch (Throwable t) {
@@ -659,7 +676,7 @@ public final class AudioSystem implements PlayerListener {
             if (entryIndex < 0) {
                 return false;
             }
-            if (entryIndex >= trackCount * PACK_PART_COUNT) {
+            if (entryIndex >= trackCount * BgmCatalog.PART_COUNT) {
                 return false;
             }
             if (entryIndex >= offsets.length || entryIndex >= lengths.length) {
@@ -673,7 +690,7 @@ public final class AudioSystem implements PlayerListener {
                 return null;
             }
 
-            InputStream raw = AudioSystem.class.getResourceAsStream(resourcePath);
+            InputStream raw = ResourceLoader.openOptional(resourcePath);
             if (raw == null) {
                 return null;
             }
@@ -870,23 +887,6 @@ public final class AudioSystem implements PlayerListener {
                 vc.setLevel(v);
             }
         } catch (Throwable ignore) {
-        }
-    }
-
-    private static boolean resourceExists(String path) {
-        InputStream is = null;
-        try {
-            is = AudioSystem.class.getResourceAsStream(path);
-            return is != null;
-        } catch (Throwable t) {
-            return false;
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (Throwable ignore) {
-                }
-            }
         }
     }
 

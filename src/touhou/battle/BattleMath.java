@@ -25,6 +25,18 @@ public final class BattleMath {
         return deg;
     }
 
+    public static boolean rectsOverlapFixed(int ax, int ay, int aw, int ah,
+            int bx, int by, int bw, int bh) {
+        if (aw <= 0 || ah <= 0 || bw <= 0 || bh <= 0) {
+            return false;
+        }
+        long ar = (long) ax + (long) aw;
+        long ab = (long) ay + (long) ah;
+        long br = (long) bx + (long) bw;
+        long bb = (long) by + (long) bh;
+        return (long) ax < br && (long) bx < ar && (long) ay < bb && (long) by < ab;
+    }
+
     // Fixed-point multiply helper.
     private static int mul16(final int a, final int b) {
         return (int) ((a * (long) b) >> 16);

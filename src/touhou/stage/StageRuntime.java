@@ -1,8 +1,12 @@
 package touhou.stage;
 
+import java.io.IOException;
+
+import touhou.ResourceException;
+
 import javax.microedition.lcdui.Graphics;
 
-import touhou.SpStore;
+import touhou.GameProgress;
 import touhou.UnlockFlags;
 import touhou.battle.BattleMath;
 import touhou.i18n.I18n;
@@ -41,9 +45,6 @@ public final class StageRuntime {
     }
 
     public interface StageServices {
-        String readUtf8TextResource(String path);
-        String[] splitLinesAndWrap(String text, int wrapByteLen);
-
         void playSound(int id, boolean loop);
 
         // Toggle rendering of red hit spark rectangles (DoJa effectId 2/21).
@@ -74,7 +75,7 @@ public final class StageRuntime {
         int getBstock();
         void setBstock(int v);
 
-        void setEnemyAabb(int idx, int xFixed, int yFixed, int radiusFixed,
+        void setEnemyAabb(int idx, int xFixed, int yFixed,
                 int leftExtentFixed, int rightExtentFixed, int topExtentFixed, int bottomExtentFixed,
                 boolean canTarget);
 
@@ -141,6 +142,7 @@ public final class StageRuntime {
     private final int[][] enemyList = new int[32][22];
     private final int[] bossWrk = new int[28];
     private final int[][] effectList = new int[64][9];
+    private final EnemyAnimationState enemyAnimation = new EnemyAnimationState();
 
     private String[] talkTable;
     private int talkLoadedStage = -1;
@@ -164,10 +166,24 @@ public final class StageRuntime {
         if (stageTable != null) {
             return;
         }
-        stageDat = StageDat.loadFromResources();
-        if (stageDat != null) {
-            stageTable = stageDat.getTable();
+        try {
+            stageDat = StageDat.load();
+        } catch (IOException e) {
+            throw new ResourceException(e.toString());
         }
+        stageTable = stageDat.getTable();
+    }
+
+    public void advanceEnemyAnimations() {
+        enemyAnimation.advance(enemyList, host.getBossX(), bossWrk);
+    }
+
+    public int getEnemySpriteId(int index) {
+        return enemyAnimation.spriteId(index);
+    }
+
+    public int getEnemyAuraSpriteId(int index) {
+        return enemyAnimation.auraSpriteId(index);
     }
 
     public int[][] getEnemyList() {
@@ -501,18 +517,9 @@ public final class StageRuntime {
                 break;
         }
 
-        String path = I18n.path("dialog/" + prefix + suffix + ".txt");
-        String text = host.readUtf8TextResource(path);
-        if (text == null) {
-            path = "/res/dialog/" + prefix + suffix + ".txt";
-            text = host.readUtf8TextResource(path);
-        }
-        if (text == null) {
-            talkTable = new String[0];
-            return;
-        }
+        String text = I18n.loadText("dialog/" + prefix + suffix + ".txt");
 
-        String[] lines = splitLinesSimple(text);
+        String[] lines = I18n.splitLines(text);
         for (int i = 0; i < lines.length; i++) {
             String line = replaceBrTag(lines[i]);
             lines[i] = wrapDialogueLineWordAware(line);
@@ -529,10 +536,6 @@ public final class StageRuntime {
 
     public String[] getTalkTable() {
         return talkTable;
-    }
-
-    public int getDialogueTalkIndex() {
-        return dialogueTalkIndex;
     }
 
     public int getDialoguePage() {
@@ -571,6 +574,7 @@ public final class StageRuntime {
     }
 
     public void stageIb() {
+        enemyAnimation.reset();
         for (int i = 0; i != 32; ++i) {
             for (int j = 0; j != 22; ++j) {
                 enemyList[i][j] = 0;
@@ -612,8 +616,8 @@ public final class StageRuntime {
 
                 int sp = enemyList[i][12] << 3;
                 int dir = enemyList[i][13];
-                enemyList[i][14] = speedCos(sp, dir);
-                enemyList[i][15] = speedSin(sp, dir);
+                enemyList[i][14] = BattleMath.speedCos(sp, dir);
+                enemyList[i][15] = BattleMath.speedSin(sp, dir);
 
                 switch (n) {
                     case 0:
@@ -705,10 +709,7 @@ public final class StageRuntime {
                     host.setBstock(bstock);
                 }
 
-                int w = enemyList[i][17] + enemyList[i][18];
-                int h = enemyList[i][19] + enemyList[i][20];
-                int r = (w > h) ? (w >> 1) : (h >> 1);
-                host.setEnemyAabb(i, enemyList[i][5], enemyList[i][6], r, enemyList[i][17], enemyList[i][18], enemyList[i][19], enemyList[i][20], enemyList[i][16] != 0);
+                host.setEnemyAabb(i, enemyList[i][5], enemyList[i][6], enemyList[i][17], enemyList[i][18], enemyList[i][19], enemyList[i][20], enemyList[i][16] != 0);
                 return i;
             }
         }
@@ -751,10 +752,7 @@ public final class StageRuntime {
 
                 if (enemyList[i][0] != 0) {
                     enemyList[i][2] += 1;
-                    int w = enemyList[i][17] + enemyList[i][18];
-                    int h = enemyList[i][19] + enemyList[i][20];
-                    int r = (w > h) ? (w >> 1) : (h >> 1);
-                    host.setEnemyAabb(i, enemyList[i][5], enemyList[i][6], r, enemyList[i][17], enemyList[i][18], enemyList[i][19], enemyList[i][20], enemyList[i][16] != 0);
+                    host.setEnemyAabb(i, enemyList[i][5], enemyList[i][6], enemyList[i][17], enemyList[i][18], enemyList[i][19], enemyList[i][20], enemyList[i][16] != 0);
                 } else {
                     host.freeEnemy(i);
                 }
@@ -977,94 +975,7 @@ public final class StageRuntime {
             return;
         }
 
-        byte[] b = SpStore.read(102, 4);
-        if (b == null || b.length < 4) {
-            b = new byte[4];
-        }
-
-        int curr = b[level] & 0xFF;
-        if (curr < n) {
-            b[level] = (byte) (n & 0xFF);
-            SpStore.write(102, b);
-        }
-    }
-
-    public void stageLc() {
-        for (int i = 0; i < 64; i++) {
-            if (effectList[i][0] == 0) {
-                continue;
-            }
-
-            effectList[i][1] += 1;
-            effectList[i][4] += effectList[i][6];
-            effectList[i][5] += effectList[i][7];
-
-            int id = effectList[i][3];
-            if (id == 21) {
-                if (effectList[i][1] >= effectList[i][8]) {
-                    effectList[i][0] = 0;
-                }
-                continue;
-            }
-
-            int[] row = null;
-            int[][] table = host.getEffectTable();
-            if (table != null && id >= 0 && id < table.length) {
-                row = table[id];
-            }
-            if (row == null || row.length == 0) {
-                effectList[i][0] = 0;
-                continue;
-            }
-
-            int frame = effectList[i][2];
-            int p = frame << 1;
-            if (p < 0 || p >= row.length) {
-                effectList[i][0] = 0;
-                continue;
-            }
-
-            int dur = row[p];
-            if (dur < effectList[i][1]) {
-                effectList[i][1] = 0;
-                effectList[i][2] = frame + 1;
-                frame = effectList[i][2];
-                p = frame << 1;
-                if (p < 0 || p >= row.length) {
-                    effectList[i][0] = 0;
-                    continue;
-                }
-                dur = row[p];
-            }
-
-            if (id >= 6 && id <= 15) {
-                stageKcEffect(3, effectList[i][4], effectList[i][5]);
-                stageKcEffect(4, effectList[i][4], effectList[i][5]);
-                stageKcEffect(5, effectList[i][4], effectList[i][5]);
-                if (effectList[i][2] != 0) {
-                    stageKcEffect(3, effectList[i][4], effectList[i][5]);
-                    stageKcEffect(3, effectList[i][4], effectList[i][5]);
-                    stageKcEffect(4, effectList[i][4], effectList[i][5]);
-                    stageKcEffect(4, effectList[i][4], effectList[i][5]);
-                    stageKcEffect(5, effectList[i][4], effectList[i][5]);
-                    stageKcEffect(5, effectList[i][4], effectList[i][5]);
-                    host.setResetFlag(2);
-                }
-                if (effectList[i][2] == 2) {
-                    host.setHFlash(1);
-                }
-            }
-
-            if (dur == 255) {
-                if (effectList[i][8] > 0) {
-                    effectList[i][2] = 0;
-                    effectList[i][1] = 0;
-                    effectList[i][8] -= 1;
-                } else {
-                    effectList[i][0] = 0;
-                }
-            }
-        }
+        GameProgress.INSTANCE.recordStageReached(level, n);
     }
 
     public void stageMc(final Graphics g) {
@@ -1276,14 +1187,6 @@ public final class StageRuntime {
         return v;
     }
 
-    private static int speedCos(int n, int dirDeg) {
-        return BattleMath.speedCos(n, dirDeg);
-    }
-
-    private static int speedSin(int n, int dirDeg) {
-        return BattleMath.speedSin(n, dirDeg);
-    }
-
     private boolean syncDialogueStateForTalkIndex(int talkIndex) {
         if (talkIndex == dialogueTalkIndex) {
             return false;
@@ -1311,38 +1214,6 @@ public final class StageRuntime {
             }
         }
         return (lines + 1) / 2;
-    }
-
-    private static String[] splitLinesSimple(String text) {
-        if (text == null) {
-            return new String[0];
-        }
-
-        int lines = 1;
-        for (int i = 0; i < text.length(); i++) {
-            if (text.charAt(i) == '\n') {
-                lines++;
-            }
-        }
-
-        String[] out = new String[lines];
-        int pos = 0;
-        int start = 0;
-        for (int i = 0; i <= text.length(); i++) {
-            boolean end = (i == text.length());
-            if (!end && text.charAt(i) != '\n') {
-                continue;
-            }
-
-            int e = i;
-            if (e > start && text.charAt(e - 1) == '\r') {
-                e--;
-            }
-            out[pos++] = text.substring(start, e);
-            start = i + 1;
-        }
-
-        return out;
     }
 
     // Replace HTML line breaks with wrap markers.

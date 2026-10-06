@@ -2,50 +2,36 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.BulletSprites;
 import touhou.ImageBank;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
-import touhou.replay.ReplayBossSnapshotStore;
 import touhou.replay.ReplayHeader;
-import touhou.replay.ReplayRmsStore;
-import touhou.replay.ReplayStageSnapshotStore;
+import touhou.replay.ReplaySlotStore;
 
 public final class ReplayScreen {
     public static final class Result {
         public static final int KIND_NONE = 0;
         public static final int KIND_BACK_TO_TITLE = 1;
         public static final int KIND_START_REPLAY = 2;
-        public static final int KIND_BT_SHARE = 3;
         public static final int KIND_OPEN_BT_RECEIVE = 4;
         public static final int KIND_OPEN_BT_SEND = 5;
 
         public final int kind;
         public final int slot;
         public final boolean bossOnly;
-        public final boolean btReceive;
 
         public Result(int kind) {
             this.kind = kind;
             this.slot = -1;
             this.bossOnly = false;
-            this.btReceive = false;
         }
 
         public Result(int kind, int slot, boolean bossOnly) {
             this.kind = kind;
             this.slot = slot;
             this.bossOnly = bossOnly;
-            this.btReceive = false;
-        }
-
-        public Result(int kind, int slot, boolean bossOnly, boolean btReceive) {
-            this.kind = kind;
-            this.slot = slot;
-            this.bossOnly = bossOnly;
-            this.btReceive = btReceive;
         }
     }
 
@@ -59,49 +45,39 @@ public final class ReplayScreen {
     private static final int SCENE_MESSAGE = 3;
 
     public void enter() {
-        scene = SCENE_LIST;
         cursor = 0;
-        actionCursor = 0;
-        msgCounter = 0;
-        msg = null;
         decoTick = 0;
-        reloadSlots();
+        returnToList();
     }
 
-    public void refreshSlotsKeepCursor() {
-        int oldCursor = cursor;
+    public void returnToList() {
+        scene = SCENE_LIST;
+        actionCursor = 0;
+        msg = null;
         reloadSlots();
-        if (oldCursor < 0) {
-            oldCursor = 0;
-        }
-        if (oldCursor >= ReplayRmsStore.SLOT_COUNT) {
-            oldCursor = ReplayRmsStore.SLOT_COUNT - 1;
-        }
-        cursor = oldCursor;
+        cursor = slots.clampCursor(cursor);
     }
 
     public Result update(int pressed) {
         decoTick++;
-        if ((pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+        if (UiInput.cancel(pressed)) {
             if (scene == SCENE_LIST) {
                 return new Result(Result.KIND_BACK_TO_TITLE);
             }
             scene = SCENE_LIST;
-            msgCounter = 0;
             msg = null;
             return null;
         }
 
         if (scene == SCENE_LIST) {
-            if ((pressed & GameCanvas.GAME_B_PRESSED) != 0) {
+            if (UiInput.secondary(pressed)) {
                 return new Result(Result.KIND_OPEN_BT_RECEIVE);
             }
         }
 
         if (scene == SCENE_MESSAGE) {
-            if ((pressed & (GameCanvas.FIRE_PRESSED | GameCanvas.GAME_A_PRESSED)) != 0) {
+            if (UiInput.dismiss(pressed)) {
                 scene = SCENE_ACTION;
-                msgCounter = 0;
                 msg = null;
                 updateActionCache();
             }
@@ -109,13 +85,11 @@ public final class ReplayScreen {
         }
 
         if (scene == SCENE_DELETE_CONFIRM) {
-            if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
-                ReplayRmsStore.clearSlot(cursor);
-                ReplayBossSnapshotStore.clearSlot(cursor);
-                ReplayStageSnapshotStore.clearSlot(cursor);
+            if (UiInput.confirm(pressed)) {
+                boolean deleted = ReplaySlotStore.clearSlot(cursor);
                 actionCursor = ACTION_BACK;
                 reloadSlots();
-                showMessage(UiText.get(TextId.REPLAY_MSG_DELETED));
+                showMessage(UiText.get(deleted ? TextId.REPLAY_MSG_DELETED : TextId.REPLAY_SAVE_FAIL));
             }
             return null;
         }
@@ -123,28 +97,28 @@ public final class ReplayScreen {
         if (scene == SCENE_ACTION) {
             boolean moved = false;
             int moveDir = 1;
-            if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
+            if (UiInput.down(pressed)) {
                 // Grid navigation: Down (wrap within column 0-2 or 3-5)
                 int col = actionCursor / 3;
                 int row = actionCursor % 3;
-                row = (row + 1) % 3;
+                row = MenuCursor.move(row, 1, 3);
                 actionCursor = col * 3 + row;
                 moved = true;
                 moveDir = 1;
-            } else if ((pressed & GameCanvas.UP_PRESSED) != 0) {
+            } else if (UiInput.up(pressed)) {
                 // Grid navigation: Up
                 int col = actionCursor / 3;
                 int row = actionCursor % 3;
-                row = (row + 2) % 3; // -1 mod 3
+                row = MenuCursor.move(row, -1, 3);
                 actionCursor = col * 3 + row;
                 moved = true;
                 moveDir = -1;
-            } else if ((pressed & GameCanvas.LEFT_PRESSED) != 0 || (pressed & GameCanvas.RIGHT_PRESSED) != 0) {
+            } else if (UiInput.left(pressed) || UiInput.right(pressed)) {
                 // Switch column
-                actionCursor = (actionCursor + 3) % 6;
+                actionCursor = MenuCursor.move(actionCursor, 3, 6);
                 moved = true;
                 moveDir = 1;
-            } else if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+            } else if (UiInput.confirm(pressed)) {
                 Result r = handleAction();
                 if (r != null) {
                     return r;
@@ -158,11 +132,11 @@ public final class ReplayScreen {
             return null;
         }
 
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-            cursor = (cursor + 1) % ReplayRmsStore.SLOT_COUNT;
-        } else if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-            cursor = (cursor - 1 + ReplayRmsStore.SLOT_COUNT) % ReplayRmsStore.SLOT_COUNT;
-        } else if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+        if (UiInput.down(pressed)) {
+            cursor = MenuCursor.move(cursor, 1, slots.size());
+        } else if (UiInput.up(pressed)) {
+            cursor = MenuCursor.move(cursor, -1, slots.size());
+        } else if (UiInput.confirm(pressed)) {
             scene = SCENE_ACTION;
             actionCursor = 0;
             updateActionCache();
@@ -184,7 +158,7 @@ public final class ReplayScreen {
             this.sprites = sprites;
         }
 
-        StageClearResultPanel.renderReplayListBackgroundOrFallback(g, this.imgs);
+        ReplayUi.renderBackground(g, this.imgs);
 
         if (scene != SCENE_ACTION) {
             UiDraw.drawString2(g, FONT, UiText.get(TextId.REPLAY_TITLE), 120, 25, 1, 0xFFFFFF, 0x777777);
@@ -229,25 +203,14 @@ public final class ReplayScreen {
     private boolean cachedHasBoss;
     private boolean cachedImported;
 
-    private final ReplayHeader[] slotHeaders = new ReplayHeader[ReplayRmsStore.SLOT_COUNT];
-    private final byte[][] slotNames = new byte[ReplayRmsStore.SLOT_COUNT][ReplayRmsStore.NAME_SIZE];
-    private final byte[] tmpFull = new byte[ReplayRmsStore.DATA_SIZE];
-    private final byte[] tmpBoss = new byte[ReplayRmsStore.DATA_SIZE];
+    private final ReplaySlotListModel slots = new ReplaySlotListModel();
 
     private String msg;
-    private int msgCounter;
 
     private final int[] tmpSpriteMetrics = new int[4];
 
     private void reloadSlots() {
-        for (int i = 0; i < ReplayRmsStore.SLOT_COUNT; i++) {
-            if (slotHeaders[i] == null) {
-                slotHeaders[i] = new ReplayHeader();
-            }
-        }
-
-        ReplaySaveUi.loadAllSlots(slotHeaders, slotNames, tmpFull, tmpBoss);
-
+        slots.reload();
         cachedSlot = -1;
     }
 
@@ -257,10 +220,10 @@ public final class ReplayScreen {
         }
         cachedSlot = cursor;
 
-        ReplayHeader h = slotHeaders[cursor];
-        cachedHasData = (h != null && h.getFlag() != 0);
+        ReplayHeader h = slots.header(cursor);
+        cachedHasData = slots.hasData(cursor);
 
-        cachedName = ReplaySaveUi.decodeSlotName(slotNames[cursor]);
+        cachedName = ReplayUi.decodeSlotName(slots.nameBytes(cursor));
         cachedSpellPractice = (h != null && h.getMode() == 3);
 
         if (!cachedHasData || h == null) {
@@ -272,10 +235,10 @@ public final class ReplayScreen {
             return;
         }
 
-        cachedUnit = ReplaySaveUi.formatUnit(h);
-        cachedDetail = ReplaySaveUi.formatDetail(h);
+        cachedUnit = ReplayUi.formatUnit(h);
+        cachedDetail = ReplayUi.formatDetail(h);
         cachedScore = String.valueOf(h.getScore());
-        cachedHasBoss = (!cachedSpellPractice && ReplaySaveUi.hasBossOnly(cursor, h));
+        cachedHasBoss = !cachedSpellPractice && slots.hasBossOnly(cursor);
         cachedImported = (h.getFlag() == ReplayHeader.FLAG_IMPORTED);
     }
 
@@ -301,11 +264,11 @@ public final class ReplayScreen {
 
         if (act == ACTION_BT) {
             if (!isActionEnabled(act)) return null;
-            return new Result(Result.KIND_OPEN_BT_SEND, cursor, false, false);
+            return new Result(Result.KIND_OPEN_BT_SEND, cursor, false);
         }
 
-        ReplayHeader h = slotHeaders[cursor];
-        boolean hasData = h != null && h.getFlag() != 0;
+        ReplayHeader h = slots.header(cursor);
+        boolean hasData = slots.hasData(cursor);
         if (!hasData) {
             showMessage(UiText.get(TextId.REPLAY_MSG_EMPTY_SLOT));
             return null;
@@ -313,14 +276,6 @@ public final class ReplayScreen {
 
         if (act == ACTION_PLAY_BOSS) {
             if (!isActionEnabled(ACTION_PLAY_BOSS)) return null;
-            if (h.getBossStartFrame() < 0) {
-                showMessage(UiText.get(TextId.REPLAY_MSG_NO_BOSS_SEGMENT));
-                return null;
-            }
-            if (!ReplayBossSnapshotStore.hasSlot(cursor)) {
-                showMessage(UiText.get(TextId.REPLAY_MSG_NO_BOSS_SNAPSHOT));
-                return null;
-            }
             return new Result(Result.KIND_START_REPLAY, cursor, true);
         }
         if (act == ACTION_PLAY) {
@@ -331,18 +286,14 @@ public final class ReplayScreen {
         return null;
     }
 
-    private void showMessage(String s) {
+    void showMessage(String s) {
         msg = s;
-        msgCounter = 30;
         scene = SCENE_MESSAGE;
     }
 
-    public void showMessageExternal(String s) {
-        showMessage(s);
-    }
-
     private void renderList(Graphics g, Font font) {
-        ReplaySaveUi.renderSlotListCompact(g, font, cursor, slotHeaders, UiText.get(TextId.COMMON_SLOT_PREFIX), false);
+        ReplayUi.renderSlotListCompact(
+                g, font, cursor, slots, UiText.get(TextId.COMMON_SLOT_PREFIX), decoTick, false);
     }
 
     private void renderAction(Graphics g, Font font) {
@@ -383,7 +334,7 @@ public final class ReplayScreen {
         }
 
         if (cachedHasData) {
-            ReplayHeader h = slotHeaders[cursor];
+            ReplayHeader h = slots.header(cursor);
             if (!cachedSpellPractice) {
                 // Draw difficulty icon at top-left, clamp inside card bounds.
                 drawIconInCard(g, difficultyToBulletId(h.getDifficulty()), 0, cardX, cardY, cardW, cardH);
@@ -397,7 +348,7 @@ public final class ReplayScreen {
             String nameLine = cachedName;
             if (nameLine == null || nameLine.length() == 0) {
                 if (!cachedSpellPractice && h != null) {
-                    nameLine = ReplaySaveUi.stageName(h.getStage());
+                    nameLine = ReplayUi.stageName(h.getStage());
                 } else {
                     nameLine = cachedDetail;
                 }
@@ -465,8 +416,7 @@ public final class ReplayScreen {
             if (cachedSpellPractice) {
                 return false;
             }
-            ReplayHeader h = slotHeaders[cursor];
-            return h != null && ReplaySaveUi.hasBossOnly(cursor, h);
+            return slots.hasBossOnly(cursor);
         }
         return true;
     }
@@ -479,7 +429,7 @@ public final class ReplayScreen {
         int step = (dir >= 0) ? 1 : -1;
         int start = actionCursor;
         for (int i = 0; i < 6; i++) {
-            actionCursor = (actionCursor + step + 6) % 6;
+            actionCursor = MenuCursor.move(actionCursor, step, 6);
             if (isActionEnabled(actionCursor)) {
                 return;
             }
@@ -585,21 +535,8 @@ public final class ReplayScreen {
     }
 
     private void renderMessage(Graphics g, Font font) {
-        if (msgCounter > 0) {
-            msgCounter--;
-        }
-
-        g.setColor(0x000000);
-        g.fillRect(24, 104, 192, 36);
-        g.setColor(0x00FF00);
-        g.drawRect(25, 105, 190, 34);
-
-        String s = (msg != null) ? msg : "";
-        int boxY = 104;
-        int boxH = 36;
-        int baseY = boxY + ((boxH - UiDraw.fontHeight(font)) >> 1) + UiDraw.fontBaseline(font);
-        UiDraw.drawString2(g, font, s, 120, baseY, 1, 0xFFFFFF, 0x444444);
+        ReplayUi.renderMessageBox(g, font, FONT_M, msg, 94, decoTick);
     }
 
-    // Use ReplaySaveUi for list rendering and header formatting.
+    // Use ReplayUi for list rendering and header formatting.
 }

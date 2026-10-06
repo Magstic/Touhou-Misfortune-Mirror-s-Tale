@@ -2,10 +2,10 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.GameOptions;
 import touhou.GameProgress;
+import touhou.BgmCatalog;
 import touhou.MusicRoomSettings;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
@@ -31,7 +31,7 @@ public final class MusicRoomScreen {
         }
     }
 
-    private static final int SOUNDTEST_MAX = 18;
+    private static final int SOUNDTEST_MAX = BgmCatalog.TRACK_COUNT;
     private static final int MAX_VISIBLE = 8;
 
     private static final int[] ST_TITLE = new int[] {
@@ -94,21 +94,15 @@ public final class MusicRoomScreen {
             TextId.MUSIC_FROM_17,
             TextId.MUSIC_FROM_18 };
 
-    private int stCursor;
-    private int stScroll;
+    private int selectedTrack;
     private int stVolume;
 
     private int[] opt;
 
     public void enter() {
-        GameProgress.INSTANCE.loadFromSp();
         opt = GameOptions.load();
-        if (opt == null) {
-            opt = GameOptions.defaults();
-        }
 
-        stCursor = 0;
-        stScroll = 0;
+        selectedTrack = 0;
         stVolume = MusicRoomSettings.loadVolume(opt[1]);
     }
 
@@ -117,50 +111,28 @@ public final class MusicRoomScreen {
     }
 
     public Result update(int pressed) {
-        if ((pressed & GameCanvas.GAME_A_PRESSED) != 0) {
-            stCursor = 0;
-            stScroll = 0;
+        if (UiInput.cancel(pressed)) {
+            selectedTrack = 0;
             MusicRoomSettings.saveVolume(stVolume);
             return new Result(Result.KIND_BACK_TO_TITLE);
         }
 
-        if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
-            int n = stCursor + stScroll;
-            GameProgress.unlockMusicPlayed(n);
-            return new Result(Result.KIND_PLAY_TRACK, n);
+        if (UiInput.confirm(pressed)) {
+            GameProgress.INSTANCE.markMusicPlayed(selectedTrack);
+            return new Result(Result.KIND_PLAY_TRACK, selectedTrack);
         }
 
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-            int n = stCursor + stScroll;
-            if (n == SOUNDTEST_MAX - 1) {
-                stCursor = 0;
-                stScroll = 0;
-                return null;
-            }
-            if (stScroll == MAX_VISIBLE - 1) {
-                stCursor++;
-                return null;
-            }
-            stScroll++;
+        if (UiInput.down(pressed)) {
+            selectedTrack = MenuCursor.move(selectedTrack, 1, SOUNDTEST_MAX);
             return null;
         }
 
-        if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-            int n = stCursor + stScroll;
-            if (n == 0) {
-                stCursor = SOUNDTEST_MAX - 1 - (MAX_VISIBLE - 1);
-                stScroll = MAX_VISIBLE - 1;
-                return null;
-            }
-            if (stScroll == 0) {
-                stCursor--;
-                return null;
-            }
-            stScroll--;
+        if (UiInput.up(pressed)) {
+            selectedTrack = MenuCursor.move(selectedTrack, -1, SOUNDTEST_MAX);
             return null;
         }
 
-        if ((pressed & GameCanvas.LEFT_PRESSED) != 0) {
+        if (UiInput.left(pressed)) {
             if (stVolume != 0) {
                 stVolume -= 10;
                 if (stVolume < 0) {
@@ -171,7 +143,7 @@ public final class MusicRoomScreen {
             return new Result(Result.KIND_VOLUME_CHANGED, stVolume);
         }
 
-        if ((pressed & GameCanvas.RIGHT_PRESSED) != 0) {
+        if (UiInput.right(pressed)) {
             if (stVolume != 100) {
                 stVolume += 10;
                 if (stVolume > 100) {
@@ -195,18 +167,16 @@ public final class MusicRoomScreen {
         Font font = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
         UiDraw.drawString2(g, font, UiText.get(TextId.MUSICROOM_TITLE), 120, 22, 1, 0xFFFFFF, 0x333333);
 
-        for (int i = 0; i < SOUNDTEST_MAX; i++) {
-            int rel = i - stCursor;
-            if (rel >= 0 && rel <= (MAX_VISIBLE - 1)) {
-                UiDraw.drawString2(g, font, UiText.get(ST_TITLE[i]), 20 + rel * 3, 45 + 15 * rel, 0, 0x777777, 0x333333);
-            }
+        int visibleStart = MenuCursor.trailingVisibleStart(selectedTrack, SOUNDTEST_MAX, MAX_VISIBLE);
+        int visibleEnd = visibleStart + MAX_VISIBLE;
+        for (int i = visibleStart; i < visibleEnd; i++) {
+            int rel = i - visibleStart;
+            UiDraw.drawString2(g, font, UiText.get(ST_TITLE[i]), 20 + rel * 3, 45 + 15 * rel, 0, 0x777777, 0x333333);
         }
 
-        int n = stCursor + stScroll;
-        int relSel = n - stCursor;
-        if (n >= 0 && n < SOUNDTEST_MAX && relSel >= 0 && relSel <= (MAX_VISIBLE - 1)) {
-            UiDraw.drawString2(g, font, UiText.get(ST_TITLE[n]), 20 + relSel * 3, 45 + 15 * relSel, 0, 0xFFFFFF, 0x777777);
-        }
+        int n = selectedTrack;
+        int relSel = n - visibleStart;
+        UiDraw.drawString2(g, font, UiText.get(ST_TITLE[n]), 20 + relSel * 3, 45 + 15 * relSel, 0, 0xFFFFFF, 0x777777);
 
         g.setColor(0x333333);
         g.fillRect(10, 160, 220, 70);
@@ -220,7 +190,7 @@ public final class MusicRoomScreen {
             prefix = "music" + n + ":";
         }
 
-        boolean played = (n >= 0 && n < GameProgress.MUSIC_COUNT && GameProgress.INSTANCE.musicPlayed[n] != 0);
+        boolean played = (n >= 0 && n < GameProgress.MUSIC_COUNT && GameProgress.INSTANCE.isMusicPlayed(n));
         String line0;
         String line1;
         String line2;

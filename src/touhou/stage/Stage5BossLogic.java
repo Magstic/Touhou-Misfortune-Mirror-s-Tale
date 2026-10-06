@@ -1,6 +1,6 @@
 package touhou.stage;
 
-import touhou.EnemyBulletSystem;
+import touhou.battle.BattleMath;
 import touhou.Trig;
 
 final class Stage5BossLogic extends AbstractBossStageLogic {
@@ -31,8 +31,8 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
             case 1:
                 bossx[idx] = 97;
                 bossy[idx] = 56;
-                bspellcnt = 255;
-                batkf = false;
+                core.bspellcnt = 255;
+                core.batkf = false;
                 host.setResetFlag(4);
                 enemylist[enemyIdx][16] = 1;
                 return;
@@ -45,31 +45,31 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     bossx[idx] = 97;
                     bossy[idx] = 56;
                 }
-                bwave[idx] = 120 * idx;
-                bspellcnt = 255;
-                batkf = false;
+                core.bwave[idx] = 120 * idx;
+                core.bspellcnt = 255;
+                core.batkf = false;
                 if (host.getMGCnt() <= 10) {
                     return;
                 }
                 if (host.getGameMode() == 3) {
-                    bspellcnt = 120;
+                    core.bspellcnt = 120;
                     int step = host.getSpellPracticeBossStep();
                     wb(step);
                     switch (step) {
                         case 10:
-                            j = 1400;
+                            core.j = 1400;
                             break;
                         case 13:
-                            j = 2000;
+                            core.j = 2000;
                             break;
                         case 16:
-                            j = 2000;
+                            core.j = 2000;
                             break;
                         case 19:
-                            j = 1800;
+                            core.j = 1800;
                             break;
                         case 37:
-                            j = 4200;
+                            core.j = 4200;
                             break;
                     }
                     yb(enemyIdx, 7, 3);
@@ -78,43 +78,43 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 switch (host.getBstock()) {
                     case 3:
-                        j = 1000;
+                        core.j = 1000;
                         yb(enemyIdx, 7, 1);
-                        bspellcnt = 39;
+                        core.bspellcnt = 39;
                         wb(3);
                         return;
                     case 2:
-                        j = 1000;
+                        core.j = 1000;
                         yb(enemyIdx, 7, 1);
-                        bspellcnt = 49;
+                        core.bspellcnt = 49;
                         wb(4);
                         return;
                     case 1:
-                        j = 2000;
+                        core.j = 2000;
                         yb(enemyIdx, 7, 3);
-                        bspellcnt = 49;
+                        core.bspellcnt = 49;
                         wb(16);
                         return;
                     case 0:
-                        j = 1800;
+                        core.j = 1800;
                         yb(enemyIdx, 7, 3);
-                        bspellcnt = 49;
+                        core.bspellcnt = 49;
                         wb(19);
                         return;
                 }
                 return;
 
             case 3:
-                if (m == 2 || bspellcnt < 0) {
+                if (core.m == 2 || core.bspellcnt < 0) {
                     host.setResetFlag(4);
-                    j = 65535;
-                    yb(l, n, 2);
+                    core.j = 65535;
+                    yb(core.l, core.n, 2);
                     enemylist[enemyIdx][3] = 0;
                     wb(10);
                     return;
                 }
                 host.setBbaria(0);
-                batkf = true;
+                core.batkf = true;
 
                 int d03 = (host.getMGCnt() + 1) % 240;
                 if (d03 % 120 == 40) {
@@ -153,7 +153,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     int ex = enemylist[enemyIdx][5];
                     int ey = enemylist[enemyIdx][6];
                     if (d03 == 20) {
-                        enemylist[enemyIdx][10] = EnemyBulletSystem.arcTan2Deg(host.getPlayerYFixed() - ey, host.getPlayerXFixed() - ex);
+                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey, host.getPlayerXFixed() - ex);
                     }
 
                     int d4;
@@ -211,7 +211,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     int ex = enemylist[enemyIdx][5];
                     int ey = enemylist[enemyIdx][6];
                     if (d03 == 140) {
-                        enemylist[enemyIdx][10] = EnemyBulletSystem.arcTan2Deg(host.getPlayerYFixed() - ey, host.getPlayerXFixed() - ex);
+                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey, host.getPlayerXFixed() - ex);
                     }
                     int d8 = 160 - d03;
 
@@ -274,7 +274,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 if (d03 == 80 || d03 == 200) {
                     int ex = enemylist[enemyIdx][5];
                     int ey = enemylist[enemyIdx][6];
-                    enemylist[enemyIdx][10] = EnemyBulletSystem.arcTan2Deg(host.getPlayerYFixed() - ey, host.getPlayerXFixed() - ex);
+                    enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey, host.getPlayerXFixed() - ex);
 
                     int div;
                     int count;
@@ -309,16 +309,16 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 return;
 
             case 4:
-                if (m == 2 || bspellcnt < 0) {
+                if (core.m == 2 || core.bspellcnt < 0) {
                     host.setResetFlag(4);
-                    j = 65535;
-                    yb(l, n, 2);
+                    core.j = 65535;
+                    yb(core.l, core.n, 2);
                     enemylist[enemyIdx][3] = 0;
                     wb(13);
                     return;
                 }
                 host.setBbaria(0);
-                batkf = true;
+                core.batkf = true;
 
                 int d04 = (host.getMGCnt() + 1) % 300;
                 int ex04 = enemylist[enemyIdx][5];
@@ -357,7 +357,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 if (d04 >= 20 && d04 < 50 && ((d04 - 20) & 0x7) == 0) {
                     if (d04 == 20) {
-                        enemylist[enemyIdx][10] = EnemyBulletSystem.arcTan2Deg(host.getPlayerYFixed() - ey04, host.getPlayerXFixed() - ex04);
+                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey04, host.getPlayerXFixed() - ex04);
                     }
                     int div;
                     switch (host.getLevel()) {
@@ -405,7 +405,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 if (d04 >= 140 && d04 < 160 && ((d04 - 140) & 0x7) == 0) {
                     if (d04 == 140) {
-                        enemylist[enemyIdx][10] = EnemyBulletSystem.arcTan2Deg(host.getPlayerYFixed() - ey04, host.getPlayerXFixed() - ex04);
+                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey04, host.getPlayerXFixed() - ex04);
                     }
                     int d8 = 160 - d04;
                     int div;
@@ -458,7 +458,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 }
 
                 if (d04 == 80 || d04 == 200) {
-                    enemylist[enemyIdx][10] = EnemyBulletSystem.arcTan2Deg(host.getPlayerYFixed() - ey04, host.getPlayerXFixed() - ex04);
+                    enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey04, host.getPlayerXFixed() - ex04);
                     int div;
                     switch (host.getLevel()) {
                         case 0:
@@ -490,18 +490,18 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 bossy[idx] = 68;
                 enemylist[enemyIdx][14] = 458752;
                 enemylist[enemyIdx][15] = 458752;
-                batkf = false;
+                core.batkf = false;
                 host.setBbaria(2);
                 if (host.getMGCnt() > 30) {
                     host.setQ(true);
-                    bspellstep = 1;
-                    spellId = 62 + host.getLevel();
+                    core.bspellstep = 1;
+                    core.spellId = 62 + host.getLevel();
                     wb(11);
                 }
                 return;
 
             case 11:
-                bspellcnt = 59;
+                core.bspellcnt = 59;
                 switch (host.getMGCnt()) {
                     case 1:
                     case 29:
@@ -525,18 +525,18 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     bossWrk[3] = 0;
                     bossWrk[4] = 0;
                     enemylist[enemyIdx][3] = 0;
-                    bspellstep = 2;
-                    batkf = true;
+                    core.bspellstep = 2;
+                    core.batkf = true;
                     host.setBbaria(0);
                     wb(12);
-                    j = 1400;
+                    core.j = 1400;
                     yb(enemyIdx, 7, 2);
                 }
                 return;
 
             case 12:
-                if (bspellcnt < 0) {
-                    j = 0;
+                if (core.bspellcnt < 0) {
+                    core.j = 0;
                     host.setQ(false);
                     host.stageJb(enemyIdx);
                     return;
@@ -566,7 +566,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 if (d12 >= 20 && d12 < 40) {
                     if (d12 == 20) {
-                        enemylist[enemyIdx][10] = EnemyBulletSystem.arcTan2Deg(host.getPlayerYFixed() - ey12, host.getPlayerXFixed() - ex12);
+                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey12, host.getPlayerXFixed() - ex12);
                     }
 
                     int d4;
@@ -678,7 +678,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 }
 
                 if (d12 == 160) {
-                    enemylist[enemyIdx][10] = EnemyBulletSystem.arcTan2Deg(host.getPlayerYFixed() - ey12, host.getPlayerXFixed() - ex12);
+                    enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey12, host.getPlayerXFixed() - ex12);
 
                     int d4;
                     int d5;
@@ -825,18 +825,18 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 bossy[idx] = 78;
                 enemylist[enemyIdx][14] = 458752;
                 enemylist[enemyIdx][15] = 458752;
-                batkf = false;
+                core.batkf = false;
                 host.setBbaria(2);
                 if (host.getMGCnt() > 30) {
                     host.setQ(true);
-                    bspellstep = 1;
-                    spellId = 66 + host.getLevel();
+                    core.bspellstep = 1;
+                    core.spellId = 66 + host.getLevel();
                     wb(14);
                 }
                 return;
 
             case 14:
-                bspellcnt = 59;
+                core.bspellcnt = 59;
                 switch (host.getMGCnt()) {
                     case 1:
                     case 29:
@@ -856,18 +856,18 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 }
                 if (host.getMGCnt() > 30) {
                     enemylist[enemyIdx][3] = 0;
-                    bspellstep = 2;
-                    batkf = true;
+                    core.bspellstep = 2;
+                    core.batkf = true;
                     host.setBbaria(0);
                     wb(15);
-                    j = 2000;
+                    core.j = 2000;
                     yb(enemyIdx, 7, 2);
                 }
                 return;
 
             case 15:
-                if (bspellcnt < 0) {
-                    j = 0;
+                if (core.bspellcnt < 0) {
+                    core.j = 0;
                     host.setQ(false);
                     host.stageJb(enemyIdx);
                     return;
@@ -899,7 +899,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 if (d15 >= 20 && d15 < 30) {
                     if (d15 == 20) {
-                        enemylist[enemyIdx][10] = EnemyBulletSystem.arcTan2Deg(host.getPlayerYFixed() - ey15, host.getPlayerXFixed() - ex15);
+                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey15, host.getPlayerXFixed() - ex15);
                     }
 
                     if ((d15 & 0x1) == 0) {
@@ -1021,20 +1021,20 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 bossy[idx] = 64;
                 enemylist[enemyIdx][14] = 458752;
                 enemylist[enemyIdx][15] = 458752;
-                batkf = false;
+                core.batkf = false;
                 host.setBbaria(2);
                 if (host.getMGCnt() > 30) {
                     host.setQ(true);
                     enemylist[enemyIdx][14] = 65536;
                     enemylist[enemyIdx][15] = 65536;
-                    bspellstep = 1;
-                    spellId = 70 + host.getLevel();
+                    core.bspellstep = 1;
+                    core.spellId = 70 + host.getLevel();
                     wb(17);
                 }
                 return;
 
             case 17:
-                bspellcnt = 59;
+                core.bspellcnt = 59;
                 switch (host.getMGCnt()) {
                     case 1:
                     case 29:
@@ -1056,16 +1056,16 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     enemylist[enemyIdx][14] = 327680;
                     enemylist[enemyIdx][15] = 327680;
                     enemylist[enemyIdx][3] = 0;
-                    bspellstep = 2;
-                    batkf = true;
+                    core.bspellstep = 2;
+                    core.batkf = true;
                     host.setBbaria(0);
                     wb(18);
                 }
                 return;
 
             case 18:
-                if (bspellcnt < 0) {
-                    j = 0;
+                if (core.bspellcnt < 0) {
+                    core.j = 0;
                     host.setQ(false);
                     host.stageJb(enemyIdx);
                     return;
@@ -1093,7 +1093,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                             break;
                     }
 
-                    int base0 = (j + (d18 << 4) + (count << 5)) % 360;
+                    int base0 = (core.j + (d18 << 4) + (count << 5)) % 360;
                     int angA = base0;
                     int angB = 360 - base0;
                     if ((d18 & 0x3) == 0) {
@@ -1148,7 +1148,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                         int px = host.getPlayerXFixed();
                         int py = host.getPlayerYFixed();
 
-                        int base0 = (j + (d18 << 4) + (count << 5)) % 360;
+                        int base0 = (core.j + (d18 << 4) + (count << 5)) % 360;
                         int angA = base0;
                         int angB = 360 - base0;
                         if ((d18 & 0x3) == 0) {
@@ -1175,7 +1175,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 }
 
                 if (d18 == 200) {
-                    enemylist[enemyIdx][10] = EnemyBulletSystem.arcTan2Deg(host.getPlayerYFixed() - ey18, host.getPlayerXFixed() - ex18);
+                    enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey18, host.getPlayerXFixed() - ex18);
 
                     int div;
                     int count;
@@ -1233,20 +1233,20 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 bossy[idx] = 121;
                 enemylist[enemyIdx][14] = 458752;
                 enemylist[enemyIdx][15] = 458752;
-                batkf = false;
+                core.batkf = false;
                 host.setBbaria(2);
                 if (host.getMGCnt() > 30) {
                     host.setQ(true);
                     enemylist[enemyIdx][14] = 65536;
                     enemylist[enemyIdx][15] = 65536;
-                    bspellstep = 1;
-                    spellId = 74 + host.getLevel();
+                    core.bspellstep = 1;
+                    core.spellId = 74 + host.getLevel();
                     wb(20);
                 }
                 return;
 
             case 20:
-                bspellcnt = 59;
+                core.bspellcnt = 59;
                 switch (host.getMGCnt()) {
                     case 1:
                     case 29:
@@ -1268,16 +1268,16 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     enemylist[enemyIdx][14] = 0;
                     enemylist[enemyIdx][15] = 0;
                     enemylist[enemyIdx][3] = 0;
-                    bspellstep = 2;
-                    batkf = true;
+                    core.bspellstep = 2;
+                    core.batkf = true;
                     host.setBbaria(0);
                     wb(21);
                 }
                 return;
 
             case 21:
-                if (bspellcnt < 0) {
-                    j = 0;
+                if (core.bspellcnt < 0) {
+                    core.j = 0;
                     host.setQ(false);
                     host.stageJb(enemyIdx);
                     return;
@@ -1369,18 +1369,18 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 bossy[idx] = 68;
                 enemylist[enemyIdx][14] = 458752;
                 enemylist[enemyIdx][15] = 458752;
-                batkf = false;
+                core.batkf = false;
                 host.setBbaria(2);
                 if (host.getMGCnt() > 30) {
                     host.setQ(true);
-                    bspellstep = 1;
-                    spellId = 113;
+                    core.bspellstep = 1;
+                    core.spellId = 113;
                     wb(38);
                 }
                 return;
 
             case 38:
-                bspellcnt = 60;
+                core.bspellcnt = 60;
                 switch (host.getMGCnt()) {
                     case 1:
                     case 29:
@@ -1400,8 +1400,8 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 }
                 if (host.getMGCnt() > 30) {
                     enemylist[enemyIdx][3] = 0;
-                    bspellstep = 2;
-                    batkf = true;
+                    core.bspellstep = 2;
+                    core.batkf = true;
                     host.setBbaria(0);
                     wb(39);
                 }
@@ -1409,8 +1409,8 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
             case 39:
             {
-                if (bspellcnt < 0) {
-                    j = 0;
+                if (core.bspellcnt < 0) {
+                    core.j = 0;
                     host.setQ(false);
                     host.stageJb(enemyIdx);
                     return;
@@ -1425,7 +1425,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 int ey_39 = enemylist[enemyIdx][6];
 
                 if ((d0_39 & 0x1F) == 0) {
-                    enemylist[enemyIdx][10] = EnemyBulletSystem.arcTan2Deg(host.getPlayerYFixed() - ey_39, host.getPlayerXFixed() - ex_39);
+                    enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey_39, host.getPlayerXFixed() - ex_39);
                 }
                 int aim_39 = enemylist[enemyIdx][10];
 

@@ -1,11 +1,9 @@
 package touhou;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 public final class CcTable {
-    private final short[][] cc;
+    private static CcTable instance;
 
     private final int[] imgIndex;
     private final int[] srcX;
@@ -18,8 +16,6 @@ public final class CcTable {
     private final boolean[] hasSpriteMeta;
 
     private CcTable(short[][] cc) {
-        this.cc = cc;
-
         int count = (cc != null) ? cc.length : 0;
         imgIndex = new int[count];
         srcX = new int[count];
@@ -59,14 +55,7 @@ public final class CcTable {
     }
 
     public int size() {
-        return cc.length;
-    }
-
-    public short[] get(int bulletId) {
-        if (bulletId < 0 || bulletId >= cc.length) {
-            return null;
-        }
-        return cc[bulletId];
+        return imgIndex.length;
     }
 
     public int getImgIndex(int ccIndex) {
@@ -125,31 +114,11 @@ public final class CcTable {
         return ay[ccIndex];
     }
 
-    public static CcTable loadFromResource(String resourcePath) throws IOException {
-        InputStream in = CcTable.class.getResourceAsStream(resourcePath);
-        if (in == null) {
-            throw new IOException("Missing resource: " + resourcePath);
+    public static CcTable load() throws IOException {
+        if (instance == null) {
+            instance = new CcTable(parse(ResourceLoader.readRequiredBytes(ResourcePaths.CC_TABLE)));
         }
-        try {
-            byte[] data = readAll(in);
-            short[][] cc = parse(data);
-            return new CcTable(cc);
-        } finally {
-            try {
-                in.close();
-            } catch (IOException ignore) {
-            }
-        }
-    }
-
-    private static byte[] readAll(InputStream in) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buf = new byte[1024];
-        int r;
-        while ((r = in.read(buf)) != -1) {
-            out.write(buf, 0, r);
-        }
-        return out.toByteArray();
+        return instance;
     }
 
     private static short[][] parse(byte[] data) throws IOException {
@@ -157,6 +126,9 @@ public final class CcTable {
             throw new IOException("Invalid cc.dat");
         }
         int count = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
+        if (count == 0 || count > data.length - 2) {
+            throw new IOException("Invalid cc.dat (entry count)");
+        }
         int n = 2;
 
         short[][] cc = new short[count][];
@@ -181,6 +153,10 @@ public final class CcTable {
                 n += 2;
                 cc[j][k] = (short) v;
             }
+        }
+
+        if (n != data.length) {
+            throw new IOException("Invalid cc.dat (trailing data)");
         }
 
         return cc;

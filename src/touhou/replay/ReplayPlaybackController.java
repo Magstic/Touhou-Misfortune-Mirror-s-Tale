@@ -25,9 +25,6 @@ public final class ReplayPlaybackController {
     private int dialoguePageCountLen;
 
     private final ReplayHeader header = new ReplayHeader();
-    private final byte[] name32 = new byte[ReplayRmsStore.NAME_SIZE];
-    private final byte[] full7168 = new byte[ReplayRmsStore.DATA_SIZE];
-    private final byte[] boss7168 = new byte[ReplayRmsStore.DATA_SIZE];
     private final FrameInput frameInput = new FrameInput();
 
     public ReplayPlaybackController() {
@@ -36,10 +33,6 @@ public final class ReplayPlaybackController {
 
     public boolean isActive() {
         return active;
-    }
-
-    public boolean isBossOnly() {
-        return bossOnly;
     }
 
     public int getFramePos() {
@@ -63,12 +56,13 @@ public final class ReplayPlaybackController {
     }
 
     public StartParams startFromSlot(int slot, boolean bossOnly) {
-        header.clear();
-        ReplayRmsStore.loadSlot2(slot, header, name32, full7168, boss7168);
-        if (header.getFlag() == ReplayHeader.FLAG_NONE) {
+        ReplaySlotData data = ReplaySlotStore.loadSlot(slot);
+        if (data == null) {
             stop();
             return null;
         }
+        header.clear();
+        header.load(data.header.bytes());
 
         dialoguePageCountLen = header.getDialoguePageCountLen();
         for (int i = 0; i < dialoguePageCounts.length; i++) {
@@ -76,11 +70,19 @@ public final class ReplayPlaybackController {
             dialoguePageCounts[i] = (byte) ((v < 0) ? 0 : (v & 0xFF));
         }
 
-        byte[] encoded = bossOnly ? boss7168 : full7168;
+        byte[] encoded = bossOnly ? data.bossInput : data.fullInput;
         if (bossOnly && ReplayBossOnlyPolicy.isFastForwardBossOnlyStage(header.getStage())) {
-            encoded = full7168;
+            encoded = data.fullInput;
+        }
+        if (encoded == null) {
+            stop();
+            return null;
         }
         frames = ReplayCodec.decode(encoded);
+        if (frames == null) {
+            stop();
+            return null;
+        }
 
         active = true;
         this.bossOnly = bossOnly;

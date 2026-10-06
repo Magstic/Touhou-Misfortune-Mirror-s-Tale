@@ -2,6 +2,11 @@ package touhou.replay;
 
 public final class ReplayHeader {
     public static final int SIZE = 64;
+    static final int INTEGRITY_OFFSET = 8;
+    static final int INTEGRITY_SIZE = 16;
+
+    private static final int FORMAT_MAGIC = 0x33504852; // 'RHP3'
+    private static final int FORMAT_VERSION = 1;
 
     public static final int DIALOGUE_MAX = 31;
 
@@ -93,6 +98,30 @@ public final class ReplayHeader {
         writeI32LE(data, 4, v);
     }
 
+    boolean hasCurrentFormat() {
+        return readI32LE(data, INTEGRITY_OFFSET) == FORMAT_MAGIC
+                && (data[INTEGRITY_OFFSET + 4] & 0xFF) == FORMAT_VERSION
+                && ((data[INTEGRITY_OFFSET + 5] & 0xFF) & ~ReplaySlotIntegrity.FLAGS_MASK) == 0;
+    }
+
+    int getPayloadFlags() {
+        return data[INTEGRITY_OFFSET + 5] & 0xFF;
+    }
+
+    int getPayloadChecksum() {
+        return readI32LE(data, INTEGRITY_OFFSET + 6);
+    }
+
+    void setPayloadIntegrity(int flags, int checksum) {
+        for (int i = 0; i < INTEGRITY_SIZE; i++) {
+            data[INTEGRITY_OFFSET + i] = 0;
+        }
+        writeI32LE(data, INTEGRITY_OFFSET, FORMAT_MAGIC);
+        data[INTEGRITY_OFFSET + 4] = (byte) FORMAT_VERSION;
+        data[INTEGRITY_OFFSET + 5] = (byte) (flags & ReplaySlotIntegrity.FLAGS_MASK);
+        writeI32LE(data, INTEGRITY_OFFSET + 6, checksum);
+    }
+
     public int getType() {
         return data[24] & 0xFF;
     }
@@ -148,23 +177,6 @@ public final class ReplayHeader {
             return -1;
         }
         return data[33 + idx] & 0xFF;
-    }
-
-    public void setDialoguePageCountAt(int idx, int pageCount) {
-        if (idx < 0 || idx >= DIALOGUE_MAX) {
-            return;
-        }
-        if (pageCount < 0) {
-            pageCount = 0;
-        }
-        if (pageCount > 255) {
-            pageCount = 255;
-        }
-        data[33 + idx] = (byte) (pageCount & 0xFF);
-        int len = getDialoguePageCountLen();
-        if (idx >= len) {
-            setDialoguePageCountLen(idx + 1);
-        }
     }
 
     public void setDialoguePageCounts(byte[] counts, int len) {

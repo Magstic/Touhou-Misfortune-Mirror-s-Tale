@@ -18,14 +18,6 @@ public final class BattleStageHost implements StageRuntime.Host {
         this.audioSystem = audioSystem;
     }
 
-    public String readUtf8TextResource(String path) {
-        return GameCore.readUtf8TextResource(path);
-    }
-
-    public String[] splitLinesAndWrap(String text, int wrapByteLen) {
-        return GameCore.splitLinesAndWrap(text, wrapByteLen);
-    }
-
     public void clearDropItems() {
         core.stageHostClearDropItems();
     }
@@ -54,10 +46,10 @@ public final class BattleStageHost implements StageRuntime.Host {
         core.stageHostSetBstock(v);
     }
 
-    public void setEnemyAabb(int idx, int xFixed, int yFixed, int radiusFixed,
+    public void setEnemyAabb(int idx, int xFixed, int yFixed,
             int leftExtentFixed, int rightExtentFixed, int topExtentFixed, int bottomExtentFixed,
             boolean canTarget) {
-        core.stageHostSetEnemyAabb(idx, xFixed, yFixed, radiusFixed, leftExtentFixed, rightExtentFixed, topExtentFixed, bottomExtentFixed, canTarget);
+        core.stageHostSetEnemyAabb(idx, xFixed, yFixed, leftExtentFixed, rightExtentFixed, topExtentFixed, bottomExtentFixed, canTarget);
     }
 
     public int[][] getEffectTable() {
@@ -93,12 +85,12 @@ public final class BattleStageHost implements StageRuntime.Host {
     }
 
     public void playSound(int id, boolean loop) {
-        // Legacy sound routing: loop -> BGM, else -> SE.
+        // Script sound routing: loop -> BGM, else -> SE.
         if (loop) {
             if (core.battleFlowIsStageClearPanelActive()) {
                 return;
             }
-            GameProgress.unlockMusicPlayed(id);
+            GameProgress.INSTANCE.markMusicPlayed(id);
             audioSystem.requestBgm(id, true);
             return;
         }

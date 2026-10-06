@@ -21,29 +21,12 @@ public final class ReplayInputBuffer {
         return pos;
     }
 
-    public void setPos(int p) {
-        if (p < 0) {
-            p = 0;
-        }
-        if (p > FRAME_COUNT) {
-            p = FRAME_COUNT;
-        }
-        pos = p;
-    }
-
     public void putNext(byte v) {
         if (pos < 0 || pos >= FRAME_COUNT) {
             pos++;
             return;
         }
         frames[pos++] = v;
-    }
-
-    public byte getAt(int frameIndex) {
-        if (frameIndex < 0 || frameIndex >= FRAME_COUNT) {
-            return 0;
-        }
-        return frames[frameIndex];
     }
 
     public byte[] raw() {

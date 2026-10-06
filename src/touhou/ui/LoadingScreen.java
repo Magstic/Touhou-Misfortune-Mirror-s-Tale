@@ -2,16 +2,13 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.BulletSprites;
 import touhou.ImageBank;
 import touhou.UnlockFlags;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
-import touhou.replay.ReplayBossSnapshotStore;
-import touhou.replay.ReplayRmsStore;
-import touhou.replay.ReplayStageSnapshotStore;
+import touhou.replay.ReplaySlotStore;
 
 public final class LoadingScreen {
     private int step;
@@ -36,7 +33,7 @@ public final class LoadingScreen {
         }
 
         // Allow skipping on emulator/testing.
-        if ((pressed & GameCanvas.FIRE_PRESSED) != 0 && UnlockFlags.isReplayRmsWarmed()) {
+        if (UiInput.confirm(pressed) && UnlockFlags.isReplayRmsWarmed()) {
             done = true;
             return;
         }
@@ -92,9 +89,7 @@ public final class LoadingScreen {
             case 8:
                 // One-time RMS warmup for Replay menu on first launch.
                 if (!UnlockFlags.isReplayRmsWarmed()) {
-                    boolean ok = ReplayRmsStore.warmup();
-                    ok = ok && ReplayBossSnapshotStore.warmup();
-                    ok = ok && ReplayStageSnapshotStore.warmup();
+                    boolean ok = ReplaySlotStore.warmup();
                     if (ok) {
                         UnlockFlags.setReplayRmsWarmed(true);
                     }

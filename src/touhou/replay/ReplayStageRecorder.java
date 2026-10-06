@@ -93,15 +93,15 @@ public final class ReplayStageRecorder {
     }
 
     public byte[] encodeBossOnly() {
-        byte[] bossFrames = new byte[ReplayInputBuffer.FRAME_COUNT];
         int start = bossStartFrame;
         if (start < 0) {
-            start = ReplayInputBuffer.FRAME_COUNT;
+            return null;
         }
         if (start > ReplayInputBuffer.FRAME_COUNT) {
-            start = ReplayInputBuffer.FRAME_COUNT;
+            return null;
         }
 
+        byte[] bossFrames = new byte[ReplayInputBuffer.FRAME_COUNT];
         byte[] src = full.raw();
         int dst = 0;
         for (int i = start; i < ReplayInputBuffer.FRAME_COUNT && dst < ReplayInputBuffer.FRAME_COUNT; i++) {

@@ -1,7 +1,7 @@
 # Build output
 build/
 dist/
-tmp*/
+.deps/
 
 # Compiled classes
 *.class
@@ -9,7 +9,6 @@ tmp*/
 # Dev
 tools/dev/
 docs/dev/
-lib/*.jar
 
 # IDE
 .vscode/

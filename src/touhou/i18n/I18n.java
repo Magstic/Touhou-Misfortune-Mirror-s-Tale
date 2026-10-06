@@ -1,7 +1,9 @@
 package touhou.i18n;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+
+import touhou.ResourcePaths;
+import touhou.ResourceException;
 
 public final class I18n {
     public static final int LANG_JA = 0;
@@ -10,140 +12,85 @@ public final class I18n {
 
     private static final String[] LANG_CODES = new String[] { "ja", "en", "zht" };
 
-    private static int langId = LANG_JA;
+    private static int languageId = LANG_JA;
 
     private I18n() {
     }
 
     public static void setLanguageId(int id) {
         if (id < 0 || id >= LANG_CODES.length) {
-            id = LANG_JA;
+            throw new IllegalArgumentException("languageId");
         }
-        langId = id;
+        languageId = id;
     }
 
     public static int getLanguageId() {
-        return langId;
+        return languageId;
     }
 
     public static String getLanguageCode() {
-        if (langId < 0 || langId >= LANG_CODES.length) {
-            return LANG_CODES[LANG_JA];
-        }
-        return LANG_CODES[langId];
+        return LANG_CODES[languageId];
     }
 
-    public static String path(String subpath) {
-        if (subpath == null) {
-            subpath = "";
-        }
-        if (subpath.startsWith("/")) {
-            subpath = subpath.substring(1);
-        }
-        return "/res/i18n/" + getLanguageCode() + "/" + subpath;
+    public static String loadText(String relativePath) {
+        return decodeUtf8(loadRequiredBytes(relativePath), ResourcePaths.localized(getLanguageCode(), relativePath));
     }
 
-    public static byte[] readResourceBytes(String path) {
-        if (path == null) {
-            return null;
+    public static byte[] loadRequiredBytes(String relativePath) {
+        String path = ResourcePaths.localized(getLanguageCode(), relativePath);
+        byte[] bytes = I18nPack.readBytes(path);
+        if (bytes == null) {
+            throw new ResourceException("Missing localized resource: " + path);
         }
-
-        byte[] packed = I18nPack.readBytes(path);
-        if (packed != null) {
-            return packed;
-        }
-
-        InputStream is = null;
-        try {
-            is = I18n.class.getResourceAsStream(path);
-            if (is == null && path != null && path.startsWith("/res/")) {
-                is = I18n.class.getResourceAsStream(path.substring(4));
-            }
-            if (is == null) {
-                return null;
-            }
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            byte[] buf = new byte[512];
-            while (true) {
-                int r = is.read(buf);
-                if (r <= 0) {
-                    break;
-                }
-                baos.write(buf, 0, r);
-            }
-            return baos.toByteArray();
-        } catch (Throwable t) {
-            return null;
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (Throwable ignore) {
-                }
-            }
-        }
+        return bytes;
     }
 
-    public static String readUtf8TextResource(String path) {
-        try {
-            byte[] bytes = readResourceBytes(path);
-            if (bytes == null) {
-                return null;
-            }
-            try {
-                return new String(bytes, "UTF-8");
-            } catch (Throwable t) {
-                return new String(bytes);
-            }
-        } catch (Throwable t) {
-            return null;
-        }
-    }
-
-    public static String[] splitLinesSimple(String text) {
+    public static String[] splitLines(String text) {
         if (text == null) {
-            return new String[0];
+            throw new NullPointerException("text");
         }
 
-        // Ignore trailing line breaks to avoid creating an extra empty entry.
-        int effectiveLen = text.length();
-        while (effectiveLen > 0) {
-            char c = text.charAt(effectiveLen - 1);
-            if (c == '\n' || c == '\r') {
-                effectiveLen--;
-                continue;
+        int effectiveLength = text.length();
+        while (effectiveLength > 0) {
+            char c = text.charAt(effectiveLength - 1);
+            if (c != '\n' && c != '\r') {
+                break;
             }
-            break;
+            effectiveLength--;
         }
-        if (effectiveLen <= 0) {
+        if (effectiveLength == 0) {
             return new String[0];
         }
 
-        int lines = 1;
-        for (int i = 0; i < effectiveLen; i++) {
+        int lineCount = 1;
+        for (int i = 0; i < effectiveLength; i++) {
             if (text.charAt(i) == '\n') {
-                lines++;
+                lineCount++;
             }
         }
 
-        String[] out = new String[lines];
-        int pos = 0;
+        String[] lines = new String[lineCount];
+        int line = 0;
         int start = 0;
-        for (int i = 0; i <= effectiveLen; i++) {
-            boolean end = (i == effectiveLen);
-            if (!end && text.charAt(i) != '\n') {
+        for (int i = 0; i <= effectiveLength; i++) {
+            if (i < effectiveLength && text.charAt(i) != '\n') {
                 continue;
             }
-
-            int e = i;
-            if (e > start && text.charAt(e - 1) == '\r') {
-                e--;
+            int end = i;
+            if (end > start && text.charAt(end - 1) == '\r') {
+                end--;
             }
-            out[pos++] = text.substring(start, e);
+            lines[line++] = text.substring(start, end);
             start = i + 1;
         }
+        return lines;
+    }
 
-        return out;
+    private static String decodeUtf8(byte[] bytes, String path) {
+        try {
+            return new String(bytes, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new ResourceException("UTF-8 unavailable for resource: " + path);
+        }
     }
 }

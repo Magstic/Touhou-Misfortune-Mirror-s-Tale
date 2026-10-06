@@ -1,237 +1,138 @@
 package touhou;
 
 import javax.microedition.rms.RecordStore;
+import javax.microedition.rms.RecordStoreException;
+import javax.microedition.rms.RecordStoreNotFoundException;
 
+/** Fixed-size scratch-pad storage. A successful write confirms every affected RMS record. */
 public final class SpStore {
     private static final String STORE = "th_sp";
     private static final int SEG_SIZE = 1024;
-    private static final int DEFAULT_SEGMENTS = 32;
+    private static final int SEGMENTS = 32;
+    private static final int SIZE = SEG_SIZE * SEGMENTS;
 
     private static byte[] cache;
-    private static boolean[] dirty;
-    private static int segmentCount;
-    private static boolean loaded;
 
     private SpStore() {
     }
 
-    public static byte[] read(int offset, int length) {
-        if (offset < 0 || length <= 0) {
-            return new byte[0];
-        }
-
-        try {
-            ensureLoaded();
-            byte[] out = new byte[length];
-            if (cache == null) {
-                return out;
-            }
-
-            if (offset >= cache.length) {
-                return out;
-            }
-            int avail = cache.length - offset;
-            int n = (length > avail) ? avail : length;
-            if (n > 0) {
-                System.arraycopy(cache, offset, out, 0, n);
-            }
-            return out;
-        } catch (Throwable t) {
-            return new byte[length];
-        }
+    public static synchronized byte[] read(int offset, int length) {
+        requireRange(offset, length);
+        ensureLoaded();
+        byte[] out = new byte[length];
+        System.arraycopy(cache, offset, out, 0, length);
+        return out;
     }
 
-    public static void write(int offset, byte[] src) {
-        if (src == null || src.length == 0 || offset < 0) {
+    public static synchronized void write(int offset, byte[] src) {
+        if (src == null) {
+            throw new NullPointerException("src");
+        }
+        requireRange(offset, src.length);
+        if (src.length == 0) {
             return;
         }
+        ensureLoaded();
 
+        boolean committed = false;
         try {
-            ensureLoaded();
-            ensureCapacity(offset + src.length);
-            if (cache == null) {
-                return;
+            RecordStore store = null;
+            boolean failed = true;
+            try {
+                store = RecordStore.openRecordStore(STORE, false);
+                requireRecordCount(store);
+                byte[] segment = new byte[SEG_SIZE];
+                int first = offset / SEG_SIZE;
+                int last = (offset + src.length - 1) / SEG_SIZE;
+                for (int index = first; index <= last; index++) {
+                    int base = index * SEG_SIZE;
+                    System.arraycopy(cache, base, segment, 0, SEG_SIZE);
+                    int start = (offset > base) ? offset : base;
+                    int end = offset + src.length;
+                    if (end > base + SEG_SIZE) {
+                        end = base + SEG_SIZE;
+                    }
+                    System.arraycopy(src, start - offset, segment, start - base, end - start);
+                    store.setRecord(index + 1, segment, 0, SEG_SIZE);
+                }
+                failed = false;
+            } catch (RecordStoreException e) {
+                throw new StorageException("Storage write failed: " + e.toString());
+            } finally {
+                close(store, failed);
             }
-
             System.arraycopy(src, 0, cache, offset, src.length);
-            markDirty(offset, src.length);
-            flushDirty();
-        } catch (Throwable t) {
+            committed = true;
         } finally {
+            if (!committed) {
+                // RMS cannot roll back a multi-record write. Reload the actual disk state, never dirty data.
+                cache = null;
+            }
         }
     }
 
-    private static void ensureLoaded() throws Exception {
-        if (loaded) {
+    private static void ensureLoaded() {
+        if (cache != null) {
             return;
         }
-
-        RecordStore rs = null;
+        RecordStore store = null;
+        boolean failed = true;
+        byte[] loaded = new byte[SIZE];
         try {
-            rs = RecordStore.openRecordStore(STORE, true);
-            int n = rs.getNumRecords();
-            if (n <= 0) {
-                segmentCount = DEFAULT_SEGMENTS;
-                cache = new byte[segmentCount * SEG_SIZE];
-                dirty = new boolean[segmentCount];
-                byte[] z = new byte[SEG_SIZE];
-                for (int i = 0; i < segmentCount; i++) {
-                    rs.addRecord(z, 0, z.length);
-                }
-                loaded = true;
-                return;
+            boolean created = false;
+            try {
+                store = RecordStore.openRecordStore(STORE, false);
+            } catch (RecordStoreNotFoundException e) {
+                store = RecordStore.openRecordStore(STORE, true);
+                created = true;
             }
-
-            segmentCount = (n > DEFAULT_SEGMENTS) ? n : DEFAULT_SEGMENTS;
-            cache = new byte[segmentCount * SEG_SIZE];
-            dirty = new boolean[segmentCount];
-
-            for (int seg = 0; seg < n; seg++) {
-                byte[] data = rs.getRecord(seg + 1);
-                if (data == null || data.length == 0) {
-                    continue;
-                }
-                int base = seg * SEG_SIZE;
-                int len = data.length;
-                if (len > SEG_SIZE) {
-                    len = SEG_SIZE;
-                }
-                System.arraycopy(data, 0, cache, base, len);
-            }
-
-            if (n < segmentCount) {
-                byte[] z = new byte[SEG_SIZE];
-                while (n < segmentCount) {
-                    rs.addRecord(z, 0, z.length);
-                    n++;
+            if (created) {
+                byte[] empty = new byte[SEG_SIZE];
+                for (int i = 0; i < SEGMENTS; i++) {
+                    store.addRecord(empty, 0, empty.length);
                 }
             }
-            loaded = true;
+            requireRecordCount(store);
+            for (int index = 0; index < SEGMENTS; index++) {
+                byte[] record = store.getRecord(index + 1);
+                if (record == null || record.length != SEG_SIZE) {
+                    throw new StorageException("Invalid storage record: " + (index + 1));
+                }
+                System.arraycopy(record, 0, loaded, index * SEG_SIZE, SEG_SIZE);
+            }
+            failed = false;
+        } catch (RecordStoreException e) {
+            throw new StorageException("Storage read failed: " + e.toString());
         } finally {
-            if (rs != null) {
-                try {
-                    rs.closeRecordStore();
-                } catch (Throwable ignore) {
-                }
-            }
+            close(store, failed);
+        }
+        // Publish only after all reads and close succeeded.
+        cache = loaded;
+    }
+
+    private static void requireRecordCount(RecordStore store) throws RecordStoreException {
+        if (store.getNumRecords() != SEGMENTS) {
+            throw new StorageException("Invalid storage record count");
         }
     }
 
-    private static void ensureCapacity(int minSize) {
-        if (minSize <= 0) {
+    private static void requireRange(int offset, int length) {
+        if (offset < 0 || length < 0 || length > SIZE || offset > SIZE - length) {
+            throw new IllegalArgumentException("Storage range: " + offset + "/" + length);
+        }
+    }
+
+    private static void close(RecordStore store, boolean failed) {
+        if (store == null) {
             return;
         }
-        if (cache == null) {
-            int segs = (minSize + SEG_SIZE - 1) / SEG_SIZE;
-            segmentCount = (segs > DEFAULT_SEGMENTS) ? segs : DEFAULT_SEGMENTS;
-            cache = new byte[segmentCount * SEG_SIZE];
-            dirty = new boolean[segmentCount];
-            return;
-        }
-
-        if (minSize <= cache.length) {
-            return;
-        }
-
-        byte[] oldCache = cache;
-        boolean[] oldDirty = dirty;
-        int oldSegs = segmentCount;
-
-        int needSegs = (minSize + SEG_SIZE - 1) / SEG_SIZE;
-        int newSegs = segmentCount;
-        while (newSegs < needSegs) {
-            newSegs <<= 1;
-            if (newSegs <= 0) {
-                newSegs = needSegs;
-                break;
-            }
-        }
-
-        byte[] nd = new byte[newSegs * SEG_SIZE];
-        System.arraycopy(cache, 0, nd, 0, cache.length);
-        cache = nd;
-
-        boolean[] ndirty = new boolean[newSegs];
-        if (dirty != null) {
-            System.arraycopy(dirty, 0, ndirty, 0, dirty.length);
-        }
-        dirty = ndirty;
-        segmentCount = newSegs;
-
-        RecordStore rs = null;
         try {
-            rs = RecordStore.openRecordStore(STORE, true);
-            int n = rs.getNumRecords();
-            if (n < segmentCount) {
-                byte[] z = new byte[SEG_SIZE];
-                while (n < segmentCount) {
-                    rs.addRecord(z, 0, z.length);
-                    n++;
-                }
+            store.closeRecordStore();
+        } catch (RecordStoreException e) {
+            if (!failed) {
+                throw new StorageException("Storage close failed: " + e.toString());
             }
-        } catch (Throwable ignore) {
-            cache = oldCache;
-            dirty = oldDirty;
-            segmentCount = oldSegs;
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.closeRecordStore();
-                } catch (Throwable ignore) {
-                }
-            }
-        }
-    }
-
-    private static void markDirty(int offset, int length) {
-        if (dirty == null || length <= 0 || offset < 0) {
-            return;
-        }
-        int startSeg = offset / SEG_SIZE;
-        int endSeg = (offset + length - 1) / SEG_SIZE;
-        if (startSeg < 0) {
-            startSeg = 0;
-        }
-        if (endSeg >= dirty.length) {
-            endSeg = dirty.length - 1;
-        }
-        for (int seg = startSeg; seg <= endSeg; seg++) {
-            dirty[seg] = true;
-        }
-    }
-
-    private static void flushDirty() throws Exception {
-        if (cache == null || dirty == null) {
-            return;
-        }
-
-        RecordStore rs = null;
-        try {
-            rs = RecordStore.openRecordStore(STORE, true);
-            int n = rs.getNumRecords();
-            if (n < segmentCount) {
-                byte[] z = new byte[SEG_SIZE];
-                while (n < segmentCount) {
-                    rs.addRecord(z, 0, z.length);
-                    n++;
-                }
-            }
-
-            for (int seg = 0; seg < segmentCount; seg++) {
-                if (!dirty[seg]) {
-                    continue;
-                }
-                int base = seg * SEG_SIZE;
-                rs.setRecord(seg + 1, cache, base, SEG_SIZE);
-                dirty[seg] = false;
-            }
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.closeRecordStore();
-                } catch (Throwable ignore) {
-                }
-            }
+            // Preserve the original failure rather than replace it with a cleanup failure.
         }
     }
 }

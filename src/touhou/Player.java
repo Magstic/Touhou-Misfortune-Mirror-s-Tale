@@ -4,10 +4,12 @@ import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.game.GameCanvas;
 
+import touhou.battle.BattleMath;
 import touhou.replay.ReplaySnapshotReader;
 import touhou.replay.ReplaySnapshotWriter;
 
 public final class Player {
+    public static final int SNAPSHOT_SIZE = 223;
     // Movement constants and hitbox tuning.
     private static final int SPEED_MARISA_BOMB = 131072;
     private static final int CLAMP_MARGIN = 10;
@@ -33,8 +35,6 @@ public final class Player {
     private final int type;
 
     private final int spriteId;
-    private final int shotBulletId;
-    private final int shotBulletId2;
 
     // Current position (fixed-point).
     private int x;
@@ -134,8 +134,6 @@ public final class Player {
 
         int imgIndex = imgIndexForChara(chara);
         this.spriteId = findSpriteId(cc, imgIndex, 12, 40, 0, 64);
-        this.shotBulletId = findSpriteId(cc, imgIndex, 3, 10, 96, 10000);
-        this.shotBulletId2 = findSpriteId(cc, imgIndex, 8, 24, 96, 10000);
     }
 
     // Slow mode toggles.
@@ -380,20 +378,7 @@ public final class Player {
         updateAnime(moveDir);
     }
 
-    // Convenience overloads for option updates.
-    public void updateFirepowerDevices(int power) {
-        updateFirepowerDevices(null, null, power);
-    }
-
-    public void updateFirepowerDevices(BulletSystem bullets, int power) {
-        updateFirepowerDevices(bullets, null, power);
-    }
-
-    public void updateFirepowerDevices(BulletSystem bullets, EnemySystem enemies, int power) {
-        updateFirepowerDevices(bullets, enemies, power, false);
-    }
-
-    public void updateFirepowerDevices(BulletSystem bullets, EnemySystem enemies, int power, boolean barrierActive) {
+    public void updateFirepowerDevices(BulletSystem bullets, EnemyTargetRegistry enemies, int power, boolean barrierActive) {
         // Convert power to shot level (0-4).
         int shotLevel = 0;
         if (power >= 32) {
@@ -574,7 +559,7 @@ public final class Player {
                     if (mode != 0 && aliceTarget != -1 && enemies != null && enemies.isTargetable(aliceTarget)) {
                         int ex = enemies.getXFixed(aliceTarget);
                         int ey = enemies.getYFixed(aliceTarget);
-                        int arc = arcTan2Deg(optcy[j] - ey - Fixed.fromInt(8), optcx[j] - ex);
+                        int arc = BattleMath.arcTan2Deg(optcy[j] - ey - Fixed.fromInt(8), optcx[j] - ex);
                         if (arc >= 0 && arc <= 180) {
                             aim = arc;
                             aimPow = 3;
@@ -695,14 +680,14 @@ public final class Player {
                             int ey = enemies.getYFixed(opttgt[j]);
                             int dx = ex - optmcx[j];
                             int dy = ey - optmcy[j];
-                            int arc = arcTan2Deg(dy, dx);
-                            int ang = normalizeDeg(arc);
+                            int arc = BattleMath.arcTan2Deg(dy, dx);
+                            int ang = BattleMath.normalizeDeg(arc);
                             int spd = 8 + j;
                             int se = Fixed.mul(Trig.cos(ang), Fixed.fromInt(spd));
                             int te = Fixed.mul(Trig.sin(ang), Fixed.fromInt(spd));
                             optmcx[j] += se;
                             optmcy[j] += te;
-                            if (rectsOverlapFixed(
+                            if (BattleMath.rectsOverlapFixed(
                                     optmcx[j] - ALICE_DOLL_BOX_HALF,
                                     optmcy[j] - ALICE_DOLL_BOX_HALF,
                                     ALICE_DOLL_BOX_HALF << 1,
@@ -721,14 +706,14 @@ public final class Player {
                     case 1: {
                         int dx = x - optmcx[j];
                         int dy = y - optmcy[j];
-                        int arc = arcTan2Deg(dy, dx);
-                        int ang = normalizeDeg(arc);
+                        int arc = BattleMath.arcTan2Deg(dy, dx);
+                        int ang = BattleMath.normalizeDeg(arc);
                         int spd = 12 - j;
                         int se = Fixed.mul(Trig.cos(ang), Fixed.fromInt(spd));
                         int te = Fixed.mul(Trig.sin(ang), Fixed.fromInt(spd));
                         optmcx[j] += se;
                         optmcy[j] += te;
-                        if (rectsOverlapFixed(
+                        if (BattleMath.rectsOverlapFixed(
                                 optmcx[j] - ALICE_RETURN_BOX_HALF,
                                 optmcy[j] - ALICE_RETURN_BOX_HALF,
                                 ALICE_RETURN_BOX_HALF << 1,
@@ -785,7 +770,7 @@ public final class Player {
                 int ang = (optroll + optdir[j] + 360) % 360 + 270;
                 if (dist < 0) {
                     dist = -dist;
-                    ang = normalizeDeg(ang + 180);
+                    ang = BattleMath.normalizeDeg(ang + 180);
                 }
                 int distPx = dist >> 3;
                 int se = Fixed.mul(Trig.cos(ang), Fixed.fromInt(distPx));
@@ -796,7 +781,7 @@ public final class Player {
                 if (mode != 0 && optmode[j] == 3 && enemies != null && opttgt[j] >= 0 && enemies.isTargetable(opttgt[j])) {
                     int ex = enemies.getXFixed(opttgt[j]);
                     int ey = enemies.getYFixed(opttgt[j]);
-                    optAimArc[j] = arcTan2Deg(optcy[j] - ey, optcx[j] - ex);
+                    optAimArc[j] = BattleMath.arcTan2Deg(optcy[j] - ey, optcx[j] - ex);
                 }
             }
 
@@ -1608,11 +1593,11 @@ public final class Player {
         }
 
         if (!drawn) {
-            boolean fallback = false;
+            boolean spriteDrawn = false;
             if (sprites != null && spriteId >= 0) {
-                fallback = sprites.draw(g, spriteId, px, py);
+                spriteDrawn = sprites.draw(g, spriteId, px, py);
             }
-            if (!fallback) {
+            if (!spriteDrawn) {
                 g.setColor(0xFFFFFF);
                 g.fillRect(px - 2, py - 2, 5, 5);
             }
@@ -1624,80 +1609,6 @@ public final class Player {
             g.setColor(0xFF0000);
             g.drawRect(px - 1, py - 1, 2, 2);
         }
-    }
-
-    // Fire interval in frames per character/type.
-    public int shotInterval() {
-        if (chara == 0) {
-            return (type == 0) ? 4 : 3;
-        }
-        if (chara == 1) {
-            return (type == 0) ? 2 : 4;
-        }
-        if (type == 0) {
-            return slow ? 3 : 5;
-        }
-        return 4;
-    }
-
-    // Spawn basic player shots (non-waTick patterns).
-    public void shoot(BulletSystem bullets) {
-        if (bullets == null) {
-            return;
-        }
-        int px = x;
-        int py = y;
-
-        if (chara == 0) {
-            if (type == 0) {
-                spawnShot(bullets, shotBulletId, 262, 6, px - Fixed.fromInt(3), py);
-                spawnShot(bullets, shotBulletId, 278, 6, px + Fixed.fromInt(3), py);
-                return;
-            }
-            spawnShot(bullets, shotBulletId, 270, 7, px - Fixed.fromInt(4), py);
-            spawnShot(bullets, shotBulletId, 270, 7, px + Fixed.fromInt(4), py);
-            return;
-        }
-
-        if (chara == 1) {
-            int bid = (type == 0 && shotBulletId2 >= 0) ? shotBulletId2 : shotBulletId;
-            if (type == 0) {
-                spawnShot(bullets, bid, 270, 10, px, py);
-                return;
-            }
-            spawnShot(bullets, bid, 268, 6, px - Fixed.fromInt(4), py);
-            spawnShot(bullets, bid, 272, 6, px + Fixed.fromInt(4), py);
-            return;
-        }
-
-        if (type == 0) {
-            if (slow) {
-                spawnShot(bullets, shotBulletId, 264, 6, px - Fixed.fromInt(7), py);
-                spawnShot(bullets, shotBulletId, 276, 6, px + Fixed.fromInt(7), py);
-                spawnShot(bullets, shotBulletId, 270, 7, px - Fixed.fromInt(2), py);
-                spawnShot(bullets, shotBulletId, 270, 7, px + Fixed.fromInt(2), py);
-                return;
-            }
-            int bid = (shotBulletId2 >= 0) ? shotBulletId2 : shotBulletId;
-            spawnShot(bullets, bid, 266, 6, px - Fixed.fromInt(6), py);
-            spawnShot(bullets, bid, 274, 6, px + Fixed.fromInt(6), py);
-            return;
-        }
-
-        spawnShot(bullets, shotBulletId, 270, 6, px - Fixed.fromInt(5), py);
-        spawnShot(bullets, shotBulletId, 270, 6, px + Fixed.fromInt(5), py);
-        if (slow) {
-            spawnShot(bullets, shotBulletId, 270, 6, px - Fixed.fromInt(12), py);
-            spawnShot(bullets, shotBulletId, 270, 6, px + Fixed.fromInt(12), py);
-        }
-    }
-
-    // Basic bullet spawn helper.
-    private static void spawnShot(BulletSystem bullets, int bulletId, int ang, int speed, int fx, int fy) {
-        if (bulletId < 0) {
-            return;
-        }
-        bullets.spawnPlayer(bulletId, 0, ang, speed, fx, fy);
     }
 
     // Player bullet table spawn helper.
@@ -1777,7 +1688,7 @@ public final class Player {
                 return;
         }
 
-        int ang = normalizeDeg(i + 270);
+        int ang = BattleMath.normalizeDeg(i + 270);
         if (n == 15) {
             int d0 = ang % 360;
             int frame = 15 - (((d0 / 22) + 11) & 0xF);
@@ -1795,32 +1706,14 @@ public final class Player {
         }
     }
 
-    // Normalize degree angles to [0, 360).
-    private static int normalizeDeg(int deg) {
-        deg %= 360;
-        if (deg < 0) {
-            deg += 360;
-        }
-        return deg;
-    }
-
-    // Fixed-point AABB overlap check.
-    private static boolean rectsOverlapFixed(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2) {
-        long r1 = (long) x1 + (long) w1;
-        long b1 = (long) y1 + (long) h1;
-        long r2 = (long) x2 + (long) w2;
-        long b2 = (long) y2 + (long) h2;
-        return (long) x1 < r2 && r1 > (long) x2 && (long) y1 < b2 && b1 > (long) y2;
-    }
-
     // Find the closest valid Alice target by X distance.
-    private static int findAliceDollTargetByX(EnemySystem enemies, int xFixed, boolean barrierActive) {
+    private static int findAliceDollTargetByX(EnemyTargetRegistry enemies, int xFixed, boolean barrierActive) {
         if (enemies == null || barrierActive) {
             return -1;
         }
         int best = -1;
         int bestAbsDx = Fixed.fromInt(240);
-        for (int i = 0; i < EnemySystem.MAX; i++) {
+        for (int i = 0; i < enemies.capacity(); i++) {
             if (!enemies.isTargetable(i)) {
                 continue;
             }
@@ -1844,69 +1737,6 @@ public final class Player {
             }
         }
         return best;
-    }
-
-    // Fixed-point math helpers.
-    private static int mul16(final int a, final int b) {
-        return (int) ((a * (long) b) >> 16);
-    }
-
-    private static int div16(final int a, final int b) {
-        if (b == 0) {
-            return 0;
-        }
-        return (int) (((long) a << 16) / b);
-    }
-
-    private static int arcTan16(final int x) {
-        final int xx = mul16(x, x);
-        int t = mul16(1365, xx);
-        t = mul16(t - 5579, xx);
-        t = mul16(t + 11805, xx);
-        t = mul16(t - 21646, xx);
-        t = mul16(t + 65527, x);
-        return t;
-    }
-
-    private static int arcTan2Deg(int yFixed, int xFixed) {
-        int x = xFixed >> 16;
-        int y = yFixed >> 16;
-
-        final int div = div16((y << 16), (x << 16));
-        int arcTan;
-
-        if (x == 0 && y == 0) {
-            arcTan = 0;
-        } else if (x == 0 && y > 0) {
-            arcTan = 102943;
-        } else if (x < 0 && y == 0) {
-            arcTan = 205887;
-        } else if (x == 0 && y < 0) {
-            arcTan = 308830;
-        } else if (x > 0 && y == 0) {
-            arcTan = 0;
-        } else {
-            if (div > 65536) {
-                arcTan = 102943 - arcTan16(div16(65536, div));
-            } else if (div < -65536) {
-                arcTan = -102943 - arcTan16(div16(65536, div));
-            } else {
-                arcTan = arcTan16(div);
-            }
-
-            if (x < 0 && y > 0) {
-                arcTan += 205887;
-            } else if (x < 0 && y < 0) {
-                arcTan += 205887;
-            } else if (x > 0 && y < 0) {
-                arcTan += 411774;
-            }
-        }
-
-        int i = mul16(arcTan, div16(11796480, 205887)) >> 16;
-        for (; i < 0; i = (i + 360) % 360) {
-        }
-        return i;
     }
 
     // Animation frame table.

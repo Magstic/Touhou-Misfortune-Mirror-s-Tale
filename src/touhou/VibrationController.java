@@ -59,9 +59,6 @@ public final class VibrationController {
 
     private void refreshVibrationOptionNow() {
         int[] opt = GameOptions.load();
-        if (opt == null) {
-            opt = GameOptions.defaults();
-        }
-        vibrationEnabled = (opt.length > 4 && opt[4] != 0);
+        vibrationEnabled = opt[4] != 0;
     }
 }

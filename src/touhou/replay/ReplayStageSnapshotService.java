@@ -24,7 +24,7 @@ public final class ReplayStageSnapshotService {
         if (player == null) {
             return false;
         }
-        byte[] snap = ReplayStageSnapshotStore.loadSlot(slot);
+        byte[] snap = ReplaySlotStore.loadStageSnapshot(slot);
         return ReplayStageSnapshotCodec.decodeAndApply(snap, random, continueSystem, hud, scoreSystem, player);
     }
 }

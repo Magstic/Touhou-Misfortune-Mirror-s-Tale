@@ -2,11 +2,10 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.BulletSprites;
 import touhou.ImageBank;
-import touhou.SpStore;
+import touhou.GameProgress;
 import touhou.UnlockFlags;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
@@ -35,55 +34,48 @@ public final class StartSetupScreen {
         }
     }
 
-    private static final String[] DIFF_DESC = new String[] {
-            UiText.get(TextId.DIFFICULTY_DESC_EASY),
-            UiText.get(TextId.DIFFICULTY_DESC_NORMAL),
-            UiText.get(TextId.DIFFICULTY_DESC_HARD),
-            UiText.get(TextId.DIFFICULTY_DESC_LUNATIC) };
+    private static final int[] DIFF_DESC = new int[] {
+            TextId.DIFFICULTY_DESC_EASY,
+            TextId.DIFFICULTY_DESC_NORMAL,
+            TextId.DIFFICULTY_DESC_HARD,
+            TextId.DIFFICULTY_DESC_LUNATIC };
 
-    private static final String EXTRA_DESC = UiText.get(TextId.DIFFICULTY_DESC_EXTRA);
-
-private static final String[] CHARA_NAME_0 = new String[] { 
-            UiText.get(TextId.CHARACTER_NAME_REIMU), 
-            UiText.get(TextId.CHARACTER_NAME_MARISA), 
-            UiText.get(TextId.CHARACTER_NAME_ALICE) };
-
-private static final String[][] CHARA_INFO = new String[][] {
-            { 
-                UiText.get(TextId.CHARACTER_INFO_REIMU_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_REIMU_NAME),
-                UiText.get(TextId.CHARACTER_INFO_REIMU_TYPE_A_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_REIMU_TYPE_A_DESC_1),
-                UiText.get(TextId.CHARACTER_INFO_REIMU_TYPE_A_DESC_2),
-                UiText.get(TextId.CHARACTER_INFO_REIMU_TYPE_B_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_REIMU_TYPE_B_DESC_1),
-                UiText.get(TextId.CHARACTER_INFO_REIMU_TYPE_B_DESC_2),
-                UiText.get(TextId.CHARACTER_INFO_REIMU_ABILITY_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_REIMU_ABILITY_DESC)
+    private static final int[][] CHARA_INFO = new int[][] {
+            {
+                    TextId.CHARACTER_INFO_REIMU_TITLE,
+                    TextId.CHARACTER_INFO_REIMU_NAME,
+                    TextId.CHARACTER_INFO_REIMU_TYPE_A_TITLE,
+                    TextId.CHARACTER_INFO_REIMU_TYPE_A_DESC_1,
+                    TextId.CHARACTER_INFO_REIMU_TYPE_A_DESC_2,
+                    TextId.CHARACTER_INFO_REIMU_TYPE_B_TITLE,
+                    TextId.CHARACTER_INFO_REIMU_TYPE_B_DESC_1,
+                    TextId.CHARACTER_INFO_REIMU_TYPE_B_DESC_2,
+                    TextId.CHARACTER_INFO_REIMU_ABILITY_TITLE,
+                    TextId.CHARACTER_INFO_REIMU_ABILITY_DESC
             },
-            { 
-                UiText.get(TextId.CHARACTER_INFO_MARISA_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_MARISA_NAME),
-                UiText.get(TextId.CHARACTER_INFO_MARISA_TYPE_A_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_MARISA_TYPE_A_DESC_1),
-                UiText.get(TextId.CHARACTER_INFO_MARISA_TYPE_A_DESC_2),
-                UiText.get(TextId.CHARACTER_INFO_MARISA_TYPE_B_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_MARISA_TYPE_B_DESC_1),
-                UiText.get(TextId.CHARACTER_INFO_MARISA_TYPE_B_DESC_2),
-                UiText.get(TextId.CHARACTER_INFO_MARISA_ABILITY_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_MARISA_ABILITY_DESC)
+            {
+                    TextId.CHARACTER_INFO_MARISA_TITLE,
+                    TextId.CHARACTER_INFO_MARISA_NAME,
+                    TextId.CHARACTER_INFO_MARISA_TYPE_A_TITLE,
+                    TextId.CHARACTER_INFO_MARISA_TYPE_A_DESC_1,
+                    TextId.CHARACTER_INFO_MARISA_TYPE_A_DESC_2,
+                    TextId.CHARACTER_INFO_MARISA_TYPE_B_TITLE,
+                    TextId.CHARACTER_INFO_MARISA_TYPE_B_DESC_1,
+                    TextId.CHARACTER_INFO_MARISA_TYPE_B_DESC_2,
+                    TextId.CHARACTER_INFO_MARISA_ABILITY_TITLE,
+                    TextId.CHARACTER_INFO_MARISA_ABILITY_DESC
             },
-            { 
-                UiText.get(TextId.CHARACTER_INFO_ALICE_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_ALICE_NAME),
-                UiText.get(TextId.CHARACTER_INFO_ALICE_TYPE_A_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_ALICE_TYPE_A_DESC_1),
-                UiText.get(TextId.CHARACTER_INFO_ALICE_TYPE_A_DESC_2),
-                UiText.get(TextId.CHARACTER_INFO_ALICE_TYPE_B_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_ALICE_TYPE_B_DESC_1),
-                UiText.get(TextId.CHARACTER_INFO_ALICE_TYPE_B_DESC_2),
-                UiText.get(TextId.CHARACTER_INFO_ALICE_ABILITY_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_ALICE_ABILITY_DESC)
+            {
+                    TextId.CHARACTER_INFO_ALICE_TITLE,
+                    TextId.CHARACTER_INFO_ALICE_NAME,
+                    TextId.CHARACTER_INFO_ALICE_TYPE_A_TITLE,
+                    TextId.CHARACTER_INFO_ALICE_TYPE_A_DESC_1,
+                    TextId.CHARACTER_INFO_ALICE_TYPE_A_DESC_2,
+                    TextId.CHARACTER_INFO_ALICE_TYPE_B_TITLE,
+                    TextId.CHARACTER_INFO_ALICE_TYPE_B_DESC_1,
+                    TextId.CHARACTER_INFO_ALICE_TYPE_B_DESC_2,
+                    TextId.CHARACTER_INFO_ALICE_ABILITY_TITLE,
+                    TextId.CHARACTER_INFO_ALICE_ABILITY_DESC
             } };
 
     private int gamemode;
@@ -121,21 +113,9 @@ private static final String[][] CHARA_INFO = new String[][] {
     public void enter(int gamemode) {
         this.gamemode = gamemode;
 
-        // Story/Practice start-stage availability (difficulty-isolated), compatible with DoJa :
-        // readByteArray(102, 4) -> t[0..3].
-        for (int i = 0; i < progressByDifficulty.length; i++) {
-            progressByDifficulty[i] = 0;
-        }
-        try {
-            byte[] b = SpStore.read(102, 4);
-            if (b != null) {
-                for (int i = 0; i < progressByDifficulty.length && i < b.length; i++) {
-                    progressByDifficulty[i] = b[i] & 0xFF;
-                }
-            }
-        } catch (Throwable t) {
-            // Ignore storage errors.
-        }
+        // Story/Practice start-stage availability, one byte per difficulty.
+        int[] progress = GameProgress.INSTANCE.getStageProgress();
+        System.arraycopy(progress, 0, progressByDifficulty, 0, progress.length);
 
         sLevel = 0;
         if (gamemode == 1) {
@@ -176,7 +156,7 @@ private static final String[][] CHARA_INFO = new String[][] {
         switch (scene) {
             case 0:
                 tickScene0();
-                if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+                if (UiInput.confirm(pressed)) {
                     scene = 1;
                     effect3 = 0;
                     effect5 = 0;
@@ -184,21 +164,21 @@ private static final String[][] CHARA_INFO = new String[][] {
                     effect8 = charaColor(sChara);
                     return null;
                 }
-                if ((pressed & GameCanvas.DOWN_PRESSED) != 0 && gamemode != 1) {
-                    sLevel = (sLevel + 1) & 3;
+                if (UiInput.down(pressed) && gamemode != 1) {
+                    sLevel = MenuCursor.move(sLevel, 1, 4);
                     return null;
-                } else if ((pressed & GameCanvas.UP_PRESSED) != 0 && gamemode != 1) {
-                    sLevel = (sLevel - 1 + 4) & 3;
+                } else if (UiInput.up(pressed) && gamemode != 1) {
+                    sLevel = MenuCursor.move(sLevel, -1, 4);
                     return null;
                 }
-                if ((pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+                if (UiInput.cancel(pressed)) {
                     return new Result(Result.KIND_BACK_TO_TITLE, gamemode, sLevel, sChara, sType, startStage, pracBoss);
                 }
                 return null;
 
             case 1:
                 tickScene1();
-                if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+                if (UiInput.confirm(pressed)) {
                     effect4 = 0;
                     effectC = 255;
                     if (gamemode == 1) {
@@ -212,18 +192,18 @@ private static final String[][] CHARA_INFO = new String[][] {
                     resetWork();
                     return null;
                 }
-                if ((pressed & GameCanvas.UP_PRESSED) != 0 && typeMax > 1) {
-                    sType = (sType - 1 + typeMax) % typeMax;
+                if (UiInput.up(pressed) && typeMax > 1) {
+                    sType = MenuCursor.move(sType, -1, typeMax);
                     return null;
                 }
-                if ((pressed & GameCanvas.DOWN_PRESSED) != 0 && typeMax > 1) {
-                    sType = (sType + 1) % typeMax;
+                if (UiInput.down(pressed) && typeMax > 1) {
+                    sType = MenuCursor.move(sType, 1, typeMax);
                     return null;
                 }
-                if ((pressed & GameCanvas.LEFT_PRESSED) != 0) {
+                if (UiInput.left(pressed)) {
                     int n = 0;
                     do {
-                        sChara = (sChara - 1 + charaMax) % charaMax;
+                        sChara = MenuCursor.move(sChara, -1, charaMax);
                         n++;
                     } while (n < charaMax && sChara == 2 && !UnlockFlags.isAliceUnlocked());
                     effect5 = 0;
@@ -231,10 +211,10 @@ private static final String[][] CHARA_INFO = new String[][] {
                     effect8 = charaColor(sChara);
                     return null;
                 }
-                if ((pressed & GameCanvas.RIGHT_PRESSED) != 0) {
+                if (UiInput.right(pressed)) {
                     int n = 0;
                     do {
-                        sChara = (sChara + 1) % charaMax;
+                        sChara = MenuCursor.move(sChara, 1, charaMax);
                         n++;
                     } while (n < charaMax && sChara == 2 && !UnlockFlags.isAliceUnlocked());
                     effect5 = 0;
@@ -242,7 +222,7 @@ private static final String[][] CHARA_INFO = new String[][] {
                     effect8 = charaColor(sChara);
                     return null;
                 }
-                if ((pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+                if (UiInput.cancel(pressed)) {
                     scene = 0;
                     effect2 = 0;
                     effect9 = effect8;
@@ -254,39 +234,39 @@ private static final String[][] CHARA_INFO = new String[][] {
 
             case 2:
                 tickScene2();
-                if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+                if (UiInput.confirm(pressed)) {
                     scene = 3;
                     effectB = 0;
                     return null;
                 }
-                if ((pressed & GameCanvas.UP_PRESSED) != 0) {
+                if (UiInput.up(pressed)) {
                     int n = stageCount();
                     if (n > 0) {
-                        startStage = (startStage - 1 + n) % n;
+                        startStage = MenuCursor.move(startStage, -1, n);
                         effectC = 255;
                     }
                     return null;
                 }
-                if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
+                if (UiInput.down(pressed)) {
                     int n = stageCount();
                     if (n > 0) {
-                        startStage = (startStage + 1) % n;
+                        startStage = MenuCursor.move(startStage, 1, n);
                         effectC = 255;
                     }
                     return null;
                 }
-                if ((pressed & GameCanvas.LEFT_PRESSED) != 0) {
+                if (UiInput.left(pressed)) {
                     if (gamemode == 2 && bossToggleAvailable()) {
                         pracBoss = false;
                         return null;
                     }
-                } else if ((pressed & GameCanvas.RIGHT_PRESSED) != 0) {
+                } else if (UiInput.right(pressed)) {
                     if (gamemode == 2 && bossToggleAvailable()) {
                         pracBoss = true;
                         return null;
                     }
                 }
-                if ((pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+                if (UiInput.cancel(pressed)) {
                     scene = 1;
                     effect3 = 0;
                     effect9 = effect8;
@@ -378,9 +358,9 @@ private void renderTopHints(Graphics g) {
             }
 
             if (gamemode != 1) {
-                UiDraw.drawString2(g, null, String.valueOf(DIFF_DESC[sLevel]), 120, 230, 1, 0xCFE7FF, 0x2F2F2F);
+                UiDraw.drawString2(g, null, UiText.get(DIFF_DESC[sLevel]), 120, 230, 1, 0xCFE7FF, 0x2F2F2F);
             } else {
-                UiDraw.drawString2(g, null, EXTRA_DESC, 120, 230, 1, 0xCFE7FF, 0x2F2F2F);
+                UiDraw.drawString2(g, null, UiText.get(TextId.DIFFICULTY_DESC_EXTRA), 120, 230, 1, 0xCFE7FF, 0x2F2F2F);
             }
         }
 
@@ -491,8 +471,8 @@ private void renderTopHints(Graphics g) {
             if (nameIdx < 0) {
                 nameIdx = 0;
             }
-            if (nameIdx >= CHARA_NAME_0.length) {
-                nameIdx = CHARA_NAME_0.length - 1;
+            if (nameIdx >= CHARA_INFO.length) {
+                nameIdx = CHARA_INFO.length - 1;
             }
 
             int infoIdx = nameIdx;
@@ -503,8 +483,8 @@ private void renderTopHints(Graphics g) {
                 infoIdx = CHARA_INFO.length - 1;
             }
 
-            UiDraw.drawString2(g, null, CHARA_INFO[infoIdx][0], 170, y + 0, 1, titleColor, titleShadow);
-            UiDraw.drawString2(g, null, CHARA_INFO[infoIdx][1], 170, y + 15, 1, nameColor, nameShadow);
+            UiDraw.drawString2(g, null, UiText.get(CHARA_INFO[infoIdx][0]), 170, y + 0, 1, titleColor, titleShadow);
+            UiDraw.drawString2(g, null, UiText.get(CHARA_INFO[infoIdx][1]), 170, y + 15, 1, nameColor, nameShadow);
 
             int n14 = y + 35;
             int c0Main;
@@ -523,20 +503,20 @@ private void renderTopHints(Graphics g) {
                 c1Shadow = 0;
             }
 
-            UiDraw.drawString2(g, null, CHARA_INFO[infoIdx][2], 100, n14 + 0, 0, c0Main, c0Shadow);
-            UiDraw.drawString2(g, null, CHARA_INFO[infoIdx][3], 100, n14 + 15, 0, c0Main, c0Shadow);
-            UiDraw.drawString2(g, null, CHARA_INFO[infoIdx][4], 100, n14 + 30, 0, c0Main, c0Shadow);
+            UiDraw.drawString2(g, null, UiText.get(CHARA_INFO[infoIdx][2]), 100, n14 + 0, 0, c0Main, c0Shadow);
+            UiDraw.drawString2(g, null, UiText.get(CHARA_INFO[infoIdx][3]), 100, n14 + 15, 0, c0Main, c0Shadow);
+            UiDraw.drawString2(g, null, UiText.get(CHARA_INFO[infoIdx][4]), 100, n14 + 30, 0, c0Main, c0Shadow);
             n14 += 45;
 
             if (typeMax == 2) {
-                UiDraw.drawString2(g, null, CHARA_INFO[infoIdx][5], 100, n14 + 0, 0, c1Main, c1Shadow);
-                UiDraw.drawString2(g, null, CHARA_INFO[infoIdx][6], 100, n14 + 15, 0, c1Main, c1Shadow);
-                UiDraw.drawString2(g, null, CHARA_INFO[infoIdx][7], 100, n14 + 30, 0, c1Main, c1Shadow);
+                UiDraw.drawString2(g, null, UiText.get(CHARA_INFO[infoIdx][5]), 100, n14 + 0, 0, c1Main, c1Shadow);
+                UiDraw.drawString2(g, null, UiText.get(CHARA_INFO[infoIdx][6]), 100, n14 + 15, 0, c1Main, c1Shadow);
+                UiDraw.drawString2(g, null, UiText.get(CHARA_INFO[infoIdx][7]), 100, n14 + 30, 0, c1Main, c1Shadow);
                 n14 += 45;
             }
 
-            UiDraw.drawString2(g, null, CHARA_INFO[infoIdx][8], 100, n14 + 0, 0, 8388479, 40704);
-            UiDraw.drawString2(g, null, CHARA_INFO[infoIdx][9], 100, n14 + 15, 0, 8388479, 40704);
+            UiDraw.drawString2(g, null, UiText.get(CHARA_INFO[infoIdx][8]), 100, n14 + 0, 0, 8388479, 40704);
+            UiDraw.drawString2(g, null, UiText.get(CHARA_INFO[infoIdx][9]), 100, n14 + 15, 0, 8388479, 40704);
         }
     }
 

@@ -2,13 +2,13 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.BulletSprites;
 import touhou.GameProgress;
 import touhou.ImageBank;
 import touhou.UnlockFlags;
-import touhou.i18n.I18n;
+import touhou.battle.SpellPracticeCatalog;
+import touhou.i18n.SpellText;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 
@@ -21,22 +21,19 @@ public final class SpellPracticeScreen {
         public final int kind;
         public final int chara;
         public final int type;
-        public final int stageIndex;
         public final int spellId;
 
         public Result(int kind) {
             this.kind = kind;
             this.chara = 0;
             this.type = 0;
-            this.stageIndex = 0;
             this.spellId = 0;
         }
 
-        public Result(int kind, int chara, int type, int stageIndex, int spellId) {
+        public Result(int kind, int chara, int type, int spellId) {
             this.kind = kind;
             this.chara = chara;
             this.type = type;
-            this.stageIndex = stageIndex;
             this.spellId = spellId;
         }
     }
@@ -44,39 +41,23 @@ public final class SpellPracticeScreen {
     private static final int[][] STAGE_RANGES = new int[][] { { 0, 18 }, { 18, 30 }, { 30, 46 }, { 46, 62 }, { 62, 78 }, { 78, 98 }, { 98, 107 }, { 107, 116 } };
     private static final String[] STAGE_NAMES = new String[] { "Stage1", "Stage2", "Stage3", "Stage4", "Stage5", "Stage6", "ExtraStage", "LastWord" };
     private static final String[] CHARA_EN = new String[] { "Reimu", "Marisa", "Alice" };
-    private static final String[][] CHARA_INFO = new String[][] {
-            { 
-                UiText.get(TextId.CHARACTER_INFO_REIMU_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_REIMU_NAME),
-                UiText.get(TextId.CHARACTER_INFO_REIMU_TYPE_A_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_REIMU_TYPE_B_TITLE),
-            },
-            { 
-                UiText.get(TextId.CHARACTER_INFO_MARISA_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_MARISA_NAME),
-                UiText.get(TextId.CHARACTER_INFO_MARISA_TYPE_A_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_MARISA_TYPE_B_TITLE),
-            },
-            { 
-                UiText.get(TextId.CHARACTER_INFO_ALICE_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_ALICE_NAME),
-                UiText.get(TextId.CHARACTER_INFO_ALICE_TYPE_A_TITLE),
-                UiText.get(TextId.CHARACTER_INFO_ALICE_TYPE_B_TITLE),
-            } };
+    private static final int[][] CHARA_INFO = new int[][] {
+            { TextId.CHARACTER_INFO_REIMU_TITLE, TextId.CHARACTER_INFO_REIMU_NAME,
+                    TextId.CHARACTER_INFO_REIMU_TYPE_A_TITLE, TextId.CHARACTER_INFO_REIMU_TYPE_B_TITLE },
+            { TextId.CHARACTER_INFO_MARISA_TITLE, TextId.CHARACTER_INFO_MARISA_NAME,
+                    TextId.CHARACTER_INFO_MARISA_TYPE_A_TITLE, TextId.CHARACTER_INFO_MARISA_TYPE_B_TITLE },
+            { TextId.CHARACTER_INFO_ALICE_TITLE, TextId.CHARACTER_INFO_ALICE_NAME,
+                    TextId.CHARACTER_INFO_ALICE_TYPE_A_TITLE, TextId.CHARACTER_INFO_ALICE_TYPE_B_TITLE } };
 
-    private static boolean spellTextLoaded;
-    private static String[] spellNames;
-    private static String[] spellComments;
-
-    private static final int SPELL_COUNT = 116;
-
-    private static final String UNKNOWN_NAME = UiText.get(TextId.UNLOCK);
+    private static final int SPELL_COUNT = SpellPracticeCatalog.size();
 
     private final int[] sumBonusAll = new int[SPELL_COUNT];
     private final int[] sumChareAll = new int[SPELL_COUNT];
+    private final int[] unitBonus = new int[SPELL_COUNT];
+    private final int[] unitSeen = new int[SPELL_COUNT];
     private boolean progressLoaded;
 
-    // Throttled progress refresh for on-screen updates (RMS load can be expensive).
+    // Throttled refresh of UI-owned aggregate counts.
     private int refreshCooldown;
     private static final int REFRESH_PERIOD = 4;
 
@@ -94,6 +75,7 @@ public final class SpellPracticeScreen {
     private boolean spellCommentCacheVisible;
     private String spellCommentCacheText;
     private String[] spellCommentCacheLines;
+    private final FontTextMeasurer textMeasurer = new FontTextMeasurer(null);
 
     private int chara;
     private int type;
@@ -107,7 +89,6 @@ public final class SpellPracticeScreen {
     private int effectB;
 
     public void enter(boolean reset) {
-        ensureSpellTextsLoaded();
         progressLoaded = false;
         ensureProgressLoaded();
         refreshCooldown = 0;
@@ -133,14 +114,12 @@ public final class SpellPracticeScreen {
         if (progressLoaded) {
             return;
         }
-        GameProgress.INSTANCE.loadFromSp();
         buildSpellTotals(sumBonusAll, sumChareAll);
         progressLoaded = true;
     }
 
     private void refreshProgressIfNeeded(boolean force) {
         if (force || refreshCooldown <= 0) {
-            GameProgress.INSTANCE.loadFromSp();
             buildSpellTotals(sumBonusAll, sumChareAll);
             progressLoaded = true;
             refreshCooldown = REFRESH_PERIOD;
@@ -150,19 +129,7 @@ public final class SpellPracticeScreen {
     }
 
     private static void buildSpellTotals(int[] outBonus, int[] outChare) {
-        int[][] bonusSrc = GameProgress.INSTANCE.scBonusCnt;
-        int[][] seenSrc = GameProgress.INSTANCE.scChareCnt;
-
-        for (int i = 0; i < SPELL_COUNT; i++) {
-            int b = 0;
-            int s = 0;
-            for (int u = 0; u < GameProgress.UNIT_COUNT; u++) {
-                b += bonusSrc[u][i];
-                s += seenSrc[u][i];
-            }
-            outBonus[i] = b;
-            outChare[i] = s;
-        }
+        GameProgress.INSTANCE.copySpellCounts(GameProgress.ALL_UNITS, outBonus, outChare);
     }
 
     // Custom LastWord unlock rules.
@@ -257,7 +224,7 @@ public final class SpellPracticeScreen {
             spellCommentScrollTick = 0;
         }
 
-        if ((pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+        if (UiInput.cancel(pressed)) {
             if (scene == 0) {
                 return new Result(Result.KIND_BACK_TO_TITLE);
             }
@@ -267,13 +234,13 @@ public final class SpellPracticeScreen {
             return null;
         }
 
-        if ((pressed & GameCanvas.GAME_B_PRESSED) != 0) {
-            type ^= 1;
+        if (UiInput.secondary(pressed)) {
+            type = MenuCursor.toggleTwo(type);
             return null;
         }
 
         if (scene == 0) {
-            if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+            if (UiInput.confirm(pressed)) {
                 scene = 1;
                 cursor2 = 0;
                 cursorLR = 0;
@@ -282,20 +249,20 @@ public final class SpellPracticeScreen {
                 return null;
             }
 
-            if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-                cursorUD = (cursorUD + 1) % STAGE_RANGES.length;
-            } else if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-                cursorUD = (cursorUD - 1 + STAGE_RANGES.length) % STAGE_RANGES.length;
+            if (UiInput.down(pressed)) {
+                cursorUD = MenuCursor.move(cursorUD, 1, STAGE_RANGES.length);
+            } else if (UiInput.up(pressed)) {
+                cursorUD = MenuCursor.move(cursorUD, -1, STAGE_RANGES.length);
             }
 
-            if ((pressed & GameCanvas.LEFT_PRESSED) != 0) {
-                chara = (chara - 1 + 3) % 3;
+            if (UiInput.left(pressed)) {
+                chara = MenuCursor.move(chara, -1, 3);
                 if (chara == 2 && !UnlockFlags.isAliceUnlocked()) {
                     chara = 1;
                 }
                 applyCharaChangeEffects();
-            } else if ((pressed & GameCanvas.RIGHT_PRESSED) != 0) {
-                chara = (chara + 1) % 3;
+            } else if (UiInput.right(pressed)) {
+                chara = MenuCursor.move(chara, 1, 3);
                 if (chara == 2 && !UnlockFlags.isAliceUnlocked()) {
                     chara = 0;
                 }
@@ -313,10 +280,7 @@ public final class SpellPracticeScreen {
         if (pageCount <= 0) {
             pageCount = 1;
         }
-        cursorLR %= pageCount;
-        if (cursorLR < 0) {
-            cursorLR += pageCount;
-        }
+        cursorLR = MenuCursor.move(cursorLR, 0, pageCount);
         int remain = total - cursorLR * perPage;
         int n19 = perPage;
         if (n19 > remain) {
@@ -326,16 +290,16 @@ public final class SpellPracticeScreen {
             n19 = 1;
         }
 
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-            cursor2 = (cursor2 + 1) % n19;
+        if (UiInput.down(pressed)) {
+            cursor2 = MenuCursor.move(cursor2, 1, n19);
             spellNameMarqueeTick = 0;
             spellCommentScrollTick = 0;
-        } else if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-            cursor2 = (cursor2 - 1 + n19) % n19;
+        } else if (UiInput.up(pressed)) {
+            cursor2 = MenuCursor.move(cursor2, -1, n19);
             spellNameMarqueeTick = 0;
             spellCommentScrollTick = 0;
-        } else if ((pressed & GameCanvas.LEFT_PRESSED) != 0) {
-            cursorLR = (cursorLR - 1 + pageCount) % pageCount;
+        } else if (UiInput.left(pressed)) {
+            cursorLR = MenuCursor.move(cursorLR, -1, pageCount);
             remain = total - cursorLR * perPage;
             n19 = perPage;
             if (n19 > remain) {
@@ -346,8 +310,8 @@ public final class SpellPracticeScreen {
             }
             spellNameMarqueeTick = 0;
             spellCommentScrollTick = 0;
-        } else if ((pressed & GameCanvas.RIGHT_PRESSED) != 0) {
-            cursorLR = (cursorLR + 1) % pageCount;
+        } else if (UiInput.right(pressed)) {
+            cursorLR = MenuCursor.move(cursorLR, 1, pageCount);
             remain = total - cursorLR * perPage;
             n19 = perPage;
             if (n19 > remain) {
@@ -358,7 +322,7 @@ public final class SpellPracticeScreen {
             }
             spellNameMarqueeTick = 0;
             spellCommentScrollTick = 0;
-        } else if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+        } else if (UiInput.confirm(pressed)) {
             int spellId = start + cursor2 + cursorLR * perPage;
             if (spellId < start) {
                 spellId = start;
@@ -372,7 +336,7 @@ public final class SpellPracticeScreen {
             if (chara == 2 && !UnlockFlags.isAliceUnlocked()) {
                 return null;
             }
-            return new Result(Result.KIND_START_PRACTICE, chara, type, cursorUD, spellId);
+            return new Result(Result.KIND_START_PRACTICE, chara, type, spellId);
         }
 
         return null;
@@ -382,6 +346,7 @@ public final class SpellPracticeScreen {
         if (g == null) {
             return;
         }
+        GameProgress.INSTANCE.copySpellCounts((chara << 1) + type, unitBonus, unitSeen);
 
         int bg0 = UiDraw.mixColor(effect8, effect9, effect5, 5);
         int bg1 = UiDraw.mixColor(effectA, effectB, effect5, 5);
@@ -434,7 +399,7 @@ public final class SpellPracticeScreen {
                 int start = STAGE_RANGES[i][0];
                 int end = STAGE_RANGES[i][1];
                 for (int id = start; id < end; id++) {
-                    if (unit >= 0 && unit < GameProgress.UNIT_COUNT && GameProgress.INSTANCE.scBonusCnt[unit][id] != 0) {
+                    if (unit >= 0 && unit < GameProgress.UNIT_COUNT && unitBonus[id] != 0) {
                         captured++;
                     }
                 }
@@ -460,7 +425,7 @@ public final class SpellPracticeScreen {
             int unit = (chara << 1) + type;
             int capturedUnit = 0;
             if (unit >= 0 && unit < GameProgress.UNIT_COUNT) {
-                int[] bonusArr = GameProgress.INSTANCE.scBonusCnt[unit];
+                int[] bonusArr = unitBonus;
                 for (int i = 0; i < SPELL_COUNT; i++) {
                     if (bonusArr[i] != 0) {
                         capturedUnit++;
@@ -492,18 +457,13 @@ public final class SpellPracticeScreen {
         int end = STAGE_RANGES[cursorUD][1];
         int perPage = 6;
         int pageCount = (end - start + perPage - 1) / perPage;
-        if (cursorLR < 0) {
-            cursorLR = 0;
-        }
-        if (cursorLR >= pageCount) {
-            cursorLR = pageCount - 1;
-        }
+        cursorLR = MenuCursor.clamp(cursorLR, pageCount);
 
         UiDraw.drawString2(g, font, String.valueOf(cursorLR + 1) + "/" + pageCount, 220 + effect1, 40, 2, 0xFF3332, 0x772222);
         int unit = (chara << 1) + type;
         int capturedStage = 0;
         for (int id = start; id < end; id++) {
-            if (unit >= 0 && unit < GameProgress.UNIT_COUNT && GameProgress.INSTANCE.scBonusCnt[unit][id] != 0) {
+            if (unit >= 0 && unit < GameProgress.UNIT_COUNT && unitBonus[id] != 0) {
                 capturedStage++;
             }
         }
@@ -533,13 +493,13 @@ public final class SpellPracticeScreen {
                     showName = isLastWordUnlockedCustom(id);
                 }
             }
-            String name = showName ? getSpellName(id) : UNKNOWN_NAME;
+            String name = showName ? getSpellName(id) : UiText.get(TextId.UNLOCK);
 
             int b = 0;
             int s = 0;
             if (unit >= 0 && unit < GameProgress.UNIT_COUNT) {
-                b = GameProgress.INSTANCE.scBonusCnt[unit][id];
-                s = GameProgress.INSTANCE.scChareCnt[unit][id];
+                b = unitBonus[id];
+                s = unitSeen[id];
             }
 
             String bsText = b + "/" + s;
@@ -554,7 +514,7 @@ public final class SpellPracticeScreen {
             if (i == cursor2) {
                 UiDraw.drawStringMarquee2(g, font, name, nameX, y, clipW, 0, cMain, cShadow, spellNameMarqueeTick);
             } else {
-                UiDraw.drawString2(g, font, ellipsizeToWidth(font, name, clipW), nameX, y, 0, cMain, cShadow);
+                UiDraw.drawString2(g, font, UiDraw.ellipsize(font, name, clipW), nameX, y, 0, cMain, cShadow);
             }
             UiDraw.drawString2(g, font, bsText, 235 + effect1, y, 2, cMain, cShadow);
             if (b != 0) {
@@ -597,10 +557,12 @@ public final class SpellPracticeScreen {
 
         if (showComment) {
             if (spellCommentCacheLines == null) {
-                spellCommentCacheLines = wrapTextToWidth(font, comment, commentW);
+                textMeasurer.setFont(font);
+                spellCommentCacheLines = UiTextLayout.wrapWords(comment, commentW, textMeasurer);
             }
 
-            int offY = calcPingPongScrollOffsetPx(spellCommentScrollTick, (spellCommentCacheLines.length - visibleLines) * lineH);
+            int offY = UiTextLayout.pingPongOffset(
+                    spellCommentScrollTick, (spellCommentCacheLines.length - visibleLines) * lineH, 18, 2);
 
             int oldClipX = g.getClipX();
             int oldClipY = g.getClipY();
@@ -623,8 +585,9 @@ public final class SpellPracticeScreen {
             if (n48 < 0) {
                 n48 = 0;
             }
-            String mask = repeatFullWidthQ(n48);
-            String[] lines = wrapTextToWidth(font, mask, commentW);
+            String mask = UiTextLayout.repeat('\uff1f', n48);
+            textMeasurer.setFont(font);
+            String[] lines = UiTextLayout.wrapWords(mask, commentW, textMeasurer);
             if (lines.length > 0) {
                 UiDraw.drawString2(g, font, lines[0], commentX, commentY + 0, 0, 0xFF0000, 0x7F0000);
             }
@@ -634,204 +597,16 @@ public final class SpellPracticeScreen {
         }
     }
 
-    // Auto-wrap comment text by pixel width (not fixed character count).
-    private static String[] wrapTextToWidth(Font font, String s, int maxW) {
-        if (s == null) {
-            s = "";
-        }
-        if (maxW <= 0) {
-            return new String[] { "" };
-        }
-        if (s.length() == 0) {
-            return new String[] { "" };
-        }
-
-        String[] out = new String[0];
-        StringBuffer line = new StringBuffer();
-        int lineW = 0;
-        int i = 0;
-
-        while (i < s.length()) {
-            char c = s.charAt(i);
-            boolean isWs = (c == ' ' || c == '\t');
-            int j = i;
-
-            if (isWs) {
-                while (j < s.length()) {
-                    char wc = s.charAt(j);
-                    if (wc != ' ' && wc != '\t') {
-                        break;
-                    }
-                    j++;
-                }
-                if (lineW == 0) {
-                    i = j;
-                    continue;
-                }
-                String token = s.substring(i, j);
-                int tokenW = UiDraw.stringWidth(font, token);
-                if (lineW + tokenW > maxW) {
-                    out = appendLine(out, line.toString());
-                    line.setLength(0);
-                    lineW = 0;
-                    i = j;
-                    continue;
-                }
-                line.append(token);
-                lineW += tokenW;
-                i = j;
-                continue;
-            }
-
-            while (j < s.length()) {
-                char wc = s.charAt(j);
-                if (wc == ' ' || wc == '\t') {
-                    break;
-                }
-                j++;
-            }
-
-            String word = s.substring(i, j);
-            int wordW = UiDraw.stringWidth(font, word);
-            if (lineW > 0 && lineW + wordW > maxW) {
-                out = appendLine(out, line.toString());
-                line.setLength(0);
-                lineW = 0;
-            }
-
-            if (wordW <= maxW) {
-                line.append(word);
-                lineW += wordW;
-                i = j;
-                continue;
-            }
-
-            for (int k = 0; k < word.length(); k++) {
-                char ch = word.charAt(k);
-                int chW = UiDraw.charWidth(font, ch);
-                if (lineW > 0 && lineW + chW > maxW) {
-                    out = appendLine(out, line.toString());
-                    line.setLength(0);
-                    lineW = 0;
-                }
-                line.append(ch);
-                lineW += chW;
-            }
-            i = j;
-        }
-
-        if (line.length() > 0) {
-            out = appendLine(out, line.toString());
-        }
-        if (out.length == 0) {
-            return new String[] { "" };
-        }
-        return out;
-    }
-
-    private static String[] appendLine(String[] arr, String s) {
-        int n = (arr != null) ? arr.length : 0;
-        String[] out = new String[n + 1];
-        for (int i = 0; i < n; i++) {
-            out[i] = arr[i];
-        }
-        out[n] = (s != null) ? s : "";
-        return out;
-    }
-
-    private static int calcPingPongScrollOffsetPx(int tick, int rangePx) {
-        if (rangePx <= 0) {
-            return 0;
-        }
-        int pause = 18;
-        int step = (tick >= 0) ? (tick >> 1) : 0;
-        int period = pause + rangePx + pause + rangePx;
-        int m = (period > 0) ? (step % period) : 0;
-        if (m < pause) {
-            return 0;
-        }
-        if (m < pause + rangePx) {
-            return m - pause;
-        }
-        if (m < pause + rangePx + pause) {
-            return rangePx;
-        }
-        return rangePx - (m - (pause + rangePx + pause));
-    }
-
-    private static String repeatFullWidthQ(int count) {
-        if (count <= 0) {
-            return "";
-        }
-        String s = "";
-        for (int i = 0; i < count; i++) {
-            s += "\uff1f";
-        }
-        return s;
-    }
-
-    private static String ellipsizeToWidth(Font font, String s, int maxW) {
-        if (s == null) {
-            return "";
-        }
-        if (maxW <= 0) {
-            return "";
-        }
-        if (UiDraw.stringWidth(font, s) <= maxW) {
-            return s;
-        }
-
-        String ell = "...";
-        int ellW = UiDraw.stringWidth(font, ell);
-        if (ellW >= maxW) {
-            return "";
-        }
-
-        int limitW = maxW - ellW;
-        int w = 0;
-        int cut = 0;
-        for (int i = 0; i < s.length(); i++) {
-            int cw = UiDraw.charWidth(font, s.charAt(i));
-            if (w + cw > limitW) {
-                break;
-            }
-            w += cw;
-            cut = i + 1;
-        }
-        if (cut <= 0) {
-            return "";
-        }
-        return s.substring(0, cut) + ell;
-    }
-
-    private static void ensureSpellTextsLoaded() {
-        if (spellTextLoaded) {
-            return;
-        }
-
-        // Load localized spell texts first; fallback to the original built-in tables.
-        String nameText = I18n.readUtf8TextResource(I18n.path("spcard.dat"));
-        spellNames = (nameText != null) ? I18n.splitLinesSimple(nameText) : null;
-        String commentText = I18n.readUtf8TextResource(I18n.path("sprac.dat"));
-        spellComments = (commentText != null) ? I18n.splitLinesSimple(commentText) : null;
-        spellTextLoaded = true;
-    }
-
     private static String getSpellName(int id) {
-        if (spellNames != null && id >= 0 && id < spellNames.length) {
-            String s = spellNames[id];
-            if (s != null && s.length() > 0) {
-                return s;
-            }
+        String name = SpellText.getName(id);
+        if (name != null) {
+            return name;
         }
         return UiText.get(TextId.REPLAY_SPELLNO_PREFIX) + (id + 1);
     }
 
     private static String getSpellComment(int id) {
-        if (spellComments != null && id >= 0 && id < spellComments.length) {
-            return spellComments[id];
-        }
-        return "";
+        return SpellText.getComment(id);
     }
 
     private void drawCharaInfo(Graphics g, Font font) {
@@ -861,9 +636,9 @@ public final class SpellPracticeScreen {
         }
 
         int y = 200;
-        UiDraw.drawStringOutline(g, font, CHARA_INFO[chara][0], 10, y + 0, 0, main0, sh0);
-        UiDraw.drawStringOutline(g, font, CHARA_INFO[chara][1], 10, y + 15, 0, main1, sh1);
-        UiDraw.drawStringOutline(g, font, CHARA_INFO[chara][2 + type], 10, y + 30, 0, main2, sh2);
+        UiDraw.drawStringOutline(g, font, UiText.get(CHARA_INFO[chara][0]), 10, y + 0, 0, main0, sh0);
+        UiDraw.drawStringOutline(g, font, UiText.get(CHARA_INFO[chara][1]), 10, y + 15, 0, main1, sh1);
+        UiDraw.drawStringOutline(g, font, UiText.get(CHARA_INFO[chara][2 + type]), 10, y + 30, 0, main2, sh2);
     }
 
     // Shared effect update when chara selection changes (LEFT/RIGHT).

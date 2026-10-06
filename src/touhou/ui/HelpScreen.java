@@ -3,7 +3,6 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.CcTable;
 import touhou.ImageBank;
@@ -34,15 +33,15 @@ public final class HelpScreen {
     }
 
     public Result update(int pressed) {
-        if ((pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+        if (UiInput.cancel(pressed)) {
             return new Result(Result.KIND_BACK_TO_TITLE);
         }
 
-        if ((pressed & GameCanvas.LEFT_PRESSED) != 0) {
+        if (UiInput.left(pressed)) {
             if (page > 0) {
                 page--;
             }
-        } else if ((pressed & GameCanvas.RIGHT_PRESSED) != 0) {
+        } else if (UiInput.right(pressed)) {
             if (page < pageMax - 1) {
                 page++;
             }
@@ -321,11 +320,7 @@ public final class HelpScreen {
         }
         ccLoaded = true;
         try {
-            try {
-                cc = CcTable.loadFromResource("/res/cc.dat");
-            } catch (Exception e) {
-                cc = CcTable.loadFromResource("/cc.dat");
-            }
+            cc = CcTable.load();
         } catch (Throwable t) {
             cc = null;
         }
@@ -351,35 +346,21 @@ public final class HelpScreen {
         int ax = cc.getAx(ccIndex);
         int ay = cc.getAy(ccIndex);
 
+        srcX = imgs.toPhysicalSourceX(imgIndex, srcX);
+        srcY = imgs.toPhysicalSourceY(imgIndex, srcY);
+
         Image img = imgs.get(imgIndex);
         if (img == null) {
             return;
         }
 
-        if (imgIndex == 6) {
-            if (drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay, 1)) {
-                return;
-            }
-            drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay, 2);
-            return;
-        }
-
-        drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay, 1);
+        drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay);
     }
 
-    private static boolean drawRegionSafe(Graphics g, Image img, int x, int y, int srcX, int srcY, int w, int h, int ax, int ay, int scale) {
+    private static boolean drawRegionSafe(Graphics g, Image img, int x, int y, int srcX, int srcY, int w, int h, int ax, int ay) {
         if (img == null) {
             return false;
         }
-        if (scale != 1) {
-            srcX *= scale;
-            srcY *= scale;
-            w *= scale;
-            h *= scale;
-            ax *= scale;
-            ay *= scale;
-        }
-
         if (w <= 0 || h <= 0) {
             return false;
         }

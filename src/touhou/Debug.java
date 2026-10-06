@@ -137,7 +137,6 @@ public final class Debug {
 
     public static void renderBattleDebugText(Graphics g,
             boolean fpsEnabled, boolean perfEnabled, boolean resourceEnabled,
-            String resourceError,
             int playX, int playY, int playW,
             BulletSystem bullets, int[][] enemylist, int[][] effectlist,
             CcTable cc, int[][] effectTable, ImageBank imgs,
@@ -149,13 +148,6 @@ public final class Debug {
         renderFpsOverlay(g, fpsEnabled);
 
         if (!perfEnabled && !resourceEnabled) {
-            return;
-        }
-
-        if (resourceEnabled && resourceError != null) {
-            int hudTextX = playX + playW + 2;
-            int y = 2 + UiDraw.fontBaseline(null);
-            UiDraw.drawStringPlain(g, null, resourceError, hudTextX, y, 0, 0xFFFFFF);
             return;
         }
 
@@ -473,7 +465,7 @@ public final class Debug {
         int ghostEnemies = 0;
         int ghostEffects = 0;
 
-        for (int i = 0; i < bullets.getMax(); i++) {
+        for (int i = 0; i < bullets.capacity(); i++) {
             if (!bullets.isActive(i)) {
                 continue;
             }
@@ -552,7 +544,7 @@ public final class Debug {
         int bestX = 0;
         int bestY = 0;
 
-        for (int i = 0; i < bullets.getMax(); i++) {
+        for (int i = 0; i < bullets.capacity(); i++) {
             if (!bullets.isActive(i)) {
                 continue;
             }

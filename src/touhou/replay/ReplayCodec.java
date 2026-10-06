@@ -9,18 +9,21 @@ public final class ReplayCodec {
 
     // Fixed-size RLE: (len,value) pairs with len in 1..127.
     public static byte[] encode(byte[] frames) {
-        byte[] out = new byte[ENCODED_SIZE];
-        if (frames == null || frames.length < FRAME_COUNT) {
-            return out;
+        if (frames == null || frames.length != FRAME_COUNT) {
+            return null;
         }
 
+        byte[] out = new byte[ENCODED_SIZE];
         int outPos = 0;
         int i = 0;
-        while (i < FRAME_COUNT && (outPos + 1) < ENCODED_SIZE) {
+        while (i < FRAME_COUNT) {
             byte v = frames[i];
             int run = 1;
             while ((i + run) < FRAME_COUNT && run < 127 && frames[i + run] == v) {
                 run++;
+            }
+            if ((outPos + 1) >= ENCODED_SIZE) {
+                return null;
             }
             out[outPos++] = (byte) (run & 0xFF);
             out[outPos++] = v;
@@ -30,27 +33,32 @@ public final class ReplayCodec {
     }
 
     public static byte[] decode(byte[] encoded) {
-        byte[] out = new byte[FRAME_COUNT];
-        if (encoded == null || encoded.length < ENCODED_SIZE) {
-            return out;
+        if (encoded == null || encoded.length != ENCODED_SIZE) {
+            return null;
         }
 
+        byte[] out = new byte[FRAME_COUNT];
         int outPos = 0;
-        for (int inPos = 0; (inPos + 1) < ENCODED_SIZE && outPos < FRAME_COUNT; inPos += 2) {
-            int run = encoded[inPos] & 0xFF;
-            if (run <= 0) {
-                break;
+        int inPos = 0;
+        while (outPos < FRAME_COUNT) {
+            if ((inPos + 1) >= ENCODED_SIZE) {
+                return null;
             }
-            if (run > 127) {
-                run = 127;
+            int run = encoded[inPos] & 0xFF;
+            if (run <= 0 || run > 127 || outPos + run > FRAME_COUNT) {
+                return null;
             }
             byte v = encoded[inPos + 1];
             int end = outPos + run;
-            if (end > FRAME_COUNT) {
-                end = FRAME_COUNT;
-            }
             while (outPos < end) {
                 out[outPos++] = v;
+            }
+            inPos += 2;
+        }
+
+        while (inPos < ENCODED_SIZE) {
+            if (encoded[inPos++] != 0) {
+                return null;
             }
         }
         return out;

@@ -193,12 +193,7 @@ public final class EndingScreen {
         if (chara < 0 || chara >= ENDING_TEXT_FILES.length) {
             return null;
         }
-        String text = I18n.readUtf8TextResource(I18n.path(ENDING_TEXT_FILES[chara]));
-        if (text == null) {
-            return null;
-        }
-        String[] lines = I18n.splitLinesSimple(text);
-        return lines;
+        return I18n.splitLines(I18n.loadText(ENDING_TEXT_FILES[chara]));
     }
 
     private static int[] buildTextIndexMap(String[] script) {
@@ -243,11 +238,11 @@ public final class EndingScreen {
 
         if (reveal < s.length()) {
             reveal++;
-            if ((pressed & GameCore.FIRE_PRESSED) != 0) {
+            if (UiInput.confirm(pressed)) {
                 reveal = s.length();
             }
         } else {
-            if ((pressed & GameCore.FIRE_PRESSED) != 0) {
+            if (UiInput.confirm(pressed)) {
                 if (line >= ENDING_SCRIPTS[chara].length - 1) {
                     return new Result(Result.KIND_DONE);
                 }
@@ -258,7 +253,7 @@ public final class EndingScreen {
         }
 
         // Allow quick exit with left softkey (GAME_A).
-        if ((pressed & GameCore.GAME_A_PRESSED) != 0) {
+        if (UiInput.cancel(pressed)) {
             return new Result(Result.KIND_DONE);
         }
 

@@ -1,6 +1,9 @@
 package touhou.i18n;
 
+import java.io.IOException;
+
 import touhou.GameOptions;
+import touhou.ResourceException;
 import touhou.font.BitmapFont;
 
 public final class I18nBootstrap {
@@ -8,14 +11,16 @@ public final class I18nBootstrap {
     }
 
     public static void initFromOptions(int[] opt) {
-        int lang = GameOptions.LANG_JA;
-        if (opt != null && opt.length > GameOptions.IDX_LANGUAGE) {
-            lang = opt[GameOptions.IDX_LANGUAGE];
-        }
+        int lang = opt[GameOptions.IDX_LANGUAGE];
 
         I18n.setLanguageId(lang);
-        I18nPack.loadForCurrentLanguage();
+        try {
+            I18nPack.loadForCurrentLanguage();
+        } catch (IOException e) {
+            throw new ResourceException(e.toString());
+        }
         UiText.load();
+        SpellText.load();
         BitmapFont.loadForCurrentLanguage();
     }
 }

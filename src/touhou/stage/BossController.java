@@ -1,8 +1,6 @@
 package touhou.stage;
 
 import touhou.SoundEffectSystem;
-import touhou.replay.ReplaySnapshotReader;
-import touhou.replay.ReplaySnapshotWriter;
 
 public final class BossController {
     public interface Host extends BossState, BossWorld, BossServices {}
@@ -19,7 +17,6 @@ public final class BossController {
         void setMGCnt(int v);
         int getBossF();
         void setBossF(int v);
-        int getBbaria();
         void setBbaria(int v);
         int getBstock();
         int getPlayerXFixed();
@@ -46,7 +43,7 @@ public final class BossController {
         void setEnemyBulletGlobalDir(int deg);
         void setEnemyBulletLock(int idx, int value);
         void spawnStageEffect(int effectId, int xFixed, int yFixed);
-        void spawnEnemyBullet(int bulletId, int moveType, int angleDeg, int speedParam, int xFixed, int yFixed);
+        int spawnEnemyBullet(int bulletId, int moveType, int angleDeg, int speedParam, int xFixed, int yFixed);
         void convertEnemyBulletsTo81Rain(int bossYFixed, int gc);
         void setEnemyBulletsDeltaForIdAndMoveType(int bulletId, int moveType, int newDelta);
         void setEnemyBulletsDeltaForIdIfDeltaZero(int bulletId, int baseDelta, int deltaStep);
@@ -74,9 +71,6 @@ public final class BossController {
     int j;
     int zbLastFi = -1;
     int spellId = -1;
-
-    // Proactive GC: armed when boss state changes, consumed by GameCore.
-    private boolean gcArmed;
 
     public BossController(Host host) {
         this.host = host;
@@ -116,103 +110,8 @@ public final class BossController {
         p[1] = 0;
         p[2] = 0;
         j = 0;
+        zbLastFi = -1;
         spellId = -1;
-    }
-
-    // Replay snapshot I/O.
-    public void writeSnapshot(ReplaySnapshotWriter w) {
-        if (w == null) {
-            return;
-        }
-
-        w.writeI32LE(bwave.length);
-        for (int i = 0; i < bwave.length; i++) {
-            w.writeI32LE(bwave[i]);
-        }
-
-        w.writeI32LE(bspellcnt);
-        w.writeBool(batkf);
-        w.writeI32LE(bspellstep);
-
-        w.writeI32LE(k);
-        w.writeI32LE(l);
-        w.writeI32LE(m);
-        w.writeI32LE(n);
-
-        w.writeI32LE(o.length);
-        for (int i = 0; i < o.length; i++) {
-            w.writeI32LE(o[i]);
-        }
-
-        w.writeI32LE(p.length);
-        for (int i = 0; i < p.length; i++) {
-            w.writeI32LE(p[i]);
-        }
-
-        w.writeI32LE(j);
-        w.writeI32LE(zbLastFi);
-        w.writeI32LE(spellId);
-    }
-
-    public void readSnapshot(ReplaySnapshotReader r) {
-        if (r == null) {
-            return;
-        }
-
-        int nWave = r.readI32LE();
-        if (nWave < 0) {
-            nWave = 0;
-        }
-        for (int i = 0; i < nWave; i++) {
-            int v = r.readI32LE();
-            if (i < bwave.length) {
-                bwave[i] = v;
-            }
-        }
-        for (int i = nWave; i < bwave.length; i++) {
-            bwave[i] = 0;
-        }
-
-        bspellcnt = r.readI32LE();
-        batkf = r.readBool();
-        bspellstep = r.readI32LE();
-
-        k = r.readI32LE();
-        l = r.readI32LE();
-        m = r.readI32LE();
-        n = r.readI32LE();
-
-        int nO = r.readI32LE();
-        if (nO < 0) {
-            nO = 0;
-        }
-        for (int i = 0; i < nO; i++) {
-            int v = r.readI32LE();
-            if (i < o.length) {
-                o[i] = v;
-            }
-        }
-        for (int i = nO; i < o.length; i++) {
-            o[i] = 0;
-        }
-
-        int nP = r.readI32LE();
-        if (nP < 0) {
-            nP = 0;
-        }
-        for (int i = 0; i < nP; i++) {
-            int v = r.readI32LE();
-            if (i < p.length) {
-                p[i] = v;
-            }
-        }
-        for (int i = nP; i < p.length; i++) {
-            p[i] = 0;
-        }
-
-        j = r.readI32LE();
-        zbLastFi = r.readI32LE();
-        spellId = r.readI32LE();
     }
 
     public int getBspellcnt() {
@@ -247,20 +146,12 @@ public final class BossController {
         return o[0];
     }
 
-    public int getHpBarAnimO1() {
-        return o[1];
-    }
-
     public int getHpBarAnimO2() {
         return o[2];
     }
 
     public int getHpBarAnimP0() {
         return p[0];
-    }
-
-    public int getHpBarAnimP1() {
-        return p[1];
     }
 
     public int getHpBarAnimP2() {
@@ -415,27 +306,6 @@ public final class BossController {
         }
     }
 
-    void vb(int enemyIdx, int state) {
-        host.setMGCnt(-1);
-        host.getEnemyList()[enemyIdx][7] = state;
-        gcArmed = true;
-    }
-
-    void wb(int bossf) {
-        host.setMGCnt(-1);
-        host.setBossF(bossf);
-        gcArmed = true;
-    }
-
-    // Proactive GC: returns true once after a state change, then resets.
-    public boolean consumeGcArmed() {
-        if (gcArmed) {
-            gcArmed = false;
-            return true;
-        }
-        return false;
-    }
-
     void yb(int l, int n, int m) {
         if (host.getGameMode() != 3 || m == 3) {
             k = 1;
@@ -515,24 +385,4 @@ public final class BossController {
             spellId = -1;
         }
     }
-//stage1 midboss
-
-//stage2 midboss
-
-//stage3 midboss
-
-//stage1 boss
-
-//stage5 boss(stub)
-
-//stage6 boss(stub)
-
-//stage extra boss(stub)
-
-//stage2 boss
-
-//stage3 boss
-
-//stage4 boss(stub)
-
 }

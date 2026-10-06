@@ -1,6 +1,5 @@
 package touhou.replay;
 
-import touhou.CcTable;
 import touhou.Player;
 import touhou.ScoreSystem;
 import touhou.battle.BattleContinueSystem;
@@ -10,7 +9,9 @@ import touhou.battle.BattleHudModel;
 public final class ReplayBossSnapshotCodec {
     // Magic/version for boss-only replay snapshot.
     public static final int MAGIC = 0x42534E50; // 'BSNP'
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
+    private static final int BODY_SIZE_WITHOUT_HUD = 75 + ScoreSystem.SNAPSHOT_SIZE + Player.SNAPSHOT_SIZE;
+    private static final int BODY_SIZE_WITH_HUD = BODY_SIZE_WITHOUT_HUD + 8;
 
     public static final class Decoded {
         public int fi;
@@ -36,15 +37,6 @@ public final class ReplayBossSnapshotCodec {
         public int hudLevel;
         public int hudPower;
 
-        public boolean hasPlayer;
-    }
-
-    public static final class PlayerBox {
-        public Player value;
-
-        public PlayerBox(Player value) {
-            this.value = value;
-        }
     }
 
     private ReplayBossSnapshotCodec() {
@@ -97,13 +89,17 @@ public final class ReplayBossSnapshotCodec {
         w.writeBool(true);
         player.writeSnapshot(w);
 
-        return w.toByteArray();
+        byte[] body = w.toByteArray();
+        int expectedSize = hasHud ? BODY_SIZE_WITH_HUD : BODY_SIZE_WITHOUT_HUD;
+        return (body.length == expectedSize) ? ReplayChecksum.append(body) : null;
     }
 
     // Decode snapshot and apply state. Returns null if data is invalid.
-    public static Decoded decodeAndApply(byte[] snap, ReplayRng random, BattleContinueSystem continueSystem, BattleHudData hud, ScoreSystem scoreSystem, PlayerBox player,
-            CcTable cc, int currentChara, int currentType) {
-        if (snap == null || snap.length < 8) {
+    public static Decoded decodeAndApply(byte[] snap, ReplayRng random, BattleContinueSystem continueSystem,
+            BattleHudData hud, ScoreSystem scoreSystem, Player player) {
+        if (snap == null
+                || (snap.length != BODY_SIZE_WITHOUT_HUD + 4 && snap.length != BODY_SIZE_WITH_HUD + 4)
+                || !ReplayChecksum.hasValidFooter(snap)) {
             return null;
         }
 
@@ -111,7 +107,7 @@ public final class ReplayBossSnapshotCodec {
             return null;
         }
 
-        ReplaySnapshotReader r = new ReplaySnapshotReader(snap);
+        ReplaySnapshotReader r = new ReplaySnapshotReader(snap, snap.length - 4);
         int magic = r.readI32LE();
         int ver = r.readI32LE();
         if (magic != MAGIC || ver != VERSION) {
@@ -157,15 +153,11 @@ public final class ReplayBossSnapshotCodec {
             m.setPower(d.hudPower);
         }
 
-        d.hasPlayer = r.readBool();
-        if (!d.hasPlayer) {
+        if (!r.readBool()) {
             return null;
         }
-        if (player.value == null) {
-            return null;
-        }
-        player.value.readSnapshot(r);
+        player.readSnapshot(r);
 
-        return d;
+        return r.isAtEnd() ? d : null;
     }
 }

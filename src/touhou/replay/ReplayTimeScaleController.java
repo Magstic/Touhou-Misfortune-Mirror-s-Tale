@@ -25,21 +25,6 @@ public final class ReplayTimeScaleController {
         autoFastForwardTargetFrame = frameIndex;
     }
 
-    public void stopAutoFastForward() {
-        autoFastForwardTargetFrame = -1;
-    }
-
-    public boolean isAutoFastForwardActive(ReplayPlaybackController playback) {
-        if (playback == null || !playback.isActive()) {
-            return false;
-        }
-        int target = autoFastForwardTargetFrame;
-        if (target < 0) {
-            return false;
-        }
-        return playback.getFramePos() < target;
-    }
-
     // Returns how many replay simulation steps should run in this render frame.
     public int computeSteps(int liveKeys, ReplayPlaybackController playback) {
         if (playback == null || !playback.isActive()) {

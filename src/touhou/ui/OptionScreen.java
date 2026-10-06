@@ -2,7 +2,6 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.GameOptions;
 import touhou.i18n.TextId;
@@ -15,12 +14,12 @@ public final class OptionScreen {
         void onSeMaskChanged(int seMask);
     }
 
-    private void renderCompatible(Graphics g, Font font) {
+    private void renderRendering(Graphics g, Font font) {
         g.setColor(0x00FF00);
         g.drawRect(10, 30, 220, 200);
-        UiDraw.drawString2(g, font, UiText.get(TextId.OPTION_COMPAT_TITLE), 120, 22, 1, 16733525, 7820629);
+        UiDraw.drawString2(g, font, UiText.get(TextId.OPTION_RENDER_TITLE), 120, 22, 1, 16733525, 7820629);
 
-        for (int i = 0; i < MENU_COMPAT.length; i++) {
+        for (int i = 0; i < MENU_RENDERING.length; i++) {
             int main;
             int sh;
             if (i == cursorUD) {
@@ -30,15 +29,15 @@ public final class OptionScreen {
                 main = 6710886;
                 sh = 3355443;
             }
-            UiDraw.drawString2(g, font, UiText.get(COMPAT_MENU_TEXT_IDS[i]), 40, 50 + i * 20, 0, main, sh);
+            UiDraw.drawString2(g, font, UiText.get(RENDER_MENU_TEXT_IDS[i]), 40, 50 + i * 20, 0, main, sh);
 
-            String v = compatValueText(i);
+            String v = renderingValueText(i);
             if (v != null) {
                 UiDraw.drawString2(g, font, v, 210, 50 + i * 20, 2, main, sh);
             }
         }
 
-        UiDraw.drawString2(g, font, UiText.get(COMPAT_DESC_TEXT_IDS[cursorUD]), 120, 220, 1, 16711680, 7798784);
+        UiDraw.drawString2(g, font, UiText.get(RENDER_DESC_TEXT_IDS[cursorUD]), 120, 220, 1, 16711680, 7798784);
         g.setColor(colorPulse());
         g.drawLine(30, 54 + cursorUD * 20, 210, 54 + cursorUD * 20);
     }
@@ -87,38 +86,38 @@ public final class OptionScreen {
     private static final int SCENE_SE_MENU = 2;
     private static final int SCENE_CHEATING = 3;
     private static final int SCENE_DEBUG = 4;
-    private static final int SCENE_COMPATIBLE = 5;
+    private static final int SCENE_RENDERING = 5;
 
     private static final int MENU_OPTION_COUNT = 8;
 
     private static final String[] MENU_SE = new String[] { "Nav", "Select", "Back", "CD", "Crash", "Graze", "Pause", "Crash2", "Power", "Life", "Shot", "Alice", "Reimu", "Marisa", "Back" };
 
-    private static final String[] MENU_GAME = new String[] { "PlayerStock", "TenkeyMove", "ShotKey", "SlowKey", "SpellKey", "Compatible", "Cheating", "Back" };
+    private static final String[] MENU_GAME = new String[] { "PlayerStock", "TenkeyMove", "ShotKey", "SlowKey", "SpellKey", "Rendering", "Cheating", "Back" };
 
     private static final String[] MENU_CHEAT = new String[] { "Boss Shield", "Item Collection Limit", "Back" };
 
-    private static final String[] MENU_COMPAT = new String[] { "Close-up", "HeavyBG", "Mystia Fade", "Hit Spark", "Alpha: BOMB Close-up", "Alpha: BOSS Close-up", "Alpha: Player Bullets", "Back" };
+    private static final String[] MENU_RENDERING = new String[] { "Close-up", "HeavyBG", "Mystia Fade", "Hit Spark", "Alpha: BOMB Close-up", "Alpha: BOSS Close-up", "Alpha: Player Bullets", "Back" };
 
-    private static final int[] COMPAT_MENU_TEXT_IDS = new int[] {
-            TextId.OPTION_COMPAT_MENU_0,
-            TextId.OPTION_COMPAT_MENU_1,
-            TextId.OPTION_COMPAT_MENU_2,
-            TextId.OPTION_COMPAT_HIT_SPARK_MENU,
-            TextId.OPTION_COMPAT_MENU_3,
-            TextId.OPTION_COMPAT_MENU_4,
-            TextId.OPTION_COMPAT_MENU_5,
-            TextId.OPTION_COMPAT_MENU_6
+    private static final int[] RENDER_MENU_TEXT_IDS = new int[] {
+            TextId.OPTION_RENDER_MENU_0,
+            TextId.OPTION_RENDER_MENU_1,
+            TextId.OPTION_RENDER_MENU_2,
+            TextId.OPTION_RENDER_HIT_SPARK_MENU,
+            TextId.OPTION_RENDER_MENU_3,
+            TextId.OPTION_RENDER_MENU_4,
+            TextId.OPTION_RENDER_MENU_5,
+            TextId.OPTION_RENDER_MENU_6
     };
 
-    private static final int[] COMPAT_DESC_TEXT_IDS = new int[] {
-            TextId.OPTION_COMPAT_DESC_0,
-            TextId.OPTION_COMPAT_DESC_1,
-            TextId.OPTION_COMPAT_DESC_2,
-            TextId.OPTION_COMPAT_HIT_SPARK_DESC,
-            TextId.OPTION_COMPAT_DESC_3,
-            TextId.OPTION_COMPAT_DESC_4,
-            TextId.OPTION_COMPAT_DESC_5,
-            TextId.OPTION_COMPAT_DESC_6
+    private static final int[] RENDER_DESC_TEXT_IDS = new int[] {
+            TextId.OPTION_RENDER_DESC_0,
+            TextId.OPTION_RENDER_DESC_1,
+            TextId.OPTION_RENDER_DESC_2,
+            TextId.OPTION_RENDER_HIT_SPARK_DESC,
+            TextId.OPTION_RENDER_DESC_3,
+            TextId.OPTION_RENDER_DESC_4,
+            TextId.OPTION_RENDER_DESC_5,
+            TextId.OPTION_RENDER_DESC_6
     };
 
     private static final String[] MENU_DEBUG = new String[] { "FPS", "Profiler", "Resource", "Back" };
@@ -154,21 +153,16 @@ public final class OptionScreen {
     }
 
     private void notifyAudioOptionsChanged() {
-        if (listener == null || opt == null) {
+        if (listener == null) {
             return;
         }
         listener.onVolumesChanged(opt[1], opt[2]);
-        if (opt.length > GameOptions.IDX_SE_MASK_HI) {
-            int mask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
-            listener.onSeMaskChanged(mask);
-        }
+        int mask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
+        listener.onSeMaskChanged(mask);
     }
 
     public Result update(int pressed) {
         count = (count + 8) & 0xFF;
-        if (opt == null) {
-            opt = GameOptions.defaults();
-        }
 
         if (scene == SCENE_CHEATING && cheatWarnActive) {
             if (pressed != 0) {
@@ -177,7 +171,7 @@ public final class OptionScreen {
             return null;
         }
 
-        if ((pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+        if (UiInput.cancel(pressed)) {
             if (scene == SCENE_OPTION) {
                 GameOptions.save(opt);
                 return new Result(Result.KIND_BACK_TO_TITLE);
@@ -199,7 +193,7 @@ public final class OptionScreen {
                 cursorUD = 5;
                 return null;
             }
-            if (scene == SCENE_COMPATIBLE) {
+            if (scene == SCENE_RENDERING) {
                 GameOptions.save(opt);
                 scene = SCENE_GAME_CONFIG;
                 cursorUD = 5;
@@ -225,8 +219,8 @@ public final class OptionScreen {
         if (scene == SCENE_DEBUG) {
             return updateDebug(pressed);
         }
-        if (scene == SCENE_COMPATIBLE) {
-            return updateCompatible(pressed);
+        if (scene == SCENE_RENDERING) {
+            return updateRendering(pressed);
         }
         return null;
     }
@@ -250,33 +244,33 @@ public final class OptionScreen {
             renderCheating(g, font);
         } else if (scene == SCENE_DEBUG) {
             renderDebug(g, font);
-        } else if (scene == SCENE_COMPATIBLE) {
-            renderCompatible(g, font);
+        } else if (scene == SCENE_RENDERING) {
+            renderRendering(g, font);
         } else {
             renderOption(g, font);
         }
     }
 
     private Result updateOption(int pressed) {
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-            cursorUD = (cursorUD + 1) % MENU_OPTION_COUNT;
+        if (UiInput.down(pressed)) {
+            cursorUD = MenuCursor.move(cursorUD, 1, MENU_OPTION_COUNT);
             return null;
         }
-        if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-            cursorUD = (cursorUD - 1 + MENU_OPTION_COUNT) % MENU_OPTION_COUNT;
+        if (UiInput.up(pressed)) {
+            cursorUD = MenuCursor.move(cursorUD, -1, MENU_OPTION_COUNT);
             return null;
         }
 
-        if ((pressed & GameCanvas.LEFT_PRESSED) != 0) {
+        if (UiInput.left(pressed)) {
             adjustOptionValue(-1);
             return null;
         }
-        if ((pressed & GameCanvas.RIGHT_PRESSED) != 0) {
+        if (UiInput.right(pressed)) {
             adjustOptionValue(1);
             return null;
         }
 
-        if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+        if (UiInput.confirm(pressed)) {
             if (cursorUD == 2) {
                 scene = SCENE_SE_MENU;
                 cursorUD = 0;
@@ -305,18 +299,18 @@ public final class OptionScreen {
         return null;
     }
 
-    private Result updateCompatible(int pressed) {
-        if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-            cursorUD = (cursorUD - 1 + MENU_COMPAT.length) % MENU_COMPAT.length;
+    private Result updateRendering(int pressed) {
+        if (UiInput.up(pressed)) {
+            cursorUD = MenuCursor.move(cursorUD, -1, MENU_RENDERING.length);
             return null;
         }
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-            cursorUD = (cursorUD + 1) % MENU_COMPAT.length;
+        if (UiInput.down(pressed)) {
+            cursorUD = MenuCursor.move(cursorUD, 1, MENU_RENDERING.length);
             return null;
         }
 
-        if ((pressed & (GameCanvas.LEFT_PRESSED | GameCanvas.RIGHT_PRESSED | GameCanvas.FIRE_PRESSED)) != 0) {
-            if (cursorUD == MENU_COMPAT.length - 1) {
+        if (UiInput.left(pressed) || UiInput.right(pressed) || UiInput.confirm(pressed)) {
+            if (cursorUD == MENU_RENDERING.length - 1) {
                 GameOptions.save(opt);
                 scene = SCENE_GAME_CONFIG;
                 cursorUD = 5;
@@ -324,9 +318,7 @@ public final class OptionScreen {
             }
 
             if (cursorUD == 0) {
-                if (opt != null && opt.length > GameOptions.IDX_DYNAMIC_CUTIN) {
-                    opt[GameOptions.IDX_DYNAMIC_CUTIN] ^= 1;
-                }
+                opt[GameOptions.IDX_DYNAMIC_CUTIN] ^= 1;
             } else if (cursorUD == 1) {
                 GameOptions.toggleHeavyBg(opt);
             } else if (cursorUD == 2) {
@@ -340,7 +332,7 @@ public final class OptionScreen {
             } else if (cursorUD == 6) {
                 GameOptions.togglePlayerShotAlpha(opt);
             }
-            GameOptions.saveFast(opt);
+            GameOptions.save(opt);
             return null;
         }
 
@@ -351,33 +343,30 @@ public final class OptionScreen {
         if (idx == MENU_SE.length - 1) {
             return null;
         }
-        if (opt == null || opt.length <= GameOptions.IDX_SE_MASK_HI) {
-            return null;
-        }
         int mask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
         return ((mask & (1 << idx)) == 0) ? UiText.get(TextId.COMMON_OFF) : UiText.get(TextId.COMMON_ON);
     }
 
     private Result updateGameConfig(int pressed) {
-        if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-            cursorUD = (cursorUD - 1 + MENU_GAME.length) % MENU_GAME.length;
+        if (UiInput.up(pressed)) {
+            cursorUD = MenuCursor.move(cursorUD, -1, MENU_GAME.length);
             return null;
         }
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-            cursorUD = (cursorUD + 1) % MENU_GAME.length;
+        if (UiInput.down(pressed)) {
+            cursorUD = MenuCursor.move(cursorUD, 1, MENU_GAME.length);
             return null;
         }
 
-        if ((pressed & GameCanvas.LEFT_PRESSED) != 0) {
+        if (UiInput.left(pressed)) {
             adjustGameValue(-1);
             return null;
         }
-        if ((pressed & GameCanvas.RIGHT_PRESSED) != 0) {
+        if (UiInput.right(pressed)) {
             adjustGameValue(1);
             return null;
         }
 
-        if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+        if (UiInput.confirm(pressed)) {
             if (cursorUD == MENU_GAME.length - 1) {
                 scene = SCENE_OPTION;
                 cursorUD = 4;
@@ -393,7 +382,7 @@ public final class OptionScreen {
                 return null;
             }
             if (cursorUD == 5) {
-                scene = SCENE_COMPATIBLE;
+                scene = SCENE_RENDERING;
                 cursorUD = 0;
                 return null;
             }
@@ -411,13 +400,13 @@ public final class OptionScreen {
     private void adjustOptionValue(int dir) {
         if (cursorUD == 0) {
             opt[1] = clamp(opt[1] + dir * 10, 0, 100);
-            GameOptions.saveFast(opt);
+            GameOptions.save(opt);
             if (listener != null) {
                 listener.onVolumesChanged(opt[1], opt[2]);
             }
         } else if (cursorUD == 1) {
             opt[2] = clamp(opt[2] + dir * 10, 0, 100);
-            GameOptions.saveFast(opt);
+            GameOptions.save(opt);
             if (listener != null) {
                 listener.onVolumesChanged(opt[1], opt[2]);
             }
@@ -425,32 +414,32 @@ public final class OptionScreen {
             // S.E. config entry (no value).
         } else if (cursorUD == 3) {
             opt[4] ^= 1;
-            GameOptions.saveFast(opt);
+            GameOptions.save(opt);
         }
     }
 
     private Result updateCheating(int pressed) {
-        if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-            cursorUD = (cursorUD - 1 + MENU_CHEAT.length) % MENU_CHEAT.length;
+        if (UiInput.up(pressed)) {
+            cursorUD = MenuCursor.move(cursorUD, -1, MENU_CHEAT.length);
             return null;
         }
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-            cursorUD = (cursorUD + 1) % MENU_CHEAT.length;
-            return null;
-        }
-
-        if ((pressed & GameCanvas.LEFT_PRESSED) != 0) {
-            adjustCheatValue(1);
-            return null;
-        }
-        if ((pressed & GameCanvas.RIGHT_PRESSED) != 0) {
-            adjustCheatValue(1);
+        if (UiInput.down(pressed)) {
+            cursorUD = MenuCursor.move(cursorUD, 1, MENU_CHEAT.length);
             return null;
         }
 
-        if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+        if (UiInput.left(pressed)) {
+            toggleSelectedCheat();
+            return null;
+        }
+        if (UiInput.right(pressed)) {
+            toggleSelectedCheat();
+            return null;
+        }
+
+        if (UiInput.confirm(pressed)) {
             if (cursorUD == 0) {
-                adjustCheatValue(1);
+                toggleSelectedCheat();
                 return null;
             }
             if (cursorUD == MENU_CHEAT.length - 1) {
@@ -462,20 +451,20 @@ public final class OptionScreen {
         return null;
     }
 
-    private void adjustCheatValue(int dir) {
-        if (cursorUD == 0 && opt != null && opt.length > GameOptions.IDX_CHEAT_DISABLE_BOSS_BOMB_SHIELD) {
+    private void toggleSelectedCheat() {
+        if (cursorUD == 0) {
             opt[GameOptions.IDX_CHEAT_DISABLE_BOSS_BOMB_SHIELD] ^= 1;
-            GameOptions.saveFast(opt);
+            GameOptions.save(opt);
             return;
         }
-        if (cursorUD == 1 && opt != null && opt.length > GameOptions.IDX_CHEAT_DISABLE_ITEM_COLLECT_LIMIT) {
+        if (cursorUD == 1) {
             opt[GameOptions.IDX_CHEAT_DISABLE_ITEM_COLLECT_LIMIT] ^= 1;
-            GameOptions.saveFast(opt);
+            GameOptions.save(opt);
         }
     }
 
     private Result updateSeMenu(int pressed) {
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
+        if (UiInput.down(pressed)) {
             if (cursorUD == MENU_SE.length - 1) {
                 return null;
             }
@@ -489,18 +478,18 @@ public final class OptionScreen {
             }
             return null;
         }
-        if ((pressed & GameCanvas.UP_PRESSED) != 0) {
+        if (UiInput.up(pressed)) {
             if (cursorUD == MENU_SE.length - 1) {
                 cursorUD = 6;
                 return null;
             }
             int row = cursorUD % 7;
             int col = cursorUD / 7;
-            row = (row - 1 + 7) % 7;
+            row = MenuCursor.move(row, -1, 7);
             cursorUD = row + col * 7;
             return null;
         }
-        if ((pressed & GameCanvas.LEFT_PRESSED) != 0) {
+        if (UiInput.left(pressed)) {
             if (cursorUD == MENU_SE.length - 1) {
                 return null;
             }
@@ -509,7 +498,7 @@ public final class OptionScreen {
             }
             return null;
         }
-        if ((pressed & GameCanvas.RIGHT_PRESSED) != 0) {
+        if (UiInput.right(pressed)) {
             if (cursorUD == MENU_SE.length - 1) {
                 return null;
             }
@@ -519,7 +508,7 @@ public final class OptionScreen {
             return null;
         }
 
-        if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+        if (UiInput.confirm(pressed)) {
             if (cursorUD == MENU_SE.length - 1) {
                 GameOptions.save(opt);
                 scene = SCENE_OPTION;
@@ -527,7 +516,7 @@ public final class OptionScreen {
                 return null;
             }
             toggleSeBit(cursorUD);
-            GameOptions.saveFast(opt);
+            GameOptions.save(opt);
             return null;
         }
 
@@ -536,9 +525,6 @@ public final class OptionScreen {
 
     private void toggleSeBit(int seIdx) {
         if (seIdx < 0 || seIdx >= 14) {
-            return;
-        }
-        if (opt == null || opt.length <= GameOptions.IDX_SE_MASK_HI) {
             return;
         }
         int mask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
@@ -557,25 +543,25 @@ public final class OptionScreen {
         } else if (cursorUD == 1) {
             opt[5] ^= 1;
         } else if (cursorUD == 2) {
-            opt[6] = (opt[6] + dir + 14) % 14;
+            opt[6] = MenuCursor.move(opt[6], dir, 14);
         } else if (cursorUD == 3) {
-            opt[7] = (opt[7] + dir + 14) % 14;
+            opt[7] = MenuCursor.move(opt[7], dir, 14);
         } else if (cursorUD == 4) {
-            opt[8] = (opt[8] + dir + 14) % 14;
+            opt[8] = MenuCursor.move(opt[8], dir, 14);
         }
     }
 
     private Result updateDebug(int pressed) {
-        if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-            cursorUD = (cursorUD - 1 + MENU_DEBUG.length) % MENU_DEBUG.length;
+        if (UiInput.up(pressed)) {
+            cursorUD = MenuCursor.move(cursorUD, -1, MENU_DEBUG.length);
             return null;
         }
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-            cursorUD = (cursorUD + 1) % MENU_DEBUG.length;
+        if (UiInput.down(pressed)) {
+            cursorUD = MenuCursor.move(cursorUD, 1, MENU_DEBUG.length);
             return null;
         }
 
-        if ((pressed & (GameCanvas.LEFT_PRESSED | GameCanvas.RIGHT_PRESSED | GameCanvas.FIRE_PRESSED)) != 0) {
+        if (UiInput.left(pressed) || UiInput.right(pressed) || UiInput.confirm(pressed)) {
             if (cursorUD == MENU_DEBUG.length - 1) {
                 GameOptions.save(opt);
                 scene = SCENE_OPTION;
@@ -590,7 +576,7 @@ public final class OptionScreen {
             } else if (cursorUD == 2) {
                 GameOptions.toggleDebugResource(opt);
             }
-            GameOptions.saveFast(opt);
+            GameOptions.save(opt);
             return null;
         }
 
@@ -811,11 +797,11 @@ public final class OptionScreen {
     }
 
     private String cheatValueText(int idx) {
-        if (idx == 0 && opt != null && opt.length > GameOptions.IDX_CHEAT_DISABLE_BOSS_BOMB_SHIELD) {
+        if (idx == 0) {
             // UI semantics: ON = boss shield enabled (normal); OFF = shield disabled (cheat active).
             return (opt[GameOptions.IDX_CHEAT_DISABLE_BOSS_BOMB_SHIELD] == 0) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
-        if (idx == 1 && opt != null && opt.length > GameOptions.IDX_CHEAT_DISABLE_ITEM_COLLECT_LIMIT) {
+        if (idx == 1) {
             // UI semantics: ON = power-gated top-line collection (normal); OFF = no limit (cheat active).
             return (opt[GameOptions.IDX_CHEAT_DISABLE_ITEM_COLLECT_LIMIT] == 0) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
@@ -847,8 +833,8 @@ public final class OptionScreen {
         return null;
     }
 
-    private String compatValueText(int idx) {
-        if (idx == 0 && opt != null && opt.length > GameOptions.IDX_DYNAMIC_CUTIN) {
+    private String renderingValueText(int idx) {
+        if (idx == 0) {
             return (opt[GameOptions.IDX_DYNAMIC_CUTIN] == 0) ? UiText.get(TextId.COMMON_OFF) : UiText.get(TextId.COMMON_ON);
         }
         if (idx == 1) {
@@ -869,7 +855,7 @@ public final class OptionScreen {
         if (idx == 6) {
             return GameOptions.isPlayerShotAlphaEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
-        if (idx == MENU_COMPAT.length - 1) {
+        if (idx == MENU_RENDERING.length - 1) {
             return null;
         }
         return null;

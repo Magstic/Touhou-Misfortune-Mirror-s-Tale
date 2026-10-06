@@ -1,14 +1,13 @@
 package touhou.ui;
 
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.BulletSprites;
-import touhou.GameCore;
 import touhou.GameOptions;
 import touhou.ImageBank;
 import touhou.ResultStats;
 import touhou.SoundEffectSystem;
+import touhou.battle.SpellPracticeCatalog;
 import touhou.stage.StagePreloader;
 import touhou.UnlockFlags;
 
@@ -35,9 +34,7 @@ public final class UiController {
         // Start replay playback from a saved slot.
         void onStartReplayRequested(int slot, boolean bossOnly);
 
-        void onReplayBtShareRequested(int slot, boolean receive);
-
-        void onStartSpellPracticeRequested(int chara, int type, int stageIndex, int spellId);
+        void onStartSpellPracticeRequested(int chara, int type, int spellId);
 
         void onQuitRequested();
 
@@ -75,9 +72,6 @@ public final class UiController {
 
     private int state;
 
-    // Cross-thread UI messaging for BT share worker.
-    private volatile String pendingReplayMessage;
-
     public UiController(ImageBank images, BulletSprites sprites, Listener listener) {
         this.images = images;
         this.sprites = sprites;
@@ -87,7 +81,7 @@ public final class UiController {
         this.startupLanguage = new StartupLanguageMenu();
 
         this.loading.enter();
-        this.state = STATE_LOADING;
+        transitionTo(STATE_LOADING);
     }
 
     // Defer creating language-dependent screens until after startup language selection.
@@ -127,12 +121,8 @@ public final class UiController {
         }
 
         // Avoid first-time hitch when the boss spell name is first shown.
-        GameCore.warmupSpellCardTexts();
 
         int[] opt = GameOptions.load();
-        if (opt == null) {
-            opt = GameOptions.defaults();
-        }
         boolean playerShotAlphaEnabled = GameOptions.isPlayerShotAlphaEnabled(opt);
         boolean bossSpellCutInAlphaEnabled = GameOptions.isBossSpellCutInAlphaEnabled(opt);
         boolean bombOverlayAlphaEnabled = GameOptions.isBombOverlayAlphaEnabled(opt);
@@ -147,281 +137,302 @@ public final class UiController {
         }
     }
 
-    public void resetToTitle() {
-        ensureMainScreens();
-        state = STATE_TITLE;
-        title.reset();
-        ResultStats.INSTANCE.onReturnToTitle();
+    public void returnToTitleKeepCursor() {
+        openTitle(false);
     }
 
-    public void returnToTitleKeepCursor() {
+    private void openTitle(boolean resetCursor) {
         ensureMainScreens();
-        state = STATE_TITLE;
-        title.onReturnToTitle();
+        if (resetCursor) {
+            title.reset();
+        } else {
+            title.onReturnToTitle();
+        }
+        transitionTo(STATE_TITLE);
         ResultStats.INSTANCE.onReturnToTitle();
     }
 
     public void returnToSpellPracticeKeepCursor() {
         ensureMainScreens();
         spellPractice.enter(false);
-        state = STATE_SPELL_PRACTICE;
+        transitionTo(STATE_SPELL_PRACTICE);
     }
 
     // Return from gameplay to replay menu.
     public void returnToReplayKeepCursor() {
         ensureMainScreens();
-        replay.enter();
-        state = STATE_REPLAY;
+        replay.returnToList();
+        transitionTo(STATE_REPLAY);
     }
 
     public void returnToReplayKeepCursorWithMessage(String msg) {
         ensureMainScreens();
-        replay.enter();
-        replay.showMessageExternal(msg);
-        state = STATE_REPLAY;
-    }
-
-    public void showReplayMessage(String msg) {
-        pendingReplayMessage = msg;
+        replay.returnToList();
+        replay.showMessage(msg);
+        transitionTo(STATE_REPLAY);
     }
 
     public void update(int pressed) {
         // Play UI S.E. after the screen update so Options volume changes take effect immediately.
         int stateBefore = state;
-
         if (state == STATE_LOADING) {
-            loading.update(pressed, images, sprites);
-            if (loading.isDone()) {
-                startupLanguage.enter();
-                state = STATE_STARTUP_LANGUAGE;
-            }
+            updateLoading(pressed);
             return;
         }
 
-        if (state == STATE_STARTUP_LANGUAGE) {
-            StartupLanguageMenu.Result r = startupLanguage.update(pressed);
-            if (r != null && r.kind == StartupLanguageMenu.Result.KIND_DONE) {
-                ensureMainScreens();
-                resetToTitle();
-            }
+        if (updateCurrentScreen(pressed)) {
             playUiSe(stateBefore, pressed);
+        }
+    }
+
+    private void updateLoading(int pressed) {
+        loading.update(pressed, images, sprites);
+        if (loading.isDone()) {
+            startupLanguage.enter();
+            transitionTo(STATE_STARTUP_LANGUAGE);
+        }
+    }
+
+    private boolean updateCurrentScreen(int pressed) {
+        switch (state) {
+            case STATE_STARTUP_LANGUAGE:
+                updateStartupLanguage(pressed);
+                return true;
+            case STATE_TITLE:
+                updateTitle(pressed);
+                return true;
+            case STATE_START_SETUP:
+                return updateStartSetup(pressed);
+            case STATE_HELP:
+                updateHelp(pressed);
+                return true;
+            case STATE_STORY:
+                updateStory(pressed);
+                return true;
+            case STATE_SPELL_PRACTICE:
+                return updateSpellPractice(pressed);
+            case STATE_REPLAY:
+                updateReplay(pressed);
+                return true;
+            case STATE_REPLAY_RECEIVE:
+                updateReplayReceive(pressed);
+                return true;
+            case STATE_REPLAY_SEND:
+                updateReplaySend(pressed);
+                return true;
+            case STATE_RESULT:
+                updateResult(pressed);
+                return true;
+            case STATE_MUSIC_ROOM:
+                updateMusicRoom(pressed);
+                return true;
+            case STATE_OPTION:
+                updateOption(pressed);
+                return true;
+            case STATE_QUIT:
+                updateQuit(pressed);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private void updateStartupLanguage(int pressed) {
+        StartupLanguageMenu.Result r = startupLanguage.update(pressed);
+        if (r != null && r.kind == StartupLanguageMenu.Result.KIND_DONE) {
+            openTitle(true);
+        }
+    }
+
+    private void updateTitle(int pressed) {
+        int action = title.update(pressed);
+        if (action == TitleScreen.ACTION_START) {
+            openStartSetup(0);
+        } else if (action == TitleScreen.ACTION_EXTRA_START) {
+            openStartSetup(1);
+        } else if (action == TitleScreen.ACTION_PRACTICE) {
+            openStartSetup(2);
+        } else if (action == TitleScreen.ACTION_HELP) {
+            help.enter();
+            transitionTo(STATE_HELP);
+        } else if (action == TitleScreen.ACTION_STORY) {
+            story.enter();
+            transitionTo(STATE_STORY);
+        } else if (action == TitleScreen.ACTION_SPELL_PRACTICE) {
+            spellPractice.enter(true);
+            transitionTo(STATE_SPELL_PRACTICE);
+        } else if (action == TitleScreen.ACTION_REPLAY) {
+            replay.enter();
+            transitionTo(STATE_REPLAY);
+        } else if (action == TitleScreen.ACTION_RESULT) {
+            result.enter();
+            transitionTo(STATE_RESULT);
+        } else if (action == TitleScreen.ACTION_MUSIC_ROOM) {
+            musicRoom.enter();
+            transitionTo(STATE_MUSIC_ROOM);
+            if (listener != null) {
+                listener.onMusicRoomVolumeChanged(musicRoom.getVolume());
+            }
+        } else if (action == TitleScreen.ACTION_OPTION) {
+            option.enter();
+            transitionTo(STATE_OPTION);
+        } else if (action == TitleScreen.ACTION_QUIT) {
+            quit.enter();
+            transitionTo(STATE_QUIT);
+        }
+    }
+
+    private void openStartSetup(int mode) {
+        setup.enter(mode);
+        transitionTo(STATE_START_SETUP);
+    }
+
+    private boolean updateStartSetup(int pressed) {
+        StartSetupScreen.Result r = setup.update(pressed);
+        if (r == null) {
+            return true;
+        }
+        if (r.kind == StartSetupScreen.Result.KIND_BACK_TO_TITLE) {
+            returnToTitleKeepCursor();
+        } else if (r.kind == StartSetupScreen.Result.KIND_START_GAME) {
+            preloadStageSync(r.startStage, r.chara, r.type);
+            if (listener != null) {
+                listener.onStartGameRequested(r.gamemode, r.level, r.chara, r.type, r.startStage, r.pracBoss);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private void updateHelp(int pressed) {
+        HelpScreen.Result r = help.update(pressed);
+        if (r != null && r.kind == HelpScreen.Result.KIND_BACK_TO_TITLE) {
+            returnToTitleKeepCursor();
+        }
+    }
+
+    private void updateStory(int pressed) {
+        StoryScreen.Result r = story.update(pressed);
+        if (r != null && r.kind == StoryScreen.Result.KIND_BACK_TO_TITLE) {
+            returnToTitleKeepCursor();
+        }
+    }
+
+    private boolean updateSpellPractice(int pressed) {
+        SpellPracticeScreen.Result r = spellPractice.update(pressed);
+        if (r == null) {
+            return true;
+        }
+        if (r.kind == SpellPracticeScreen.Result.KIND_BACK_TO_TITLE) {
+            returnToTitleKeepCursor();
+        } else if (r.kind == SpellPracticeScreen.Result.KIND_START_PRACTICE) {
+            if (r.chara == 2 && !UnlockFlags.isAliceUnlocked()) {
+                return false;
+            }
+            preloadStageSync(SpellPracticeCatalog.getStage(r.spellId), r.chara, r.type);
+            if (listener != null) {
+                listener.onStartSpellPracticeRequested(r.chara, r.type, r.spellId);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private void updateReplay(int pressed) {
+        ReplayScreen.Result r = replay.update(pressed);
+        if (r == null) {
             return;
         }
-
-        if (state == STATE_TITLE) {
-            int action = title.update(pressed);
-            if (action == TitleScreen.ACTION_START) {
-                setup.enter(0);
-                state = STATE_START_SETUP;
-            } else if (action == TitleScreen.ACTION_EXTRA_START) {
-                setup.enter(1);
-                state = STATE_START_SETUP;
-            } else if (action == TitleScreen.ACTION_PRACTICE) {
-                setup.enter(2);
-                state = STATE_START_SETUP;
-            } else if (action == TitleScreen.ACTION_HELP) {
-                help.enter();
-                state = STATE_HELP;
-            } else if (action == TitleScreen.ACTION_STORY) {
-                story.enter();
-                state = STATE_STORY;
-            } else if (action == TitleScreen.ACTION_SPELL_PRACTICE) {
-                spellPractice.enter(true);
-                state = STATE_SPELL_PRACTICE;
-            } else if (action == TitleScreen.ACTION_REPLAY) {
-                replay.enter();
-                state = STATE_REPLAY;
-            } else if (action == TitleScreen.ACTION_RESULT) {
-                result.enter();
-                state = STATE_RESULT;
-            } else if (action == TitleScreen.ACTION_MUSIC_ROOM) {
-                musicRoom.enter();
-                state = STATE_MUSIC_ROOM;
-                if (listener != null) {
-                    listener.onMusicRoomVolumeChanged(musicRoom.getVolume());
-                }
-            } else if (action == TitleScreen.ACTION_OPTION) {
-                option.enter();
-                state = STATE_OPTION;
-            } else if (action == TitleScreen.ACTION_QUIT) {
-                quit.enter();
-                state = STATE_QUIT;
+        if (r.kind == ReplayScreen.Result.KIND_BACK_TO_TITLE) {
+            returnToTitleKeepCursor();
+        } else if (r.kind == ReplayScreen.Result.KIND_START_REPLAY) {
+            if (listener != null) {
+                listener.onStartReplayRequested(r.slot, r.bossOnly);
             }
-            playUiSe(stateBefore, pressed);
+        } else if (r.kind == ReplayScreen.Result.KIND_OPEN_BT_RECEIVE) {
+            replayReceive.enter();
+            transitionTo(STATE_REPLAY_RECEIVE);
+        } else if (r.kind == ReplayScreen.Result.KIND_OPEN_BT_SEND) {
+            replaySend.enter(r.slot);
+            transitionTo(STATE_REPLAY_SEND);
+        }
+    }
+
+    private void updateReplayReceive(int pressed) {
+        ReplayReceiveScreen.Result r = replayReceive.update(pressed);
+        if (r != null && r.kind == ReplayReceiveScreen.Result.KIND_BACK_TO_REPLAY) {
+            replay.returnToList();
+            transitionTo(STATE_REPLAY);
+        }
+    }
+
+    private void updateReplaySend(int pressed) {
+        ReplaySendScreen.Result r = replaySend.update(pressed);
+        if (r != null && r.kind == ReplaySendScreen.Result.KIND_BACK_TO_REPLAY) {
+            replay.returnToList();
+            transitionTo(STATE_REPLAY);
+        }
+    }
+
+    private void updateResult(int pressed) {
+        ResultScreen.Result r = result.update(pressed);
+        if (r != null && r.kind == ResultScreen.Result.KIND_BACK_TO_TITLE) {
+            returnToTitleKeepCursor();
+        }
+    }
+
+    private void updateMusicRoom(int pressed) {
+        MusicRoomScreen.Result r = musicRoom.update(pressed);
+        if (r == null) {
             return;
         }
-
-        if (state == STATE_START_SETUP) {
-            StartSetupScreen.Result r = setup.update(pressed);
-            if (r != null) {
-                if (r.kind == StartSetupScreen.Result.KIND_BACK_TO_TITLE) {
-                    returnToTitleKeepCursor();
-                } else if (r.kind == StartSetupScreen.Result.KIND_START_GAME) {
-                    preloadStageSync(r.startStage, r.chara, r.type);
-                    if (listener != null) {
-                        listener.onStartGameRequested(r.gamemode, r.level, r.chara, r.type, r.startStage, r.pracBoss);
-                    }
-                    return;
-                }
+        if (r.kind == MusicRoomScreen.Result.KIND_BACK_TO_TITLE) {
+            returnToTitleKeepCursor();
+        } else if (r.kind == MusicRoomScreen.Result.KIND_PLAY_TRACK) {
+            if (listener != null) {
+                listener.onPlayBgmRequested(r.trackId);
             }
-            playUiSe(stateBefore, pressed);
+        } else if (r.kind == MusicRoomScreen.Result.KIND_VOLUME_CHANGED) {
+            if (listener != null) {
+                listener.onMusicRoomVolumeChanged(r.trackId);
+            }
+        }
+    }
+
+    private void updateOption(int pressed) {
+        OptionScreen.Result r = option.update(pressed);
+        if (r != null && r.kind == OptionScreen.Result.KIND_BACK_TO_TITLE) {
+            returnToTitleKeepCursor();
+        }
+    }
+
+    private void updateQuit(int pressed) {
+        QuitScreen.Result r = quit.update(pressed);
+        if (r == null) {
             return;
         }
-
-        if (state == STATE_HELP) {
-            HelpScreen.Result r = help.update(pressed);
-            if (r != null && r.kind == HelpScreen.Result.KIND_BACK_TO_TITLE) {
-                returnToTitleKeepCursor();
-            }
-            playUiSe(stateBefore, pressed);
-            return;
+        if (r.kind == QuitScreen.Result.KIND_BACK_TO_TITLE) {
+            returnToTitleKeepCursor();
+        } else if (r.kind == QuitScreen.Result.KIND_QUIT && listener != null) {
+            listener.onQuitRequested();
         }
+    }
 
-        if (state == STATE_STORY) {
-            StoryScreen.Result r = story.update(pressed);
-            if (r != null && r.kind == StoryScreen.Result.KIND_BACK_TO_TITLE) {
-                returnToTitleKeepCursor();
-            }
-            playUiSe(stateBefore, pressed);
-            return;
-        }
-
-        if (state == STATE_SPELL_PRACTICE) {
-            SpellPracticeScreen.Result r = spellPractice.update(pressed);
-            if (r != null) {
-                if (r.kind == SpellPracticeScreen.Result.KIND_BACK_TO_TITLE) {
-                    returnToTitleKeepCursor();
-                } else if (r.kind == SpellPracticeScreen.Result.KIND_START_PRACTICE) {
-                    if (r.chara == 2 && !UnlockFlags.isAliceUnlocked()) {
-                        return;
-                    }
-                    preloadStageSync(r.stageIndex, r.chara, r.type);
-                    if (listener != null) {
-                        listener.onStartSpellPracticeRequested(r.chara, r.type, r.stageIndex, r.spellId);
-                    }
-                    return;
-                }
-            }
-            playUiSe(stateBefore, pressed);
-            return;
-        }
-
-        if (state == STATE_REPLAY) {
-            String msg = pendingReplayMessage;
-            if (msg != null) {
-                pendingReplayMessage = null;
-                replay.showMessageExternal(msg);
-            }
-            ReplayScreen.Result r = replay.update(pressed);
-            if (r != null) {
-                if (r.kind == ReplayScreen.Result.KIND_BACK_TO_TITLE) {
-                    returnToTitleKeepCursor();
-                } else if (r.kind == ReplayScreen.Result.KIND_START_REPLAY) {
-                    if (listener != null) {
-                        listener.onStartReplayRequested(r.slot, r.bossOnly);
-                    }
-                } else if (r.kind == ReplayScreen.Result.KIND_BT_SHARE) {
-                    if (listener != null) {
-                        listener.onReplayBtShareRequested(r.slot, r.btReceive);
-                    }
-                } else if (r.kind == ReplayScreen.Result.KIND_OPEN_BT_RECEIVE) {
-                    replayReceive.enter();
-                    state = STATE_REPLAY_RECEIVE;
-                } else if (r.kind == ReplayScreen.Result.KIND_OPEN_BT_SEND) {
-                    replaySend.enter(r.slot);
-                    state = STATE_REPLAY_SEND;
-                }
-            }
-            playUiSe(stateBefore, pressed);
-            return;
-        }
-
-        if (state == STATE_REPLAY_RECEIVE) {
-            ReplayReceiveScreen.Result r = replayReceive.update(pressed);
-            if (r != null && r.kind == ReplayReceiveScreen.Result.KIND_BACK_TO_REPLAY) {
-                state = STATE_REPLAY;
-                // Refresh replay list so newly received data shows up immediately.
-                if (replay != null) {
-                    replay.refreshSlotsKeepCursor();
-                }
-            }
-            playUiSe(stateBefore, pressed);
-            return;
-        }
-
-        if (state == STATE_REPLAY_SEND) {
-            ReplaySendScreen.Result r = replaySend.update(pressed);
-            if (r != null && r.kind == ReplaySendScreen.Result.KIND_BACK_TO_REPLAY) {
-                state = STATE_REPLAY;
-            }
-            playUiSe(stateBefore, pressed);
-            return;
-        }
-
-        if (state == STATE_RESULT) {
-            ResultScreen.Result r = result.update(pressed);
-            if (r != null && r.kind == ResultScreen.Result.KIND_BACK_TO_TITLE) {
-                returnToTitleKeepCursor();
-            }
-            playUiSe(stateBefore, pressed);
-            return;
-        }
-
-        if (state == STATE_MUSIC_ROOM) {
-            MusicRoomScreen.Result r = musicRoom.update(pressed);
-            if (r != null) {
-                if (r.kind == MusicRoomScreen.Result.KIND_BACK_TO_TITLE) {
-                    returnToTitleKeepCursor();
-                } else if (r.kind == MusicRoomScreen.Result.KIND_PLAY_TRACK) {
-                    if (listener != null) {
-                        listener.onPlayBgmRequested(r.trackId);
-                    }
-                } else if (r.kind == MusicRoomScreen.Result.KIND_VOLUME_CHANGED) {
-                    if (listener != null) {
-                        listener.onMusicRoomVolumeChanged(r.trackId);
-                    }
-                }
-            }
-            playUiSe(stateBefore, pressed);
-            return;
-        }
-
-        if (state == STATE_OPTION) {
-            OptionScreen.Result r = option.update(pressed);
-            if (r != null && r.kind == OptionScreen.Result.KIND_BACK_TO_TITLE) {
-                returnToTitleKeepCursor();
-            }
-            playUiSe(stateBefore, pressed);
-            return;
-        }
-
-        if (state == STATE_QUIT) {
-            QuitScreen.Result r = quit.update(pressed);
-            if (r != null) {
-                if (r.kind == QuitScreen.Result.KIND_BACK_TO_TITLE) {
-                    returnToTitleKeepCursor();
-                } else if (r.kind == QuitScreen.Result.KIND_QUIT) {
-                    if (listener != null) {
-                        listener.onQuitRequested();
-                    }
-                }
-            }
-        }
-
-        playUiSe(stateBefore, pressed);
+    private void transitionTo(int nextState) {
+        state = nextState;
     }
 
     private void playUiSe(int stateBefore, int pressed) {
-        if ((pressed & (GameCanvas.UP_PRESSED | GameCanvas.DOWN_PRESSED | GameCanvas.LEFT_PRESSED | GameCanvas.RIGHT_PRESSED)) != 0) {
+        if (UiInput.anyDirection(pressed)) {
             playSe(SoundEffectSystem.SE_NAV);
         }
-        if ((pressed & GameCanvas.FIRE_PRESSED) != 0) {
+        if (UiInput.confirm(pressed)) {
             playSe(SoundEffectSystem.SE_SELECT);
         }
-        if (stateBefore == STATE_TITLE && (pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+        if (stateBefore == STATE_TITLE && UiInput.cancel(pressed)) {
             playSe(SoundEffectSystem.SE_SELECT);
         }
-        if (stateBefore != STATE_TITLE && (pressed & GameCanvas.GAME_A_PRESSED) != 0) {
+        if (stateBefore != STATE_TITLE && UiInput.cancel(pressed)) {
             playSe(SoundEffectSystem.SE_BACK);
         }
     }
@@ -434,61 +445,50 @@ public final class UiController {
     }
 
     public void render(Graphics g) {
-        if (state == STATE_LOADING) {
-            loading.render(g);
-            return;
-        }
-        if (state == STATE_STARTUP_LANGUAGE) {
-            startupLanguage.render(g, images);
-            return;
-        }
-        if (state == STATE_TITLE) {
-            title.render(g, images, sprites);
-            return;
-        }
-        if (state == STATE_START_SETUP) {
-            setup.render(g, images, sprites);
-            return;
-        }
-        if (state == STATE_HELP) {
-            help.render(g, images);
-            return;
-        }
-        if (state == STATE_STORY) {
-            story.render(g, images);
-            return;
-        }
-        if (state == STATE_SPELL_PRACTICE) {
-            spellPractice.render(g, images, sprites);
-            return;
-        }
-        if (state == STATE_REPLAY) {
-            replay.render(g, images, sprites);
-            return;
-        }
-        if (state == STATE_REPLAY_RECEIVE) {
-            replayReceive.render(g, images, sprites);
-            return;
-        }
-        if (state == STATE_REPLAY_SEND) {
-            replaySend.render(g, images, sprites);
-            return;
-        }
-        if (state == STATE_RESULT) {
-            result.render(g);
-            return;
-        }
-        if (state == STATE_MUSIC_ROOM) {
-            musicRoom.render(g);
-            return;
-        }
-        if (state == STATE_OPTION) {
-            option.render(g);
-            return;
-        }
-        if (state == STATE_QUIT) {
-            title.render(g, images, sprites);
-            quit.render(g);
+        switch (state) {
+            case STATE_LOADING:
+                loading.render(g);
+                break;
+            case STATE_STARTUP_LANGUAGE:
+                startupLanguage.render(g, images);
+                break;
+            case STATE_TITLE:
+                title.render(g, images, sprites);
+                break;
+            case STATE_START_SETUP:
+                setup.render(g, images, sprites);
+                break;
+            case STATE_HELP:
+                help.render(g, images);
+                break;
+            case STATE_STORY:
+                story.render(g, images);
+                break;
+            case STATE_SPELL_PRACTICE:
+                spellPractice.render(g, images, sprites);
+                break;
+            case STATE_REPLAY:
+                replay.render(g, images, sprites);
+                break;
+            case STATE_REPLAY_RECEIVE:
+                replayReceive.render(g, images, sprites);
+                break;
+            case STATE_REPLAY_SEND:
+                replaySend.render(g, images, sprites);
+                break;
+            case STATE_RESULT:
+                result.render(g);
+                break;
+            case STATE_MUSIC_ROOM:
+                musicRoom.render(g);
+                break;
+            case STATE_OPTION:
+                option.render(g);
+                break;
+            case STATE_QUIT:
+                title.render(g, images, sprites);
+                quit.render(g);
+                break;
         }
     }
     

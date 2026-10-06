@@ -32,7 +32,7 @@ public final class ReplayRecordingController {
         return enabled && recorder.isRecording();
     }
 
-    public void startForNewRun() {
+    public void startSession(boolean bossAtStart) {
         if (!enabled) {
             recorder.stop();
             bossSnapshot = null;
@@ -40,46 +40,9 @@ public final class ReplayRecordingController {
             return;
         }
         recorder.start();
-        bossSnapshot = null;
-        stageSnapshot = null;
-    }
-
-    public void startForRetry(boolean spellPractice) {
-        if (!enabled) {
-            recorder.stop();
-            bossSnapshot = null;
-            stageSnapshot = null;
-            return;
-        }
-        recorder.start();
-        if (spellPractice) {
+        if (bossAtStart) {
             recorder.markBossStart(0);
         }
-        bossSnapshot = null;
-        stageSnapshot = null;
-    }
-
-    public void startForSpellPractice() {
-        if (!enabled) {
-            recorder.stop();
-            bossSnapshot = null;
-            stageSnapshot = null;
-            return;
-        }
-        recorder.start();
-        recorder.markBossStart(0);
-        bossSnapshot = null;
-        stageSnapshot = null;
-    }
-
-    public void startForNextStage() {
-        if (!enabled) {
-            recorder.stop();
-            bossSnapshot = null;
-            stageSnapshot = null;
-            return;
-        }
-        recorder.start();
         bossSnapshot = null;
         stageSnapshot = null;
     }

@@ -4,69 +4,32 @@
 
 ## 環境需求
 
-### 通用
-
-以下軟體為兩個平台共同需要的，請依序安裝：
-
-1. **[Zulu JDK 8](https://www.azul.com/downloads/?version=java-8-lts&package=jdk#zulu)**
-   - Linux 亦可透過套件管理器安裝：[Azul Zulu Doc](https://docs.azul.com/core/install/linux-ca-deb)
-   - 若您習慣使用其他的 OpenJDK，那也是非常好的
-
+1. **[OpenJDK 8](https://www.azul.com/downloads/?version=java-8-lts&package=jdk#zulu)**
+   - Zulu、Temurin 或其他 OpenJDK 8 發行版皆可，請將 `JAVA_HOME` 指向 JDK 8。
 2. **[Apache Ant](https://ant.apache.org/bindownload.cgi)**
-   - Windows：下載 zip 解壓後將 ANT_HOME 的 `PATH` 加入系統變數
-   - Linux：`sudo apt install ant`
+   - Windows：解壓後將 Ant 的 `bin` 加入 `PATH`。
+   - Linux：`sudo apt install ant`。
 
-3. **[proguard.jar](https://github.com/Guardsquare/proguard/releases)**
-   - 下載後，在 zip 內並找到 `lib/proguard.jar`，然後放置於專案的 `lib/` 下
+首次建置需連線至 Maven。
 
-4. **[antenna-bin-1.2.1-beta.jar](https://sourceforge.net/projects/antenna/files/antenna/Antenna%201.2.1-beta/)**
-   - 下載後放置於專案的 `lib/` 下
+Ant 會自動下載 Apache Ivy 2.5.3，再透過 Ivy 取得以下依賴：
 
-### Windows / Linux
-
-5. 以下兩者 **擇一安裝** 即可（`build.xml` 會自動偵測）：
-
-   - **[Java ME SDK 3.4](https://www.oracle.com/java/technologies/javame-sdk-downloads.html)**（僅 Windows）
-     - oracle-jmesdk-3-4-rr-win32-bin.exe
-     - 預設安裝路徑：`C:\Java_ME_platform_SDK_3.4`
-
-   - **[Sun Java Wireless Toolkit 2.5.2](https://www.oracle.com/java/technologies/java-archive-downloads-javame-downloads.html)**（Windows / Linux）
-     - Windows：sun_java_wireless_toolkit-2.5.2_01-win.exe（預設路徑：`C:\WTK2.5.2_01`）
-     - Linux：sun_java_wireless_toolkit-2.5.2_01-linuxi486.bin.sh（預設路徑：`~/WTK2.5.2`）
-       ```bash
-       chmod +x sun_java_wireless_toolkit-2.5.2_01-linuxi486.bin.sh
-       ./sun_java_wireless_toolkit-2.5.2_01-linuxi486.bin.sh
-       ```
-
-   - 若安裝在其他路徑，請修改 `build.xml` 中對應的 `wtk.home`
-
-### Linux 額外步驟
-
-   - `preverify` 為 32 位元執行檔，64 位元系統需安裝相容函式庫（以 Debian 系為例）：
-     ```bash
-     sudo dpkg --add-architecture i386
-     sudo apt update
-     sudo apt install libc6:i386 libstdc++6:i386 zlib1g:i386 \
-                      libxt6:i386 libxext6:i386 libx11-6:i386
-     ```
-
----
-
-> NOTE 1: 下載 `Java ME SDK 3.4` 和 `Sun Java Wireless Toolkit 2.5.2` 時，需要登入 Oracle 賬戶（說實話非常麻煩……如果可以在值得信賴的第三方渠道獲得『散裝』的依賴項，就可以免去安裝的煩瑣了。）。
-
-> NOTE 2: `Java ME SDK 3.0` 或許也可以替代 `3.4`，區別僅僅在於 `preverify` 使用的新舊……但，您需要自行修改 `build.xml` 中對應的 `wtk.home` 為 `3.0` 版本的路徑。
+| 依賴 | Maven 座標 |
+|------|------------|
+| CLDC 1.1 API | `org.microemu:cldcapi11:2.0.4` |
+| MIDP 2.0 API | `org.microemu:midpapi20:2.0.4` |
+| JSR-82 API | `org.microemu:microemu-jsr-82:2.0.4` |
+| ProGuard | `net.sf.proguard:proguard-base:6.0.3` |
 
 ## 建置指令
 
 | 指令 | 說明 |
 |------|------|
-| `ant` | 正常構建 |
-| `ant s` | 精簡 BGM 構建 |
-| `ant run` | 正常構建並啟動模擬器 |
-| `ant s run` | 精簡 BGM 構建並啟動模擬器 |
-| `ant compile` | 僅編譯 |
-| `ant clean` | 清理建置檔案 |
+| `ant` | 正常建置 |
+| `ant clean package` | 清除建置產物，重新建置 |
+| `ant run` | 正常建置並啟動模擬器 |
+| `ant clean` | 清理 `build/` 與 `dist/`，保留依賴快取 |
 
-建置完成後，可在 `dist/` 目錄下取得 JAR 檔。
+建置完成後，可在 `dist/` 目錄下取得 JAR 與 JAD 檔。
 
 若想使用 `run` 指令，您需要先將 `freej2me.jar` 放到專案的 `emulator` 下。

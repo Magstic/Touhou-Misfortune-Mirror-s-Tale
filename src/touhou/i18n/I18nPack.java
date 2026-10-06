@@ -1,96 +1,68 @@
 package touhou.i18n;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
-public final class I18nPack {
+import touhou.ResourceLoader;
+import touhou.ResourcePaths;
+
+final class I18nPack {
     private static byte[] pack;
-
     private static String[] keys;
     private static int[] offsets;
     private static int[] lengths;
-
     private static int[] slotToEntry;
     private static int slotMask;
 
     private I18nPack() {
     }
 
-    public static void loadForCurrentLanguage() {
-        load(I18n.getLanguageCode());
-    }
-
-    public static void load(String langCode) {
-        if (langCode == null || langCode.length() == 0) {
-            langCode = "ja";
-        }
-        String path = "/res/i18n/" + langCode + ".dat";
-        byte[] bytes = readBytesFromResource(path);
-        if (bytes == null || bytes.length < 8) {
-            clear();
-            return;
-        }
+    static void loadForCurrentLanguage() throws IOException {
+        String path = ResourcePaths.languagePack(I18n.getLanguageCode());
+        byte[] bytes = ResourceLoader.readRequiredBytes(path);
         if (!parse(bytes)) {
             clear();
+            throw new IOException("Invalid i18n pack: " + path);
         }
     }
 
-    public static byte[] readBytes(String path) {
-        if (path == null) {
+    static byte[] readBytes(String path) {
+        if (path == null || pack == null || slotToEntry == null) {
             return null;
         }
-        byte[] p = pack;
-        if (p == null) {
+        int index = findEntry(path);
+        if (index < 0) {
             return null;
         }
-
-        int idx = findEntry(path);
-        if (idx < 0) {
-            return null;
-        }
-
-        int off = offsets[idx];
-        int len = lengths[idx];
-        if (off < 0 || len < 0 || off + len > p.length) {
-            return null;
-        }
-
-        byte[] out = new byte[len];
-        System.arraycopy(p, off, out, 0, len);
+        int offset = offsets[index];
+        int length = lengths[index];
+        byte[] out = new byte[length];
+        System.arraycopy(pack, offset, out, 0, length);
         return out;
     }
 
     private static int findEntry(String key) {
-        int[] slots = slotToEntry;
-        if (slots == null) {
-            return -1;
-        }
-
-        int mask = slotMask;
-        int h = key.hashCode();
-        int pos = mix(h) & mask;
-        for (int i = 0; i < slots.length; i++) {
-            int v = slots[pos];
-            if (v == 0) {
+        int position = mix(key.hashCode()) & slotMask;
+        for (int i = 0; i < slotToEntry.length; i++) {
+            int value = slotToEntry[position];
+            if (value == 0) {
                 return -1;
             }
-            int entryIdx = v - 1;
-            String k = keys[entryIdx];
-            if (k != null && k.equals(key)) {
-                return entryIdx;
+            int entryIndex = value - 1;
+            if (keys[entryIndex].equals(key)) {
+                return entryIndex;
             }
-            pos = (pos + 1) & mask;
+            position = (position + 1) & slotMask;
         }
         return -1;
     }
 
-    private static int mix(int h) {
-        h ^= (h >>> 16);
-        h *= 0x7feb352d;
-        h ^= (h >>> 15);
-        h *= 0x846ca68b;
-        h ^= (h >>> 16);
-        return h;
+    private static int mix(int hash) {
+        hash ^= hash >>> 16;
+        hash *= 0x7feb352d;
+        hash ^= hash >>> 15;
+        hash *= 0x846ca68b;
+        return hash ^ (hash >>> 16);
     }
 
     private static void clear() {
@@ -103,121 +75,101 @@ public final class I18nPack {
     }
 
     private static boolean parse(byte[] bytes) {
-        int p = 0;
-        if (bytes[p++] != 'I' || bytes[p++] != '1' || bytes[p++] != '8' || bytes[p++] != 'N') {
+        if (bytes == null || bytes.length < 8) {
             return false;
         }
-        int ver = bytes[p++] & 0xFF;
-        if (ver != 1) {
+        int position = 0;
+        if (bytes[position++] != 'I' || bytes[position++] != '1' || bytes[position++] != '8' || bytes[position++] != 'N') {
             return false;
         }
-        // reserved
-        p++;
-        int count = ((bytes[p] & 0xFF) << 8) | (bytes[p + 1] & 0xFF);
-        p += 2;
+        if ((bytes[position++] & 0xFF) != 1 || bytes[position++] != 0) {
+            return false;
+        }
+        int count = readU16(bytes, position);
+        position += 2;
         if (count <= 0) {
             return false;
         }
 
-        String[] k = new String[count];
-        int[] off = new int[count];
-        int[] len = new int[count];
-
+        String[] parsedKeys = new String[count];
+        int[] parsedOffsets = new int[count];
+        int[] parsedLengths = new int[count];
+        String expectedPrefix = "/i18n/" + I18n.getLanguageCode() + "/";
+        String previousKey = null;
         for (int i = 0; i < count; i++) {
-            if (p + 2 > bytes.length) {
+            if (position + 2 > bytes.length) {
                 return false;
             }
-            int keyLen = ((bytes[p] & 0xFF) << 8) | (bytes[p + 1] & 0xFF);
-            p += 2;
-            if (keyLen <= 0 || p + keyLen > bytes.length) {
+            int keyLength = readU16(bytes, position);
+            position += 2;
+            if (keyLength <= 0 || position + keyLength + 8 > bytes.length) {
                 return false;
             }
-
-            String key;
             try {
-                key = new String(bytes, p, keyLen, "UTF-8");
-            } catch (Throwable t) {
-                key = new String(bytes, p, keyLen);
-            }
-            p += keyLen;
-
-            if (p + 8 > bytes.length) {
+                parsedKeys[i] = new String(bytes, position, keyLength, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
                 return false;
             }
-            int o = ((bytes[p] & 0xFF) << 24) | ((bytes[p + 1] & 0xFF) << 16) | ((bytes[p + 2] & 0xFF) << 8) | (bytes[p + 3] & 0xFF);
-            p += 4;
-            int l = ((bytes[p] & 0xFF) << 24) | ((bytes[p + 1] & 0xFF) << 16) | ((bytes[p + 2] & 0xFF) << 8) | (bytes[p + 3] & 0xFF);
-            p += 4;
-
-            if (o < 0 || l < 0 || o + l > bytes.length) {
+            if (!parsedKeys[i].startsWith(expectedPrefix) || parsedKeys[i].length() == expectedPrefix.length()
+                    || (previousKey != null && previousKey.compareTo(parsedKeys[i]) >= 0)) {
                 return false;
             }
-
-            k[i] = key;
-            off[i] = o;
-            len[i] = l;
+            previousKey = parsedKeys[i];
+            position += keyLength;
+            int offset = readI32(bytes, position);
+            position += 4;
+            int length = readI32(bytes, position);
+            position += 4;
+            if (offset < 0 || length < 0 || offset > bytes.length - length) {
+                return false;
+            }
+            parsedOffsets[i] = offset;
+            parsedLengths[i] = length;
         }
 
-        int cap = 1;
-        while (cap < (count * 2)) {
-            cap <<= 1;
-        }
-        if (cap < 16) {
-            cap = 16;
-        }
-        int[] slots = new int[cap];
-        int mask = cap - 1;
+        int dataPosition = position;
         for (int i = 0; i < count; i++) {
-            String key = k[i];
-            int pos = mix(key.hashCode()) & mask;
-            while (true) {
-                if (slots[pos] == 0) {
-                    slots[pos] = i + 1;
-                    break;
-                }
-                pos = (pos + 1) & mask;
+            if (parsedOffsets[i] != dataPosition) {
+                return false;
             }
+            dataPosition += parsedLengths[i];
+        }
+        if (dataPosition != bytes.length) {
+            return false;
+        }
+
+        int capacity = 16;
+        while (capacity < count * 2) {
+            capacity <<= 1;
+        }
+        int[] slots = new int[capacity];
+        int mask = capacity - 1;
+        for (int i = 0; i < count; i++) {
+            int slot = mix(parsedKeys[i].hashCode()) & mask;
+            while (slots[slot] != 0) {
+                if (parsedKeys[slots[slot] - 1].equals(parsedKeys[i])) {
+                    return false;
+                }
+                slot = (slot + 1) & mask;
+            }
+            slots[slot] = i + 1;
         }
 
         pack = bytes;
-        keys = k;
-        offsets = off;
-        lengths = len;
+        keys = parsedKeys;
+        offsets = parsedOffsets;
+        lengths = parsedLengths;
         slotToEntry = slots;
         slotMask = mask;
         return true;
     }
 
-    private static byte[] readBytesFromResource(String path) {
-        InputStream is = null;
-        try {
-            is = I18nPack.class.getResourceAsStream(path);
-            if (is == null && path.startsWith("/res/")) {
-                is = I18nPack.class.getResourceAsStream(path.substring(4));
-            }
-            if (is == null) {
-                return null;
-            }
+    private static int readU16(byte[] bytes, int position) {
+        return ((bytes[position] & 0xFF) << 8) | (bytes[position + 1] & 0xFF);
+    }
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            byte[] buf = new byte[512];
-            while (true) {
-                int r = is.read(buf);
-                if (r <= 0) {
-                    break;
-                }
-                baos.write(buf, 0, r);
-            }
-            return baos.toByteArray();
-        } catch (Throwable t) {
-            return null;
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (Throwable ignore) {
-                }
-            }
-        }
+    private static int readI32(byte[] bytes, int position) {
+        return ((bytes[position] & 0xFF) << 24) | ((bytes[position + 1] & 0xFF) << 16)
+                | ((bytes[position + 2] & 0xFF) << 8) | (bytes[position + 3] & 0xFF);
     }
 }

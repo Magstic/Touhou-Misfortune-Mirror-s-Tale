@@ -20,31 +20,22 @@ public final class UnlockFlags {
         if (loaded) {
             return;
         }
+        byte[] data = SpStore.read(OFFSET_UFLAGS, LEN_UFLAGS);
+        System.arraycopy(data, 0, flags, 0, LEN_UFLAGS);
         loaded = true;
-
-        try {
-            byte[] b = SpStore.read(OFFSET_UFLAGS, LEN_UFLAGS);
-            if (b == null) {
-                return;
-            }
-            int n = b.length;
-            if (n > LEN_UFLAGS) {
-                n = LEN_UFLAGS;
-            }
-            for (int i = 0; i < n; i++) {
-                flags[i] = b[i];
-            }
-        } catch (Throwable t) {
-            // Ignore storage errors.
-        }
     }
 
-    private static void save() {
-        byte[] b = new byte[LEN_UFLAGS];
-        for (int i = 0; i < LEN_UFLAGS; i++) {
-            b[i] = flags[i];
+    private static void setFlag(int index, boolean value) {
+        ensureLoaded();
+        byte next = (byte) (value ? 1 : 0);
+        if (flags[index] == next) {
+            return;
         }
-        SpStore.write(OFFSET_UFLAGS, b);
+        byte[] data = new byte[LEN_UFLAGS];
+        System.arraycopy(flags, 0, data, 0, LEN_UFLAGS);
+        data[index] = next;
+        SpStore.write(OFFSET_UFLAGS, data);
+        flags[index] = next;
     }
 
     public static boolean isExtraUnlocked() {
@@ -53,13 +44,7 @@ public final class UnlockFlags {
     }
 
     public static void setExtraUnlocked(boolean v) {
-        ensureLoaded();
-        byte nv = (byte) (v ? 1 : 0);
-        if (flags[IDX_EXTRA_UNLOCKED] == nv) {
-            return;
-        }
-        flags[IDX_EXTRA_UNLOCKED] = nv;
-        save();
+        setFlag(IDX_EXTRA_UNLOCKED, v);
     }
 
     public static boolean isAliceUnlocked() {
@@ -68,46 +53,20 @@ public final class UnlockFlags {
             return true;
         }
         if (qualifiesAliceFromSpellCaptures()) {
-            flags[IDX_ALICE_UNLOCKED] = 1;
-            save();
+            setFlag(IDX_ALICE_UNLOCKED, true);
             return true;
         }
         return false;
     }
 
     public static void setAliceUnlocked(boolean v) {
-        ensureLoaded();
-        byte nv = (byte) (v ? 1 : 0);
-        if (flags[IDX_ALICE_UNLOCKED] == nv) {
-            return;
-        }
-        flags[IDX_ALICE_UNLOCKED] = nv;
-        save();
+        setFlag(IDX_ALICE_UNLOCKED, v);
     }
 
     private static boolean qualifiesAliceFromSpellCaptures() {
         // Unlock Alice when unique captured SpellCards >= 41.
         // Count is based on sc_bonuscnt (captured/bonus), summed across all units.
-        try {
-            GameProgress.INSTANCE.loadFromSp();
-            int[][] bonus = GameProgress.INSTANCE.scBonusCnt;
-            int unique = 0;
-            for (int i = 0; i < GameProgress.SPELL_COUNT; i++) {
-                int sum = 0;
-                for (int u = 0; u < GameProgress.UNIT_COUNT; u++) {
-                    sum += bonus[u][i];
-                }
-                if (sum != 0) {
-                    unique++;
-                    if (unique >= 41) {
-                        return true;
-                    }
-                }
-            }
-            return unique >= 41;
-        } catch (Throwable t) {
-            return false;
-        }
+        return GameProgress.INSTANCE.countCapturedSpells() >= 41;
     }
 
     private static boolean qualifiesExtraOrNextExtra(int clearedStage, int gamemode, int startLevel, int remainingContinues, int runStartStage, boolean startPracBoss) {
@@ -173,34 +132,17 @@ public final class UnlockFlags {
     }
 
     public static void setReplayRmsWarmed(boolean v) {
-        ensureLoaded();
-        byte nv = (byte) (v ? 1 : 0);
-        if (flags[IDX_REPLAY_RMS_WARMED] == nv) {
-            return;
-        }
-        flags[IDX_REPLAY_RMS_WARMED] = nv;
-        save();
+        setFlag(IDX_REPLAY_RMS_WARMED, v);
     }
 
     public static void tryUnlockSpellPracticeOnAnyEnding() {
         // Original behavior: unlock SpellPractice after seeing any ending.
-        ensureLoaded();
-        if (flags[IDX_SPELL_PRACTICE_UNLOCKED] != 0) {
-            return;
-        }
-        flags[IDX_SPELL_PRACTICE_UNLOCKED] = 1;
-        save();
+        setFlag(IDX_SPELL_PRACTICE_UNLOCKED, true);
     }
 
     public static void tryUnlockFlag1FromStageOp(int gamemode) {
-        // Original behavior: do not unlock in spell practice.
-        if (gamemode == 3) {
-            return;
-        }
-        ensureLoaded();
-        if (flags[IDX_FLAG1] == 0) {
-            flags[IDX_FLAG1] = 1;
-            save();
+        if (gamemode != 3) {
+            setFlag(IDX_FLAG1, true);
         }
     }
 }

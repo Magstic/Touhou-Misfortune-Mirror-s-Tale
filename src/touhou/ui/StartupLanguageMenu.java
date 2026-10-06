@@ -1,8 +1,6 @@
 package touhou.ui;
 
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.Image;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.GameOptions;
 import touhou.ImageBank;
@@ -31,8 +29,6 @@ public final class StartupLanguageMenu {
     private int cursor;
     private int count;
 
-    private Image menu;
-
     public StartupLanguageMenu() {
     }
 
@@ -40,12 +36,7 @@ public final class StartupLanguageMenu {
         count = 0;
 
         int[] opt = GameOptions.load();
-        if (opt == null) {
-            opt = GameOptions.defaults();
-        }
-        if (opt.length > GameOptions.IDX_LANGUAGE) {
-            cursor = opt[GameOptions.IDX_LANGUAGE];
-        }
+        cursor = opt[GameOptions.IDX_LANGUAGE];
         if (cursor < 0 || cursor >= 3) {
             cursor = 0;
         }
@@ -56,11 +47,11 @@ public final class StartupLanguageMenu {
             count++;
         }
 
-        if ((pressed & GameCanvas.DOWN_PRESSED) != 0) {
-            cursor = (cursor + 1) % 3;
-        } else if ((pressed & GameCanvas.UP_PRESSED) != 0) {
-            cursor = (cursor + 2) % 3;
-        } else if ((pressed & (GameCanvas.FIRE_PRESSED | GameCanvas.GAME_A_PRESSED | GameCanvas.GAME_B_PRESSED)) != 0) {
+        if (UiInput.down(pressed)) {
+            cursor = MenuCursor.move(cursor, 1, 3);
+        } else if (UiInput.up(pressed)) {
+            cursor = MenuCursor.move(cursor, -1, 3);
+        } else if (UiInput.dismiss(pressed) || UiInput.secondary(pressed)) {
             commit();
             return new Result(Result.KIND_DONE);
         }
@@ -70,12 +61,7 @@ public final class StartupLanguageMenu {
 
     private void commit() {
         int[] opt = GameOptions.load();
-        if (opt == null) {
-            opt = GameOptions.defaults();
-        }
-        if (opt.length > GameOptions.IDX_LANGUAGE) {
-            opt[GameOptions.IDX_LANGUAGE] = cursor;
-        }
+        opt[GameOptions.IDX_LANGUAGE] = cursor;
         GameOptions.save(opt);
 
         I18nBootstrap.initFromOptions(opt);
@@ -86,10 +72,10 @@ public final class StartupLanguageMenu {
             return;
         }
 
-        UiDraw.drawRegion(g, imgs.get(0), 0, 0, 0, 0, 240, 240);
+        imgs.drawRegion(g, 0, 0, 0, 240, 240, 0, 0, 0, Graphics.TOP | Graphics.LEFT);
 
         int wob = 4 - (count >> 1);
-        Image ui = imgs.get(1);
+        javax.microedition.lcdui.Image ui = imgs.get(1);
         if (ui != null) {
             UiDraw.drawRegion(g, ui, 30 - wob + 0, 33 - wob, 0, 3, 36, 36);
             UiDraw.drawRegion(g, ui, 30 + wob + 36, 33 + wob, 36, 3, 36, 36);
@@ -108,17 +94,9 @@ public final class StartupLanguageMenu {
             }
         }
 
-        Image charImg = imgs.get(2);
-        if (charImg != null) {
-            g.drawImage(charImg, 5, 93, Graphics.TOP | Graphics.LEFT);
-        }
+        imgs.draw(g, 2, 5, 93, Graphics.TOP | Graphics.LEFT);
 
         UiDraw.fillRectAlpha(g, 0, 0, 240, 240, TINT_RGB, TINT_ALPHA);
-
-        ensureMenuLoaded();
-        if (menu == null) {
-            return;
-        }
 
         int menuAreaH = TITLE_MENU_STEP * TITLE_MENU_ROWS;
         int listH = ITEM_H + (ITEM_STEP_Y * 2);
@@ -136,19 +114,7 @@ public final class StartupLanguageMenu {
             int srcX = (i == cursor) ? MENU_SRC_X_ON : MENU_SRC_X_OFF;
             int srcY = i * ITEM_STRIDE;
 
-            UiDraw.drawRegion(g, menu, x, y, srcX, srcY, ITEM_W, ITEM_H);
-        }
-    }
-
-    private void ensureMenuLoaded() {
-        if (menu != null) {
-            return;
-        }
-        try {
-            // Keep it as a direct resource load to avoid expanding ImageBank capacity.
-            menu = Image.createImage("/res/sp/095.gif");
-        } catch (Throwable t) {
-            menu = null;
+            imgs.drawRegion(g, 95, srcX, srcY, ITEM_W, ITEM_H, 0, x, y, Graphics.TOP | Graphics.LEFT);
         }
     }
 

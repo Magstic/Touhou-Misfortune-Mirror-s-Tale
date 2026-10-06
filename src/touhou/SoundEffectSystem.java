@@ -34,7 +34,7 @@ public final class SoundEffectSystem {
     private final InputStream[] cacheStreams = new InputStream[SE_COUNT];
     private boolean cacheEnabled = true;
 
-    // Fallback shared player (used when caching is disabled on incompatible devices).
+    // Shared-player mode used after per-effect player caching fails.
     private Player sharedPlayer;
     private InputStream sharedStream;
 
@@ -93,7 +93,7 @@ public final class SoundEffectSystem {
             if (startCached(seId)) {
                 return;
             }
-            // Caching failed on this device; fall back to shared player.
+            // Switch permanently to the lower-memory shared-player mode.
             cacheEnabled = false;
             closeAll();
         }
@@ -146,7 +146,7 @@ public final class SoundEffectSystem {
 
         InputStream is = null;
         try {
-            is = SoundEffectSystem.class.getResourceAsStream(path);
+            is = ResourceLoader.openOptional(path);
             if (is == null) {
                 return null;
             }
@@ -192,7 +192,7 @@ public final class SoundEffectSystem {
 
         InputStream is = null;
         try {
-            is = SoundEffectSystem.class.getResourceAsStream(path);
+            is = ResourceLoader.openOptional(path);
             if (is == null) {
                 return;
             }
@@ -277,20 +277,20 @@ public final class SoundEffectSystem {
 
     private static String resolvePath(int seId) {
         switch (seId) {
-            case SE_NAV:         return "/res/se/nav.wav";
-            case SE_SELECT:      return "/res/se/select.wav";
-            case SE_BACK:        return "/res/se/back.wav";
-            case SE_CD:          return "/res/se/cd.wav";
-            case SE_CRASH:       return "/res/se/crash.wav";
-            case SE_GRAZE:       return "/res/se/graze.wav";
-            case SE_PAUSE:       return "/res/se/pause.wav";
-            case SE_CRASH2:      return "/res/se/crash2.wav";
-            case SE_POWER:       return "/res/se/power.wav";
-            case SE_LIFE:        return "/res/se/life.wav";
-            case SE_SHOT:        return "/res/se/shot.wav";
-            case SE_ALICE_BOMB:  return "/res/se/alice.wav";
-            case SE_REIMU_BOMB:  return "/res/se/reimu.wav";
-            case SE_MARISA_BOMB: return "/res/se/marisa.wav";
+            case SE_NAV:         return "/se/nav.wav";
+            case SE_SELECT:      return "/se/select.wav";
+            case SE_BACK:        return "/se/back.wav";
+            case SE_CD:          return "/se/cd.wav";
+            case SE_CRASH:       return "/se/crash.wav";
+            case SE_GRAZE:       return "/se/graze.wav";
+            case SE_PAUSE:       return "/se/pause.wav";
+            case SE_CRASH2:      return "/se/crash2.wav";
+            case SE_POWER:       return "/se/power.wav";
+            case SE_LIFE:        return "/se/life.wav";
+            case SE_SHOT:        return "/se/shot.wav";
+            case SE_ALICE_BOMB:  return "/se/alice.wav";
+            case SE_REIMU_BOMB:  return "/se/reimu.wav";
+            case SE_MARISA_BOMB: return "/se/marisa.wav";
             default:             return null;
         }
     }
@@ -307,22 +307,8 @@ public final class SoundEffectSystem {
             return false;
         }
 
-        InputStream is = null;
-        try {
-            is = SoundEffectSystem.class.getResourceAsStream(path);
-            resourceExists[seId] = (is != null);
-            return resourceExists[seId];
-        } catch (Throwable t) {
-            resourceExists[seId] = false;
-            return false;
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (Throwable ignore) {
-                }
-            }
-        }
+        resourceExists[seId] = ResourceLoader.exists(path);
+        return resourceExists[seId];
     }
 
     private static Player createWavPlayer(InputStream is) {

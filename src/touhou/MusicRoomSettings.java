@@ -12,38 +12,30 @@ public final class MusicRoomSettings {
     }
 
     public static int loadVolume(int defaultVol) {
-        int def = clamp100(defaultVol);
-        try {
-            byte[] b = SpStore.read(OFFSET_MR_SETTINGS, LEN_MR_SETTINGS);
-            if (b == null || b.length < 1) {
-                return def;
+        byte[] data = SpStore.read(OFFSET_MR_SETTINGS, LEN_MR_SETTINGS);
+        boolean empty = true;
+        for (int i = 0; i < data.length; i++) {
+            if (data[i] != 0) {
+                empty = false;
             }
-            if (b.length < LEN_MR_SETTINGS) {
-                return def;
-            }
-            if (((b[1] & 0xFF) != MAGIC0) || ((b[2] & 0xFF) != MAGIC1) || ((b[3] & 0xFF) != VERSION)) {
-                return def;
-            }
-            int v = b[0] & 0xFF;
-            if (v > 100) {
-                return def;
-            }
-            return v;
-        } catch (Throwable t) {
-            return def;
         }
+        if (empty) {
+            return clamp100(defaultVol);
+        }
+        if ((data[1] & 0xFF) != MAGIC0 || (data[2] & 0xFF) != MAGIC1
+                || (data[3] & 0xFF) != VERSION || (data[0] & 0xFF) > 100) {
+            throw new StorageException("Invalid stored music room settings");
+        }
+        return data[0] & 0xFF;
     }
 
     public static void saveVolume(int volume) {
-        try {
-            byte[] b = new byte[LEN_MR_SETTINGS];
-            b[0] = (byte) (clamp100(volume) & 0xFF);
-            b[1] = (byte) MAGIC0;
-            b[2] = (byte) MAGIC1;
-            b[3] = (byte) VERSION;
-            SpStore.write(OFFSET_MR_SETTINGS, b);
-        } catch (Throwable t) {
-        }
+        byte[] data = new byte[LEN_MR_SETTINGS];
+        data[0] = (byte) clamp100(volume);
+        data[1] = (byte) MAGIC0;
+        data[2] = (byte) MAGIC1;
+        data[3] = (byte) VERSION;
+        SpStore.write(OFFSET_MR_SETTINGS, data);
     }
 
     private static int clamp100(int v) {

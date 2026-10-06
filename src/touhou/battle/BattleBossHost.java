@@ -60,10 +60,6 @@ final class BattleBossHost implements BossController.Host {
         core.bossHostSetBossF(v);
     }
 
-    public int getBbaria() {
-        return core.bossHostGetBbaria();
-    }
-
     public void setBbaria(int v) {
         core.bossHostSetBbaria(v);
     }
@@ -117,7 +113,7 @@ final class BattleBossHost implements BossController.Host {
     }
 
     public void playSound(int id, boolean loop) {
-        // Legacy sound routing: loop -> BGM, else -> SE.
+        // Script sound routing: loop -> BGM, else -> SE.
         if (loop) {
             if (core.battleFlowIsStageClearPanelActive()) {
                 return;
@@ -152,8 +148,8 @@ final class BattleBossHost implements BossController.Host {
         stageRuntime.stageKc(effectId, xFixed, yFixed);
     }
 
-    public void spawnEnemyBullet(int bulletId, int moveType, int angleDeg, int speedParam, int xFixed, int yFixed) {
-        core.bossHostSpawnEnemyBullet(bulletId, moveType, angleDeg, speedParam, xFixed, yFixed);
+    public int spawnEnemyBullet(int bulletId, int moveType, int angleDeg, int speedParam, int xFixed, int yFixed) {
+        return core.bossHostSpawnEnemyBullet(bulletId, moveType, angleDeg, speedParam, xFixed, yFixed);
     }
 
     public void convertEnemyBulletsTo81Rain(int bossYFixed, int gc) {

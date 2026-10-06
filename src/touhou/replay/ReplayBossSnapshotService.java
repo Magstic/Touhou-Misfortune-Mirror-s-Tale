@@ -1,6 +1,5 @@
 package touhou.replay;
 
-import touhou.CcTable;
 import touhou.Player;
 import touhou.ScoreSystem;
 import touhou.battle.BattleContinueSystem;
@@ -35,14 +34,13 @@ public final class ReplayBossSnapshotService {
     }
 
     public static ReplayBossSnapshotCodec.Decoded loadAndApplyFromSlot(int slot, ReplayRng random, BattleContinueSystem continueSystem,
-            BattleHudData hud, ScoreSystem scoreSystem, Player player, CcTable cc, int currentChara, int currentType) {
+            BattleHudData hud, ScoreSystem scoreSystem, Player player) {
 
         if (player == null) {
             return null;
         }
 
-        byte[] snap = ReplayBossSnapshotStore.loadSlot(slot);
-        ReplayBossSnapshotCodec.PlayerBox pb = new ReplayBossSnapshotCodec.PlayerBox(player);
-        return ReplayBossSnapshotCodec.decodeAndApply(snap, random, continueSystem, hud, scoreSystem, pb, cc, currentChara, currentType);
+        byte[] snap = ReplaySlotStore.loadBossSnapshot(slot);
+        return ReplayBossSnapshotCodec.decodeAndApply(snap, random, continueSystem, hud, scoreSystem, player);
     }
 }

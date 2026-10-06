@@ -8,7 +8,6 @@ import touhou.ui.EndingScreen;
 import touhou.ui.StageClearResultPanel;
 import touhou.ui.StaffRollScreen;
 import touhou.ui.UiController;
-import touhou.ui.UiDraw;
 
 public final class SceneController {
 
@@ -101,11 +100,6 @@ public final class SceneController {
             UiController ui = core.sceneUi();
             if (ui != null) {
                 ui.render(g);
-            }
-            String err = core.sceneResourceError();
-            if (err != null) {
-                int y = 2 + UiDraw.fontBaseline(null);
-                UiDraw.drawStringPlain(g, null, err, 2, y, 0, 0xFFFFFF);
             }
             return;
         }

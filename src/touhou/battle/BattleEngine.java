@@ -4,7 +4,7 @@ import touhou.BulletSystem;
 import touhou.CcTable;
 import touhou.DropItemSystem;
 import touhou.EnemyBulletSystem;
-import touhou.EnemySystem;
+import touhou.EnemyTargetRegistry;
 import touhou.Fixed;
 import touhou.Player;
 import touhou.ScoreSystem;
@@ -43,7 +43,7 @@ public final class BattleEngine {
         // Enemy death notification (lets the stage runtime award drops/advance script).
         void onEnemyKilled(int enemyIndex);
 
-        // Legacy sound routing entry. loop=true is used for script-driven BGM requests.
+        // Script sound routing entry. loop=true is used for BGM requests.
         void playSound(int soundId, boolean loop);
 
         // Per-frame bomb callback while bomb is active.
@@ -137,10 +137,6 @@ public final class BattleEngine {
         playerDeadFlag = false;
     }
 
-    public boolean isPlayerDeadFlag() {
-        return playerDeadFlag;
-    }
-
     // Mirrors DoJa : yc() used by continue.
     public void scatterCollectingItemsForContinue(DropItemSystem dropItems) {
         if (dropItems == null) {
@@ -201,7 +197,7 @@ public final class BattleEngine {
 
     // Mirrors GameCanvas.update: player tick (movement + options + shooting).
     public void tickPlayer(Player player, int keys, int playX, int playY, int playW, int playH, int power, boolean bossBarrierActive,
-            boolean shooting, int sBossf, int bombCnt, int currentChara, EnemySystem enemies, int fi, int sDeadcnt) {
+            boolean shooting, int sBossf, int bombCnt, int currentChara, EnemyTargetRegistry enemies, int fi, int sDeadcnt) {
         // Handles player movement, option devices, and normal shot emission.
         if (player == null) {
             return;
@@ -313,7 +309,7 @@ public final class BattleEngine {
         return bombActivateResult;
     }
 
-    // Mirrors GameCanvas.stageLc: effect list update and chained effect spawns.
+    // Update effect entries and chained effect spawns.
     public void tickStageEffects(int[][] effectlist, int[][] effectTable) {
         // Updates effect entries and spawns chained stage effects (id-dependent patterns).
         if (effectlist == null || effectTable == null) {
@@ -513,7 +509,7 @@ public final class BattleEngine {
         int ew = enemylist[enemyIndex][17] + enemylist[enemyIndex][18];
         int eh = enemylist[enemyIndex][19] + enemylist[enemyIndex][20];
 
-        int max = bullets.getMax();
+        int max = bullets.capacity();
         for (int i = 0; i < max; i++) {
             if (enemylist[enemyIndex][0] == 0) {
                 return;
@@ -616,7 +612,7 @@ public final class BattleEngine {
                 }
             }
 
-            if (!rectOverlapFixed(el, et, ew, eh, bl, bt, bw, bh)) {
+            if (!BattleMath.rectsOverlapFixed(el, et, ew, eh, bl, bt, bw, bh)) {
                 continue;
             }
 
@@ -856,7 +852,7 @@ public final class BattleEngine {
             int ew = enemylist[i][17] + enemylist[i][18];
             int eh = enemylist[i][19] + enemylist[i][20];
 
-            if (rectOverlapFixed(el, et, ew, eh, playerLeft, playerTop, playerSize, playerSize)) {
+            if (BattleMath.rectsOverlapFixed(el, et, ew, eh, playerLeft, playerTop, playerSize, playerSize)) {
                 return true;
             }
         }
@@ -864,23 +860,4 @@ public final class BattleEngine {
         return false;
     }
 
-    private static boolean rectOverlapFixed(int ax, int ay, int aw, int ah, int bx, int by, int bw, int bh) {
-        // Fixed-point AABB overlap.
-        if (aw <= 0 || ah <= 0 || bw <= 0 || bh <= 0) {
-            return false;
-        }
-        if (ax >= bx + bw) {
-            return false;
-        }
-        if (bx >= ax + aw) {
-            return false;
-        }
-        if (ay >= by + bh) {
-            return false;
-        }
-        if (by >= ay + ah) {
-            return false;
-        }
-        return true;
-    }
 }
