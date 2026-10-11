@@ -1,24 +1,11 @@
 package touhou;
 
 public final class ResourcePaths {
-    public static final String CC_TABLE = "/cc.dat";
+    public static final String SPRITE_CATALOG = "/cc.dat";
     public static final String STAGE_DATA = "/stage.dat";
     public static final String BGM_PACK = "/snd/bgm.dat";
 
     private ResourcePaths() {
-    }
-
-    public static String sprite(int imageIndex) {
-        if (imageIndex < 0 || imageIndex > 999) {
-            throw new IllegalArgumentException("imageIndex");
-        }
-        if (imageIndex < 10) {
-            return "/sp/00" + imageIndex + ".gif";
-        }
-        if (imageIndex < 100) {
-            return "/sp/0" + imageIndex + ".gif";
-        }
-        return "/sp/" + imageIndex + ".gif";
     }
 
     public static String languagePack(String languageCode) {

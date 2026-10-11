@@ -4,7 +4,9 @@ import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Font;
 
-import touhou.CcTable;
+import touhou.SpriteCatalog;
+import touhou.SpriteRenderer;
+import touhou.SpriteSheetCatalog;
 import touhou.Debug;
 import touhou.GameCore;
 import touhou.ImageBank;
@@ -56,9 +58,6 @@ public final class BattleRenderer {
             "90","91","92","93","94","95","96","97","98","99"
     };
 
-    // Boss spell cut-in (screen overlay) timing.
-    private static final int BOSS_SPELL_CUTIN_PHASE_FADE_OUT = BattleRenderRules.CUT_IN_PHASE_FADE_OUT;
-
     // Boss display names used by the boss HUD.
     private static final String[] BOSS_NAMES = new String[] { "Sunny Milk", "Luna Child", "Star Sapphire", "Sunny Luna Star", "Mystia Lorelei", "Chen", "Keine Kamishirasawa", "Sakuya Izayoi", "Marisa Vision", "Alice Vision" };
 
@@ -92,9 +91,7 @@ public final class BattleRenderer {
     private final int[] bgRanks3 = new int[3];
     private final int[] bgKeys24 = new int[24];
     private final int[] bgRanks24 = new int[24];
-    private final int[] dialoguePortrait = new int[8];
-    private final int[] clippedSourceRegion = new int[6];
-    private final int[] clippedPlayfieldRegion = new int[6];
+    private final int[] dialoguePortrait = new int[4];
 
     /**
      * Entry point for battle rendering.
@@ -113,7 +110,7 @@ public final class BattleRenderer {
                 renderBattleHudText(a, g);
                 renderBattleFrame(g, imgs);
             }
-            panel.render(g, a.bulletSprites());
+            panel.render(g, a.sprites());
             return;
         }
 
@@ -179,7 +176,7 @@ public final class BattleRenderer {
         Player player = a.player();
         if (player != null) {
             g.setClip(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
-            player.render(g, a.bulletSprites());
+            player.render(g, a.sprites(), a.bullets().isPlayerShotAlphaEnabled());
             g.setClip(0, 0, LOGICAL_W, LOGICAL_H);
         }
 
@@ -233,14 +230,14 @@ public final class BattleRenderer {
 
         renderBattleDebugText(a, g);
         if (a.spellPracticeEndActive()) {
-            a.spellPracticeEndScreen().render(g, a.bulletSprites());
+            a.spellPracticeEndScreen().render(g, a.sprites());
         }
     }
 
     /**
      * Renders enemies and boss sprites.
      *
-     * Uses {@link CcTable} sprite definitions (cc indices) and stage/boss work arrays
+     * Uses {@link SpriteCatalog} sprite definitions (cc indices) and stage/boss work arrays
      * to select the correct animation frames.
      */
     private void stageHb(final GameCore.BattleRenderAccess a, final Graphics g) {
@@ -256,7 +253,7 @@ public final class BattleRenderer {
             int y = BattleRenderRules.fixedToScreen(a.originY(), enemylist[i][6]);
             int auraSprite = a.enemyAuraSpriteId(i);
             if (auraSprite != BattleEnemyVisuals.NO_SPRITE) {
-                drawCcIconAlphaSafe(a, g, auraSprite, x, y, 127);
+                drawSpriteAlpha(a, g, auraSprite, x, y, 127);
             }
             int spriteId = a.enemySpriteId(i);
             if (spriteId == BattleEnemyVisuals.NO_SPRITE) {
@@ -265,10 +262,10 @@ public final class BattleRenderer {
             int type = enemylist[i][1];
             if ((type == 17 || type == 19) && !a.disableBossBombShieldCheat()
                     && a.bossVisualShieldActive() && a.bombCnt() > 0) {
-                drawCcIconAlphaSafe(a, g, spriteId, x, y,
+                drawSpriteAlpha(a, g, spriteId, x, y,
                         BattleEnemyVisuals.bossShieldAlpha(a.bombCnt()));
             } else {
-                drawCcIconSafe(a, g, spriteId, x, y);
+                drawSprite(a, g, spriteId, x, y);
             }
         }
     }
@@ -307,22 +304,11 @@ public final class BattleRenderer {
         try {
             g.setClip(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
 
-            int imgIndex = BattleRenderRules.bombOverlayImage(a.currentChara());
-            if (imgIndex >= 12 && imgIndex <= 14 && d0 < 25) {
-                Image overlay;
-                if (a.bombOverlayAlphaEnabled()) {
-                    overlay = imgs.getAlphaImage(imgIndex, 128);
-                    if (overlay == null) {
-                        overlay = imgs.get(imgIndex);
-                    }
-                } else {
-                    overlay = imgs.get(imgIndex);
-                }
-                if (overlay != null) {
-                    int x = BattleRenderRules.bombOverlayX(a.currentChara(), d0);
-                    int y = BattleRenderRules.bombOverlayY(d0);
-                    g.drawImage(overlay, x, y, Graphics.TOP | Graphics.LEFT);
-                }
+            int sprite = BattleRenderRules.bombPortraitSprite(a.currentChara());
+            if (sprite >= 0 && d0 < 25) {
+                int x = BattleRenderRules.bombOverlayX(a.currentChara(), d0);
+                int y = BattleRenderRules.bombOverlayY(d0);
+                a.sprites().drawAlpha(g, sprite, x, y, a.bombOverlayAlphaEnabled() ? 128 : 255);
             }
 
             if (a.currentChara() == 0) {
@@ -454,7 +440,7 @@ public final class BattleRenderer {
         int talkCnt = a.dialogueCounter();
         int portraitType = a.dialoguePortraitType();
 
-        int colorMain = renderDialoguePortrait(g, imgs, portraitType, talkCnt);
+        int colorMain = renderDialoguePortrait(g, a, portraitType, talkCnt);
 
         UiDraw.fillRectAlpha(g, PLAY_X + 10, PLAY_Y + 183, 174, 38, 0x000000, 128);
 
@@ -485,19 +471,18 @@ public final class BattleRenderer {
         }
     }
 
-    private int renderDialoguePortrait(Graphics g, ImageBank imgs, int portraitType, int talkCounter) {
-        if (!BattleRenderRules.dialoguePortrait(portraitType, talkCounter, dialoguePortrait)) {
-            return 0xFFFFFF;
+    private int renderDialoguePortrait(Graphics g, GameCore.BattleRenderAccess a, int portraitType, int talkCounter) {
+        if (!BattleRenderRules.dialoguePortrait(a.cc(), portraitType, talkCounter, dialoguePortrait)) return 0xFFFFFF;
+        int cx = g.getClipX(), cy = g.getClipY(), cw = g.getClipWidth(), ch = g.getClipHeight();
+        try {
+            g.clipRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
+            a.sprites().draw(g, dialoguePortrait[0], dialoguePortrait[1], dialoguePortrait[2]);
+            if (portraitType == 6) a.sprites().draw(g, SpriteSheetCatalog.STAR_DIALOGUE_EXPRESSION,
+                    dialoguePortrait[1], dialoguePortrait[2] + 46);
+        } finally {
+            g.setClip(cx, cy, cw, ch);
         }
-        Image image = imgs.get(dialoguePortrait[0]);
-        if (image != null) {
-            drawEkiImage(g, image, dialoguePortrait[5], dialoguePortrait[6],
-                    dialoguePortrait[1], dialoguePortrait[2], dialoguePortrait[3], dialoguePortrait[4]);
-            if (portraitType == 6) {
-                drawEkiImage(g, image, dialoguePortrait[5], dialoguePortrait[6] + 46, 76, 124, 76, 8);
-            }
-        }
-        return dialoguePortrait[7];
+        return dialoguePortrait[3];
     }
 
     private void drawDialoguePageLines(Graphics g, String s, int page, int x, int y, int colorMain) {
@@ -559,13 +544,11 @@ public final class BattleRenderer {
             // Darkness overlay: single semi-transparent black layer over the playfield.
             // Triggers: boss spell active (bspellstep != 0) OR player bomb active.
             // Only one layer is rendered regardless of overlap (no stacking).
-            // During boss cut-in fade-in/hold, the cut-in provides its own darkness,
-            // so spell darkness is suppressed; during fade-out it takes over (both α128).
+            // The active cut-in provides its own fixed-alpha darkness.
             if (a.bossSpellCutInAlphaEnabled() || a.bombOverlayAlphaEnabled()) {
                 boolean needsDark = false;
                 if (a.timeStop() <= 0 && a.bossController().getBspellstep() != 0) {
-                    int cutInCnt = a.bossSpellCutInCnt();
-                    if (cutInCnt <= 0 || cutInCnt == BOSS_SPELL_CUTIN_PHASE_FADE_OUT) {
+                    if (!a.bossSpellCutInActive()) {
                         needsDark = true;
                     }
                 }
@@ -647,7 +630,7 @@ public final class BattleRenderer {
                         spriteId = 192;
                         break;
                 }
-                drawCcIconSafe(a, g, spriteId, x, y);
+                drawSprite(a, g, spriteId, x, y);
             }
         }
     }
@@ -738,7 +721,7 @@ public final class BattleRenderer {
                     x = PLAY_X + a.originX() + 20 + (idx * 54) % 160;
                     spriteId = 355;
                 }
-                drawCcIconSafe(a, g, spriteId, x, y);
+                drawSprite(a, g, spriteId, x, y);
             }
 
             int overlayImage = BattleRenderRules.backgroundOverlayImage(1, 0);
@@ -805,22 +788,22 @@ public final class BattleRenderer {
                 int y = PLAY_Y + a.originY() + keys[idx];
 
                 if (idx == 2) {
-                    drawCcIconSafe(a, g, 486, x - 90, y);
-                    drawCcIconSafe(a, g, 487, x - 90, y);
-                    drawCcIconSafe(a, g, 488, x - 90, y);
-                    drawCcIconSafe(a, g, 489, x - 90, y);
+                    drawSprite(a, g, 486, x - 90, y);
+                    drawSprite(a, g, 487, x - 90, y);
+                    drawSprite(a, g, 488, x - 90, y);
+                    drawSprite(a, g, 489, x - 90, y);
                 } else if (idx == 1) {
-                    drawCcIconSafe(a, g, 486, x - 90, y);
-                    drawCcIconSafe(a, g, 487, x - 90, y);
-                    drawCcIconSafe(a, g, 488, x - 90, y);
-                    drawCcIconSafe(a, g, 489, x - 90, y);
-                    drawCcIconSafe(a, g, 486, x - 10 + 0, y);
-                    drawCcIconSafe(a, g, 486, x - 10 + 21, y);
-                    drawCcIconSafe(a, g, 486, x - 10 + 42, y);
-                    drawCcIconSafe(a, g, 487, x - 10 + 42, y);
+                    drawSprite(a, g, 486, x - 90, y);
+                    drawSprite(a, g, 487, x - 90, y);
+                    drawSprite(a, g, 488, x - 90, y);
+                    drawSprite(a, g, 489, x - 90, y);
+                    drawSprite(a, g, 486, x - 10 + 0, y);
+                    drawSprite(a, g, 486, x - 10 + 21, y);
+                    drawSprite(a, g, 486, x - 10 + 42, y);
+                    drawSprite(a, g, 487, x - 10 + 42, y);
                 }
                 y -= 50;
-                drawCcIconSafe(a, g, 485, x, y);
+                drawSprite(a, g, 485, x, y);
             }
 
             int scroll = (a.bgMoveSpd() << 1) % 240;
@@ -946,13 +929,13 @@ public final class BattleRenderer {
         // Time-stop effect: gameplay mechanic, always rendered regardless of bg mode.
         if (a.timeStop() > 0) {
             // Time-stop visual: wavy clock stripes + gray tint.
-            Image clock = imgs.get(66);
-            if (clock != null) {
+            SpriteRenderer sprites = a.sprites();
+            if (sprites != null) {
                 int baseX = PLAY_X + a.originX();
                 int t = a.timeStop() << 2;
                 for (int i = 0; i < PLAY_H; i++) {
                     int dx = baseX + (-23) + (Trig.sin(t + i) >> 13);
-                    drawEkiImage(g, clock, dx, PLAY_Y + i, 0, i, 240, 1);
+                    sprites.drawWindow(g, SpriteSheetCatalog.CLOCK_FACE, dx, PLAY_Y, 0, i, 240, 1, 255);
                 }
             }
 
@@ -998,7 +981,7 @@ public final class BattleRenderer {
                 int x = PLAY_X + a.originX() + d4;
                 int y = PLAY_Y + a.originY() - 10 + d5;
                 int spriteId = 728 + ((base + i) & 0x1);
-                drawCcIconAlphaSafe(a, g, spriteId, x, y, 128);
+                drawSpriteAlpha(a, g, spriteId, x, y, 128);
             }
         }
     }
@@ -1260,96 +1243,12 @@ public final class BattleRenderer {
      *
      * This is used by many systems (enemies, backgrounds, HUD decorations).
      */
-    public void drawCcIconSafe(GameCore.BattleRenderAccess a, Graphics g, int ccIndex, int x, int y) {
-        CcTable cc = a.cc();
-        ImageBank imgs = a.imgs();
-        if (cc == null || imgs == null) {
-            return;
-        }
-        if (!cc.hasSpriteMeta(ccIndex)) {
-            return;
-        }
-
-        int imgIndex = cc.getImgIndex(ccIndex);
-        int srcX = cc.getSrcX(ccIndex);
-        int srcY = cc.getSrcY(ccIndex);
-        int w = cc.getW(ccIndex);
-        int h = cc.getH(ccIndex);
-        int ax = cc.getAx(ccIndex);
-        int ay = cc.getAy(ccIndex);
-
-        srcX = imgs.toPhysicalSourceX(imgIndex, srcX);
-        srcY = imgs.toPhysicalSourceY(imgIndex, srcY);
-
-        Image img = imgs.get(imgIndex);
-        if (img == null) {
-            return;
-        }
-
-        drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay);
+    private void drawSprite(GameCore.BattleRenderAccess a, Graphics g, int id, int x, int y) {
+        a.sprites().draw(g, id, x, y);
     }
 
-    // Alpha variant of drawCcIconSafe using ImageBank alpha cache.
-    private void drawCcIconAlphaSafe(GameCore.BattleRenderAccess a, Graphics g, int ccIndex, int x, int y, int alpha) {
-        CcTable cc = a.cc();
-        ImageBank imgs = a.imgs();
-        if (cc == null || imgs == null) {
-            return;
-        }
-        if (!cc.hasSpriteMeta(ccIndex)) {
-            return;
-        }
-
-        int imgIndex = cc.getImgIndex(ccIndex);
-        int srcX = cc.getSrcX(ccIndex);
-        int srcY = cc.getSrcY(ccIndex);
-        int w = cc.getW(ccIndex);
-        int h = cc.getH(ccIndex);
-        int ax = cc.getAx(ccIndex);
-        int ay = cc.getAy(ccIndex);
-
-        srcX = imgs.toPhysicalSourceX(imgIndex, srcX);
-        srcY = imgs.toPhysicalSourceY(imgIndex, srcY);
-
-        Image img = imgs.get(imgIndex);
-        if (img == null) {
-            return;
-        }
-
-        int a0 = alpha;
-        if (a0 < 0) {
-            a0 = 0;
-        }
-        if (a0 > 255) {
-            a0 = 255;
-        }
-        if (a0 != 255) {
-            Image alphaImg = imgs.getAlphaImage(imgIndex, a0);
-            if (alphaImg != null) {
-                img = alphaImg;
-            }
-        }
-
-        drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay);
-    }
-
-    /**
-     * Safe region drawing helper.
-     *
-     * Clamps the source rect to the source image bounds and avoids exceptions.
-     */
-    private boolean drawRegionSafe(Graphics g, Image img, int x, int y, int srcX, int srcY, int w, int h, int ax, int ay) {
-        if (img == null) {
-            return false;
-        }
-        if (!BattleRenderRules.clipSourceRegion(x, y, srcX, srcY, w, h, ax, ay, 1,
-                img.getWidth(), img.getHeight(), clippedSourceRegion)) {
-            return false;
-        }
-        UiDraw.drawRegion(g, img, clippedSourceRegion[0], clippedSourceRegion[1],
-                clippedSourceRegion[2], clippedSourceRegion[3],
-                clippedSourceRegion[4], clippedSourceRegion[5]);
-        return true;
+    private void drawSpriteAlpha(GameCore.BattleRenderAccess a, Graphics g, int id, int x, int y, int alpha) {
+        a.sprites().drawAlpha(g, id, x, y, alpha);
     }
 
     /**
@@ -1364,36 +1263,33 @@ public final class BattleRenderer {
             return;
         }
 
-        Image sheet = imgs.get(19);
-        if (sheet == null) {
-            return;
-        }
+        SpriteRenderer sprites = a.sprites();
 
         int level = hud.getLevel();
-        drawCcIconSafe(a, g, 185 + level, 216, 4);
+        drawSprite(a, g, 185 + level, 216, 4);
 
-        UiDraw.drawRegion(g, sheet, 196, 13, 2, 45, 36, 9);
-        drawDigitsFixed(g, sheet, hud.getHiScore(), 8, 197, 23);
+        sprites.draw(g, SpriteSheetCatalog.HUD_LABEL_BASE + 0, 196, 13);
+        drawDigitsFixed(g, sprites, hud.getHiScore(), 8, 197, 23);
 
-        UiDraw.drawRegion(g, sheet, 196, 32, 2, 54, 26, 9);
-        drawDigitsFixed(g, sheet, hud.getScore(), 8, 197, 42);
+        sprites.draw(g, SpriteSheetCatalog.HUD_LABEL_BASE + 1, 196, 32);
+        drawDigitsFixed(g, sprites, hud.getScore(), 8, 197, 42);
 
-        UiDraw.drawRegion(g, sheet, 196, 51, 2, 63, 31, 9);
-        drawStars(g, sheet, 0, hud.getPlayer() - 1, 196, 60);
+        sprites.draw(g, SpriteSheetCatalog.HUD_LABEL_BASE + 2, 196, 51);
+        drawStars(g, sprites, SpriteSheetCatalog.HUD_LIFE, hud.getPlayer() - 1, 196, 60);
 
-        UiDraw.drawRegion(g, sheet, 196, 69, 2, 72, 23, 9);
-        drawStars(g, sheet, 7, hud.getBomb(), 196, 78);
+        sprites.draw(g, SpriteSheetCatalog.HUD_LABEL_BASE + 3, 196, 69);
+        drawStars(g, sprites, SpriteSheetCatalog.HUD_BOMB, hud.getBomb(), 196, 78);
 
-        UiDraw.drawRegion(g, sheet, 196, 87, 2, 81, 30, 9);
-        drawDigitsFixed(g, sheet, hud.getPower(), BattleRenderRules.digitCount(hud.getPower(), 3), 197, 97);
+        sprites.draw(g, SpriteSheetCatalog.HUD_LABEL_BASE + 4, 196, 87);
+        drawDigitsFixed(g, sprites, hud.getPower(), BattleRenderRules.digitCount(hud.getPower(), 3), 197, 97);
 
-        UiDraw.drawRegion(g, sheet, 196, 106, 2, 90, 27, 9);
-        drawDigitsFixed(g, sheet, hud.getGraze(), BattleRenderRules.digitCount(hud.getGraze(), 5), 197, 116);
+        sprites.draw(g, SpriteSheetCatalog.HUD_LABEL_BASE + 5, 196, 106);
+        drawDigitsFixed(g, sprites, hud.getGraze(), BattleRenderRules.digitCount(hud.getGraze(), 5), 197, 116);
     }
 
-    // Boss spell cut-in overlay (black fade + character cut-in image).
+    // Boss spell cut-in: instant appearance/removal, with fixed alpha.
     private void renderBossSpellCutInOverlay(GameCore.BattleRenderAccess a, Graphics g) {
-        if (a.bossSpellCutInCnt() <= 0) {
+        if (!a.bossSpellCutInActive()) {
             return;
         }
 
@@ -1414,79 +1310,56 @@ public final class BattleRenderer {
             g.setClip(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
 
             boolean alphaEnabled = a.bossSpellCutInAlphaEnabled();
-            int alpha = BattleRenderRules.CUT_IN_ALPHA_MAX;
+            int alpha = alphaEnabled ? 128 : 255;
             if (alphaEnabled) {
-                alpha = BattleRenderRules.bossSpellCutInAlpha(
-                        a.bossSpellCutInCnt(), a.dynamicCutInEnabled(),
-                        a.fi() - a.bossSpellCutInPhaseStartFi());
-                if (alpha <= 0) {
-                    return;
-                }
-                // Draw dark overlay only during fade-in and hold phases.
-                // During fade-out, renderBattleBackground's spell darkness handles it.
-                if (a.bossSpellCutInCnt() != BOSS_SPELL_CUTIN_PHASE_FADE_OUT) {
-                    UiDraw.fillRectAlpha(g, PLAY_X, PLAY_Y, PLAY_W, PLAY_H, 0x000000, alpha);
-                }
+                UiDraw.fillRectAlpha(g, PLAY_X, PLAY_Y, PLAY_W, PLAY_H, 0x000000, 128);
             }
 
-            int imgIndex = BattleRenderRules.bossSpellCutInImage(
-                    a.bossSpellCutInStage(), a.gameMode(),
+            SpriteRenderer sprites = a.sprites();
+            int sprite = BattleRenderRules.bossSpellCutInSprite(a.bossSpellCutInStage(), a.gameMode(),
                     a.bossController().host().getSpellPracticeBossStep());
-
-            Image overlay;
-            if (alphaEnabled) {
-                overlay = imgs.getAlphaImage(imgIndex, alpha);
-                if (overlay == null) {
-                    overlay = imgs.get(imgIndex);
-                }
-            } else {
-                overlay = imgs.get(imgIndex);
+            int gc = a.fi() - a.bossSpellCutInStartFi();
+            if (gc < 0) {
+                gc = 0;
             }
 
-            if (overlay != null) {
-                int gc = a.fi() - a.bossSpellCutInStartFi();
-                if (gc < 0) {
-                    gc = 0;
-                }
-
-                switch (a.bossSpellCutInStage()) {
-                    case 0:
-                        switch (a.bossSpellCutInChara()) {
-                            case 108:
-                                drawEkiImage(g, overlay, 130, 20 - (gc >> 2), 65, 0, 64, 240);
-                                break;
-                            case 110:
-                                drawEkiImage(g, overlay, 130, 20 - (gc >> 2), 130, 10, 64, 230);
-                                break;
-                            case 109:
-                                drawEkiImage(g, overlay, 0, 20 - (gc >> 2), 0, 21, 64, 219);
-                                break;
-                            case 111:
-                                drawEkiImage(g, overlay, 0, 20 - (gc >> 2), 0, 21, 64, 219);
-                                drawEkiImage(g, overlay, 64, gc >> 2, 65, 0, 64, 240);
-                                drawEkiImage(g, overlay, 130, 20 - (gc >> 2), 130, 10, 64, 230);
-                                break;
-                        }
-                        break;
-                    case 1:
-                        drawEkiImage(g, overlay, 0, 8 + (gc >> 3), 0, 0, 194, 226);
-                        break;
-                    case 2:
-                        drawEkiImage(g, overlay, 14 - (gc >> 2), 8 + (gc >> 2), 0, 0, 240, 240);
-                        break;
-                    case 3:
-                        drawEkiImage(g, overlay, 0, gc >> 2, 0, 0, 205, 240);
-                        break;
-                    case 4:
-                        drawEkiImage(g, overlay, 0 - (gc >> 2), gc >> 2, 0, 0, 240, 240);
-                        break;
-                    case 5:
-                        drawEkiImage(g, overlay, -20 + (gc >> 1), gc >> 2, 0, 0, 240, 240);
-                        break;
-                    case 6:
-                        drawEkiImage(g, overlay, 0, 8 - (gc >> 2), 0, 0, 206, 240);
-                        break;
-                }
+            switch (a.bossSpellCutInStage()) {
+                case 0:
+                    switch (a.bossSpellCutInChara()) {
+                        case 108:
+                            sprites.drawAlpha(g, SpriteSheetCatalog.SUNNY_CUTIN, 130, 20 - (gc >> 2), alpha);
+                            break;
+                        case 110:
+                            sprites.drawAlpha(g, SpriteSheetCatalog.LUNA_CUTIN, 130, 20 - (gc >> 2), alpha);
+                            break;
+                        case 109:
+                            sprites.drawAlpha(g, SpriteSheetCatalog.STAR_CUTIN, 0, 20 - (gc >> 2), alpha);
+                            break;
+                        case 111:
+                            sprites.drawAlpha(g, SpriteSheetCatalog.STAR_CUTIN, 0, 20 - (gc >> 2), alpha);
+                            sprites.drawAlpha(g, SpriteSheetCatalog.SUNNY_CUTIN, 64, gc >> 2, alpha);
+                            sprites.drawAlpha(g, SpriteSheetCatalog.LUNA_CUTIN, 130, 20 - (gc >> 2), alpha);
+                            break;
+                    }
+                    break;
+                case 1:
+                    sprites.drawAlpha(g, sprite, 0, 8 + (gc >> 3), alpha);
+                    break;
+                case 2:
+                    sprites.drawAlpha(g, sprite, 14 - (gc >> 2), 8 + (gc >> 2), alpha);
+                    break;
+                case 3:
+                    sprites.drawAlpha(g, sprite, 0, gc >> 2, alpha);
+                    break;
+                case 4:
+                    sprites.drawAlpha(g, sprite, 0 - (gc >> 2), gc >> 2, alpha);
+                    break;
+                case 5:
+                    sprites.drawAlpha(g, sprite, -20 + (gc >> 1), gc >> 2, alpha);
+                    break;
+                case 6:
+                    sprites.drawAlpha(g, sprite, 0, 8 - (gc >> 2), alpha);
+                    break;
             }
         } finally {
             g.setClip(oldClipX, oldClipY, oldClipW, oldClipH);
@@ -1558,7 +1431,6 @@ public final class BattleRenderer {
             cy = player.getYFixed() >> 16;
         }
 
-        int imageIndex = spellId < 28 ? 38 : 37;
         int size = spellId < 28 ? 140 : 120;
         int half = size >> 1;
         int alpha = maskAlpha << 1;
@@ -1566,13 +1438,8 @@ public final class BattleRenderer {
             alpha = 255;
         }
 
-        Image overlay = imgs.getAlphaImageColorKey(imageIndex, alpha, 0xFF00FF);
-        if (overlay == null) {
-            overlay = imgs.getAlphaImage(imageIndex, alpha);
-        }
-        if (overlay != null) {
-            drawEkiImage(g, overlay, cx - half, cy - half, 0, 0, size, size);
-        }
+        a.sprites().drawMirroredColorKey(g, SpriteSheetCatalog.MASK_BASE + (spellId < 28 ? 1 : 0),
+                cx - half, cy - half, alpha, 0xFF00FF);
 
         int top = cy - half;
         int bottom = cy + half;
@@ -1782,11 +1649,8 @@ public final class BattleRenderer {
         if (stock > 10) {
             stock = 10;
         }
-        Image starImg = (imgs != null) ? imgs.get(5) : null;
-        if (starImg != null) {
-            for (int i = 0; i < stock; ++i) {
-                UiDraw.drawRegion(g, starImg, 2 + i * 6 + 1, 28, 96, 31, 5, 5);
-            }
+        for (int i = 0; i < stock; i++) {
+            a.sprites().draw(g, SpriteSheetCatalog.BOSS_STAR, 2 + i * 6 + 1, 28);
         }
 
         int bspellcnt = a.bossController().getBspellcnt();
@@ -1868,7 +1732,7 @@ public final class BattleRenderer {
             }
 
             int x = (xFixed >> 16) - 8;
-            UiDraw.drawRegion(g, img, PLAY_X + x, PLAY_Y + PLAY_H, 156, 76, 16, 5);
+            a.sprites().draw(g, SpriteSheetCatalog.BOSS_MARKER, PLAY_X + x, PLAY_Y + PLAY_H);
 
             if (a.stage() != 0) {
                 break;
@@ -1912,7 +1776,7 @@ public final class BattleRenderer {
     }
 
     // Digit renderer for HUD numbers (right-aligned fixed width).
-    private static void drawDigitsFixed(Graphics g, Image sheet, int v, int digits, int x, int y) {
+    private static void drawDigitsFixed(Graphics g, SpriteRenderer sprites, int v, int digits, int x, int y) {
         int[] arr = new int[digits];
         int n = v;
         if (n < 0) {
@@ -1926,12 +1790,12 @@ public final class BattleRenderer {
         int px = x + digits * 5;
         for (int j = 0; j < digits; j++) {
             px -= 5;
-            UiDraw.drawRegion(g, sheet, px, y, arr[j] * 5, 100, 5, 8);
+            sprites.draw(g, SpriteSheetCatalog.HUD_DIGIT_BASE + arr[j], px, y);
         }
     }
 
     // Star icon renderer for life/bomb counters.
-    private static void drawStars(Graphics g, Image sheet, int srcX, int count, int x, int y) {
+    private static void drawStars(Graphics g, SpriteRenderer sprites, int id, int count, int x, int y) {
         if (count < 0) {
             count = 0;
         }
@@ -1939,71 +1803,7 @@ public final class BattleRenderer {
             count = 7;
         }
         for (int i = 0; i < count; i++) {
-            UiDraw.drawRegion(g, sheet, x + i * 6, y, srcX, 108, 7, 7);
-        }
-    }
-
-    // Clipped draw helper for large images (portraits / overlays) limited to the playfield.
-    private void drawEkiImage(Graphics g, Image img, int x, int y, int srcX, int srcY, int w, int h) {
-        if (img == null || !BattleRenderRules.clipToPlayfield(
-                x, y, srcX, srcY, w, h, clippedPlayfieldRegion)) {
-            return;
-        }
-        int dx = clippedPlayfieldRegion[0];
-        int dy = clippedPlayfieldRegion[1];
-        srcX = clippedPlayfieldRegion[2];
-        srcY = clippedPlayfieldRegion[3];
-        w = clippedPlayfieldRegion[4];
-        h = clippedPlayfieldRegion[5];
-
-        int oldClipX = g.getClipX();
-        int oldClipY = g.getClipY();
-        int oldClipW = g.getClipWidth();
-        int oldClipH = g.getClipHeight();
-
-        try {
-            int clipX = PLAY_X;
-            int clipY = PLAY_Y;
-            int clipW = PLAY_W;
-            int clipH = PLAY_H;
-
-            if (oldClipW > 0 && oldClipH > 0) {
-                int ox1 = oldClipX + oldClipW;
-                int oy1 = oldClipY + oldClipH;
-                int px1 = PLAY_X + PLAY_W;
-                int py1 = PLAY_Y + PLAY_H;
-
-                int ix0 = (oldClipX > clipX) ? oldClipX : clipX;
-                int iy0 = (oldClipY > clipY) ? oldClipY : clipY;
-                int ix1 = (ox1 < px1) ? ox1 : px1;
-                int iy1 = (oy1 < py1) ? oy1 : py1;
-                clipW = ix1 - ix0;
-                clipH = iy1 - iy0;
-                clipX = ix0;
-                clipY = iy0;
-                if (clipW <= 0 || clipH <= 0) {
-                    return;
-                }
-            }
-
-            int dx1 = dx + w;
-            int dy1 = dy + h;
-            int cx1 = clipX + clipW;
-            int cy1 = clipY + clipH;
-            int ix0 = (dx > clipX) ? dx : clipX;
-            int iy0 = (dy > clipY) ? dy : clipY;
-            int ix1 = (dx1 < cx1) ? dx1 : cx1;
-            int iy1 = (dy1 < cy1) ? dy1 : cy1;
-            int iw = ix1 - ix0;
-            int ih = iy1 - iy0;
-            if (iw <= 0 || ih <= 0) {
-                return;
-            }
-
-            g.setClip(ix0, iy0, iw, ih);
-            g.drawImage(img, dx - srcX, dy - srcY, Graphics.TOP | Graphics.LEFT);
-        } finally {
-            g.setClip(oldClipX, oldClipY, oldClipW, oldClipH);
+            sprites.draw(g, id, x + i * 6, y);
         }
     }
 

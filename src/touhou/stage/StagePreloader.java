@@ -1,13 +1,13 @@
 package touhou.stage;
 
-import touhou.BulletSprites;
+import touhou.SpriteSheetCatalog;
+import touhou.SpriteRenderer;
 import touhou.ImageBank;
 import touhou.ui.UiDraw;
 
 public final class StagePreloader {
     private int stage;
     private int chara;
-    private int type;
     private boolean playerShotAlphaEnabled = true;
     private boolean bossSpellCutInAlphaEnabled = true;
     private boolean bombOverlayAlphaEnabled = true;
@@ -27,15 +27,9 @@ public final class StagePreloader {
         bombOverlayAlphaEnabled = enabled;
     }
 
-    public void enter(int nextStage, int chara, int type) {
-        enter(nextStage, chara, type, playerShotAlphaEnabled);
-    }
-
-    public void enter(int nextStage, int chara, int type, boolean playerShotAlphaEnabled) {
+    public void enter(int nextStage, int chara) {
         stage = nextStage;
         this.chara = chara;
-        this.type = type;
-        this.playerShotAlphaEnabled = playerShotAlphaEnabled;
         step = 0;
         done = false;
         // Keep this in sync with tickOneStep().
@@ -50,18 +44,15 @@ public final class StagePreloader {
         return stepMax;
     }
 
-    public void update(ImageBank imgs, BulletSprites sprites) {
+    public void update(ImageBank imgs, SpriteRenderer sprites) {
         if (done) {
             return;
         }
-        if (imgs == null || sprites == null) {
-            done = true;
-            return;
-        }
+        if (imgs == null || sprites == null) throw new IllegalArgumentException("Sprite resources");
         tickOneStep(imgs, sprites);
     }
 
-    private void tickOneStep(ImageBank imgs, BulletSprites sprites) {
+    private void tickOneStep(ImageBank imgs, SpriteRenderer sprites) {
         switch (step) {
             case 0:
                 // Common HUD/frame images and always-present sprite sheets.
@@ -83,6 +74,11 @@ public final class StagePreloader {
             case 2:
                 // Stage background images.
                 preloadStageBackground(imgs, stage);
+                // Opening label and vertical subtitle: all three phases of each.
+                int opening = SpriteSheetCatalog.STAGE_OPENING_BASE
+                        + stage * SpriteSheetCatalog.STAGE_OPENING_FRAME_COUNT;
+                preloadSpriteRange(imgs, sprites, opening,
+                        opening + SpriteSheetCatalog.STAGE_OPENING_FRAME_COUNT - 1, 255);
                 break;
             case 3:
                 // Stage background decoration sprites (cc icons).
@@ -90,14 +86,12 @@ public final class StagePreloader {
                 break;
             case 4:
                 // Common small enemy sprites.
-                preloadSpriteRange(imgs, sprites, 0, 27, 255);
+                preloadSpriteRange(imgs, sprites, 0, 26, 255);
                 break;
             case 5:
-                // Common bullet sprites (heuristic).
-                preloadSpriteRange(imgs, sprites, 80, 160, 255);
-
-                // Drop items use sprite ids 111..165; 161..165 are not covered by the heuristic range.
-                preloadSpriteRange(imgs, sprites, 161, 165, 255);
+                // Enemy bullets and drop items; player assets belong to step 9.
+                preloadSpriteRange(imgs, sprites, 81, 96, 255);
+                preloadSpriteRange(imgs, sprites, 111, 165, 255);
                 break;
             case 6:
                 // Boss/enemy sprite ids commonly used by stage renderer.
@@ -109,30 +103,35 @@ public final class StagePreloader {
                 // kind14
                 preloadSpriteRange(imgs, sprites, 216, 238, 255);
                 // kind15 (includes +14 offset frames)
-                preloadSpriteRange(imgs, sprites, 356, 383, 255);
+                preloadSpriteRange(imgs, sprites, 356, 379, 255);
+                // Split orb and magic-circle sheets, including all seven orb frames.
+                preloadSpriteRange(imgs, sprites, 380, 386, 255);
+                preloadSpriteRange(imgs, sprites, 388, 391, 255);
                 // kind16
                 preloadSpriteRange(imgs, sprites, 504, 520, 255);
 
                 // kind17/18/19 (boss main body parts)
                 preloadSpriteRange(imgs, sprites, 711, 727, 255);
+                // Split celestial spheres, including the shared white explosion flash and its tail.
+                preloadSpriteRange(imgs, sprites, 494, 503, 255);
                 // Common boss bullet sprites seen in stage boss patterns.
                 preloadSpriteIds(imgs, sprites, new int[] { 81, 82, 84, 89, 585, 603, 639 }, 255);
                 break;
             case 7:
                 // Boss dialogue portraits (ImageBank indices) used by BattleRenderer.renderDialogue.
-                preloadBossDialoguePortraitImages(imgs);
+                preloadBossDialoguePortraitSprites(imgs, sprites);
                 break;
             case 8:
                 // Boss spell cut-in overlay images.
-                preloadBossSpellCutInImages(imgs, stage, bossSpellCutInAlphaEnabled);
+                preloadBossSpellCutInSprites(imgs, sprites, stage, bossSpellCutInAlphaEnabled);
                 break;
             case 9:
-                // Player character image sheets + player bullets (alpha=128) for the selected chara/type.
-                preloadPlayerAssets(imgs, sprites, chara, type, playerShotAlphaEnabled);
+                // Selected character: animation, options, ordinary shots and bomb shots.
+                preloadPlayerAssets(imgs, sprites, chara, playerShotAlphaEnabled);
                 break;
             case 10:
-                // Bomb overlay image + waTick bullet sprites + darkness overlay precache.
-                preloadBombAndMiscAssets(imgs, sprites, chara,
+                // Bomb portrait and darkness overlay precache.
+                preloadBombAndMiscAssets(imgs, chara,
                         bossSpellCutInAlphaEnabled || bombOverlayAlphaEnabled);
                 break;
             case 11:
@@ -199,145 +198,64 @@ public final class StagePreloader {
         }
     }
 
-    private static void preloadBossDialoguePortraitImages(ImageBank imgs) {
-        // Keep in sync with BattleRenderer.renderDialogue portraitType mappings.
-        imgs.get(8);
-        imgs.get(9);
-        imgs.get(10);
-        imgs.get(28);
-        imgs.get(39);
-        imgs.get(50);
-        imgs.get(53);
-        imgs.get(60);
-        imgs.get(72);
-        imgs.get(74);
+    private static void preloadBossDialoguePortraitSprites(ImageBank imgs, SpriteRenderer sprites) {
+        preloadSpriteRange(imgs, sprites, SpriteSheetCatalog.DIALOGUE_BASE,
+                SpriteSheetCatalog.DIALOGUE_BASE + 12, 255);
+        preloadSpriteRange(imgs, sprites, SpriteSheetCatalog.STAR_DIALOGUE_EXPRESSION,
+                SpriteSheetCatalog.STAR_DIALOGUE_EXPRESSION, 255);
     }
 
-    private static void preloadBossSpellCutInImages(ImageBank imgs, int stage, boolean alphaEnabled) {
-        // Keep in sync with BattleRenderer.bossSpellCutInImgIndexForStage().
-        int imgIndex = -1;
-        switch (stage) {
-            case 0:
-                imgIndex = 30;
-                break;
-            case 1:
-                imgIndex = 40;
-                break;
-            case 2:
-                imgIndex = 51;
-                break;
-            case 3:
-                imgIndex = 56;
-                imgs.get(58);
-                break;
-            case 4:
-                imgIndex = 65;
-                break;
-            case 5:
-                imgIndex = 69;
-                break;
-            case 6:
-                imgIndex = 76;
-                break;
-            default:
-                imgIndex = -1;
-                break;
-        }
-        if (imgIndex >= 0) {
-            imgs.get(imgIndex);
-            if (alphaEnabled) {
-                // Prebuild a common alpha variant to avoid first-time alpha generation cost.
-                imgs.getAlphaImage(imgIndex, 128);
-                if (stage == 3) {
-                    imgs.getAlphaImage(58, 128);
-                }
+    private static void preloadBossSpellCutInSprites(ImageBank imgs, SpriteRenderer sprites, int stage, boolean alphaEnabled) {
+        int alpha = alphaEnabled ? 128 : 255;
+        if (stage == 0) {
+            preloadSpriteIds(imgs, sprites, new int[] {
+                    SpriteSheetCatalog.SUNNY_CUTIN, SpriteSheetCatalog.LUNA_CUTIN, SpriteSheetCatalog.STAR_CUTIN }, alpha);
+        } else if (stage >= 1 && stage <= 6) {
+            int id = SpriteSheetCatalog.SINGLE_CUTIN_BASE + (stage <= 3 ? stage - 1 : stage);
+            preloadSpriteRange(imgs, sprites, id, id, alpha);
+            if (stage == 3) {
+                int lastWord = SpriteSheetCatalog.SINGLE_CUTIN_BASE + 3;
+                preloadSpriteRange(imgs, sprites, lastWord, lastWord, alpha);
             }
         }
     }
 
-    private static void preloadPlayerAssets(ImageBank imgs, BulletSprites sprites, int chara, int type, boolean playerShotAlphaEnabled) {
-        if (imgs == null || sprites == null) {
-            return;
+    private static void preloadPlayerAssets(ImageBank imgs, SpriteRenderer sprites, int chara, boolean playerShotAlphaEnabled) {
+        imgs.get(SpriteSheetCatalog.PLAYER_IMAGES_BASE + chara);
+        imgs.get(SpriteSheetCatalog.PLAYER_OPTIONS_IMAGES_BASE + chara);
+        int shots = SpriteSheetCatalog.PLAYER_SHOTS_IMAGES_BASE + chara;
+        int bombShots = SpriteSheetCatalog.PLAYER_BOMB_SHOTS_IMAGES_BASE + chara;
+        imgs.get(shots);
+        imgs.get(bombShots);
+        for (int i = 0; i < 4; i++) sprites.precacheAlphaRegion(SpriteSheetCatalog.PLAYER_AURA_BASE + i, 128);
+
+        // Extra projectile sheets live outside 008-010, but still belong to this character.
+        if (chara == 0) {
+            imgs.get(SpriteSheetCatalog.REIMU_SHOTS_IMAGE);
+            imgs.get(SpriteSheetCatalog.REIMU_BOMB_QUARTERS_IMAGE);
+            imgs.get(SpriteSheetCatalog.REIMU_BOMB_FIRST_IMAGE);
+        } else if (chara == 1) {
+            imgs.get(SpriteSheetCatalog.MARISA_SHOT_LASERS_IMAGE);
+            imgs.get(16);
+            imgs.get(17);
         }
-
-        // Player sprite sheet used by Player.render.
-        imgs.get(8 + chara);
-
-        // Slow aura alpha regions used by Player.render.
-        // The region is (auraFrame*32,117,32,31) on sheet 19 with alpha=128.
-        imgs.get(19);
-        imgs.getAlphaRegion(19, 0, 117, 32, 31, 128);
-        imgs.getAlphaRegion(19, 32, 117, 32, 31, 128);
-        imgs.getAlphaRegion(19, 64, 117, 32, 31, 128);
-        imgs.getAlphaRegion(19, 96, 117, 32, 31, 128);
-
-        // Precache the exact player shot sprites (alpha=128 draw path).
-        if (playerShotAlphaEnabled) {
-            int shot1 = findPlayerShotSpriteId(sprites, chara, type, false);
-            int shot2 = findPlayerShotSpriteId(sprites, chara, type, true);
-            int imgIndex = -1;
-            if (shot1 >= 0) {
-                imgIndex = sprites.getImageIndex(shot1);
-            } else if (shot2 >= 0) {
-                imgIndex = sprites.getImageIndex(shot2);
-            }
-            if (imgIndex >= 0) {
-                imgs.get(imgIndex);
-                imgs.getAlphaImage(imgIndex, 128);
-            }
+        if (!playerShotAlphaEnabled) return;
+        // BulletSystem.drawFast uses sheet alpha caches, not compact sprite-region caches.
+        imgs.getAlphaImage(shots, 128);
+        imgs.getAlphaImage(bombShots, 128);
+        if (chara == 0) {
+            imgs.getAlphaImage(SpriteSheetCatalog.REIMU_SHOTS_IMAGE, 128);
+            imgs.getAlphaImage(SpriteSheetCatalog.REIMU_BOMB_QUARTERS_IMAGE, 128);
+            imgs.getAlphaImage(SpriteSheetCatalog.REIMU_BOMB_FIRST_IMAGE, 128);
+        } else if (chara == 1) {
+            imgs.getAlphaImage(SpriteSheetCatalog.MARISA_SHOT_LASERS_IMAGE, 128);
+            imgs.getAlphaImage(16, 128);
+            imgs.getAlphaImage(17, 128);
+            for (int id = 100; id <= 102; id++) sprites.precacheAlphaRegion(id, 128);
         }
     }
 
-    private static int findPlayerShotSpriteId(BulletSprites sprites, int chara, int type, boolean isAlt) {
-        if (sprites == null || sprites.getCc() == null) {
-            return -1;
-        }
-        int imgIndex = 8 + chara;
-        int minSize = isAlt ? 8 : 3;
-        int maxSize = isAlt ? 24 : 10;
-        int minSrcX = 96;
-        int maxSrcX = 10000;
-
-        // Mirrors Player.findSpriteId selection criteria without creating a Player instance.
-        int bestId = -1;
-        int bestY = Integer.MAX_VALUE;
-        int bestX = Integer.MAX_VALUE;
-
-        touhou.CcTable cc = sprites.getCc();
-        for (int i = 0; i < cc.size(); i++) {
-            if (!cc.hasSpriteMeta(i)) {
-                continue;
-            }
-            int idx = cc.getImgIndex(i);
-            if (idx != imgIndex) {
-                continue;
-            }
-            int w = cc.getW(i);
-            int h = cc.getH(i);
-            if (w < minSize || h < minSize || w > maxSize || h > maxSize) {
-                continue;
-            }
-            int srcX = cc.getSrcX(i);
-            int srcY = cc.getSrcY(i);
-            if (srcX < minSrcX || srcX > maxSrcX) {
-                continue;
-            }
-            if (srcY < bestY || (srcY == bestY && srcX < bestX)) {
-                bestY = srcY;
-                bestX = srcX;
-                bestId = i;
-            }
-        }
-
-        // Marisa type 0 uses an alternate shot when available.
-        if (chara == 1 && type == 0) {
-            return bestId;
-        }
-        // Default: use the same selected id.
-        return bestId;
-    }
-
-    private static void preloadStageDecorationSprites(ImageBank imgs, BulletSprites sprites, int stage) {
+    private static void preloadStageDecorationSprites(ImageBank imgs, SpriteRenderer sprites, int stage) {
         if (stage == 0) {
             preloadSpriteIds(imgs, sprites, new int[] { 191, 192 }, 255);
             return;
@@ -357,31 +275,11 @@ public final class StagePreloader {
         }
     }
 
-    private static void preloadBombAndMiscAssets(ImageBank imgs, BulletSprites sprites, int chara, boolean bossSpellAlphaEnabled) {
+    private static void preloadBombAndMiscAssets(ImageBank imgs, int chara, boolean bossSpellAlphaEnabled) {
         // Bomb overlay image (imgIndex 12+chara). Previously not preloaded, causing first-bomb stutter.
         int bombImgIndex = 12 + chara;
         if (bombImgIndex >= 12 && bombImgIndex <= 14) {
             imgs.get(bombImgIndex);
-        }
-
-        // waTick bullet sprites per character (loaded on first slow-mode shot otherwise).
-        if (sprites != null) {
-            switch (chara) {
-                case 0:
-                    // Reimu: xaSpawn types 0,1,2,18 -> sprite IDs 31-32, 48-60.
-                    preloadSpriteRange(imgs, sprites, 31, 32, 255);
-                    preloadSpriteRange(imgs, sprites, 48, 60, 255);
-                    break;
-                case 1:
-                    // Marisa: xaSpawn types 8,19 + lasers 9,10 -> sprite IDs 97-107.
-                    preloadSpriteRange(imgs, sprites, 97, 107, 255);
-                    break;
-                case 2:
-                    // Alice: xaSpawn types 11-17 -> sprite IDs 730-766.
-                    // 730-740 already covered by step 6 (kind17/18/19 range 711-727 + decorations).
-                    preloadSpriteRange(imgs, sprites, 733, 766, 255);
-                    break;
-            }
         }
 
         // Precache darkness overlay (194x226 black@128).
@@ -391,16 +289,13 @@ public final class StagePreloader {
         }
     }
 
-    private static void preloadSpriteIds(ImageBank imgs, BulletSprites sprites, int[] ids, int alpha) {
+    private static void preloadSpriteIds(ImageBank imgs, SpriteRenderer sprites, int[] ids, int alpha) {
         if (ids == null) {
             return;
         }
         for (int i = 0; i < ids.length; i++) {
             int id = ids[i];
             int imgIndex = sprites.getImageIndex(id);
-            if (imgIndex < 0) {
-                continue;
-            }
             imgs.get(imgIndex);
             if (alpha != 255) {
                 sprites.precacheAlphaRegion(id, alpha);
@@ -408,12 +303,9 @@ public final class StagePreloader {
         }
     }
 
-    private static void preloadSpriteRange(ImageBank imgs, BulletSprites sprites, int idFrom, int idTo, int alpha) {
+    private static void preloadSpriteRange(ImageBank imgs, SpriteRenderer sprites, int idFrom, int idTo, int alpha) {
         for (int id = idFrom; id <= idTo; id++) {
             int imgIndex = sprites.getImageIndex(id);
-            if (imgIndex < 0) {
-                continue;
-            }
             imgs.get(imgIndex);
             if (alpha != 255) {
                 sprites.precacheAlphaRegion(id, alpha);

@@ -54,7 +54,8 @@ public final class BulletSystem {
 
     private final int[] enemyBulletLock = new int[3];
 
-    private BulletSprites sprites;
+    private SpriteRenderer sprites;
+    private boolean playerShotAlphaEnabled = true;
 
     private EnemyTargetRegistry enemies;
 
@@ -234,7 +235,15 @@ public final class BulletSystem {
         }
     }
 
-    public void setSprites(BulletSprites sprites) {
+    public void setPlayerShotAlphaEnabled(boolean enabled) {
+        playerShotAlphaEnabled = enabled;
+    }
+
+    public boolean isPlayerShotAlphaEnabled() {
+        return playerShotAlphaEnabled;
+    }
+
+    public void setSprites(SpriteRenderer sprites) {
         this.sprites = sprites;
     }
 
@@ -3245,25 +3254,9 @@ public final class BulletSystem {
             drawId = bulletId[i] + dirFrame;
         }
 
-        if (sprites != null) {
-            if (sprites.drawFast(g, drawId, px, py, fromPlayer[i], clipX, clipY, clipW, clipH)) {
-                return;
-            }
-            if (sprites.draw(g, drawId, px, py, fromPlayer[i])) {
-                return;
-            }
-        }
-
-        if (drawId == 21) {
-            g.setColor(0xFF0000);
-            g.fillRect(px - 2, py - 2, 4, 4);
-            return;
-        }
-
-        int c = (drawId * 97) & 0xFF;
-        int color = (c << 16) | (c << 8) | c;
-        g.setColor(color);
-        g.fillRect(px - 1, py - 1, 3, 3);
+        if (sprites == null) throw new ResourceException("Sprite renderer not initialized");
+        sprites.drawFast(g, drawId, px, py, fromPlayer[i] && playerShotAlphaEnabled ? 128 : 255,
+                clipX, clipY, clipW, clipH);
     }
 
     private int alloc() {

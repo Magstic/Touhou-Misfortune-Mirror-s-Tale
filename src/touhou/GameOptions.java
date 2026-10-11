@@ -18,9 +18,6 @@ public final class GameOptions {
     public static final int LANG_EN = 1;
     public static final int LANG_ZHT = 2;
 
-    // Rendering option slot.
-    public static final int IDX_DYNAMIC_CUTIN = 9;
-
     // Rendering and debug switches packed into opt[3].
     private static final int IDX_RENDER_FLAGS = 3;
     private static final int ALPHA_MASK = 0x07;
@@ -53,10 +50,6 @@ public final class GameOptions {
         } catch (Throwable t) {
             return false;
         }
-    }
-
-    public static boolean isDynamicCutInEnabled(int[] opt) {
-        return opt[IDX_DYNAMIC_CUTIN] != 0;
     }
 
     public static boolean isBombOverlayAlphaEnabled(int[] opt) {
@@ -159,8 +152,6 @@ public final class GameOptions {
         opt[6] = 10;
         opt[7] = 11;
         opt[8] = 12;
-        // Rendering defaults by runtime (emulator vs real device).
-        opt[9] = emu ? 1 : 0;
         // HeavyBG: always ON; Mistia Fade: ON for emulator, OFF for real device.
         // Hit Spark: always ON.
         opt[IDX_RENDER_MISC_FLAGS] = emu ? 0 : RENDER_BLIND_MASK_NO_FADE;
@@ -273,9 +264,6 @@ public final class GameOptions {
             return false;
         }
         if (opt[IDX_CHEAT_DISABLE_ITEM_COLLECT_LIMIT] != 0 && opt[IDX_CHEAT_DISABLE_ITEM_COLLECT_LIMIT] != 1) {
-            return false;
-        }
-        if (opt[IDX_DYNAMIC_CUTIN] != 0 && opt[IDX_DYNAMIC_CUTIN] != 1) {
             return false;
         }
         if ((opt[IDX_RENDER_MISC_FLAGS] & ~RENDER_MISC_MASK) != 0) {

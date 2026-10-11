@@ -55,7 +55,7 @@ public final class StageRuntime {
 
         int randomNextInt();
 
-        void drawCcIconSafe(Graphics g, int spriteId, int x, int y);
+        void drawSprite(Graphics g, int spriteId, int x, int y);
     }
 
     public interface StageFlow {
@@ -1024,7 +1024,7 @@ public final class StageRuntime {
             }
             int spriteId = row[spriteIdx];
             if (spriteId != -1) {
-                host.drawCcIconSafe(g, spriteId, x, y);
+                host.drawSprite(g, spriteId, x, y);
             }
 
             //stage start connection lines

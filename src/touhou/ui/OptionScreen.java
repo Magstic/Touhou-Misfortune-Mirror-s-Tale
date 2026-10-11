@@ -96,10 +96,9 @@ public final class OptionScreen {
 
     private static final String[] MENU_CHEAT = new String[] { "Boss Shield", "Item Collection Limit", "Back" };
 
-    private static final String[] MENU_RENDERING = new String[] { "Close-up", "HeavyBG", "Mystia Fade", "Hit Spark", "Alpha: BOMB Close-up", "Alpha: BOSS Close-up", "Alpha: Player Bullets", "Back" };
+    private static final String[] MENU_RENDERING = new String[] { "HeavyBG", "Mystia Fade", "Hit Spark", "Alpha: BOMB Close-up", "Alpha: BOSS Close-up", "Alpha: Player Bullets", "Back" };
 
     private static final int[] RENDER_MENU_TEXT_IDS = new int[] {
-            TextId.OPTION_RENDER_MENU_0,
             TextId.OPTION_RENDER_MENU_1,
             TextId.OPTION_RENDER_MENU_2,
             TextId.OPTION_RENDER_HIT_SPARK_MENU,
@@ -110,7 +109,6 @@ public final class OptionScreen {
     };
 
     private static final int[] RENDER_DESC_TEXT_IDS = new int[] {
-            TextId.OPTION_RENDER_DESC_0,
             TextId.OPTION_RENDER_DESC_1,
             TextId.OPTION_RENDER_DESC_2,
             TextId.OPTION_RENDER_HIT_SPARK_DESC,
@@ -318,18 +316,16 @@ public final class OptionScreen {
             }
 
             if (cursorUD == 0) {
-                opt[GameOptions.IDX_DYNAMIC_CUTIN] ^= 1;
-            } else if (cursorUD == 1) {
                 GameOptions.toggleHeavyBg(opt);
-            } else if (cursorUD == 2) {
+            } else if (cursorUD == 1) {
                 GameOptions.toggleBlindMaskFade(opt);
-            } else if (cursorUD == 3) {
+            } else if (cursorUD == 2) {
                 GameOptions.toggleHitSpark(opt);
-            } else if (cursorUD == 4) {
+            } else if (cursorUD == 3) {
                 GameOptions.toggleBombOverlayAlpha(opt);
-            } else if (cursorUD == 5) {
+            } else if (cursorUD == 4) {
                 GameOptions.toggleBossSpellCutInAlpha(opt);
-            } else if (cursorUD == 6) {
+            } else if (cursorUD == 5) {
                 GameOptions.togglePlayerShotAlpha(opt);
             }
             GameOptions.save(opt);
@@ -835,24 +831,21 @@ public final class OptionScreen {
 
     private String renderingValueText(int idx) {
         if (idx == 0) {
-            return (opt[GameOptions.IDX_DYNAMIC_CUTIN] == 0) ? UiText.get(TextId.COMMON_OFF) : UiText.get(TextId.COMMON_ON);
-        }
-        if (idx == 1) {
             return GameOptions.isHeavyBgEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
-        if (idx == 2) {
+        if (idx == 1) {
             return GameOptions.isBlindMaskFadeEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
-        if (idx == 3) {
+        if (idx == 2) {
             return GameOptions.isHitSparkEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
-        if (idx == 4) {
+        if (idx == 3) {
             return GameOptions.isBombOverlayAlphaEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
-        if (idx == 5) {
+        if (idx == 4) {
             return GameOptions.isBossSpellCutInAlphaEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
-        if (idx == 6) {
+        if (idx == 5) {
             return GameOptions.isPlayerShotAlphaEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
         if (idx == MENU_RENDERING.length - 1) {

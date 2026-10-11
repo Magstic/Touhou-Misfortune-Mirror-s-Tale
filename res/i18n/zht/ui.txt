@@ -191,14 +191,12 @@ BOSS 炸彈護盾
 版頂道具蒐集
 返回
 - 相容設定 -
-Close-up
 HeavyBG
 Mystia Fade
 Alpha: BOMB Close-up
 Alpha: BOSS Close-up
 Alpha: Player Bullets
 Back
-特寫 漸入/漸出
 華麗的背景
 Stage2 暗幕 漸入/漸出
 半透明特寫

@@ -139,7 +139,7 @@ public final class Debug {
             boolean fpsEnabled, boolean perfEnabled, boolean resourceEnabled,
             int playX, int playY, int playW,
             BulletSystem bullets, int[][] enemylist, int[][] effectlist,
-            CcTable cc, int[][] effectTable, ImageBank imgs,
+            SpriteCatalog cc, int[][] effectTable, ImageBank imgs,
             String debugLine1, String debugLine2, String debugLine3, String debugLine4, String debugLine5) {
         if (g == null) {
             return;
@@ -456,7 +456,7 @@ public final class Debug {
     }
 
     private static String buildGhostSummaryLine(BulletSystem bullets, int[][] enemylist, int[][] effectlist,
-            CcTable cc, int[][] effectTable) {
+            SpriteCatalog cc, int[][] effectTable) {
         if (cc == null || bullets == null || enemylist == null || effectlist == null || effectTable == null) {
             return null;
         }
@@ -523,17 +523,17 @@ public final class Debug {
     }
 
     private static String buildGhostFirstLine(BulletSystem bullets, int[][] enemylist, int[][] effectlist,
-            CcTable cc, int[][] effectTable) {
+            SpriteCatalog cc, int[][] effectTable) {
         return buildGhostNthLine(0, bullets, enemylist, effectlist, cc, effectTable);
     }
 
     private static String buildGhostSecondLine(BulletSystem bullets, int[][] enemylist, int[][] effectlist,
-            CcTable cc, int[][] effectTable) {
+            SpriteCatalog cc, int[][] effectTable) {
         return buildGhostNthLine(1, bullets, enemylist, effectlist, cc, effectTable);
     }
 
     private static String buildGhostNthLine(int skipCount, BulletSystem bullets, int[][] enemylist, int[][] effectlist,
-            CcTable cc, int[][] effectTable) {
+            SpriteCatalog cc, int[][] effectTable) {
         if (cc == null || bullets == null || enemylist == null || effectlist == null || effectTable == null) {
             return null;
         }
@@ -644,7 +644,7 @@ public final class Debug {
         return "gh" + (skipCount + 1) + " " + t + " id" + bestId + " x" + (bestX >> 16) + " y" + (bestY >> 16);
     }
 
-    private static boolean spriteUsesGhostImage(CcTable cc, int spriteId) {
+    private static boolean spriteUsesGhostImage(SpriteCatalog cc, int spriteId) {
         if (cc == null) {
             return false;
         }

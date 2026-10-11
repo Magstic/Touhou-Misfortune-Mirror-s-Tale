@@ -52,13 +52,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     // Key bitmask for tenkey '#'.
     public static final int KEY_POUND_PRESSED = 1 << 29;
 
-    // Boss spell cut-in fade in/out.
-    private static final int BOSS_SPELL_CUTIN_PHASE_FADE_IN = 1;
-    private static final int BOSS_SPELL_CUTIN_PHASE_HOLD = 2;
-    private static final int BOSS_SPELL_CUTIN_PHASE_FADE_OUT = 3;
-    private static final int BOSS_SPELL_CUTIN_FADE_IN_FRAMES = 4;
-    private static final int BOSS_SPELL_CUTIN_FADE_OUT_FRAMES = 8;
-
     // Playfield bounds in logical coordinates.
     private static final int PLAY_X = 0;
     private static final int PLAY_Y = 8;
@@ -96,7 +89,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
     private final DropItemSystem.IconDrawer dropItemDrawer = new DropItemSystem.IconDrawer() {
         public void draw(Graphics g, int ccIndex, int x, int y) {
-            battleRenderer.drawCcIconSafe(battleRenderAccess, g, ccIndex, x, y);
+            sprites.draw(g, ccIndex, x, y);
         }
     };
 
@@ -190,7 +183,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     private final BossController bossController;
 
     // Sprite resources.
-    private BulletSprites bulletSprites;
+    private SpriteRenderer sprites;
 
     // Debug output strings.
     private String debugLine;
@@ -200,7 +193,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     private String debugLine5;
 
     // Global resource tables.
-    private CcTable cc;
+    private SpriteCatalog cc;
     private ImageBank imgs;
 
     private final ScoreSystem scoreSystem;
@@ -272,16 +265,12 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     // Bomb and spell cut-in state.
     private int bombCnt;
 
-    private int bossSpellCutInCnt;
+    private boolean bossSpellCutInActive;
     private int bossSpellCutInPrevBspellstep;
     private int bossSpellCutInStage;
     private int bossSpellCutInSpellId;
     private int bossSpellCutInChara;
     private int bossSpellCutInStartFi;
-    private int bossSpellCutInPhaseStartFi;
-
-    // Rendering option: if disabled, cut-in overlay skips fade-in/fade-out.
-    private boolean optDynamicCutInEnabled;
 
     // Rendering options: alpha rendering toggles.
     private boolean optBombOverlayAlphaEnabled;
@@ -358,65 +347,16 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     // Update boss spell cut-in state.
     private void bossSpellCutInTick() {
         int bspellstep = bossController.getBspellstep();
-
-        if (!optDynamicCutInEnabled) {
-            if (bossSpellCutInCnt != 0) {
-                if (bspellstep != 1) {
-                    bossSpellCutInCnt = 0;
-                }
-                bossSpellCutInPrevBspellstep = bspellstep;
-                return;
-            }
-
-            if (bossSpellCutInPrevBspellstep == 0 && bspellstep == 1) {
-                int mt = resolveBossMtForCutIn();
-                bossSpellCutInCnt = BOSS_SPELL_CUTIN_PHASE_HOLD;
-                bossSpellCutInStage = mStage;
-                bossSpellCutInSpellId = bossController.getSpellId();
-                bossSpellCutInChara = resolveBossCharaForCutIn(mStage, mt, bossSpellCutInSpellId);
-                bossSpellCutInStartFi = fi;
-                bossSpellCutInPhaseStartFi = fi;
-            }
-
-            bossSpellCutInPrevBspellstep = bspellstep;
-            return;
-        }
-
-        if (bossSpellCutInCnt != 0) {
-            int dt = fi - bossSpellCutInPhaseStartFi;
-            if (dt < 0) {
-                dt = 0;
-            }
-
-            if (bossSpellCutInCnt == BOSS_SPELL_CUTIN_PHASE_FADE_IN) {
-                if (dt >= BOSS_SPELL_CUTIN_FADE_IN_FRAMES) {
-                    bossSpellCutInCnt = BOSS_SPELL_CUTIN_PHASE_HOLD;
-                }
-            } else if (bossSpellCutInCnt == BOSS_SPELL_CUTIN_PHASE_FADE_OUT) {
-                if (dt >= BOSS_SPELL_CUTIN_FADE_OUT_FRAMES) {
-                    bossSpellCutInCnt = 0;
-                }
-            }
-
-            if (bossSpellCutInCnt != 0 && bossSpellCutInCnt != BOSS_SPELL_CUTIN_PHASE_FADE_OUT && bspellstep != 1) {
-                bossSpellCutInCnt = BOSS_SPELL_CUTIN_PHASE_FADE_OUT;
-                bossSpellCutInPhaseStartFi = fi;
-            }
-
-            bossSpellCutInPrevBspellstep = bspellstep;
-            return;
-        }
-
-        if (bossSpellCutInPrevBspellstep == 0 && bspellstep == 1) {
+        if (bossSpellCutInActive) {
+            if (bspellstep != 1) bossSpellCutInActive = false;
+        } else if (bossSpellCutInPrevBspellstep == 0 && bspellstep == 1) {
             int mt = resolveBossMtForCutIn();
-            bossSpellCutInCnt = BOSS_SPELL_CUTIN_PHASE_FADE_IN;
+            bossSpellCutInActive = true;
             bossSpellCutInStage = mStage;
             bossSpellCutInSpellId = bossController.getSpellId();
             bossSpellCutInChara = resolveBossCharaForCutIn(mStage, mt, bossSpellCutInSpellId);
             bossSpellCutInStartFi = fi;
-            bossSpellCutInPhaseStartFi = fi;
         }
-
         bossSpellCutInPrevBspellstep = bspellstep;
     }
 
@@ -632,10 +572,10 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         bossController.reset();
 
         try {
-            CcTable cc = CcTable.load();
-            ImageBank imgs = new ImageBank();
-            bulletSprites = new BulletSprites(cc, imgs);
-            bullets.setSprites(bulletSprites);
+            SpriteCatalog cc = SpriteCatalog.load();
+            ImageBank imgs = new ImageBank(cc);
+            sprites = new SpriteRenderer(cc, imgs);
+            bullets.setSprites(sprites);
             bullets.setEnemies(enemies);
             bullets.setEffectSpawner(new BulletSystem.EffectSpawner() {
                 public void spawnEffect(int effectId, int xFixed, int yFixed) {
@@ -660,7 +600,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             // Title BGM (00): request once; actual start is driven by polling tick().
             audioSystem.requestBgm(0, true);
 
-            ui = new UiController(imgs, bulletSprites, new UiController.Listener() {
+            ui = new UiController(imgs, sprites, new UiController.Listener() {
                 public void onStartGameRequested(int gamemode, int level, int chara, int type, int startStage, boolean pracBoss) {
                     startGame(gamemode, level, chara, type, startStage, pracBoss);
                 }
@@ -885,7 +825,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         fi = 0;
         shooting = true;
         bombCnt = 0;
-        bossSpellCutInCnt = 0;
+        bossSpellCutInActive = false;
         bossSpellCutInPrevBspellstep = 0;
         bossSpellCutInStage = 0;
         bossSpellCutInSpellId = -1;
@@ -932,7 +872,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
     private void createSessionPlayer() {
         if (cc != null) {
-            player = new Player(cc, session.getCharacter(), session.getShotType(), PLAY_X + (PLAY_W / 2), PLAY_Y + PLAY_H - 28);
+            player = new Player(session.getCharacter(), session.getShotType(), PLAY_X + (PLAY_W / 2), PLAY_Y + PLAY_H - 28);
         } else {
             player = null;
         }
@@ -1162,14 +1102,12 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
                 + " y=" + (enemylist[si][6] >> 16);
     }
 
-    // Format a cc.dat row for debug output.
-    private static String formatCcRow(CcTable cc, int bulletId) {
+    // Format logical sprite geometry for debug output.
+    private static String formatCcRow(SpriteCatalog cc, int bulletId) {
         if (!cc.hasSpriteMeta(bulletId)) {
             return "cc[" + bulletId + "]=<none>";
         }
         int imgIndex = cc.getImgIndex(bulletId);
-        int srcX = cc.getSrcX(bulletId);
-        int srcY = cc.getSrcY(bulletId);
         int w = cc.getW(bulletId);
         int h = cc.getH(bulletId);
         int ax = cc.getAx(bulletId);
@@ -1180,10 +1118,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         sb.append(bulletId);
         sb.append("] img=");
         sb.append(imgIndex);
-        sb.append(" src=");
-        sb.append(srcX);
-        sb.append(',');
-        sb.append(srcY);
         sb.append(" wh=");
         sb.append(w);
         sb.append('x');
@@ -1529,8 +1463,8 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         return imgs;
     }
 
-    public BulletSprites battleFlowBulletSprites() {
-        return bulletSprites;
+    public SpriteRenderer battleFlowSprites() {
+        return sprites;
     }
 
     public SpellPracticeEndScreen battleFlowSpellPracticeEndScreen() {
@@ -1775,8 +1709,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     }
 
     public void stageHostDrawCcIconSafe(Graphics g, int spriteId, int x, int y) {
-        // Delegate cc.dat icon drawing to BattleRenderer to keep GameCore render-free.
-        battleRenderer.drawCcIconSafe(battleRenderAccess, g, spriteId, x, y);
+        sprites.draw(g, spriteId, x, y);
     }
 
     // BossController.Host bridge helpers (used by BattleBossHost).
@@ -2208,8 +2141,8 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         return imgs;
     }
 
-    BulletSprites sceneBulletSprites() {
-        return bulletSprites;
+    SpriteRenderer sceneSprites() {
+        return sprites;
     }
 
     UiController sceneUi() {
@@ -2853,8 +2786,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         scoreSystem.attachHud(m);
         int[] opt = GameOptions.load();
 
-        optDynamicCutInEnabled = GameOptions.isDynamicCutInEnabled(opt);
-
         optBombOverlayAlphaEnabled = GameOptions.isBombOverlayAlphaEnabled(opt);
         optBossSpellCutInAlphaEnabled = GameOptions.isBossSpellCutInAlphaEnabled(opt);
         optPlayerShotAlphaEnabled = GameOptions.isPlayerShotAlphaEnabled(opt);
@@ -2869,8 +2800,8 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         optDebugPerfEnabled = GameOptions.isDebugPerfEnabled(opt);
         optDebugResourceEnabled = GameOptions.isDebugResourceEnabled(opt);
 
-        if (bulletSprites != null) {
-            bulletSprites.setPlayerShotAlphaEnabled(optPlayerShotAlphaEnabled);
+        if (sprites != null) {
+            bullets.setPlayerShotAlphaEnabled(optPlayerShotAlphaEnabled);
         }
 
         // Cheat is ignored in spell practice (no bomb usage in this mode).
@@ -3649,7 +3580,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             this.core = core;
         }
 
-        public CcTable cc() {
+        public SpriteCatalog cc() {
             return core.cc;
         }
 
@@ -3669,8 +3600,8 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             return core.imgs;
         }
 
-        public BulletSprites bulletSprites() {
-            return core.bulletSprites;
+        public SpriteRenderer sprites() {
+            return core.sprites;
         }
 
         public BattleHudData hud() {
@@ -3822,8 +3753,8 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             return core.stageRuntime.getDialogueScrollY();
         }
 
-        public int bossSpellCutInCnt() {
-            return core.bossSpellCutInCnt;
+        public boolean bossSpellCutInActive() {
+            return core.bossSpellCutInActive;
         }
 
         public int bossSpellCutInStage() {
@@ -3836,14 +3767,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
         public int bossSpellCutInStartFi() {
             return core.bossSpellCutInStartFi;
-        }
-
-        public int bossSpellCutInPhaseStartFi() {
-            return core.bossSpellCutInPhaseStartFi;
-        }
-
-        public boolean dynamicCutInEnabled() {
-            return core.optDynamicCutInEnabled;
         }
 
         public boolean bombOverlayAlphaEnabled() {

@@ -4,7 +4,7 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
-import touhou.BulletSprites;
+import touhou.SpriteRenderer;
 import touhou.GameOptions;
 import touhou.ImageBank;
 import touhou.i18n.TextId;
@@ -157,7 +157,7 @@ public final class StageClearResultPanel {
 
     // Update stage clear panel with preloading support.
     // nextStage: 0..5 for Stage1..Stage6, or -1 if unavailable.
-    public Result updateWithStagePreload(int pressed, int nextStage, int chara, int type, ImageBank imgs, BulletSprites sprites) {
+    public Result updateWithStagePreload(int pressed, int nextStage, int chara, int type, ImageBank imgs, SpriteRenderer sprites) {
         replayAnimationTick++;
         if (mode == MODE_FINAL) {
             return updateFinal(pressed);
@@ -226,7 +226,7 @@ public final class StageClearResultPanel {
         return updateStageClearWithPreload(pressed, -1, 0, 0, null, null);
     }
 
-    private Result updateStageClearWithPreload(int pressed, int nextStage, int chara, int type, ImageBank imgs, BulletSprites sprites) {
+    private Result updateStageClearWithPreload(int pressed, int nextStage, int chara, int type, ImageBank imgs, SpriteRenderer sprites) {
         if (scene == SCENE_MAIN) {
             if (!leaving && slide >= SLIDE_MAX) {
                 if (UiInput.dismiss(pressed)) {
@@ -243,7 +243,7 @@ public final class StageClearResultPanel {
                         stagePreloader.setPlayerShotAlphaEnabled(playerShotAlphaEnabled);
                         stagePreloader.setBossSpellCutInAlphaEnabled(bossSpellCutInAlphaEnabled);
                         stagePreloader.setBombOverlayAlphaEnabled(bombOverlayAlphaEnabled);
-                        stagePreloader.enter(nextStage, chara, type);
+                        stagePreloader.enter(nextStage, chara);
                         int guard = stagePreloader.getStepMax() + 4;
                         for (int i = 0; i < guard && !stagePreloader.isDone(); i++) {
                             stagePreloader.update(imgs, sprites);
@@ -301,7 +301,7 @@ public final class StageClearResultPanel {
         return null;
     }
 
-    public void render(Graphics g, BulletSprites sprites) {
+    public void render(Graphics g, SpriteRenderer sprites) {
         if (g == null) {
             return;
         }
@@ -313,7 +313,7 @@ public final class StageClearResultPanel {
         }
     }
 
-    private void renderFinal(Graphics g, BulletSprites sprites) {
+    private void renderFinal(Graphics g, SpriteRenderer sprites) {
         // DoJa  jf(): full screen gradation + centered layout.
         ReplayUi.renderBackground(g, sprites);
         UiDraw.drawGradation(g, 0, 0, 240, 240, 0, 16736609, 32);
@@ -347,7 +347,7 @@ public final class StageClearResultPanel {
     }
 
 
-    private void renderFinalReplayOverlay(Graphics g, BulletSprites sprites) {
+    private void renderFinalReplayOverlay(Graphics g, SpriteRenderer sprites) {
         // Replay overlay for final result.
         // Keep the replay list visible even when showing save result popup.
         ReplayUi.renderBackground(g, sprites);
@@ -375,7 +375,7 @@ public final class StageClearResultPanel {
         }
     }
 
-    private void renderStageClear(Graphics g, BulletSprites sprites) {
+    private void renderStageClear(Graphics g, SpriteRenderer sprites) {
         renderBackgroundSweep(g);
 
         if (!leaving) {
@@ -400,7 +400,7 @@ public final class StageClearResultPanel {
     }
 
     // Draw character portrait overlay (cc.dat id 193/194/195) with fade-in.
-    private void renderPortrait(Graphics g, BulletSprites sprites) {
+    private void renderPortrait(Graphics g, SpriteRenderer sprites) {
         if (sprites == null) {
             return;
         }
@@ -423,8 +423,8 @@ public final class StageClearResultPanel {
         int y = 206;
         int alpha = 255 - (128 * subsecCount) / 10;
 
-        sprites.drawAlpha(g, id, x, y, alpha);
-        sprites.drawAlpha(g, id, x, y, alpha);
+        sprites.drawAlpha(g, id, x, y, UiDraw.spriteAlpha(alpha));
+        sprites.drawAlpha(g, id, x, y, UiDraw.spriteAlpha(alpha));
     }
 
     // DoJa : a(Graphics, 0, 8, 194, 234) driven by slide (a.b).
@@ -608,7 +608,7 @@ public final class StageClearResultPanel {
         slots.reload();
     }
 
-    private void renderReplayOverlay(Graphics g, BulletSprites sprites) {
+    private void renderReplayOverlay(Graphics g, SpriteRenderer sprites) {
         boolean showList = (scene == SCENE_REPLAY_SLOT || scene == SCENE_REPLAY_OK || scene == SCENE_REPLAY_FAIL);
         if (!showList) {
             return;

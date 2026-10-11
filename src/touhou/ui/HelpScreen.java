@@ -2,10 +2,9 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.Image;
 
-import touhou.CcTable;
-import touhou.ImageBank;
+import touhou.SpriteRenderer;
+import touhou.SpriteSheetCatalog;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 
@@ -23,9 +22,6 @@ public final class HelpScreen {
 
     private int page;
     private int pageMax;
-
-    private static CcTable cc;
-    private static boolean ccLoaded;
 
     public void enter() {
         page = 0;
@@ -50,7 +46,7 @@ public final class HelpScreen {
         return null;
     }
 
-    public void render(Graphics g, ImageBank imgs) {
+    public void render(Graphics g, SpriteRenderer sprites) {
         if (g == null) {
             return;
         }
@@ -69,17 +65,10 @@ public final class HelpScreen {
         // Title is i18n. Page number is dynamic.
         UiDraw.drawString2(g, font, UiText.get(TextId.HELP_TITLE_PREFIX) + (page + 1) + "/" + pageMax + UiText.get(TextId.HELP_PAGE_SUFFIX), 120, 25, 1, 0xFFFFFF, 0x777777);
 
-        renderPage(g, font, imgs, page);
+        renderPage(g, font, sprites, page);
 
-        Image ui = (imgs != null) ? imgs.get(1) : null;
-        if (ui != null) {
-            if (page != 0) {
-                UiDraw.drawRegion(g, ui, 20, 25, 0, 212, 8, 12);
-            }
-            if (page != pageMax - 1) {
-                UiDraw.drawRegion(g, ui, 214, 25, 8, 212, 8, 12);
-            }
-        }
+        if (page != 0) sprites.draw(g, SpriteSheetCatalog.HELP_ARROW_BASE, 20, 25);
+        if (page != pageMax - 1) sprites.draw(g, SpriteSheetCatalog.HELP_ARROW_BASE + 1, 214, 25);
     }
 
     private static void drawPlain(Graphics g, Font font, String s, int x, int y, int rgb) {
@@ -103,7 +92,7 @@ public final class HelpScreen {
         return TextId.HELP_PAGE_HEADER_0 + page;
     }
 
-    private static void renderPage(Graphics g, Font font, ImageBank imgs, int page) {
+    private static void renderPage(Graphics g, Font font, SpriteRenderer sprites, int page) {
         UiDraw.drawString2(g, font, UiText.get(pageHeaderId(page)), 120, 44, 1, 0xFF0000, 0x770000);
         switch (page) {
             case 0:
@@ -160,35 +149,35 @@ public final class HelpScreen {
                 return;
 
             case 4:
-                drawCcIcon(g, imgs, 120, 25, 53);
+                sprites.draw(g, 120, 25, 53);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_LABEL_P_SMALL, 40, 58, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_DESC_P_SMALL_1, 20, 72, 0xFFFFFF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_DESC_P_SMALL_2, 20, 86, 0xFFFFFF);
 
-                drawCcIcon(g, imgs, 111, 25, 102);
+                sprites.draw(g, 111, 25, 102);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_LABEL_POINT, 40, 107, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_DESC_POINT_1, 20, 121, 0xFFFFFF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_DESC_POINT_2, 20, 135, 0xFFFFFF);
 
-                drawCcIcon(g, imgs, 129, 26, 151);
+                sprites.draw(g, 129, 26, 151);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_LABEL_P_BIG, 40, 156, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_DESC_P_BIG, 20, 170, 0xFFFFFF);
 
-                drawCcIcon(g, imgs, 138, 26, 186);
+                sprites.draw(g, 138, 26, 186);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_LABEL_F, 40, 191, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_DESC_F, 20, 205, 0xFFFFFF);
                 return;
 
             case 5:
-                drawCcIcon(g, imgs, 147, 26, 53);
+                sprites.draw(g, 147, 26, 53);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_LABEL_B, 40, 58, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_DESC_B, 20, 72, 0xFFFFFF);
 
-                drawCcIcon(g, imgs, 156, 26, 87);
+                sprites.draw(g, 156, 26, 87);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_LABEL_1UP, 40, 93, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_DESC_1UP, 20, 107, 0xFFFFFF);
 
-                drawCcIcon(g, imgs, 165, 26, 123);
+                sprites.draw(g, 165, 26, 123);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_LABEL_STAR, 40, 128, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_DESC_STAR_1, 20, 142, 0xFFFFFF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_DESC_STAR_2, 20, 156, 0xFFFFFF);
@@ -314,93 +303,4 @@ public final class HelpScreen {
         }
     }
 
-    private static void ensureCcLoaded() {
-        if (ccLoaded) {
-            return;
-        }
-        ccLoaded = true;
-        try {
-            cc = CcTable.load();
-        } catch (Throwable t) {
-            cc = null;
-        }
-    }
-
-    private static void drawCcIcon(Graphics g, ImageBank imgs, int ccIndex, int x, int y) {
-        if (g == null || imgs == null) {
-            return;
-        }
-        ensureCcLoaded();
-        if (cc == null) {
-            return;
-        }
-        if (!cc.hasSpriteMeta(ccIndex)) {
-            return;
-        }
-
-        int imgIndex = cc.getImgIndex(ccIndex);
-        int srcX = cc.getSrcX(ccIndex);
-        int srcY = cc.getSrcY(ccIndex);
-        int w = cc.getW(ccIndex);
-        int h = cc.getH(ccIndex);
-        int ax = cc.getAx(ccIndex);
-        int ay = cc.getAy(ccIndex);
-
-        srcX = imgs.toPhysicalSourceX(imgIndex, srcX);
-        srcY = imgs.toPhysicalSourceY(imgIndex, srcY);
-
-        Image img = imgs.get(imgIndex);
-        if (img == null) {
-            return;
-        }
-
-        drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay);
-    }
-
-    private static boolean drawRegionSafe(Graphics g, Image img, int x, int y, int srcX, int srcY, int w, int h, int ax, int ay) {
-        if (img == null) {
-            return false;
-        }
-        if (w <= 0 || h <= 0) {
-            return false;
-        }
-
-        int imgW = img.getWidth();
-        int imgH = img.getHeight();
-        if (srcX >= imgW || srcY >= imgH) {
-            return false;
-        }
-
-        int dx = x - ax;
-        int dy = y - ay;
-
-        if (srcX < 0) {
-            int cut = -srcX;
-            srcX = 0;
-            dx += cut;
-            w -= cut;
-        }
-        if (srcY < 0) {
-            int cut = -srcY;
-            srcY = 0;
-            dy += cut;
-            h -= cut;
-        }
-        if (w <= 0 || h <= 0) {
-            return false;
-        }
-
-        if (srcX + w > imgW) {
-            w = imgW - srcX;
-        }
-        if (srcY + h > imgH) {
-            h = imgH - srcY;
-        }
-        if (w <= 0 || h <= 0) {
-            return false;
-        }
-
-        UiDraw.drawRegion(g, img, dx, dy, srcX, srcY, w, h);
-        return true;
-    }
 }

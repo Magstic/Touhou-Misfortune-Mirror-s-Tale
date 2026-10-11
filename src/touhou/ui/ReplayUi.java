@@ -4,7 +4,7 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
-import touhou.BulletSprites;
+import touhou.SpriteRenderer;
 import touhou.ImageBank;
 import touhou.i18n.SpellText;
 import touhou.i18n.TextId;
@@ -17,7 +17,7 @@ final class ReplayUi {
     private ReplayUi() {
     }
 
-    static void renderBackground(Graphics g, BulletSprites sprites) {
+    static void renderBackground(Graphics g, SpriteRenderer sprites) {
         renderBackground(g, sprites == null ? null : sprites.getImages());
     }
 

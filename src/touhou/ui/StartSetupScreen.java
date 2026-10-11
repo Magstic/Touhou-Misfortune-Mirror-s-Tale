@@ -3,7 +3,8 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
-import touhou.BulletSprites;
+import touhou.SpriteSheetCatalog;
+import touhou.SpriteRenderer;
 import touhou.ImageBank;
 import touhou.GameProgress;
 import touhou.UnlockFlags;
@@ -285,7 +286,7 @@ public final class StartSetupScreen {
         return null;
     }
 
-    public void render(Graphics g, ImageBank imgs, BulletSprites sprites) {
+    public void render(Graphics g, ImageBank imgs, SpriteRenderer sprites) {
         if (imgs == null) {
             return;
         }
@@ -304,7 +305,7 @@ public final class StartSetupScreen {
         renderTopHints(g);
         renderDifficulty(g, sprites);
         renderChara(g, sprites);
-        renderStageBlocks(g, imgs);
+        renderStageBlocks(g, sprites);
         renderPracticeLabel(g);
         renderFadeOut(g);
     }
@@ -331,7 +332,7 @@ private void renderTopHints(Graphics g) {
         }
     }
 
-    private void renderDifficulty(Graphics g, BulletSprites sprites) {
+    private void renderDifficulty(Graphics g, SpriteRenderer sprites) {
         if (sprites == null) {
             return;
         }
@@ -385,11 +386,11 @@ private void renderTopHints(Graphics g) {
             if (gamemode == 1) {
                 id = 476;
             }
-            sprites.drawAlpha(g, id, 120, y, alpha);
+            sprites.drawAlpha(g, id, 120, y, UiDraw.spriteAlpha(alpha));
         }
     }
 
-    private void renderDifficultyHighlight(Graphics g, BulletSprites sprites) {
+    private void renderDifficultyHighlight(Graphics g, SpriteRenderer sprites) {
         int id = 472 + sLevel;
         if (gamemode == 1) {
             id = 476;
@@ -415,7 +416,7 @@ private void renderTopHints(Graphics g) {
         UiDraw.drawGradationAlpha(g, 0, 120, 240, dist, 0xFFFFFF, color, 24, 96);
     }
 
-    private void renderChara(Graphics g, BulletSprites sprites) {
+    private void renderChara(Graphics g, SpriteRenderer sprites) {
         if (sprites == null) {
             return;
         }
@@ -632,7 +633,7 @@ private void renderTopHints(Graphics g) {
         }
     }
 
-    private void renderStageBlocks(Graphics g, ImageBank imgs) {
+    private void renderStageBlocks(Graphics g, SpriteRenderer sprites) {
         if (gamemode == 1) {
             return;
         }
@@ -640,8 +641,7 @@ private void renderTopHints(Graphics g) {
             return;
         }
 
-        javax.microedition.lcdui.Image img = imgs.get(11);
-        if (img == null) {
+        if (sprites == null) {
             return;
         }
 
@@ -660,9 +660,9 @@ private void renderTopHints(Graphics g) {
             int x = xBase + m;
             int y = n20;
 
-            UiDraw.drawRegion(g, img, x, y, 0, 0, 105, 26);
-            UiDraw.drawRegion(g, img, x + 21, y + 6, 0, 52, 50, 14);
-            UiDraw.drawRegion(g, img, x + 76, y + 7, 50 + (k << 3), 54, 8, 12);
+            sprites.draw(g, SpriteSheetCatalog.SETUP_BLOCK_BASE + 0, x, y);
+            sprites.draw(g, SpriteSheetCatalog.SETUP_BLOCK_BASE + 1, x + 21, y + 6);
+            sprites.draw(g, SpriteSheetCatalog.SETUP_DIGIT_BASE + k, x + 76, y + 7);
 
             if (k != startStage) {
                 UiDraw.fillRectAlpha(g, x, y, 105, 26, 0x000000, 96);
@@ -673,11 +673,11 @@ private void renderTopHints(Graphics g) {
                 int by = y + 20;
                 int bx1 = x + (n21 >> 1) - 23 + 54 - 26 + effectC;
 
-                UiDraw.drawRegion(g, img, bx0, by, 0, 26, 52, 26);
-                UiDraw.drawRegion(g, img, bx0 + 9, by + 6, 52, 26, 34, 14);
+                sprites.draw(g, SpriteSheetCatalog.SETUP_BLOCK_BASE + 2, bx0, by);
+                sprites.draw(g, SpriteSheetCatalog.SETUP_BLOCK_BASE + 3, bx0 + 9, by + 6);
 
-                UiDraw.drawRegion(g, img, bx1, by, 0, 26, 52, 26);
-                UiDraw.drawRegion(g, img, bx1 + 9, by + 6, 52, 40, 34, 14);
+                sprites.draw(g, SpriteSheetCatalog.SETUP_BLOCK_BASE + 2, bx1, by);
+                sprites.draw(g, SpriteSheetCatalog.SETUP_BLOCK_BASE + 4, bx1 + 9, by + 6);
 
                 if (pracBoss) {
                     UiDraw.fillRectAlpha(g, bx0, by, 52, 26, 0x000000, 96);

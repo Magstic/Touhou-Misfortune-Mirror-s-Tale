@@ -1,6 +1,5 @@
 package touhou;
 
-import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
 public final class ImageBank {
@@ -19,6 +18,7 @@ public final class ImageBank {
                     0x6C9C1F, 0xA1CA1F, 0x273C07 },
     };
 
+    private final SpriteCatalog catalog;
     private final Image[] images;
 
     private final Image[] alphaImageCacheImg;
@@ -54,8 +54,9 @@ public final class ImageBank {
     private int perfAlphaKeyHit;
     private int perfAlphaKeyCreate;
 
-    public ImageBank() {
-        images = new Image[SpriteSheetCatalog.IMAGE_COUNT];
+    public ImageBank(SpriteCatalog catalog) {
+        this.catalog = catalog;
+        images = new Image[catalog.imageCount()];
 
         alphaImageCacheImg = new Image[24];
         alphaImageCacheImgIndex = new int[24];
@@ -81,86 +82,30 @@ public final class ImageBank {
 
     public Image get(int imgIndex) {
         if (imgIndex < 0 || imgIndex >= images.length) {
-            return null;
+            throw new IllegalArgumentException("imageIndex=" + imgIndex);
         }
         Image cached = images[imgIndex];
-        if (cached != null) {
-            return cached;
-        }
-
-        // StageEX color variants: generate directly from base, no GIF file needed.
-        if (isStageExVariantIndex(imgIndex)) {
-            Image variant = buildStageExVariant(imgIndex);
-            if (variant != null) {
-                images[imgIndex] = variant;
-                return variant;
+        if (cached != null) return cached;
+        Image img;
+        if (catalog.variantBase(imgIndex) >= 0) {
+            img = buildStageExVariantFromBase(catalog.variantBase(imgIndex), catalog.variantPalette(imgIndex));
+            if (img == null) {
+                recoverForImageLoad();
+                img = buildStageExVariantFromBase(catalog.variantBase(imgIndex), catalog.variantPalette(imgIndex));
             }
-            return null;
+        } else {
+            img = ResourceLoader.loadOptionalImage(catalog.imagePath(imgIndex));
+            if (img == null) {
+                recoverForImageLoad();
+                img = ResourceLoader.loadOptionalImage(catalog.imagePath(imgIndex));
+            }
         }
-
-        String path = SpriteSheetCatalog.get(imgIndex).getPath();
-
-        Image img = loadByPath(path);
-        if (img == null) {
-            recoverForImageLoad();
-            img = loadByPath(path);
+        if (img == null) throw new ResourceException("Cannot load sprite image: " + imgIndex);
+        if (img.getWidth() != catalog.imageWidth(imgIndex) || img.getHeight() != catalog.imageHeight(imgIndex)) {
+            throw new ResourceException("Sprite image size mismatch: " + imgIndex);
         }
-        if (img != null) {
-            images[imgIndex] = img;
-        }
+        images[imgIndex] = img;
         return img;
-    }
-
-    public boolean draw(Graphics graphics, int imgIndex, int x, int y, int anchor) {
-        if (graphics == null) {
-            return false;
-        }
-        Image image = get(imgIndex);
-        if (image == null) {
-            return false;
-        }
-        SpriteSheetLayout layout = SpriteSheetCatalog.get(imgIndex);
-        int drawX = layout.toPhysicalDestinationX(x);
-        int drawY = layout.toPhysicalDestinationY(y);
-        if ((anchor & Graphics.RIGHT) != 0) {
-            drawX += image.getWidth() - layout.getLogicalWidth();
-        } else if ((anchor & Graphics.HCENTER) != 0) {
-            drawX += (image.getWidth() - layout.getLogicalWidth()) >> 1;
-        }
-        if ((anchor & Graphics.BOTTOM) != 0) {
-            drawY += image.getHeight() - layout.getLogicalHeight();
-        } else if ((anchor & Graphics.VCENTER) != 0) {
-            drawY += (image.getHeight() - layout.getLogicalHeight()) >> 1;
-        }
-        graphics.drawImage(image, drawX, drawY, anchor);
-        return true;
-    }
-
-    public boolean drawRegion(Graphics graphics, int imgIndex, int srcX, int srcY, int width, int height,
-            int transform, int x, int y, int anchor) {
-        if (graphics == null || width <= 0 || height <= 0) {
-            return false;
-        }
-        Image image = get(imgIndex);
-        if (image == null) {
-            return false;
-        }
-        SpriteSheetLayout layout = SpriteSheetCatalog.get(imgIndex);
-        int physicalX = layout.toPhysicalSourceX(srcX);
-        int physicalY = layout.toPhysicalSourceY(srcY);
-        if (physicalX < 0 || physicalY < 0 || physicalX + width > image.getWidth() || physicalY + height > image.getHeight()) {
-            return false;
-        }
-        graphics.drawRegion(image, physicalX, physicalY, width, height, transform, x, y, anchor);
-        return true;
-    }
-
-    public int toPhysicalSourceX(int imgIndex, int logicalX) {
-        return SpriteSheetCatalog.get(imgIndex).toPhysicalSourceX(logicalX);
-    }
-
-    public int toPhysicalSourceY(int imgIndex, int logicalY) {
-        return SpriteSheetCatalog.get(imgIndex).toPhysicalSourceY(logicalY);
     }
 
     public Image getAlphaImageColorKey(int imgIndex, int alpha, int keyRgb) {
@@ -296,7 +241,7 @@ public final class ImageBank {
         return img;
     }
 
-    public Image getAlphaRegion(int imgIndex, int srcX, int srcY, int w, int h, int alpha) {
+    Image getAlphaRegion(int imgIndex, int srcX, int srcY, int w, int h, int alpha) {
         if (w <= 0 || h <= 0) {
             return null;
         }
@@ -314,9 +259,8 @@ public final class ImageBank {
             return null;
         }
 
-        SpriteSheetLayout layout = SpriteSheetCatalog.get(imgIndex);
-        int physicalX = layout.toPhysicalSourceX(srcX);
-        int physicalY = layout.toPhysicalSourceY(srcY);
+        int physicalX = srcX;
+        int physicalY = srcY;
         if (physicalX < 0 || physicalY < 0) {
             return null;
         }
@@ -471,34 +415,12 @@ public final class ImageBank {
         System.gc();
     }
 
-    private static Image loadByPath(String path) {
-        return tryLoad(path);
-    }
-
-    private static Image tryLoad(String path) {
-        return ResourceLoader.loadOptionalImage(path);
-    }
-
-    private static boolean isStageExVariantIndex(int imgIndex) {
-        return (imgIndex >= 78 && imgIndex <= 80) || (imgIndex >= 82 && imgIndex <= 84);
-    }
-
-    private Image buildStageExVariant(int imgIndex) {
-        if (imgIndex >= 78 && imgIndex <= 80) {
-            return buildStageExVariantFromBase(77, imgIndex - 78);
-        }
-        if (imgIndex >= 82 && imgIndex <= 84) {
-            return buildStageExVariantFromBase(81, (imgIndex - 82) + 3);
-        }
-        return null;
-    }
-
     private Image buildStageExVariantFromBase(int baseImgIndex, int tdIndex) {
         if (tdIndex < 0 || tdIndex >= STAGEEX_TD.length) {
             return null;
         }
 
-        String basePath = SpriteSheetCatalog.get(baseImgIndex).getPath();
+        String basePath = catalog.imagePath(baseImgIndex);
         byte[] base = ResourceLoader.readOptionalBytes(basePath);
         if (base == null) {
             return null;

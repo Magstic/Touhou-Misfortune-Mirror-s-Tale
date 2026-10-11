@@ -34,8 +34,6 @@ public final class Player {
     private final int chara;
     private final int type;
 
-    private final int spriteId;
-
     // Current position (fixed-point).
     private int x;
     private int y;
@@ -90,7 +88,7 @@ public final class Player {
     private final int[] optAimPower = new int[4];
 
     // Initialize player state and option defaults.
-    public Player(CcTable cc, int chara, int type, int startX, int startY) {
+    public Player(int chara, int type, int startX, int startY) {
         this.chara = chara;
         this.type = type;
         this.x = Fixed.fromInt(startX);
@@ -131,9 +129,6 @@ public final class Player {
         optlr = 0;
 
         aliceTarget = -1;
-
-        int imgIndex = imgIndexForChara(chara);
-        this.spriteId = findSpriteId(cc, imgIndex, 12, 40, 0, 64);
     }
 
     // Slow mode toggles.
@@ -892,35 +887,11 @@ public final class Player {
 
     // Advance animation frame timing.
     private void fd() {
-        animeCnt++;
         short[] list = ANIMELIST[animeId];
-        int idx = animeNo * 3;
-        if (idx < 0 || idx >= list.length) {
-            animeNo = 0;
-            idx = 0;
+        animeCnt++;
+        if (animeCnt > list[animeNo * 2]) {
             animeCnt = 0;
-        }
-        if ((list[idx] & 0xFF) < animeCnt) {
-            animeNo++;
-            animeCnt = 0;
-            idx = animeNo * 3;
-            if (idx < 0 || idx >= list.length) {
-                animeNo = 0;
-                idx = 0;
-            }
-        }
-        if (idx < list.length && (list[idx] & 0xFF) == 254) {
-            animeNo = 0;
-        }
-        if (idx < list.length && (list[idx] & 0xFF) == 255) {
-            int next = 0;
-            if (idx + 1 < list.length) {
-                next = list[idx + 1] & 0xFFFF;
-            }
-            if (next >= 0 && next < ANIMELIST.length) {
-                animeId = next;
-            }
-            animeNo = 0;
+            animeNo = (animeNo + 1) % (list.length / 2);
         }
     }
 
@@ -1511,7 +1482,7 @@ public final class Player {
     }
 
     // Draw options, player sprite, and slow aura.
-    public void render(Graphics g, BulletSprites sprites) {
+    public void render(Graphics g, SpriteRenderer sprites, boolean playerShotAlphaEnabled) {
         if (g == null) {
             return;
         }
@@ -1528,16 +1499,16 @@ public final class Player {
                 int y1 = Fixed.toInt(optcy[1]);
                 int x0 = Fixed.toInt(optcx[0]);
                 int y0 = Fixed.toInt(optcy[0]);
-                sprites.draw(g, 27 + (tick & 0x3), x1, y1, false);
-                sprites.draw(g, 27 + (3 - ((tick + 1) & 0x3)), x0, y0, false);
+                sprites.draw(g, 27 + (tick & 0x3), x1, y1);
+                sprites.draw(g, 27 + (3 - ((tick + 1) & 0x3)), x0, y0);
             } else if (chara == 1) {
                 int id = 100 + optSpriteLv;
                 int x1 = Fixed.toInt(optcx[1]);
                 int y1 = Fixed.toInt(optcy[1]);
                 int x0 = Fixed.toInt(optcx[0]);
                 int y0 = Fixed.toInt(optcy[0]);
-                sprites.draw(g, id, x1, y1, true);
-                sprites.draw(g, id, x0, y0, true);
+                sprites.drawAlpha(g, id, x1, y1, playerShotAlphaEnabled ? 128 : 255);
+                sprites.drawAlpha(g, id, x0, y0, playerShotAlphaEnabled ? 128 : 255);
             } else {
                 int id = 731;
                 if (type == 0) {
@@ -1550,57 +1521,18 @@ public final class Player {
                 }
                 for (int i = 0; i < optLv; i++) {
                     if (optrad[i] > 0) {
-                        sprites.draw(g, id, Fixed.toInt(optcx[i]), Fixed.toInt(optcy[i]), false);
+                        sprites.draw(g, id, Fixed.toInt(optcx[i]), Fixed.toInt(optcy[i]));
                     }
                 }
             }
         }
 
-        boolean drawn = false;
         if (sprites != null) {
-            ImageBank imgs = sprites.getImages();
-            if (imgs != null) {
-                int imgIndex = 8 + chara;
-                short[] list = ANIMELIST[animeId];
-                int idx = animeNo * 3;
-                int srcX = 0;
-                int srcY = 0;
-                if (idx + 2 < list.length) {
-                    srcX = list[idx + 1] & 0xFFFF;
-                    srcY = list[idx + 2] & 0xFFFF;
-                }
-
-                if (slow) {
-                    int auraFrame = tick & 0x3;
-                    int auraSrcX = auraFrame * 32;
-                    Image aura = imgs.getAlphaRegion(19, auraSrcX, 117, 32, 31, 128);
-                    if (aura != null) {
-                        g.drawImage(aura, px - 15, py - 15, Graphics.TOP | Graphics.LEFT);
-                    } else {
-                        javax.microedition.lcdui.Image sheet = imgs.get(19);
-                        if (sheet != null) {
-                            touhou.ui.UiDraw.drawRegion(g, sheet, px - 15, py - 15, auraSrcX, 117, 32, 31);
-                        }
-                    }
-                }
-
-                javax.microedition.lcdui.Image playerImg = imgs.get(imgIndex);
-                if (playerImg != null) {
-                    touhou.ui.UiDraw.drawRegion(g, playerImg, px - 11, py - 11, srcX, srcY, 24, 24);
-                    drawn = true;
-                }
-            }
-        }
-
-        if (!drawn) {
-            boolean spriteDrawn = false;
-            if (sprites != null && spriteId >= 0) {
-                spriteDrawn = sprites.draw(g, spriteId, px, py);
-            }
-            if (!spriteDrawn) {
-                g.setColor(0xFFFFFF);
-                g.fillRect(px - 2, py - 2, 5, 5);
-            }
+            short[] list = ANIMELIST[animeId];
+            int idx = animeNo * 2;
+            int frame = list[idx + 1];
+            if (slow) sprites.drawAlpha(g, SpriteSheetCatalog.PLAYER_AURA_BASE + (tick & 3), px, py, 128);
+            sprites.draw(g, SpriteSheetCatalog.PLAYER_FRAME_BASE + chara * SpriteSheetCatalog.PLAYER_FRAME_COUNT + frame, px, py);
         }
 
         if (slow) {
@@ -1741,62 +1673,12 @@ public final class Player {
 
     // Animation frame table.
     private static final short[][] ANIMELIST = new short[][] {
-            { 1, 0, 0, 1, 24, 0, 1, 48, 0, 1, 24, 0, (short) 254 },
-            { 3, 0, 24, (short) 254 },
-            { 3, 24, 24, (short) 254 },
-            { 3, 48, 24, (short) 254 },
-            { 3, 0, 48, (short) 254 },
-            { 3, 24, 48, (short) 254 },
-            { 3, 48, 48, (short) 254 },
-            { 1, 0, 72, 1, 24, 72, (short) 255, 6 },
-            { 3, 48, 72, (short) 254 },
+            { 1, 0, 1, 1, 1, 2, 1, 1 },
+            { 3, 3 },
+            { 3, 4 },
+            { 3, 5 },
+            { 3, 6 },
+            { 3, 7 },
+            { 3, 8 },
     };
-
-    // Image index lookup by character.
-    private static int imgIndexForChara(int chara) {
-        if (chara == 0) {
-            return 8;
-        }
-        if (chara == 1) {
-            return 9;
-        }
-        return 10;
-    }
-
-    // Pick a sprite entry matching the requested image constraints.
-    private static int findSpriteId(CcTable cc, int imgIndex, int minSize, int maxSize, int minSrcX, int maxSrcX) {
-        if (cc == null) {
-            return -1;
-        }
-
-        int bestId = -1;
-        int bestY = Integer.MAX_VALUE;
-        int bestX = Integer.MAX_VALUE;
-
-        for (int i = 0; i < cc.size(); i++) {
-            if (!cc.hasSpriteMeta(i)) {
-                continue;
-            }
-            int idx = cc.getImgIndex(i);
-            if (idx != imgIndex) {
-                continue;
-            }
-            int w = cc.getW(i);
-            int h = cc.getH(i);
-            if (w < minSize || h < minSize || w > maxSize || h > maxSize) {
-                continue;
-            }
-            int srcX = cc.getSrcX(i);
-            int srcY = cc.getSrcY(i);
-            if (srcX < minSrcX || srcX > maxSrcX) {
-                continue;
-            }
-            if (srcY < bestY || (srcY == bestY && srcX < bestX)) {
-                bestY = srcY;
-                bestX = srcX;
-                bestId = i;
-            }
-        }
-        return bestId;
-    }
 }

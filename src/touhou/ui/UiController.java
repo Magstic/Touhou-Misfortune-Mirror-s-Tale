@@ -2,7 +2,7 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Graphics;
 
-import touhou.BulletSprites;
+import touhou.SpriteRenderer;
 import touhou.GameOptions;
 import touhou.ImageBank;
 import touhou.ResultStats;
@@ -50,7 +50,7 @@ public final class UiController {
     }
 
     private final ImageBank images;
-    private final BulletSprites sprites;
+    private final SpriteRenderer sprites;
     private final Listener listener;
 
     private TitleScreen title;
@@ -72,7 +72,7 @@ public final class UiController {
 
     private int state;
 
-    public UiController(ImageBank images, BulletSprites sprites, Listener listener) {
+    public UiController(ImageBank images, SpriteRenderer sprites, Listener listener) {
         this.images = images;
         this.sprites = sprites;
         this.listener = listener;
@@ -130,7 +130,7 @@ public final class UiController {
         stagePreloader.setPlayerShotAlphaEnabled(playerShotAlphaEnabled);
         stagePreloader.setBossSpellCutInAlphaEnabled(bossSpellCutInAlphaEnabled);
         stagePreloader.setBombOverlayAlphaEnabled(bombOverlayAlphaEnabled);
-        stagePreloader.enter(stage, chara, type);
+        stagePreloader.enter(stage, chara);
         int guard = stagePreloader.getStepMax() + 8;
         for (int i = 0; i < guard && !stagePreloader.isDone(); i++) {
             stagePreloader.update(images, sprites);
@@ -450,7 +450,7 @@ public final class UiController {
                 loading.render(g);
                 break;
             case STATE_STARTUP_LANGUAGE:
-                startupLanguage.render(g, images);
+                startupLanguage.render(g, images, sprites);
                 break;
             case STATE_TITLE:
                 title.render(g, images, sprites);
@@ -459,7 +459,7 @@ public final class UiController {
                 setup.render(g, images, sprites);
                 break;
             case STATE_HELP:
-                help.render(g, images);
+                help.render(g, sprites);
                 break;
             case STATE_STORY:
                 story.render(g, images);

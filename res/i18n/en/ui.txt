@@ -191,14 +191,12 @@ Boss bomb shield
 Top item collect limit
 Back
 - Compatible -
-Close-up
 HeavyBG
 Mystia Fade
 Alpha: BOMB Close-up
 Alpha: BOSS Close-up
 Alpha: Player Bullets
 Back
-Close-up fade in/out
 Fancy background
 Stage2 dark mask fade
 Overlay alpha

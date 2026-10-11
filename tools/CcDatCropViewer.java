@@ -14,6 +14,7 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,32 +53,29 @@ public final class CcDatCropViewer {
         }
 
         int srcX() {
-            return row[1];
-        }
-
-        int srcY() {
-            return row[2];
-        }
-
-        int w() {
-            return row[3];
-        }
-
-        int h() {
-            return row[4];
-        }
-
-        int ax() {
             return row[5];
         }
 
-        int ay() {
+        int srcY() {
             return row[6];
         }
 
-        int len() {
-            return row.length;
+        int w() {
+            return row[7];
         }
+
+        int h() {
+            return row[8];
+        }
+
+        int ax() {
+            return row[3] - row[9];
+        }
+
+        int ay() {
+            return row[4] - row[10];
+        }
+
     }
 
     private static final class EntryTableModel extends AbstractTableModel {
@@ -101,7 +99,7 @@ public final class CcDatCropViewer {
         }
 
         public int getColumnCount() {
-            return 9;
+            return 14;
         }
 
         public String getColumnName(int c) {
@@ -123,7 +121,12 @@ public final class CcDatCropViewer {
                 case 7:
                     return "ay";
                 case 8:
-                    return "len";
+                    return "logicalW";
+                case 9: return "logicalH";
+                case 10: return "trimX";
+                case 11: return "trimY";
+                case 12: return "mode";
+                case 13: return "bottomGap";
                 default:
                     return "";
             }
@@ -149,7 +152,12 @@ public final class CcDatCropViewer {
                 case 7:
                     return Integer.valueOf(e.ay());
                 case 8:
-                    return Integer.valueOf(e.len());
+                    return Integer.valueOf(e.row[1]);
+                case 9: return Integer.valueOf(e.row[2]);
+                case 10: return Integer.valueOf(e.row[9]);
+                case 11: return Integer.valueOf(e.row[10]);
+                case 12: return Integer.valueOf(e.row[11]);
+                case 13: return Integer.valueOf(e.row[12]);
                 default:
                     return "";
             }
@@ -302,6 +310,7 @@ public final class CcDatCropViewer {
     private final JScrollPane atlasScroll;
 
     private int[][] cc;
+    private String[] imageNames;
     private BufferedImage cachedAtlas;
     private int cachedAtlasImgIndex = -1;
 
@@ -431,7 +440,7 @@ public final class CcDatCropViewer {
         List<Entry> list = new ArrayList<Entry>();
         for (int i = 0; i < cc.length; i++) {
             int[] row = cc[i];
-            if (row == null || row.length < 7) {
+            if (row == null || row.length != 13) {
                 continue;
             }
             if (imgFilter != null && row[0] != imgFilter.intValue()) {
@@ -496,94 +505,39 @@ public final class CcDatCropViewer {
         }
     }
 
-    private static String resolveAtlasFile(File spDir, int imgIndex) {
+    private String resolveAtlasFile(File spDir, int imgIndex) {
         if (spDir == null || !spDir.isDirectory()) {
             return null;
         }
 
-        String fileName = pad3(imgIndex) + ".gif";
+        if (imageNames == null || imgIndex < 0 || imgIndex >= imageNames.length) return null;
+        String fileName = imageNames[imgIndex];
+        if (fileName.length() == 0) return null;
         return new File(spDir, fileName).isFile() ? fileName : null;
     }
 
-    private static String pad3(int n) {
-        if (n < 10) {
-            return "00" + n;
-        }
-        if (n < 100) {
-            return "0" + n;
-        }
-        return String.valueOf(n);
-    }
-
-    private static int[][] loadCcDat(File file) throws IOException {
-        if (file == null || !file.isFile()) {
-            throw new IOException("Missing file: " + file);
-        }
-
-        byte[] data;
-        FileInputStream in = new FileInputStream(file);
-        try {
-            data = readAll(in);
-        } finally {
-            try {
-                in.close();
-            } catch (IOException ignore) {
+    private int[][] loadCcDat(File file) throws IOException {
+        if (file == null || !file.isFile()) throw new IOException("Missing file: " + file);
+        try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
+            if (in.readInt() != 0x43433031 || in.readUnsignedShort() != 1) {
+                throw new IOException("Invalid cc.dat header");
             }
-        }
-
-        if (data.length < 2) {
-            throw new IOException("Invalid cc.dat");
-        }
-
-        int count = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
-        int n = 2;
-
-        int[][] cc = new int[count][];
-        int[] lens = new int[count];
-
-        for (int i = 0; i < count; i++) {
-            if (n >= data.length) {
-                throw new IOException("Invalid cc.dat (length table)");
-            }
-            int len = data[n] & 0xFF;
-            n++;
-            lens[i] = len;
-            cc[i] = new int[len];
-        }
-
-        for (int j = 0; j < count; j++) {
-            for (int k = 0; k < lens[j]; k++) {
-                if (n + 1 >= data.length) {
-                    throw new IOException("Invalid cc.dat (payload)");
+            int imageCount = in.readUnsignedShort(), count = in.readUnsignedShort();
+            if (imageCount == 0 || count == 0) throw new IOException("Empty cc.dat");
+            String[] names = new String[imageCount];
+            for (int i = 0; i < imageCount; i++) {
+                names[i] = in.readUTF();
+                for (int k = 0; k < 4; k++) in.readShort();
+                if (names[i].indexOf('/') >= 0 || names[i].indexOf('\\') >= 0 || names[i].indexOf("..") >= 0) {
+                    throw new IOException("Invalid image filename");
                 }
-                int v = ((data[n] & 0xFF) << 8) | (data[n + 1] & 0xFF);
-                n += 2;
-                cc[j][k] = v;
             }
+            int[][] rows = new int[count][13];
+            for (int[] row : rows) for (int k = 0; k < 13; k++) row[k] = in.readShort();
+            if (in.read() != -1) throw new IOException("Trailing cc.dat data");
+            imageNames = names;
+            return rows;
         }
-
-        return cc;
-    }
-
-    private static byte[] readAll(FileInputStream in) throws IOException {
-        byte[] buf = new byte[4096];
-        int r;
-        List<byte[]> chunks = new ArrayList<byte[]>();
-        int total = 0;
-        while ((r = in.read(buf)) != -1) {
-            byte[] c = new byte[r];
-            System.arraycopy(buf, 0, c, 0, r);
-            chunks.add(c);
-            total += r;
-        }
-        byte[] out = new byte[total];
-        int off = 0;
-        for (int i = 0; i < chunks.size(); i++) {
-            byte[] c = chunks.get(i);
-            System.arraycopy(c, 0, out, off, c.length);
-            off += c.length;
-        }
-        return out;
     }
 
     private static Integer parseNullableInt(String s) {

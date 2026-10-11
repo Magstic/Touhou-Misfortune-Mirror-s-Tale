@@ -3,7 +3,8 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
-import touhou.BulletSprites;
+import touhou.SpriteRenderer;
+import touhou.SpriteSheetCatalog;
 import touhou.ImageBank;
 import touhou.UnlockFlags;
 import touhou.i18n.TextId;
@@ -27,7 +28,7 @@ public final class LoadingScreen {
         return done;
     }
 
-    public void update(int pressed, ImageBank imgs, BulletSprites sprites) {
+    public void update(int pressed, ImageBank imgs, SpriteRenderer sprites) {
         if (done) {
             return;
         }
@@ -41,7 +42,7 @@ public final class LoadingScreen {
         tickOneStep(imgs, sprites);
     }
 
-    private void tickOneStep(ImageBank imgs, BulletSprites sprites) {
+    private void tickOneStep(ImageBank imgs, SpriteRenderer sprites) {
         if (imgs == null || sprites == null) {
             done = true;
             return;
@@ -52,6 +53,9 @@ public final class LoadingScreen {
                 // Title background/UI.
                 imgs.get(0);
                 imgs.get(1);
+                imgs.get(SpriteSheetCatalog.TITLE_GLYPHS_IMAGE);
+                imgs.get(SpriteSheetCatalog.TITLE_CAPTION_IMAGE);
+                imgs.get(SpriteSheetCatalog.HELP_ARROWS_IMAGE);
                 imgs.get(2);
                 break;
             case 1:
@@ -106,7 +110,7 @@ public final class LoadingScreen {
         }
     }
 
-    private static void preloadSpriteRange(ImageBank imgs, BulletSprites sprites, int idFrom, int idTo, int alpha) {
+    private static void preloadSpriteRange(ImageBank imgs, SpriteRenderer sprites, int idFrom, int idTo, int alpha) {
         if (imgs == null || sprites == null) {
             return;
         }

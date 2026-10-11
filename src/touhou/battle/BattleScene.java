@@ -117,7 +117,7 @@ public final class BattleScene {
                 nextStage = st + 1;
             }
         }
-        StageClearResultPanel.Result r = panel.updateWithStagePreload(pressed, nextStage, core.bossHostGetChara(), core.bossHostGetType(), core.battleFlowImgs(), core.battleFlowBulletSprites());
+        StageClearResultPanel.Result r = panel.updateWithStagePreload(pressed, nextStage, core.bossHostGetChara(), core.bossHostGetType(), core.battleFlowImgs(), core.battleFlowSprites());
 
         if (!wasLeaving && panel.isLeaving()) {
             core.battleFlowClearStageClearPhoto();

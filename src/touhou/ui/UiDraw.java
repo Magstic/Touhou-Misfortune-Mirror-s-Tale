@@ -185,6 +185,14 @@ public final class UiDraw {
         drawStringPlain(g, font, s, x, y, align, colorMain);
     }
 
+    // UI fade steps retain the original 16-level sprite-alpha policy; the renderer itself is exact.
+    public static int spriteAlpha(int alpha) {
+        if (alpha <= 0) return 0;
+        if (alpha >= 255) return 255;
+        int a = (alpha + 8) & 0xF0;
+        return a <= 0 ? 16 : a >= 255 ? 255 : a;
+    }
+
     public static void drawRegion(Graphics g, Image img, int dstX, int dstY, int srcX, int srcY, int w, int h) {
         if (img == null || w <= 0 || h <= 0) {
             return;

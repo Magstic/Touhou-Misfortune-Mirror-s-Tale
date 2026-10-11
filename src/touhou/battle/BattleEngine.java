@@ -1,7 +1,7 @@
 package touhou.battle;
 
 import touhou.BulletSystem;
-import touhou.CcTable;
+import touhou.SpriteCatalog;
 import touhou.DropItemSystem;
 import touhou.EnemyBulletSystem;
 import touhou.EnemyTargetRegistry;
@@ -467,7 +467,7 @@ public final class BattleEngine {
 
     // Mirrors GameCanvas.stageHd: handle player bullet collision against an enemy.
     public void tickEnemyPlayerBulletCollision(int enemyIndex, int[][] enemylist, int bombCnt, int sBbaria, int[] bossWrk, boolean disableBossBombShieldCheat,
-            CcTable cc, BossController bossController, Player player) {
+            SpriteCatalog cc, BossController bossController, Player player) {
         // Detects overlap between player bullets and a target enemy hitbox and applies damage.
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;

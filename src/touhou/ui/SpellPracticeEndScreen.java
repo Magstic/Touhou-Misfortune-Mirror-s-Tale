@@ -3,7 +3,7 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
-import touhou.BulletSprites;
+import touhou.SpriteRenderer;
 import touhou.GameCore;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
@@ -124,7 +124,7 @@ public final class SpellPracticeEndScreen {
         return null;
     }
 
-    public void render(Graphics g, BulletSprites sprites) {
+    public void render(Graphics g, SpriteRenderer sprites) {
         if (g == null) {
             return;
         }
@@ -168,7 +168,7 @@ public final class SpellPracticeEndScreen {
         slots.reload();
     }
 
-    private void renderReplayOverlay(Graphics g, BulletSprites sprites) {
+    private void renderReplayOverlay(Graphics g, SpriteRenderer sprites) {
         boolean showList = (scene == SCENE_REPLAY_SLOT || scene == SCENE_REPLAY_OK || scene == SCENE_REPLAY_FAIL);
         if (!showList) {
             return;

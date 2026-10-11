@@ -2,15 +2,16 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Graphics;
 
+import touhou.SpriteSheetCatalog;
+import touhou.SpriteRenderer;
 import touhou.GameOptions;
 import touhou.ImageBank;
 import touhou.i18n.I18nBootstrap;
 
 public final class StartupLanguageMenu {
-    // Menu image: 240x240. Left half is unselected (gray), right half is selected (colored).
+    // Logical items retain their original size; selected/unselected frames have stable IDs.
     private static final int ITEM_W = 120;
     private static final int ITEM_H = 13;
-    private static final int ITEM_STRIDE = 15;
 
     // Match TitleScreen menu area (y=104, 9 rows * 12px) and center our smaller list within it.
     private static final int TITLE_MENU_Y0 = 104;
@@ -23,8 +24,6 @@ public final class StartupLanguageMenu {
     private static final int TINT_RGB = 0x0A1026;
     private static final int TINT_ALPHA = 26;
 
-    private static final int MENU_SRC_X_OFF = 0;
-    private static final int MENU_SRC_X_ON = 120;
 
     private int cursor;
     private int count;
@@ -67,34 +66,33 @@ public final class StartupLanguageMenu {
         I18nBootstrap.initFromOptions(opt);
     }
 
-    public void render(Graphics g, ImageBank imgs) {
+    public void render(Graphics g, ImageBank imgs, SpriteRenderer sprites) {
         if (g == null || imgs == null) {
             return;
         }
 
-        imgs.drawRegion(g, 0, 0, 0, 240, 240, 0, 0, 0, Graphics.TOP | Graphics.LEFT);
+        UiDraw.drawRegion(g, imgs.get(0), 0, 0, 0, 0, 240, 240);
 
         int wob = 4 - (count >> 1);
-        javax.microedition.lcdui.Image ui = imgs.get(1);
-        if (ui != null) {
-            UiDraw.drawRegion(g, ui, 30 - wob + 0, 33 - wob, 0, 3, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 + wob + 36, 33 + wob, 36, 3, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 - wob + 72, 33 - wob, 72, 3, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 + wob + 108, 33 + wob, 108, 3, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 - wob + 144, 33 - wob, 144, 3, 36, 36);
+        if (sprites != null) {
+            sprites.draw(g, SpriteSheetCatalog.TITLE_GLYPH_BASE + 0, 30 - wob + 0, 33 - wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_GLYPH_BASE + 1, 30 + wob + 36, 33 + wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_GLYPH_BASE + 2, 30 - wob + 72, 33 - wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_GLYPH_BASE + 3, 30 + wob + 108, 33 + wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_GLYPH_BASE + 4, 30 - wob + 144, 33 - wob);
 
-            UiDraw.drawRegion(g, ui, 30 + wob + 0, 33 - wob, 0, 40, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 - wob + 36, 33 + wob, 36, 40, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 + wob + 72, 33 - wob, 72, 40, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 - wob + 108, 33 + wob, 108, 40, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 + wob + 144, 33 - wob, 144, 40, 36, 36);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_FRAME, 30 + wob + 0, 33 - wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_FRAME, 30 - wob + 36, 33 + wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_FRAME, 30 + wob + 72, 33 - wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_FRAME, 30 - wob + 108, 33 + wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_FRAME, 30 + wob + 144, 33 - wob);
 
             if (count == 8) {
-                UiDraw.drawRegion(g, ui, 59, 73, 2, 79, 121, 8);
+                sprites.draw(g, SpriteSheetCatalog.TITLE_CAPTION, 59, 73);
             }
         }
 
-        imgs.draw(g, 2, 5, 93, Graphics.TOP | Graphics.LEFT);
+        g.drawImage(imgs.get(2), 5, 93, Graphics.TOP | Graphics.LEFT);
 
         UiDraw.fillRectAlpha(g, 0, 0, 240, 240, TINT_RGB, TINT_ALPHA);
 
@@ -111,10 +109,7 @@ public final class StartupLanguageMenu {
             }
             int y = y0 + i * ITEM_STEP_Y;
 
-            int srcX = (i == cursor) ? MENU_SRC_X_ON : MENU_SRC_X_OFF;
-            int srcY = i * ITEM_STRIDE;
-
-            imgs.drawRegion(g, 95, srcX, srcY, ITEM_W, ITEM_H, 0, x, y, Graphics.TOP | Graphics.LEFT);
+            sprites.draw(g, SpriteSheetCatalog.LANGUAGE_ITEM_BASE + (i == cursor ? 3 : 0) + i, x, y);
         }
     }
 

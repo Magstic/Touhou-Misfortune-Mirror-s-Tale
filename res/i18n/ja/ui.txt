@@ -191,14 +191,12 @@ Back
 上部アイテム収集制限
 戻る
 - Compatible -
-Close-up
 HeavyBG
 Mystia Fade
 Alpha: BOMB Close-up
 Alpha: BOSS Close-up
 Alpha: Player Bullets
 Back
-Close-up 漸入/漸出
 ゴージャスな背景
 Stage2 暗幕フェード
 特写の半透明処理

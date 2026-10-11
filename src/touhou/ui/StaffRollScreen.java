@@ -4,7 +4,7 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
-import touhou.CcTable;
+import touhou.SpriteRenderer;
 import touhou.GameCore;
 import touhou.ImageBank;
 import touhou.i18n.TextId;
@@ -52,20 +52,7 @@ public final class StaffRollScreen {
                     TextId.STAFF_DEVELOPMENT_2, TextId.STAFF_DEVELOPMENT_URL_2 }
     };
 
-    private static CcTable cc;
-    private static boolean ccLoaded;
-
-    private static void ensureCcLoaded() {
-        if (ccLoaded) {
-            return;
-        }
-        ccLoaded = true;
-        try {
-            cc = CcTable.load();
-        } catch (Throwable t) {
-            cc = null;
-        }
-    }
+    private SpriteRenderer sprites;
 
     private ImageBank imgs;
 
@@ -73,14 +60,16 @@ public final class StaffRollScreen {
 
     private int count;
 
-    public void enter(ImageBank imgs) {
+    public void enter(ImageBank imgs, SpriteRenderer sprites) {
         this.imgs = imgs;
+        this.sprites = sprites;
         count = 0;
         buildBackImages();
     }
 
     public void leave() {
         imgs = null;
+        sprites = null;
         back = null;
     }
 
@@ -283,7 +272,6 @@ public final class StaffRollScreen {
             return;
         }
 
-        ensureCcLoaded();
 
         buildBack0();
         buildBack1();
@@ -304,9 +292,9 @@ public final class StaffRollScreen {
         // Do not draw sprite-sheet images full-frame here, or the wipe windows will expose multiple frames.
         drawFull(g, 25);
 
-        drawCcIcon(g, 169, 50, 38);
-        drawCcIcon(g, 174, 130, 58);
-        drawCcIcon(g, 181, 50, 98);
+        sprites.draw(g, 169, 50, 38);
+        sprites.draw(g, 174, 130, 58);
+        sprites.draw(g, 181, 50, 98);
 
         back[0] = img;
     }
@@ -321,7 +309,7 @@ public final class StaffRollScreen {
         // Base background (avoid drawing sprite sheets full-frame).
         drawFull(g, 25);
 
-        drawCcIcon(g, 205, 100, 108);
+        sprites.draw(g, 205, 100, 108);
 
         back[1] = img;
     }
@@ -336,7 +324,7 @@ public final class StaffRollScreen {
         // Base background (avoid drawing sprite sheets full-frame).
         drawFull(g, 25);
 
-        drawCcIcon(g, 227, 100, 108);
+        sprites.draw(g, 227, 100, 108);
 
         back[2] = img;
     }
@@ -351,7 +339,7 @@ public final class StaffRollScreen {
         // DoJa uses 59 as the primary scene background here.
         drawFull(g, 59);
 
-        drawCcIcon(g, 365, 100, 108);
+        sprites.draw(g, 365, 100, 108);
 
         back[3] = img;
     }
@@ -367,7 +355,7 @@ public final class StaffRollScreen {
         drawFull(g, 62);
         drawFull(g, 63);
 
-        drawCcIcon(g, 516, 100, 108);
+        sprites.draw(g, 516, 100, 108);
 
         back[4] = img;
     }
@@ -382,7 +370,7 @@ public final class StaffRollScreen {
         // DoJa uses 70 as the base scene background here.
         drawFull(g, 70);
 
-        drawCcIcon(g, 711, 100, 108);
+        sprites.draw(g, 711, 100, 108);
 
         back[5] = img;
     }
@@ -400,91 +388,9 @@ public final class StaffRollScreen {
             return;
         }
         try {
-            imgs.draw(g, imgIndex, 0, 0, Graphics.TOP | Graphics.LEFT);
+            g.drawImage(imgs.get(imgIndex), 0, 0, Graphics.TOP | Graphics.LEFT);
         } catch (Throwable t) {
         }
-    }
-
-    // Backdrop builder helper: use current screen ImageBank.
-    private void drawCcIcon(Graphics g, int ccIndex, int x, int y) {
-        drawCcIcon(g, this.imgs, ccIndex, x, y);
-    }
-
-    private static void drawCcIcon(Graphics g, ImageBank imgs, int ccIndex, int x, int y) {
-        if (g == null || imgs == null) {
-            return;
-        }
-        ensureCcLoaded();
-        if (cc == null) {
-            return;
-        }
-        if (!cc.hasSpriteMeta(ccIndex)) {
-            return;
-        }
-
-        int imgIndex = cc.getImgIndex(ccIndex);
-        int srcX = cc.getSrcX(ccIndex);
-        int srcY = cc.getSrcY(ccIndex);
-        int w = cc.getW(ccIndex);
-        int h = cc.getH(ccIndex);
-        int ax = cc.getAx(ccIndex);
-        int ay = cc.getAy(ccIndex);
-
-        srcX = imgs.toPhysicalSourceX(imgIndex, srcX);
-        srcY = imgs.toPhysicalSourceY(imgIndex, srcY);
-
-        Image img = imgs.get(imgIndex);
-        if (img == null) {
-            return;
-        }
-
-        drawRegionSafe(g, img, x, y, srcX, srcY, w, h, ax, ay);
-    }
-
-    private static boolean drawRegionSafe(Graphics g, Image img, int x, int y, int srcX, int srcY, int w, int h, int ax, int ay) {
-        if (img == null) {
-            return false;
-        }
-        int imgW = img.getWidth();
-        int imgH = img.getHeight();
-        if (w <= 0 || h <= 0) {
-            return false;
-        }
-
-        int dx = x - ax;
-        int dy = y - ay;
-
-        if (srcX < 0) {
-            int cut = -srcX;
-            srcX = 0;
-            dx += cut;
-            w -= cut;
-        }
-        if (srcY < 0) {
-            int cut = -srcY;
-            srcY = 0;
-            dy += cut;
-            h -= cut;
-        }
-        if (w <= 0 || h <= 0) {
-            return false;
-        }
-
-        if (srcX >= imgW || srcY >= imgH) {
-            return false;
-        }
-        if (srcX + w > imgW) {
-            w = imgW - srcX;
-        }
-        if (srcY + h > imgH) {
-            h = imgH - srcY;
-        }
-        if (w <= 0 || h <= 0) {
-            return false;
-        }
-
-        UiDraw.drawRegion(g, img, dx, dy, srcX, srcY, w, h);
-        return true;
     }
 
     private static int scaleRgb(int rgb, int alpha) {

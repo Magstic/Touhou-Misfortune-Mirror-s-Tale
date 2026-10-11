@@ -30,7 +30,7 @@ public final class SceneController {
             EndingScreen.Result r = endingScreen.update(pressed);
             if (r != null && r.kind == EndingScreen.Result.KIND_DONE) {
                 core.sceneSetEndingActive(false);
-                staffRollScreen.enter(core.sceneImgs());
+                staffRollScreen.enter(core.sceneImgs(), core.sceneSprites());
                 core.sceneSetStaffRollActive(true);
             }
             return;
@@ -92,7 +92,7 @@ public final class SceneController {
         }
 
         if (core.battleFlowIsStageClearPanelActive() && !core.sceneIsInGame()) {
-            stageClearResultPanel.render(g, core.sceneBulletSprites());
+            stageClearResultPanel.render(g, core.sceneSprites());
             return;
         }
 

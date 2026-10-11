@@ -233,7 +233,7 @@ public final class BattleStageHost implements StageRuntime.Host {
         core.stageHostSetTargetFps(fps);
     }
 
-    public void drawCcIconSafe(Graphics g, int spriteId, int x, int y) {
+    public void drawSprite(Graphics g, int spriteId, int x, int y) {
         core.stageHostDrawCcIconSafe(g, spriteId, x, y);
     }
 }

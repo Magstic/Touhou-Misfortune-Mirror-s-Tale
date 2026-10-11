@@ -3,7 +3,8 @@ package touhou.ui;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
-import touhou.BulletSprites;
+import touhou.SpriteSheetCatalog;
+import touhou.SpriteRenderer;
 import touhou.ImageBank;
 import touhou.UnlockFlags;
 import touhou.i18n.TextId;
@@ -113,7 +114,7 @@ public final class TitleScreen {
         return cur;
     }
 
-    public void render(Graphics g, ImageBank imgs, BulletSprites sprites) {
+    public void render(Graphics g, ImageBank imgs, SpriteRenderer sprites) {
         if (imgs == null) {
             return;
         }
@@ -121,22 +122,21 @@ public final class TitleScreen {
         UiDraw.drawRegion(g, imgs.get(0), 0, 0, 0, 0, 240, 240);
 
         int wob = 4 - (count >> 1);
-        Image ui = imgs.get(1);
-        if (ui != null) {
-            UiDraw.drawRegion(g, ui, 30 - wob + 0, 33 - wob, 0, 3, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 + wob + 36, 33 + wob, 36, 3, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 - wob + 72, 33 - wob, 72, 3, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 + wob + 108, 33 + wob, 108, 3, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 - wob + 144, 33 - wob, 144, 3, 36, 36);
+        if (sprites != null) {
+            sprites.draw(g, SpriteSheetCatalog.TITLE_GLYPH_BASE + 0, 30 - wob + 0, 33 - wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_GLYPH_BASE + 1, 30 + wob + 36, 33 + wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_GLYPH_BASE + 2, 30 - wob + 72, 33 - wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_GLYPH_BASE + 3, 30 + wob + 108, 33 + wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_GLYPH_BASE + 4, 30 - wob + 144, 33 - wob);
 
-            UiDraw.drawRegion(g, ui, 30 + wob + 0, 33 - wob, 0, 40, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 - wob + 36, 33 + wob, 36, 40, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 + wob + 72, 33 - wob, 72, 40, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 - wob + 108, 33 + wob, 108, 40, 36, 36);
-            UiDraw.drawRegion(g, ui, 30 + wob + 144, 33 - wob, 144, 40, 36, 36);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_FRAME, 30 + wob + 0, 33 - wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_FRAME, 30 - wob + 36, 33 + wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_FRAME, 30 + wob + 72, 33 - wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_FRAME, 30 - wob + 108, 33 + wob);
+            sprites.draw(g, SpriteSheetCatalog.TITLE_FRAME, 30 + wob + 144, 33 - wob);
 
             if (count == 8) {
-                UiDraw.drawRegion(g, ui, 59, 73, 2, 79, 121, 8);
+                sprites.draw(g, SpriteSheetCatalog.TITLE_CAPTION, 59, 73);
             }
         }
 

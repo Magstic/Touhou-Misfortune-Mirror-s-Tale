@@ -3,7 +3,7 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
-import touhou.BulletSprites;
+import touhou.SpriteRenderer;
 import touhou.ImageBank;
 import touhou.bt.BtSppLink;
 import touhou.i18n.TextId;
@@ -155,7 +155,7 @@ public final class ReplayReceiveScreen {
         return null;
     }
 
-    public void render(Graphics g, ImageBank imgs, BulletSprites sprites) {
+    public void render(Graphics g, ImageBank imgs, SpriteRenderer sprites) {
         if (g == null) {
             return;
         }

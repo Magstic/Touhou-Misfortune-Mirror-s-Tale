@@ -3,7 +3,7 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
-import touhou.BulletSprites;
+import touhou.SpriteRenderer;
 import touhou.ImageBank;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
@@ -146,7 +146,7 @@ public final class ReplayScreen {
         return null;
     }
 
-    public void render(Graphics g, ImageBank imgs, BulletSprites sprites) {
+    public void render(Graphics g, ImageBank imgs, SpriteRenderer sprites) {
         if (g == null) {
             return;
         }
@@ -190,7 +190,7 @@ public final class ReplayScreen {
     private int decoTick;
 
     private ImageBank imgs;
-    private BulletSprites sprites;
+    private SpriteRenderer sprites;
 
     // Cache derived strings for the selected slot to avoid per-frame allocations.
     private int cachedSlot;
@@ -475,7 +475,7 @@ public final class ReplayScreen {
 
         int[] m = tmpSpriteMetrics;
         if (!sprites.getSizeAndAnchor(bulletId, m)) {
-            sprites.drawAlphaCropRight(g, bulletId, cardX + 10, cardY + 10, 200, cropRight);
+            sprites.drawAlphaCropRight(g, bulletId, cardX + 10, cardY + 10, 208, cropRight);
             return;
         }
 
@@ -492,7 +492,7 @@ public final class ReplayScreen {
         if (dx > cardX + cardW - 2 - w) dx = cardX + cardW - 2 - w;
         if (dy > cardY + cardH - 2 - hh) dy = cardY + cardH - 2 - hh;
 
-        sprites.drawAlphaCropRight(g, bulletId, dx + ax, dy + ay, 200, cropRight);
+        sprites.drawAlphaCropRight(g, bulletId, dx + ax, dy + ay, 208, cropRight);
     }
 
     // Returns the badge width so callers can stack badges right-to-left.
@@ -517,7 +517,7 @@ public final class ReplayScreen {
             return;
         }
         int frame = (decoTick >> 2) % 9;
-        sprites.drawAlpha(g, 445 + frame, x, y, alpha);
+        sprites.drawAlpha(g, 445 + frame, x, y, UiDraw.spriteAlpha(alpha));
     }
 
     private void renderDeleteConfirm(Graphics g, Font font) {

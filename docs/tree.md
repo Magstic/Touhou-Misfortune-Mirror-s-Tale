@@ -16,14 +16,13 @@ Touhou_Misfortune_MirrorS_Tale/
 │   ├── GameCore.java                #   Main game loop, core orchestrator (GameCanvas + Runnable)
 │   ├── SceneController.java         #   Scene routing: UI / Battle / Ending / StaffRoll
 │   ├── ImageBank.java               #   Sprite image loader, cache, StageEX color variant generator
-│   ├── SpriteSheetCatalog.java       #   Canonical sprite path and logical-canvas layout catalog
-│   ├── SpriteSheetLayout.java        #   Logical-to-cropped sprite coordinate mapping
+│   ├── SpriteSheetCatalog.java       #   Stable logical IDs only; no filenames or source geometry
 │   ├── ResourceLoader.java           #   Single required/optional classpath resource loader
 │   ├── ResourcePaths.java            #   Canonical classpath resource paths
 │   ├── ResourceException.java        #   CLDC-compatible required-resource failure
 │   ├── BgmCatalog.java               #   Current 18-track BGMP schema
-│   ├── CcTable.java                 #   cc.dat parser: maps spriteId to (imgIndex, srcRect, anchor)
-│   ├── BulletSprites.java           #   Draws sprites by spriteId using CcTable + ImageBank
+│   ├── SpriteCatalog.java           #   Final cc.dat: image table, geometry and reflection modes
+│   ├── SpriteRenderer.java          #   Shared sprite rendering: trim, logical windows, anchor, alpha and clip
 │   ├── BulletSystem.java            #   Shared player/enemy bullet, laser and effect store
 │   ├── EnemyBulletSystem.java       #   Enemy bullet spawning and player-collision rules
 │   ├── EnemyTargetRegistry.java     #   Targeting projection of StageRuntime enemies
@@ -154,7 +153,7 @@ Touhou_Misfortune_MirrorS_Tale/
 │   ├── icon.png                     #   MIDlet icon
 │   ├── cc.dat                       #   Sprite crop table (spriteId -> imgIndex + srcRect + anchor)
 │   ├── stage.dat                    #   Stage wave script (enemy type, position, timing)
-│   ├── sp/                          #   Sprite images (GIF): 000.gif ~ 095.gif (missing 078-080, 082-084: generated at runtime)
+│   ├── sp/                          #   Sprite images (GIF): 000.gif ~ 095.gif + 001/003/008-010/015/024/028/029/030/031/042/052/055/057/061/068/073/085 split sheets (003/004/008-010/015/024/028/029/030/031/042/052/055/057/061/068/073/085 replaced; missing 078-080, 082-084: generated at runtime)
 │   ├── bgm/                         #   Source MIDI, tracks 0–17 (packed, not copied into the JAR)
 │   │   ├── <id>/intro.mid + loop.mid #     Split looping track
 │   │   └── <id>.mid                  #     Single-file track
@@ -239,7 +238,7 @@ graph TD
     GC["GameCore<br/>(GameCanvas + Runnable)<br/>16 FPS game loop<br/>owns subsystems + state"]
     GC --> AU["AudioSystem<br/>BGM / MIDI"]
     GC --> SE["SoundEffectSystem<br/>SE / WAV"]
-    GC --> RES["ImageBank + CcTable<br/>sprite resources"]
+    GC --> RES["ImageBank + SpriteCatalog<br/>sprite resources"]
 
     GC --> BS["BattleScene<br/>battle frame coordinator<br/>(update drives core methods)"]
     GC --> SC["SceneController<br/>(update when NOT inGame)<br/>(render always)"]
@@ -375,8 +374,8 @@ flowchart LR
 | File | Role |
 |------|------|
 | `ImageBank` | Loads GIF sprites from `/sp/`, caches, generates StageEX color variants |
-| `CcTable` | Parses `cc.dat`: maps spriteId -> (imgIndex, srcX, srcY, w, h, anchorX, anchorY) |
-| `BulletSprites` | Draws a sprite by spriteId (method param is often named bulletId) using `CcTable` + `ImageBank` |
+| `SpriteCatalog` | Reads final `/cc.dat`, including image filenames, sizes, EX bases/palettes and complete sprite geometry/reflection modes |
+| `SpriteRenderer` | Draws sprites by ID with trim-aware logical windows, anchors, exact alpha and clip handling |
 | `BulletSystem` | Shared player/enemy bullet, laser and effect state store (capacity 1024) |
 | `EnemyBulletSystem` | Enemy bullet spawning policy and player collision/graze rules over `BulletSystem` |
 | `EnemyTargetRegistry` | Targeting projection of the enemy table owned by `StageRuntime` |
@@ -443,9 +442,9 @@ flowchart LR
 
 | Path | Format | Role |
 |------|--------|------|
-| `res/cc.dat` | Binary | Sprite crop table: spriteId -> (imgIndex, srcX, srcY, w, h, anchorX, anchorY) |
+| `res/cc.dat` | CC01 binary, packaged unchanged | Image table and all 891 sprite records (13 shorts each); the sole filename/geometry/reflection definition |
 | `res/stage.dat` | Binary | Stage wave script: enemy type, position, timing, formation |
-| `res/sp/*.gif` | GIF | Sprite sheets indexed by imgIndex (000.gif ~ 095.gif; missing 078-080, 082-084 are runtime-generated StageEX variants) |
+| `res/sp/*.gif` | Final GIFs, packaged unchanged | Sprite sheets indexed by imgIndex (000.gif ~ 095.gif + 001/003/008-010/015/024/028/029/030/031/042/052/055/057/061/068/073/085 split sheets; 003/004/008-010/015/024/028/029/030/031/042/052/055/057/061/068/073/085 replaced; missing 078-080, 082-084 are runtime-generated StageEX variants) |
 | `res/se/*.wav` | WAV | Sound effects |
 | `res/bgm/` | MIDI | Source tracks 0–17; each is either `id.mid` or `id/intro.mid + loop.mid` |
 | `build/generated-res/snd/bgm.dat` | Custom | Generated current 18-track MIDI bundle embedded as `/snd/bgm.dat` |
@@ -454,3 +453,5 @@ flowchart LR
 | `res/i18n/<lang>/dialog/` | Text | In-game dialog scripts per stage |
 | `res/i18n/<lang>/spcard.dat` | Text | Spell card name list |
 | `/i18n/<lang>/font/font.dat` | Binary | Bitmap font glyph atlas (generated at build time and stored inside `i18n/<lang>.dat`) |
+
+Ant packages `res/sp/` and `res/cc.dat` unchanged. There is no sprite builder, generated sprite directory or separate `sprites.dat`; BGM and i18n generation remain unchanged. See [sprite format and history](sprite-repack.md).
