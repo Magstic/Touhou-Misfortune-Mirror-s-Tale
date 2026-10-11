@@ -125,11 +125,10 @@ public final class UiController {
         int[] opt = GameOptions.load();
         boolean playerShotAlphaEnabled = GameOptions.isPlayerShotAlphaEnabled(opt);
         boolean bossSpellCutInAlphaEnabled = GameOptions.isBossSpellCutInAlphaEnabled(opt);
-        boolean bombOverlayAlphaEnabled = GameOptions.isBombOverlayAlphaEnabled(opt);
 
         stagePreloader.setPlayerShotAlphaEnabled(playerShotAlphaEnabled);
         stagePreloader.setBossSpellCutInAlphaEnabled(bossSpellCutInAlphaEnabled);
-        stagePreloader.setBombOverlayAlphaEnabled(bombOverlayAlphaEnabled);
+
         stagePreloader.enter(stage, chara);
         int guard = stagePreloader.getStepMax() + 8;
         for (int i = 0; i < guard && !stagePreloader.isDone(); i++) {

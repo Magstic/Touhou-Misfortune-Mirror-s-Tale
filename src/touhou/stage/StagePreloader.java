@@ -3,14 +3,12 @@ package touhou.stage;
 import touhou.SpriteSheetCatalog;
 import touhou.SpriteRenderer;
 import touhou.ImageBank;
-import touhou.ui.UiDraw;
 
 public final class StagePreloader {
     private int stage;
     private int chara;
     private boolean playerShotAlphaEnabled = true;
     private boolean bossSpellCutInAlphaEnabled = true;
-    private boolean bombOverlayAlphaEnabled = true;
     private int step;
     private int stepMax;
     private boolean done;
@@ -21,10 +19,6 @@ public final class StagePreloader {
 
     public void setBossSpellCutInAlphaEnabled(boolean enabled) {
         bossSpellCutInAlphaEnabled = enabled;
-    }
-
-    public void setBombOverlayAlphaEnabled(boolean enabled) {
-        bombOverlayAlphaEnabled = enabled;
     }
 
     public void enter(int nextStage, int chara) {
@@ -130,9 +124,8 @@ public final class StagePreloader {
                 preloadPlayerAssets(imgs, sprites, chara, playerShotAlphaEnabled);
                 break;
             case 10:
-                // Bomb portrait and darkness overlay precache.
-                preloadBombAndMiscAssets(imgs, chara,
-                        bossSpellCutInAlphaEnabled || bombOverlayAlphaEnabled);
+                // Selected character's bomb portrait; solid darkness draws directly.
+                preloadBombPortrait(imgs, chara);
                 break;
             case 11:
                 // Final step: proactive GC to start stage with a clean heap.
@@ -275,17 +268,11 @@ public final class StagePreloader {
         }
     }
 
-    private static void preloadBombAndMiscAssets(ImageBank imgs, int chara, boolean bossSpellAlphaEnabled) {
+    private static void preloadBombPortrait(ImageBank imgs, int chara) {
         // Bomb overlay image (imgIndex 12+chara). Previously not preloaded, causing first-bomb stutter.
         int bombImgIndex = 12 + chara;
         if (bombImgIndex >= 12 && bombImgIndex <= 14) {
             imgs.get(bombImgIndex);
-        }
-
-        // Precache darkness overlay (194x226 black@128).
-        // Shared by boss spells and player bombs; only one layer is rendered.
-        if (bossSpellAlphaEnabled) {
-            UiDraw.precacheSolidAlpha(194, 226, 0x000000, 128);
         }
     }
 

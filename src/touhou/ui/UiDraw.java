@@ -8,20 +8,10 @@ import touhou.font.BitmapFont;
 
 public final class UiDraw {
     private static final Font DEFAULT_FONT = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
-    private static final Image[] cachedGradImg = new Image[8];
-    private static final int[] cachedGradW = new int[8];
-    private static final int[] cachedGradH = new int[8];
-    private static final int[] cachedGradFrom = new int[8];
-    private static final int[] cachedGradTo = new int[8];
-    private static final int[] cachedGradSteps = new int[8];
-    private static final int[] cachedGradAlpha = new int[8];
-    private static int gradCacheNext;
-
-     private static final Image[] cachedSolidImg = new Image[32];
-     private static final int[] cachedSolidW = new int[32];
-     private static final int[] cachedSolidH = new int[32];
-     private static final int[] cachedSolidArgb = new int[32];
-     private static int solidCacheNext;
+    // One bounded working strip for solid/gradient alpha primitives; never cache Images by alpha.
+    private static final int ALPHA_STRIP_WIDTH = 240;
+    private static final int ALPHA_STRIP_HEIGHT = 8;
+    private static final int[] alphaPixels = new int[ALPHA_STRIP_WIDTH * ALPHA_STRIP_HEIGHT];
 
     private UiDraw() {
     }
@@ -393,222 +383,50 @@ public final class UiDraw {
         return v;
     }
 
-     public static void drawGradationAlpha(Graphics g, int x, int y, int w, int h, int colorFrom, int colorTo, int steps, int alpha) {
-         if (steps <= 0 || h <= 0 || w <= 0) {
-             return;
-         }
-         if (alpha <= 0) {
-             return;
-         }
-         if (alpha > 255) {
-             alpha = 255;
-         }
-
-         Image img = getOrBuildGradationImage(w, h, colorFrom, colorTo, steps, alpha);
-
-         if (img != null) {
-             g.drawImage(img, x, y, Graphics.TOP | Graphics.LEFT);
-             return;
-         }
-
-         drawGradation(g, x, y, w, h, colorFrom, colorTo, steps);
+    public static void drawGradationAlpha(Graphics g, int x, int y, int w, int h,
+            int colorFrom, int colorTo, int steps, int alpha) {
+        if (steps <= 0 || w <= 0 || h <= 0 || alpha <= 0) return;
+        alpha = Math.min(alpha, 255);
+        int stepH = h / steps;
+        int r = (colorFrom >> 16) & 255, green = (colorFrom >> 8) & 255, blue = colorFrom & 255;
+        int r1 = (colorTo >> 16) & 255, g1 = (colorTo >> 8) & 255, b1 = colorTo & 255;
+        int dr = (r1 - r) / steps, dg = (g1 - green) / steps, db = (b1 - blue) / steps;
+        for (int i = 0; i < steps; i++) {
+            int rows = i == steps - 1 ? h - stepH * i : stepH;
+            fillArgb(g, x, y + stepH * i, w, rows, (alpha << 24) | (r << 16) | (green << 8) | blue);
+            r = clampByte(r + dr);
+            green = clampByte(green + dg);
+            blue = clampByte(blue + db);
+        }
     }
 
-     public static void fillRectAlpha(Graphics g, int x, int y, int w, int h, int rgb, int alpha) {
-         if (w <= 0 || h <= 0) {
-             return;
-         }
-         if (alpha <= 0) {
-             return;
-         }
-         if (alpha >= 255) {
-             g.setColor(rgb & 0x00FFFFFF);
-             g.fillRect(x, y, w, h);
-             return;
-         }
-
-         int argb = (alpha << 24) | (rgb & 0x00FFFFFF);
-         Image img = getOrBuildSolidImage(w, h, argb);
-
-         if (img != null) {
-             g.drawImage(img, x, y, Graphics.TOP | Graphics.LEFT);
-             return;
-         }
-
-         g.setColor(rgb & 0x00FFFFFF);
-         g.fillRect(x, y, w, h);
+    public static void fillRectAlpha(Graphics g, int x, int y, int w, int h, int rgb, int alpha) {
+        if (w <= 0 || h <= 0 || alpha <= 0) return;
+        if (alpha >= 255) {
+            g.setColor(rgb & 0x00FFFFFF);
+            g.fillRect(x, y, w, h);
+            return;
+        }
+        fillArgb(g, x, y, w, h, (alpha << 24) | (rgb & 0x00FFFFFF));
     }
 
-     // Pre-build a solid alpha image into internal cache.
-     public static void precacheSolidAlpha(int w, int h, int rgb, int alpha) {
-         if (w <= 0 || h <= 0) {
-             return;
-         }
-         if (alpha <= 0 || alpha >= 255) {
-             return;
-         }
-         int argb = (alpha << 24) | (rgb & 0x00FFFFFF);
-         getOrBuildSolidImage(w, h, argb);
-     }
-
-     // Pre-build a gradation alpha image into internal cache.
-     public static void precacheGradationAlpha(int w, int h, int colorFrom, int colorTo, int steps, int alpha) {
-         if (steps <= 0 || h <= 0 || w <= 0) {
-             return;
-         }
-         if (alpha <= 0) {
-             return;
-         }
-         if (alpha > 255) {
-             alpha = 255;
-         }
-         getOrBuildGradationImage(w, h, colorFrom, colorTo, steps, alpha);
-     }
-
-     private static Image getOrBuildSolidImage(int w, int h, int argb) {
-         for (int i = 0; i < cachedSolidImg.length; i++) {
-             if (cachedSolidImg[i] != null && cachedSolidW[i] == w && cachedSolidH[i] == h && cachedSolidArgb[i] == argb) {
-                 return cachedSolidImg[i];
-             }
-         }
-
-         int[] pixels;
-         try {
-             pixels = new int[w * h];
-             for (int i = 0; i < pixels.length; i++) {
-                 pixels[i] = argb;
-             }
-         } catch (Throwable t) {
-             return null;
-         }
-
-         Image img;
-         try {
-             img = Image.createRGBImage(pixels, w, h, true);
-         } catch (Throwable t) {
-             img = null;
-         }
-
-         if (img != null) {
-             int slot = -1;
-             for (int i = 0; i < cachedSolidImg.length; i++) {
-                 if (cachedSolidImg[i] == null) {
-                     slot = i;
-                     break;
-                 }
-             }
-             if (slot < 0) {
-                 if (solidCacheNext < 0 || solidCacheNext >= cachedSolidImg.length) {
-                     solidCacheNext = 0;
-                 }
-                 slot = solidCacheNext;
-                 solidCacheNext = (solidCacheNext + 1) % cachedSolidImg.length;
-             }
-             cachedSolidImg[slot] = img;
-             cachedSolidW[slot] = w;
-             cachedSolidH[slot] = h;
-             cachedSolidArgb[slot] = argb;
-         }
-         return img;
-     }
-
-     private static Image getOrBuildGradationImage(int w, int h, int colorFrom, int colorTo, int steps, int alpha) {
-        boolean cacheable = (w == 240 && ((steps == 32 && h == 240) || (steps == 24 && h > 0 && h <= 96)));
-
-        if (cacheable) {
-            for (int i = 0; i < cachedGradImg.length; i++) {
-                if (cachedGradImg[i] != null && cachedGradW[i] == w && cachedGradH[i] == h && cachedGradFrom[i] == colorFrom
-                        && cachedGradTo[i] == colorTo && cachedGradSteps[i] == steps && cachedGradAlpha[i] == alpha) {
-                    return cachedGradImg[i];
-                }
+    private static void fillArgb(Graphics g, int x, int y, int w, int h, int argb) {
+        if (w <= 0 || h <= 0 || g.getClipWidth() <= 0 || g.getClipHeight() <= 0) return;
+        int left = Math.max(x, g.getClipX()), top = Math.max(y, g.getClipY());
+        int right = Math.min(x + w, g.getClipX() + g.getClipWidth());
+        int bottom = Math.min(y + h, g.getClipY() + g.getClipHeight());
+        if (left >= right || top >= bottom) return;
+        int blockW = Math.min(right - left, ALPHA_STRIP_WIDTH);
+        int blockH = Math.min(bottom - top, ALPHA_STRIP_HEIGHT);
+        for (int i = 0; i < blockW * blockH; i++) alphaPixels[i] = argb;
+        // drawRGB consumes the strip synchronously; reuse it for every visible block.
+        for (int yy = top; yy < bottom; yy += blockH) {
+            for (int xx = left; xx < right; xx += blockW) {
+                g.drawRGB(alphaPixels, 0, blockW, xx, yy,
+                        Math.min(blockW, right - xx), Math.min(blockH, bottom - yy), true);
             }
         }
-
-         int[] pixels;
-         try {
-             pixels = buildGradationPixels(w, h, colorFrom, colorTo, steps, alpha);
-         } catch (Throwable t) {
-             return null;
-         }
-
-         Image img;
-         try {
-             img = Image.createRGBImage(pixels, w, h, true);
-         } catch (Throwable t) {
-             img = null;
-         }
-
-         if (img != null && cacheable) {
-            int slot = -1;
-            for (int i = 0; i < cachedGradImg.length; i++) {
-                if (cachedGradImg[i] == null) {
-                    slot = i;
-                    break;
-                }
-            }
-            if (slot < 0) {
-                slot = (gradCacheNext++) % cachedGradImg.length;
-            }
-            cachedGradImg[slot] = img;
-            cachedGradW[slot] = w;
-            cachedGradH[slot] = h;
-            cachedGradFrom[slot] = colorFrom;
-            cachedGradTo[slot] = colorTo;
-            cachedGradSteps[slot] = steps;
-            cachedGradAlpha[slot] = alpha;
-        }
-        return img;
     }
-
-     private static int[] buildGradationPixels(int w, int h, int colorFrom, int colorTo, int steps, int alpha) {
-         int[] pixels = new int[w * h];
-
-         int stepH = h / steps;
-         int currStepH = stepH;
-
-         int r0 = (colorFrom >> 16) & 0xFF;
-         int g0 = (colorFrom >> 8) & 0xFF;
-         int b0 = (colorFrom) & 0xFF;
-
-         int r1 = (colorTo >> 16) & 0xFF;
-         int g1 = (colorTo >> 8) & 0xFF;
-         int b1 = (colorTo) & 0xFF;
-
-         int dr = Math.abs(r0 - r1) / steps;
-         int dg = Math.abs(g0 - g1) / steps;
-         int db = Math.abs(b0 - b1) / steps;
-
-         int r = r0;
-         int gg = g0;
-         int bb = b0;
-         int color = (alpha << 24) | (colorFrom & 0x00FFFFFF);
-
-         int y = 0;
-         for (int i = 0; i < steps; i++) {
-             if (i == steps - 1 && stepH * i + stepH < h) {
-                 currStepH += h - (stepH * i + stepH);
-             }
-
-             for (int yy = 0; yy < currStepH && y < h; yy++, y++) {
-                 int rowStart = y * w;
-                 for (int x = 0; x < w; x++) {
-                     pixels[rowStart + x] = color;
-                 }
-             }
-
-             int nr = r + ((r0 < r1) ? dr : (-dr));
-             int ng = gg + ((g0 < g1) ? dg : (-dg));
-             int nb = bb + ((b0 < b1) ? db : (-db));
-
-             r = clampByte(nr);
-             gg = clampByte(ng);
-             bb = clampByte(nb);
-             color = (alpha << 24) | (r << 16) | (gg << 8) | bb;
-             currStepH = stepH;
-         }
-
-         return pixels;
-     }
 
     // Linear color interpolation: returns blend of c0 and c1 at position t/tMax.
     public static int mixColor(int c0, int c1, int t, int tMax) {

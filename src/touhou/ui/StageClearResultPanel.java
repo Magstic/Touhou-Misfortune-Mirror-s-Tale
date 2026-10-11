@@ -239,10 +239,10 @@ public final class StageClearResultPanel {
                         int[] opt = GameOptions.load();
                         boolean playerShotAlphaEnabled = GameOptions.isPlayerShotAlphaEnabled(opt);
                         boolean bossSpellCutInAlphaEnabled = GameOptions.isBossSpellCutInAlphaEnabled(opt);
-                        boolean bombOverlayAlphaEnabled = GameOptions.isBombOverlayAlphaEnabled(opt);
+
                         stagePreloader.setPlayerShotAlphaEnabled(playerShotAlphaEnabled);
                         stagePreloader.setBossSpellCutInAlphaEnabled(bossSpellCutInAlphaEnabled);
-                        stagePreloader.setBombOverlayAlphaEnabled(bombOverlayAlphaEnabled);
+
                         stagePreloader.enter(nextStage, chara);
                         int guard = stagePreloader.getStepMax() + 4;
                         for (int i = 0; i < guard && !stagePreloader.isDone(); i++) {

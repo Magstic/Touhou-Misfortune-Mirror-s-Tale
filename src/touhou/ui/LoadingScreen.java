@@ -21,7 +21,7 @@ public final class LoadingScreen {
         done = false;
 
         // Keep this in sync with tickOneStep().
-        stepMax = 9;
+        stepMax = 6;
     }
 
     public boolean isDone() {
@@ -76,21 +76,6 @@ public final class LoadingScreen {
                 preloadSpriteRange(imgs, sprites, 477, 479, 128);
                 break;
             case 5:
-                // Start setup gradation background variants.
-                UiDraw.precacheGradationAlpha(240, 240, 0x303030, 0xFFFFA0, 32, 128);
-                UiDraw.precacheGradationAlpha(240, 240, 0x303030, 0xFFB000, 32, 128);
-                UiDraw.precacheGradationAlpha(240, 240, 0x303030, 0xA10010, 32, 128);
-                break;
-            case 6:
-                // Common UI overlay rectangles.
-                UiDraw.precacheSolidAlpha(105, 26, 0x000000, 96);
-                UiDraw.precacheSolidAlpha(52, 26, 0x000000, 96);
-                break;
-            case 7:
-                // Full-screen fade (first-touch cost on devices).
-                UiDraw.precacheSolidAlpha(240, 240, 0xFFFFFF, 128);
-                break;
-            case 8:
                 // One-time RMS warmup for Replay menu on first launch.
                 if (!UnlockFlags.isReplayRmsWarmed()) {
                     boolean ok = ReplaySlotStore.warmup();
