@@ -2,7 +2,6 @@ package touhou.battle;
 
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
-import javax.microedition.lcdui.Font;
 
 import touhou.SpriteCatalog;
 import touhou.SpriteRenderer;
@@ -75,11 +74,6 @@ public final class BattleRenderer {
     private int stage6CacheOverlayH;
 
     private int[] stage6BlendOutRgb;
-
-    // Cached bomb spell title banner (pre-rendered to avoid per-frame text rasterization).
-    private final Image[] bombSpellTitleImg = new Image[3];
-    private final int[] bombSpellTitleImgMainRgb = new int[3];
-    private final int[] bombSpellTitleImgYOffset = new int[3];
 
     // Pre-built death checkerboard overlay (replaces 200 drawLine calls per frame).
     private Image deathCheckerboard;
@@ -345,80 +339,10 @@ public final class BattleRenderer {
                 main = 4791679;
             }
 
-            Image title = getBombSpellTitleImage(a.currentChara(), s, main);
-            if (title != null) {
-                int yOff = bombSpellTitleImgYOffset[BattleRenderRules.safeCharacterIndex(a.currentChara())];
-                g.drawImage(title, 5, ty - yOff, Graphics.TOP | Graphics.LEFT);
-            } else {
-                UiDraw.drawString2(g, null, s, 5, ty, 0, main, 16777215);
-            }
+            // Preserve the cached banner's one-pixel inset and baseline without a title image.
+            UiDraw.drawStringOutline(g, null, s, 6, ty, 0, main, 0xFFFFFF);
         } finally {
             g.setClip(oldClipX, oldClipY, oldClipW, oldClipH);
-        }
-    }
-
-    private Image getBombSpellTitleImage(int chara, String s, int mainRgb) {
-        int idx = BattleRenderRules.safeCharacterIndex(chara);
-        if (s == null) {
-            s = "";
-        }
-
-        Image cached = bombSpellTitleImg[idx];
-        if (cached != null && bombSpellTitleImgMainRgb[idx] == mainRgb) {
-            return cached;
-        }
-
-        Font font = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
-        int w = UiDraw.stringWidth(font, s) + 2;
-        int h = UiDraw.fontHeight(font) + 2;
-        if (w <= 0) {
-            w = 1;
-        }
-        if (h <= 0) {
-            h = 1;
-        }
-
-        try {
-            Image img = Image.createImage(w, h);
-            Graphics ig = img.getGraphics();
-            ig.setFont(font);
-
-            // Some MIDP implementations initialize mutable images with opaque pixels.
-            // Use a unique key color and convert it to transparent to guarantee a clear background.
-            final int keyRgb = 0x00FF00;
-            ig.setColor(keyRgb);
-            ig.fillRect(0, 0, w, h);
-
-            int y = 1 + UiDraw.fontBaseline(font);
-            // 1px outline to avoid the "shifted shadow" look.
-            int x = 1;
-            int outlineRgb = 0xFFFFFF;
-            for (int oy = -1; oy <= 1; oy++) {
-                for (int ox = -1; ox <= 1; ox++) {
-                    if (ox == 0 && oy == 0) {
-                        continue;
-                    }
-                    UiDraw.drawStringPlain(ig, font, s, x + ox, y + oy, 0, outlineRgb);
-                }
-            }
-            UiDraw.drawStringPlain(ig, font, s, x, y, 0, mainRgb);
-
-            int[] rgb = new int[w * h];
-            img.getRGB(rgb, 0, w, 0, 0, w, h);
-            int key = 0xFF000000 | (keyRgb & 0x00FFFFFF);
-            for (int i = 0; i < rgb.length; i++) {
-                if (rgb[i] == key) {
-                    rgb[i] = 0x00000000;
-                }
-            }
-
-            Image out = Image.createRGBImage(rgb, w, h, true);
-            bombSpellTitleImg[idx] = out;
-            bombSpellTitleImgMainRgb[idx] = mainRgb;
-            bombSpellTitleImgYOffset[idx] = y;
-            return out;
-        } catch (Throwable t) {
-            return null;
         }
     }
 
