@@ -48,6 +48,7 @@ public final class StageAssets {
     public void enter(ImageBank images, SpriteRenderer sprites, int stage, int character, int bossStep,
             boolean bossOnly, int[] options) {
         this.stage = stage;
+        setBackgroundDarkness(images, stage, 0);
         this.bossStep = bossStep;
         bossPhase = bossOnly;
         bossCutInAlpha = GameOptions.isBossSpellCutInAlphaEnabled(options);
@@ -89,6 +90,12 @@ public final class StageAssets {
 
     private int[] bossImages() {
         return stage == 3 && bossStep == 37 ? LAST_WORD : BOSSES[stage];
+    }
+
+    public static void setBackgroundDarkness(ImageBank images, int stage, int levels) {
+        int[] backgrounds = BACKGROUNDS[stage];
+        for (int i = 0; i < backgrounds.length; i++) images.setDarkness(backgrounds[i], levels);
+        if (stage == 4) images.setDarkness(100, levels);
     }
 
     public void update(ImageBank images, boolean bossMode,

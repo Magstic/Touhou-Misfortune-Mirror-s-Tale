@@ -22,6 +22,7 @@ public final class ImageBank {
 
     private final SpriteCatalog catalog;
     private final Image[] images;
+    private final byte[] darkness;
 
     private final Image[] alphaImageCacheImg;
     private final int[] alphaImageCacheImgIndex;
@@ -57,6 +58,7 @@ public final class ImageBank {
     public ImageBank(SpriteCatalog catalog) {
         this.catalog = catalog;
         images = new Image[catalog.imageCount()];
+        darkness = new byte[images.length];
 
         alphaImageCacheImg = new Image[24];
         alphaImageCacheImgIndex = new int[24];
@@ -84,8 +86,8 @@ public final class ImageBank {
         Image cached = images[imgIndex];
         if (cached != null) return cached;
         try {
-            Image img = catalog.variantBase(imgIndex) >= 0
-                    ? buildStageExVariantFromBase(catalog.variantBase(imgIndex), catalog.variantPalette(imgIndex))
+            Image img = catalog.variantBase(imgIndex) >= 0 || darkness[imgIndex] != 0
+                    ? buildPaletteImage(imgIndex)
                     : Image.createImage(catalog.imagePath(imgIndex));
             images[imgIndex] = img;
             return img;
@@ -107,8 +109,28 @@ public final class ImageBank {
     }
 
     public void clear() {
-        for (int i = 0; i < images.length; i++) images[i] = null;
+        for (int i = 0; i < images.length; i++) {
+            images[i] = null;
+            darkness[i] = 0;
+        }
         clearAlphaCaches();
+    }
+
+    /** Invalidate the current sheet and its alpha caches only when brightness changes. */
+    public void setDarkness(int imgIndex, int levels) {
+        if (darkness[imgIndex] == levels) return;
+        darkness[imgIndex] = (byte) levels;
+        release(imgIndex);
+        for (int i = 0; i < images.length; i++) {
+            if (catalog.variantBase(i) == imgIndex) {
+                darkness[i] = (byte) levels;
+                release(i);
+            }
+        }
+    }
+
+    public static int darkenColor(int rgb, int levels) {
+        return (rgb >>> levels) & ((255 >>> levels) * 0x010101);
     }
 
     public void release(int imgIndex) {
@@ -377,24 +399,28 @@ public final class ImageBank {
         alphaRegionCacheNext = 0;
     }
 
-    private Image buildStageExVariantFromBase(int baseImgIndex, int tdIndex) throws IOException {
-        byte[] png = ResourceLoader.readRequiredBytes(catalog.imagePath(baseImgIndex));
-        if (!applyPngPalette(png, STAGEEX_TD[tdIndex])) {
-            throw new IOException("Missing PNG palette: " + baseImgIndex);
+    private Image buildPaletteImage(int imgIndex) throws IOException {
+        int base = catalog.variantBase(imgIndex);
+        byte[] png = ResourceLoader.readRequiredBytes(catalog.imagePath(base < 0 ? imgIndex : base));
+        int[] palette = base < 0 ? null : STAGEEX_TD[catalog.variantPalette(imgIndex)];
+        if (!applyPngPalette(png, palette, darkness[imgIndex])) {
+            throw new IOException("Missing PNG palette: " + imgIndex);
         }
         return Image.createImage(png, 0, png.length);
     }
 
-    private static boolean applyPngPalette(byte[] pngBytes, int[] palette) {
+    private static boolean applyPngPalette(byte[] pngBytes, int[] palette, int levels) {
         int offset = 8;
         while (offset <= pngBytes.length - 12) {
             int length = readPngInt(pngBytes, offset);
             if (length < 0 || length > pngBytes.length - offset - 12) return false;
             if (readPngInt(pngBytes, offset + 4) == 0x504C5445) {
-                if (length < palette.length * 3) return false;
-                for (int i = 0; i < palette.length; i++) {
-                    int c = palette[i];
+                if (palette != null && length < palette.length * 3) return false;
+                for (int i = 0; i < length / 3; i++) {
                     int p = offset + 8 + i * 3;
+                    int c = palette != null && i < palette.length ? palette[i]
+                            : ((pngBytes[p] & 255) << 16) | ((pngBytes[p + 1] & 255) << 8) | (pngBytes[p + 2] & 255);
+                    c = darkenColor(c, levels);
                     pngBytes[p] = (byte) (c >> 16);
                     pngBytes[p + 1] = (byte) (c >> 8);
                     pngBytes[p + 2] = (byte) c;

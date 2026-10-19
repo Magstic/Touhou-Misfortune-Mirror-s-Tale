@@ -14,6 +14,7 @@ import touhou.Trig;
 import touhou.i18n.I18n;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
+import touhou.stage.StageAssets;
 import touhou.ui.StageClearResultPanel;
 import touhou.ui.UiDraw;
 
@@ -62,7 +63,9 @@ public final class BattleRenderer {
 
     // Stage 6 (Extra Stage) background: caches for additive RGB blending.
     // We cache RGB arrays to avoid calling Image.getRGB every frame.
+    private int backgroundDarkness;
     private int stage6CacheD4 = -1;
+    private int stage6CacheDarkness = -1;
     private boolean stage6CacheHeavy;
     private Image stage6CacheBaseImg;
     private int[] stage6CacheBaseRgb;
@@ -86,7 +89,9 @@ public final class BattleRenderer {
     private final int[] dialoguePortrait = new int[4];
 
     public void release() {
+        backgroundDarkness = 0;
         stage6CacheD4 = -1;
+        stage6CacheDarkness = -1;
         stage6CacheBaseImg = null;
         stage6CacheOverlayImg = null;
         stage6CacheBaseRgb = null;
@@ -430,10 +435,22 @@ public final class BattleRenderer {
     /**
      * Background renderer for the playfield.
      *
-     * Each stage has its own background function. Some stages include special overlays
-     * (e.g., boss spell darkness tiles).
+     * Spell darkness is applied to background palettes instead of blending a full-screen layer.
      */
     private void renderBattleBackground(GameCore.BattleRenderAccess a, Graphics g) {
+        backgroundDarkness = 0;
+        if ((a.bossSpellCutInAlphaEnabled() || a.bombOverlayAlphaEnabled())
+                && (a.bombCnt() > 0 || (a.timeStop() <= 0 && a.bossController().getBspellstep() != 0
+                && !a.bossSpellCutInActive()))) {
+            backgroundDarkness++;
+        }
+        if (a.bossSpellCutInActive() && a.bossSpellCutInAlphaEnabled()
+                && !a.dialogueVisible() && a.taCnt() == 0) {
+            backgroundDarkness++;
+        }
+        // EX's additive mode darkens its final RGB output instead of its source layers.
+        StageAssets.setBackgroundDarkness(a.imgs(), a.stage(),
+                a.stage() == 6 && a.heavyBgEnabled() ? 0 : backgroundDarkness);
         int oldClipX = g.getClipX();
         int oldClipY = g.getClipY();
         int oldClipW = g.getClipWidth();
@@ -468,25 +485,6 @@ public final class BattleRenderer {
                     renderBgStage0(a, g);
                     break;
             }
-
-            // Darkness overlay: single semi-transparent black layer over the playfield.
-            // Triggers: boss spell active (bspellstep != 0) OR player bomb active.
-            // Only one layer is rendered regardless of overlap (no stacking).
-            // The active cut-in provides its own fixed-alpha darkness.
-            if (a.bossSpellCutInAlphaEnabled() || a.bombOverlayAlphaEnabled()) {
-                boolean needsDark = false;
-                if (a.timeStop() <= 0 && a.bossController().getBspellstep() != 0) {
-                    if (!a.bossSpellCutInActive()) {
-                        needsDark = true;
-                    }
-                }
-                if (a.bombCnt() > 0) {
-                    needsDark = true;
-                }
-                if (needsDark) {
-                    UiDraw.fillRectAlpha(g, PLAY_X, PLAY_Y, PLAY_W, PLAY_H, 0x000000, 128);
-                }
-            }
         } finally {
             g.setClip(oldClipX, oldClipY, oldClipW, oldClipH);
         }
@@ -496,12 +494,12 @@ public final class BattleRenderer {
     private void renderBgStage0(GameCore.BattleRenderAccess a, Graphics g) {
         ImageBank imgs = a.imgs();
         if (imgs == null) {
-            g.setColor(0x7F7F7F);
+            g.setColor(ImageBank.darkenColor(0x7F7F7F, backgroundDarkness));
             g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
             return;
         }
 
-        g.setColor(0x7F7F7F);
+        g.setColor(ImageBank.darkenColor(0x7F7F7F, backgroundDarkness));
         g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
 
         Image bg = imgs.get(BattleRenderRules.backgroundBaseImage(0, 0));
@@ -567,12 +565,12 @@ public final class BattleRenderer {
     private void renderBgStage1(GameCore.BattleRenderAccess a, Graphics g) {
         ImageBank imgs = a.imgs();
         if (imgs == null) {
-            g.setColor(0x7F7F7F);
+            g.setColor(ImageBank.darkenColor(0x7F7F7F, backgroundDarkness));
             g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
             return;
         }
 
-        g.setColor(0x7F7F7F);
+        g.setColor(ImageBank.darkenColor(0x7F7F7F, backgroundDarkness));
         g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
 
         Image bg = imgs.get(BattleRenderRules.backgroundBaseImage(1, 0));
@@ -671,12 +669,12 @@ public final class BattleRenderer {
     private void renderBgStage2(GameCore.BattleRenderAccess a, Graphics g) {
         ImageBank imgs = a.imgs();
         if (imgs == null) {
-            g.setColor(0x7F7F7F);
+            g.setColor(ImageBank.darkenColor(0x7F7F7F, backgroundDarkness));
             g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
             return;
         }
 
-        g.setColor(0x7F7F7F);
+        g.setColor(ImageBank.darkenColor(0x7F7F7F, backgroundDarkness));
         g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
 
         Image bg = imgs.get(BattleRenderRules.backgroundBaseImage(2, 0));
@@ -746,7 +744,8 @@ public final class BattleRenderer {
                 UiDraw.drawRegion(g, left, x0, y0 - 240, 0, 0, 73, 240);
             }
 
-            UiDraw.fillRectAlpha(g, PLAY_X + a.originX() + 73, PLAY_Y + a.originY(), 40, PLAY_H, 0xCFE2FF, 128);
+            UiDraw.fillRectAlpha(g, PLAY_X + a.originX() + 73, PLAY_Y + a.originY(), 40, PLAY_H,
+                    ImageBank.darkenColor(0xCFE2FF, backgroundDarkness), 128);
 
             Image right = imgs.getAlphaImage(73, 128);
             if (right == null) {
@@ -765,7 +764,7 @@ public final class BattleRenderer {
     private void renderBgStage3(GameCore.BattleRenderAccess a, Graphics g) {
         ImageBank imgs = a.imgs();
         if (imgs == null) {
-            g.setColor(0x303030);
+            g.setColor(ImageBank.darkenColor(0x303030, backgroundDarkness));
             g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
             return;
         }
@@ -778,7 +777,7 @@ public final class BattleRenderer {
             g.drawImage(bg, x0, y0, Graphics.TOP | Graphics.LEFT);
             g.drawImage(bg, x0, y0 - 240, Graphics.TOP | Graphics.LEFT);
         } else {
-            g.setColor(0x303030);
+            g.setColor(ImageBank.darkenColor(0x303030, backgroundDarkness));
             g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
         }
 
@@ -810,7 +809,7 @@ public final class BattleRenderer {
     private void renderBgStage4(GameCore.BattleRenderAccess a, Graphics g) {
         ImageBank imgs = a.imgs();
         if (imgs == null) {
-            g.setColor(0x303030);
+            g.setColor(ImageBank.darkenColor(0x303030, backgroundDarkness));
             g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
             return;
         }
@@ -833,7 +832,7 @@ public final class BattleRenderer {
             g.drawImage(a1, x0, y0, Graphics.TOP | Graphics.LEFT);
         }
         if (a0 == null && a1 == null) {
-            g.setColor(0x303030);
+            g.setColor(ImageBank.darkenColor(0x303030, backgroundDarkness));
             g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
         }
 
@@ -867,7 +866,8 @@ public final class BattleRenderer {
                 }
             }
 
-            UiDraw.fillRectAlpha(g, PLAY_X, PLAY_Y, PLAY_W, PLAY_H, 0xBFBFBF, 128);
+            UiDraw.fillRectAlpha(g, PLAY_X, PLAY_Y, PLAY_W, PLAY_H,
+                    ImageBank.darkenColor(0xBFBFBF, backgroundDarkness), 128);
         }
     }
 
@@ -875,7 +875,7 @@ public final class BattleRenderer {
     private void renderBgStage5(GameCore.BattleRenderAccess a, Graphics g) {
         ImageBank imgs = a.imgs();
         if (imgs == null) {
-            g.setColor(0x303030);
+            g.setColor(ImageBank.darkenColor(0x303030, backgroundDarkness));
             g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
             return;
         }
@@ -888,7 +888,7 @@ public final class BattleRenderer {
             g.drawImage(bg, x0, y0, Graphics.TOP | Graphics.LEFT);
             g.drawImage(bg, x0, y0 - 240, Graphics.TOP | Graphics.LEFT);
         } else {
-            g.setColor(0x303030);
+            g.setColor(ImageBank.darkenColor(0x303030, backgroundDarkness));
             g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
         }
 
@@ -946,7 +946,8 @@ public final class BattleRenderer {
 
     // Keep only the current EX palette pair and its optional RGB buffers.
     private void ensureStage6Cache(ImageBank images, int phase, boolean heavy) {
-        if (stage6CacheD4 == phase && stage6CacheHeavy == heavy) return;
+        int darkness = heavy ? 0 : backgroundDarkness;
+        if (stage6CacheD4 == phase && stage6CacheHeavy == heavy && stage6CacheDarkness == darkness) return;
         int previousPhase = stage6CacheD4 < 0 ? 0 : stage6CacheD4;
         if (previousPhase != phase) {
             images.release(BattleRenderRules.backgroundBaseImage(6, previousPhase));
@@ -958,6 +959,7 @@ public final class BattleRenderer {
         stage6CacheOverlayRgb = null;
 
         stage6CacheD4 = phase;
+        stage6CacheDarkness = darkness;
         stage6CacheHeavy = heavy;
         stage6CacheBaseImg = images.get(BattleRenderRules.backgroundBaseImage(6, phase));
         stage6CacheOverlayImg = images.get(BattleRenderRules.backgroundOverlayImage(6, phase));
@@ -984,6 +986,8 @@ public final class BattleRenderer {
         int baseH = this.stage6CacheBaseH;
         int overlayW = this.stage6CacheOverlayW;
         int overlayH = this.stage6CacheOverlayH;
+        int shift = backgroundDarkness;
+        int colorMask = (255 >>> shift) * 0x010101;
         int outIndex = 0;
         for (int y = 0; y < PLAY_H; y++) {
             int by = PLAY_Y + y;
@@ -1013,14 +1017,14 @@ public final class BattleRenderer {
 
                 int ox = x - a.originX();
                 if (ox < 0 || ox >= overlayW) {
-                    this.stage6BlendOutRgb[outIndex++] = 0xFF000000 | (dst & 0x00FFFFFF);
+                    this.stage6BlendOutRgb[outIndex++] = 0xFF000000 | ((dst >>> shift) & colorMask);
                     continue;
                 }
                 int src = this.stage6CacheOverlayRgb[overlayRow + ox];
 
                 int srcA = (src >>> 24) & 0xFF;
                 if (srcA == 0) {
-                    this.stage6BlendOutRgb[outIndex++] = 0xFF000000 | (dst & 0x00FFFFFF);
+                    this.stage6BlendOutRgb[outIndex++] = 0xFF000000 | ((dst >>> shift) & colorMask);
                     continue;
                 }
 
@@ -1036,7 +1040,8 @@ public final class BattleRenderer {
                 int outG = (dstG * ratio + srcG * ratio) / 255;
                 int outB = (dstB * ratio + srcB * ratio) / 255;
 
-                this.stage6BlendOutRgb[outIndex++] = 0xFF000000 | (outR << 16) | (outG << 8) | outB;
+                int rgb = (outR << 16) | (outG << 8) | outB;
+                this.stage6BlendOutRgb[outIndex++] = 0xFF000000 | ((rgb >>> shift) & colorMask);
             }
         }
 
@@ -1125,9 +1130,6 @@ public final class BattleRenderer {
 
             boolean alphaEnabled = a.bossSpellCutInAlphaEnabled();
             int alpha = alphaEnabled ? 128 : 255;
-            if (alphaEnabled) {
-                UiDraw.fillRectAlpha(g, PLAY_X, PLAY_Y, PLAY_W, PLAY_H, 0x000000, 128);
-            }
 
             SpriteRenderer sprites = a.sprites();
             int sprite = BattleRenderRules.bossSpellCutInSprite(a.bossSpellCutInStage(), a.gameMode(),
