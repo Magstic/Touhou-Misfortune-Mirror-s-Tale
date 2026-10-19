@@ -529,7 +529,7 @@ public final class BattleEngine {
             int ax = cc.getAx(bid);
             int ay = cc.getAy(bid);
 
-            int scale = (imgIndex == 6) ? 2 : 1;
+            int scale = (imgIndex == 10) ? 2 : 1;
             if (scale != 1) {
                 w *= scale;
                 h *= scale;

@@ -731,9 +731,9 @@ public final class BattleRenderer {
             }
 
             int scroll = (a.bgMoveSpd() << 1) % 240;
-            Image left = imgs.getAlphaImage(44, 128);
+            Image left = imgs.getAlphaImage(72, 128);
             if (left == null) {
-                left = imgs.get(44);
+                left = imgs.get(72);
             }
             if (left != null) {
                 int x0 = PLAY_X + a.originX();
@@ -744,9 +744,9 @@ public final class BattleRenderer {
 
             UiDraw.fillRectAlpha(g, PLAY_X + a.originX() + 73, PLAY_Y + a.originY(), 40, PLAY_H, 0xCFE2FF, 128);
 
-            Image right = imgs.getAlphaImage(45, 128);
+            Image right = imgs.getAlphaImage(73, 128);
             if (right == null) {
-                right = imgs.get(45);
+                right = imgs.get(73);
             }
             if (right != null) {
                 int x0 = PLAY_X + a.originX() + 194 - 81;
@@ -1627,7 +1627,7 @@ public final class BattleRenderer {
         if (imgs == null) {
             return;
         }
-        Image img = imgs.get(6);
+        Image img = imgs.get(10);
         if (img == null) {
             return;
         }
@@ -1733,12 +1733,12 @@ public final class BattleRenderer {
 
     // Draws the static frame around the playfield (top border + bottom border).
     public void renderBattleFrame(Graphics g, ImageBank imgs) {
-        Image top = (imgs != null) ? imgs.get(22) : null;
+        Image top = (imgs != null) ? imgs.get(41) : null;
         if (top != null) {
             UiDraw.drawRegion(g, top, 0, 0, 0, 0, 194, 8);
         }
 
-        Image bottom = (imgs != null) ? imgs.get(23) : null;
+        Image bottom = (imgs != null) ? imgs.get(42) : null;
         if (bottom != null) {
             UiDraw.drawRegion(g, bottom, 0, 234, 0, 0, 240, 6);
         }
@@ -1761,11 +1761,11 @@ public final class BattleRenderer {
         try {
             g.setClip(hudX, 0, hudW, LOGICAL_H);
 
-            Image top = imgs.get(20);
+            Image top = imgs.get(39);
             if (top != null) {
                 UiDraw.drawRegion(g, top, 194, 0, 0, 0, 46, 123);
             }
-            Image bottom = imgs.get(21);
+            Image bottom = imgs.get(40);
             if (bottom != null) {
                 UiDraw.drawRegion(g, bottom, 194, 123, 0, 0, 46, 111);
             }

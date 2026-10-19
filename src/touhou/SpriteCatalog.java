@@ -36,7 +36,7 @@ public final class SpriteCatalog {
                 throw new IOException("Invalid image size: " + id);
             }
             if (base == -1) {
-                if (palette != -1 || name.length() == 0 || name.indexOf("..") >= 0 || !name.endsWith(".gif")) {
+                if (palette != -1 || name.length() == 0 || name.indexOf("..") >= 0 || !name.endsWith(".png")) {
                     throw new IOException("Invalid image file: " + id);
                 }
                 for (int k = 0; k < name.length(); k++) {

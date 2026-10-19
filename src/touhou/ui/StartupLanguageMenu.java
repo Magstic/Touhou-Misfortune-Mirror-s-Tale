@@ -92,7 +92,7 @@ public final class StartupLanguageMenu {
             }
         }
 
-        g.drawImage(imgs.get(2), 5, 93, Graphics.TOP | Graphics.LEFT);
+        g.drawImage(imgs.get(5), 5, 93, Graphics.TOP | Graphics.LEFT);
 
         UiDraw.fillRectAlpha(g, 0, 0, 240, 240, TINT_RGB, TINT_ALPHA);
 

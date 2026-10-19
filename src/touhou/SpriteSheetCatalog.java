@@ -2,22 +2,21 @@ package touhou;
 
 /** Stable logical IDs; all asset names and geometry live in cc.dat. */
 public final class SpriteSheetCatalog {
-    public static final int PLAYER_IMAGES_BASE = 8;
-    public static final int PLAYER_DIALOGUE_IMAGES_BASE = 111;
-    public static final int PLAYER_OPTIONS_IMAGES_BASE = PLAYER_DIALOGUE_IMAGES_BASE + 3;
-    public static final int PLAYER_SHOTS_IMAGES_BASE = PLAYER_OPTIONS_IMAGES_BASE + 3;
-    public static final int PLAYER_BOMB_SHOTS_IMAGES_BASE = PLAYER_SHOTS_IMAGES_BASE + 3;
-    public static final int MARISA_SHOT_LASERS_IMAGE = PLAYER_BOMB_SHOTS_IMAGES_BASE + 3;
+    public static final int[] PLAYER_IMAGES = { 13, 18, 24 };
+    public static final int[] PLAYER_OPTIONS_IMAGES = { 14, 19, 25 };
+    public static final int[] PLAYER_SHOTS_IMAGES = { 15, 20, 26 };
+    public static final int[] PLAYER_BOMB_SHOTS_IMAGES = { 16, 21, 27 };
+    public static final int MARISA_SHOT_LASERS_IMAGE = 22;
     public static final int STAGE_OPENING_BASE = 400;
     public static final int STAGE_OPENING_FRAME_COUNT = 6;
     public static final int PLAYER_FRAME_COUNT = 9;
     public static final int CC_COUNT = 784;
-    public static final int TITLE_GLYPHS_IMAGE = 96;
-    public static final int TITLE_CAPTION_IMAGE = 97;
-    public static final int HELP_ARROWS_IMAGE = 98;
-    public static final int REIMU_SHOTS_IMAGE = 15;
-    public static final int REIMU_BOMB_QUARTERS_IMAGE = 107;
-    public static final int REIMU_BOMB_FIRST_IMAGE = 108;
+    public static final int TITLE_GLYPHS_IMAGE = 2;
+    public static final int TITLE_CAPTION_IMAGE = 3;
+    public static final int HELP_ARROWS_IMAGE = 4;
+    public static final int REIMU_SHOTS_IMAGE = 32;
+    public static final int REIMU_BOMB_QUARTERS_IMAGE = 33;
+    public static final int REIMU_BOMB_FIRST_IMAGE = 34;
     public static final int TITLE_GLYPH_BASE = CC_COUNT;
     public static final int TITLE_FRAME = TITLE_GLYPH_BASE + 5;
     public static final int TITLE_CAPTION = TITLE_FRAME + 1;

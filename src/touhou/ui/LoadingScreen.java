@@ -56,12 +56,12 @@ public final class LoadingScreen {
                 imgs.get(SpriteSheetCatalog.TITLE_GLYPHS_IMAGE);
                 imgs.get(SpriteSheetCatalog.TITLE_CAPTION_IMAGE);
                 imgs.get(SpriteSheetCatalog.HELP_ARROWS_IMAGE);
-                imgs.get(2);
+                imgs.get(5);
                 break;
             case 1:
                 // Start setup backgrounds.
-                imgs.get(18);
-                imgs.get(11);
+                imgs.get(37);
+                imgs.get(28);
                 break;
             case 2:
                 // Title menu sprites.

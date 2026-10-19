@@ -434,7 +434,7 @@ public final class ImageBank {
             return null;
         }
 
-        applyGifGlobalPalette(modified, STAGEEX_TD[tdIndex], 0);
+        if (!applyPngPalette(modified, STAGEEX_TD[tdIndex])) return null;
 
         try {
             return Image.createImage(modified, 0, modified.length);
@@ -443,22 +443,44 @@ public final class ImageBank {
         }
     }
 
-    private static void applyGifGlobalPalette(byte[] gifBytes, int[] palette, int paletteIndex) {
-        if (gifBytes == null || palette == null) {
-            return;
+    private static boolean applyPngPalette(byte[] pngBytes, int[] palette) {
+        int offset = 8;
+        while (offset <= pngBytes.length - 12) {
+            int length = readPngInt(pngBytes, offset);
+            if (length < 0 || length > pngBytes.length - offset - 12) return false;
+            if (readPngInt(pngBytes, offset + 4) == 0x504C5445) {
+                if (length < palette.length * 3) return false;
+                for (int i = 0; i < palette.length; i++) {
+                    int c = palette[i];
+                    int p = offset + 8 + i * 3;
+                    pngBytes[p] = (byte) (c >> 16);
+                    pngBytes[p + 1] = (byte) (c >> 8);
+                    pngBytes[p + 2] = (byte) c;
+                }
+                // PNG stores a CRC over the chunk type and data, including the changed palette.
+                int crc = -1;
+                for (int p = offset + 4; p < offset + 8 + length; p++) {
+                    crc ^= pngBytes[p] & 0xFF;
+                    for (int bit = 0; bit < 8; bit++) {
+                        crc = (crc & 1) != 0 ? (crc >>> 1) ^ 0xEDB88320 : crc >>> 1;
+                    }
+                }
+                crc = ~crc;
+                int p = offset + 8 + length;
+                pngBytes[p] = (byte) (crc >>> 24);
+                pngBytes[p + 1] = (byte) (crc >>> 16);
+                pngBytes[p + 2] = (byte) (crc >>> 8);
+                pngBytes[p + 3] = (byte) crc;
+                return true;
+            }
+            offset += length + 12;
         }
-        int offset = paletteIndex * 3 + 13;
-        int need = offset + palette.length * 3;
-        if (need > gifBytes.length) {
-            return;
-        }
-        for (int i = 0; i < palette.length; i++) {
-            int c = palette[i];
-            gifBytes[offset + 0] = (byte) ((c >> 16) & 0xFF);
-            gifBytes[offset + 1] = (byte) ((c >> 8) & 0xFF);
-            gifBytes[offset + 2] = (byte) (c & 0xFF);
-            offset += 3;
-        }
+        return false;
+    }
+
+    private static int readPngInt(byte[] bytes, int offset) {
+        return ((bytes[offset] & 0xFF) << 24) | ((bytes[offset + 1] & 0xFF) << 16)
+                | ((bytes[offset + 2] & 0xFF) << 8) | (bytes[offset + 3] & 0xFF);
     }
 
 }

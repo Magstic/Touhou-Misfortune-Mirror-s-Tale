@@ -27,7 +27,7 @@ public final class StoryScreen {
         return I18n.splitLines(I18n.loadText("story.txt"));
     }
 
-    private static final int BG_IMG_INDEX = 54;
+    private static final int BG_IMG_INDEX = 83;
 
     private static final int W = 240;
     private static final int H = 240;

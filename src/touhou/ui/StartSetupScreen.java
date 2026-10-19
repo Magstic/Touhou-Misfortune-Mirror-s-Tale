@@ -291,7 +291,7 @@ public final class StartSetupScreen {
             return;
         }
 
-        UiDraw.drawRegion(g, imgs.get(18), 0, 0, 0, 0, 240, 240);
+        UiDraw.drawRegion(g, imgs.get(37), 0, 0, 0, 0, 240, 240);
 
         int colorFrom = 0x303030;
         int colorTo = 0xFFFFA0;

@@ -153,7 +153,7 @@ Touhou_Misfortune_MirrorS_Tale/
 │   ├── icon.png                     #   MIDlet icon
 │   ├── cc.dat                       #   Sprite crop table (spriteId -> imgIndex + srcRect + anchor)
 │   ├── stage.dat                    #   Stage wave script (enemy type, position, timing)
-│   ├── sp/                          #   Sprite images (GIF): 000.gif ~ 095.gif + 001/003/008-010/015/024/028/029/030/031/042/052/055/057/061/068/073/085 split sheets (003/004/008-010/015/024/028/029/030/031/042/052/055/057/061/068/073/085 replaced; missing 078-080, 082-084: generated at runtime)
+│   ├── sp/                          #   128 indexed 8-bit PNG sprite sheets: 000.png ~ 127.png; image indices 128–133 are runtime-generated StageEX variants
 │   ├── bgm/                         #   Source MIDI, tracks 0–17 (packed, not copied into the JAR)
 │   │   ├── <id>/intro.mid + loop.mid #     Split looping track
 │   │   └── <id>.mid                  #     Single-file track
@@ -373,7 +373,7 @@ flowchart LR
 
 | File | Role |
 |------|------|
-| `ImageBank` | Loads GIF sprites from `/sp/`, caches, generates StageEX color variants |
+| `ImageBank` | Loads PNG sprites from `/sp/`, caches, generates StageEX color variants |
 | `SpriteCatalog` | Reads final `/cc.dat`, including image filenames, sizes, EX bases/palettes and complete sprite geometry/reflection modes |
 | `SpriteRenderer` | Draws sprites by ID with trim-aware logical windows, anchors, exact alpha and clip handling |
 | `BulletSystem` | Shared player/enemy bullet, laser and effect state store (capacity 1024) |
@@ -444,7 +444,7 @@ flowchart LR
 |------|--------|------|
 | `res/cc.dat` | CC01 binary, packaged unchanged | Image table and all 891 sprite records (13 shorts each); the sole filename/geometry/reflection definition |
 | `res/stage.dat` | Binary | Stage wave script: enemy type, position, timing, formation |
-| `res/sp/*.gif` | Final GIFs, packaged unchanged | Sprite sheets indexed by imgIndex (000.gif ~ 095.gif + 001/003/008-010/015/024/028/029/030/031/042/052/055/057/061/068/073/085 split sheets; 003/004/008-010/015/024/028/029/030/031/042/052/055/057/061/068/073/085 replaced; missing 078-080, 082-084 are runtime-generated StageEX variants) |
+| `res/sp/*.png` | Indexed 8-bit PNGs, packaged unchanged | 128 sprite sheets, 000.png ~ 127.png; each filename matches its image index. Indices 128–133 are runtime-generated StageEX variants. |
 | `res/se/*.wav` | WAV | Sound effects |
 | `res/bgm/` | MIDI | Source tracks 0–17; each is either `id.mid` or `id/intro.mid + loop.mid` |
 | `build/generated-res/snd/bgm.dat` | Custom | Generated current 18-track MIDI bundle embedded as `/snd/bgm.dat` |

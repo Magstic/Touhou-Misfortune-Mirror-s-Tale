@@ -523,31 +523,31 @@ public final class EndingScreen {
 
     private static int imgIndexForKey(String key) {
         if (equals(key, "REIMU_1")) {
-            return 86;
+            return 118;
         }
         if (equals(key, "REIMU_2")) {
-            return 87;
+            return 119;
         }
         if (equals(key, "REIMU_3")) {
-            return 88;
+            return 120;
         }
         if (equals(key, "MARISA_1")) {
-            return 89;
+            return 121;
         }
         if (equals(key, "MARISA_2")) {
-            return 90;
+            return 122;
         }
         if (equals(key, "MARISA_3")) {
-            return 91;
+            return 123;
         }
         if (equals(key, "ALICE_1")) {
-            return 92;
+            return 124;
         }
         if (equals(key, "ALICE_2")) {
-            return 93;
+            return 125;
         }
         if (equals(key, "ALICE_3")) {
-            return 94;
+            return 126;
         }
         return -1;
     }

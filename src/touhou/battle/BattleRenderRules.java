@@ -67,37 +67,37 @@ public final class BattleRenderRules {
             case 0:
             case 1:
             case 2:
-                return 25;
+                return 45;
             case 3:
-                return 59;
+                return 92;
             case 4:
-                return 62;
+                return 96;
             case 5:
-                return 70;
+                return 106;
             case 6:
-                return 77 + (phase & 3);
+                return (phase & 3) == 0 ? 114 : 127 + (phase & 3);
             default:
-                return 25;
+                return 45;
         }
     }
 
     public static int backgroundOverlayImage(int stage, int phase) {
         switch (stage) {
             case 1:
-                return 32;
+                return 59;
             case 3:
-                return 54;
+                return 83;
             case 4:
-                return 64;
+                return 98;
             case 6:
-                return 81 + (phase & 3);
+                return (phase & 3) == 0 ? 115 : 130 + (phase & 3);
             default:
                 return -1;
         }
     }
 
     public static int backgroundSecondaryImage(int stage) {
-        return (stage == 4) ? 63 : -1;
+        return (stage == 4) ? 97 : -1;
     }
 
     /** Sprite ID, logical destination X/Y and text color. */

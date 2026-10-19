@@ -50,20 +50,20 @@ public final class StagePreloader {
         switch (step) {
             case 0:
                 // Common HUD/frame images and always-present sprite sheets.
-                imgs.get(20);
-                imgs.get(21);
-                imgs.get(22);
-                imgs.get(23);
+                imgs.get(39);
+                imgs.get(40);
+                imgs.get(41);
+                imgs.get(42);
 
                 // Effects / enemies / bullets+items.
-                imgs.get(5);
-                imgs.get(6);
-                imgs.get(7);
-                imgs.get(19);
+                imgs.get(9);
+                imgs.get(10);
+                imgs.get(11);
+                imgs.get(38);
                 break;
             case 1:
                 // Common base background texture (stage 0/1/2).
-                imgs.get(25);
+                imgs.get(45);
                 break;
             case 2:
                 // Stage background images.
@@ -146,45 +146,45 @@ public final class StagePreloader {
         // Stage index: 0..6 (Stage1..Stage6 + StageEX).
         switch (stage) {
             case 0:
-                imgs.get(25);
+                imgs.get(45);
                 break;
             case 1:
-                imgs.get(25);
-                imgs.get(32);
-                imgs.getAlphaImage(32, 128);
+                imgs.get(45);
+                imgs.get(59);
+                imgs.getAlphaImage(59, 128);
                 break;
             case 2:
-                imgs.get(25);
-                imgs.get(44);
                 imgs.get(45);
-                imgs.getAlphaImage(44, 128);
-                imgs.getAlphaImage(45, 128);
+                imgs.get(72);
+                imgs.get(73);
+                imgs.getAlphaImage(72, 128);
+                imgs.getAlphaImage(73, 128);
                 break;
             case 3:
-                imgs.get(59);
-                imgs.get(54);
-                imgs.getAlphaImage(54, 127);
+                imgs.get(92);
+                imgs.get(83);
+                imgs.getAlphaImage(83, 127);
                 break;
             case 4:
-                imgs.get(62);
-                imgs.get(63);
-                imgs.get(64);
-                imgs.get(66);
-                imgs.getAlphaImage(64, 128);
+                imgs.get(96);
+                imgs.get(97);
+                imgs.get(98);
+                imgs.get(100);
+                imgs.getAlphaImage(98, 128);
                 break;
             case 5:
-                imgs.get(70);
+                imgs.get(106);
                 break;
             case 6:
                 // StageEX base/overlay phases.
-                imgs.get(77);
-                imgs.get(78);
-                imgs.get(79);
-                imgs.get(80);
-                imgs.get(81);
-                imgs.get(82);
-                imgs.get(83);
-                imgs.get(84);
+                imgs.get(114);
+                imgs.get(128);
+                imgs.get(129);
+                imgs.get(130);
+                imgs.get(115);
+                imgs.get(131);
+                imgs.get(132);
+                imgs.get(133);
                 break;
             default:
                 break;
@@ -214,23 +214,23 @@ public final class StagePreloader {
     }
 
     private static void preloadPlayerAssets(ImageBank imgs, SpriteRenderer sprites, int chara, boolean playerShotAlphaEnabled) {
-        imgs.get(SpriteSheetCatalog.PLAYER_IMAGES_BASE + chara);
-        imgs.get(SpriteSheetCatalog.PLAYER_OPTIONS_IMAGES_BASE + chara);
-        int shots = SpriteSheetCatalog.PLAYER_SHOTS_IMAGES_BASE + chara;
-        int bombShots = SpriteSheetCatalog.PLAYER_BOMB_SHOTS_IMAGES_BASE + chara;
+        imgs.get(SpriteSheetCatalog.PLAYER_IMAGES[chara]);
+        imgs.get(SpriteSheetCatalog.PLAYER_OPTIONS_IMAGES[chara]);
+        int shots = SpriteSheetCatalog.PLAYER_SHOTS_IMAGES[chara];
+        int bombShots = SpriteSheetCatalog.PLAYER_BOMB_SHOTS_IMAGES[chara];
         imgs.get(shots);
         imgs.get(bombShots);
         for (int i = 0; i < 4; i++) sprites.precacheAlphaRegion(SpriteSheetCatalog.PLAYER_AURA_BASE + i, 128);
 
-        // Extra projectile sheets live outside 008-010, but still belong to this character.
+        // Additional projectile sheets for this character.
         if (chara == 0) {
             imgs.get(SpriteSheetCatalog.REIMU_SHOTS_IMAGE);
             imgs.get(SpriteSheetCatalog.REIMU_BOMB_QUARTERS_IMAGE);
             imgs.get(SpriteSheetCatalog.REIMU_BOMB_FIRST_IMAGE);
         } else if (chara == 1) {
             imgs.get(SpriteSheetCatalog.MARISA_SHOT_LASERS_IMAGE);
-            imgs.get(16);
-            imgs.get(17);
+            imgs.get(35);
+            imgs.get(36);
         }
         if (!playerShotAlphaEnabled) return;
         // BulletSystem.drawFast uses sheet alpha caches, not compact sprite-region caches.
@@ -242,8 +242,8 @@ public final class StagePreloader {
             imgs.getAlphaImage(SpriteSheetCatalog.REIMU_BOMB_FIRST_IMAGE, 128);
         } else if (chara == 1) {
             imgs.getAlphaImage(SpriteSheetCatalog.MARISA_SHOT_LASERS_IMAGE, 128);
-            imgs.getAlphaImage(16, 128);
-            imgs.getAlphaImage(17, 128);
+            imgs.getAlphaImage(35, 128);
+            imgs.getAlphaImage(36, 128);
             for (int id = 100; id <= 102; id++) sprites.precacheAlphaRegion(id, 128);
         }
     }
@@ -269,9 +269,9 @@ public final class StagePreloader {
     }
 
     private static void preloadBombPortrait(ImageBank imgs, int chara) {
-        // Bomb overlay image (imgIndex 12+chara). Previously not preloaded, causing first-bomb stutter.
-        int bombImgIndex = 12 + chara;
-        if (bombImgIndex >= 12 && bombImgIndex <= 14) {
+        // Preload the bomb overlay to avoid first-bomb stutter.
+        int bombImgIndex = 29 + chara;
+        if (bombImgIndex >= 29 && bombImgIndex <= 31) {
             imgs.get(bombImgIndex);
         }
     }

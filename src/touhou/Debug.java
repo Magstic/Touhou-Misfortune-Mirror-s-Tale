@@ -474,7 +474,7 @@ public final class Debug {
             if (imgIndex < 0) {
                 continue;
             }
-            if (imgIndex == 7 || imgIndex == 8) {
+            if (imgIndex == 11 || imgIndex == 13) {
                 ghostBullets++;
             }
         }
@@ -553,7 +553,7 @@ public final class Debug {
             if (imgIndex < 0) {
                 continue;
             }
-            if (imgIndex == 7 || imgIndex == 8) {
+            if (imgIndex == 11 || imgIndex == 13) {
                 if (remaining > 0) {
                     remaining--;
                     continue;
@@ -649,7 +649,7 @@ public final class Debug {
             return false;
         }
         int imgIndex = cc.getImgIndex(spriteId);
-        return imgIndex == 7 || imgIndex == 8;
+        return imgIndex == 11 || imgIndex == 13;
     }
 
     private static int resolveEnemySpriteId(int[][] enemylist, int i) {

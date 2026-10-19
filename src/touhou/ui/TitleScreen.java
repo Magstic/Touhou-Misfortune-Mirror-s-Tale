@@ -140,7 +140,7 @@ public final class TitleScreen {
             }
         }
 
-        Image charImg = imgs.get(2);
+        Image charImg = imgs.get(5);
         if (charImg != null) {
             g.drawImage(charImg, 5, 93, Graphics.TOP | Graphics.LEFT);
         }

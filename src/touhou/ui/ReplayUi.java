@@ -22,7 +22,7 @@ final class ReplayUi {
     }
 
     static void renderBackground(Graphics g, ImageBank images) {
-        Image background = images == null ? null : images.get(18);
+        Image background = images == null ? null : images.get(37);
         if (background != null) {
             UiDraw.drawRegion(g, background, 0, 0, 0, 0, 240, 240);
             UiDraw.fillRectAlpha(g, 0, 0, 240, 240, 0x000000, 96);

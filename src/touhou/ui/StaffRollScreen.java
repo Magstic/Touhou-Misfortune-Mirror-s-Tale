@@ -97,7 +97,7 @@ public final class StaffRollScreen {
             this.imgs = imgs;
         }
 
-        Image bg = (this.imgs != null) ? this.imgs.get(18) : null;
+        Image bg = (this.imgs != null) ? this.imgs.get(37) : null;
         if (bg != null) {
             UiDraw.drawRegion(g, bg, 0, 0, 0, 0, 240, 240);
         } else {
@@ -290,7 +290,7 @@ public final class StaffRollScreen {
 
         // DoJa builds _m_backImage[] by rendering the scene and then drawing cc icons.
         // Do not draw sprite-sheet images full-frame here, or the wipe windows will expose multiple frames.
-        drawFull(g, 25);
+        drawFull(g, 45);
 
         sprites.draw(g, 169, 50, 38);
         sprites.draw(g, 174, 130, 58);
@@ -307,7 +307,7 @@ public final class StaffRollScreen {
         Graphics g = img.getGraphics();
 
         // Base background (avoid drawing sprite sheets full-frame).
-        drawFull(g, 25);
+        drawFull(g, 45);
 
         sprites.draw(g, 205, 100, 108);
 
@@ -322,7 +322,7 @@ public final class StaffRollScreen {
         Graphics g = img.getGraphics();
 
         // Base background (avoid drawing sprite sheets full-frame).
-        drawFull(g, 25);
+        drawFull(g, 45);
 
         sprites.draw(g, 227, 100, 108);
 
@@ -336,8 +336,8 @@ public final class StaffRollScreen {
         }
         Graphics g = img.getGraphics();
 
-        // DoJa uses 59 as the primary scene background here.
-        drawFull(g, 59);
+        // Primary scene background.
+        drawFull(g, 92);
 
         sprites.draw(g, 365, 100, 108);
 
@@ -351,9 +351,9 @@ public final class StaffRollScreen {
         }
         Graphics g = img.getGraphics();
 
-        // DoJa uses 62/63 as the base scene background here.
-        drawFull(g, 62);
-        drawFull(g, 63);
+        // Base scene backgrounds.
+        drawFull(g, 96);
+        drawFull(g, 97);
 
         sprites.draw(g, 516, 100, 108);
 
@@ -367,8 +367,8 @@ public final class StaffRollScreen {
         }
         Graphics g = img.getGraphics();
 
-        // DoJa uses 70 as the base scene background here.
-        drawFull(g, 70);
+        // Base scene background.
+        drawFull(g, 106);
 
         sprites.draw(g, 711, 100, 108);
 
