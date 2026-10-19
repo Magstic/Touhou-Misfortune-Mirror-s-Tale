@@ -1,5 +1,7 @@
 package touhou;
 
+import java.io.IOException;
+
 import javax.microedition.lcdui.Image;
 
 public final class ImageBank {
@@ -41,8 +43,6 @@ public final class ImageBank {
     private final int[] alphaRegionCacheAlpha;
     private int alphaRegionCacheNext;
 
-    private long lastRecoverAt;
-
     // Perf: alpha cache statistics (per instance).
     private int perfAlphaImageReq;
     private int perfAlphaImageHit;
@@ -81,31 +81,47 @@ public final class ImageBank {
     }
 
     public Image get(int imgIndex) {
-        if (imgIndex < 0 || imgIndex >= images.length) {
-            throw new IllegalArgumentException("imageIndex=" + imgIndex);
-        }
         Image cached = images[imgIndex];
         if (cached != null) return cached;
-        Image img;
-        if (catalog.variantBase(imgIndex) >= 0) {
-            img = buildStageExVariantFromBase(catalog.variantBase(imgIndex), catalog.variantPalette(imgIndex));
-            if (img == null) {
-                recoverForImageLoad();
-                img = buildStageExVariantFromBase(catalog.variantBase(imgIndex), catalog.variantPalette(imgIndex));
-            }
-        } else {
-            img = ResourceLoader.loadOptionalImage(catalog.imagePath(imgIndex));
-            if (img == null) {
-                recoverForImageLoad();
-                img = ResourceLoader.loadOptionalImage(catalog.imagePath(imgIndex));
-            }
+        try {
+            Image img = catalog.variantBase(imgIndex) >= 0
+                    ? buildStageExVariantFromBase(catalog.variantBase(imgIndex), catalog.variantPalette(imgIndex))
+                    : Image.createImage(catalog.imagePath(imgIndex));
+            images[imgIndex] = img;
+            return img;
+        } catch (IOException e) {
+            throw new ResourceException("Cannot load sprite image: " + imgIndex + ": " + e.toString());
         }
-        if (img == null) throw new ResourceException("Cannot load sprite image: " + imgIndex);
-        if (img.getWidth() != catalog.imageWidth(imgIndex) || img.getHeight() != catalog.imageHeight(imgIndex)) {
-            throw new ResourceException("Sprite image size mismatch: " + imgIndex);
+    }
+
+    /** Drop the previous scene before allocating the next scene's images. */
+    public void retain(int[][] groups) {
+        boolean[] keep = new boolean[images.length];
+        for (int i = 0; i < groups.length; i++) {
+            int[] group = groups[i];
+            for (int j = 0; j < group.length; j++) keep[group[j]] = true;
         }
-        images[imgIndex] = img;
-        return img;
+        for (int i = 0; i < images.length; i++) {
+            if (!keep[i]) release(i);
+        }
+    }
+
+    public void clear() {
+        for (int i = 0; i < images.length; i++) images[i] = null;
+        clearAlphaCaches();
+    }
+
+    public void release(int imgIndex) {
+        images[imgIndex] = null;
+        for (int i = 0; i < alphaImageCacheImg.length; i++) {
+            if (alphaImageCacheImgIndex[i] == imgIndex) alphaImageCacheImg[i] = null;
+        }
+        for (int i = 0; i < alphaKeyImageCacheImg.length; i++) {
+            if (alphaKeyImageCacheImgIndex[i] == imgIndex) alphaKeyImageCacheImg[i] = null;
+        }
+        for (int i = 0; i < alphaRegionCacheImg.length; i++) {
+            if (alphaRegionCacheImgIndex[i] == imgIndex) alphaRegionCacheImg[i] = null;
+        }
     }
 
     public Image getAlphaImageColorKey(int imgIndex, int alpha, int keyRgb) {
@@ -119,9 +135,6 @@ public final class ImageBank {
         perfAlphaKeyReq++;
 
         Image base = get(imgIndex);
-        if (base == null) {
-            return null;
-        }
 
         for (int i = 0; i < alphaKeyImageCacheImg.length; i++) {
             Image cached = alphaKeyImageCacheImg[i];
@@ -136,48 +149,41 @@ public final class ImageBank {
 
         int w = base.getWidth();
         int h = base.getHeight();
-        Image img;
-        try {
-            int[] rgb = new int[w * h];
-            base.getRGB(rgb, 0, w, 0, 0, w, h);
-            int key = keyRgb & 0x00FFFFFF;
-            for (int i = 0; i < rgb.length; i++) {
-                int p = rgb[i];
-                int rgb24 = p & 0x00FFFFFF;
-                if (rgb24 == key) {
-                    rgb[i] = 0;
-                    continue;
-                }
-                int a0 = (p >>> 24) & 0xFF;
-                if (a0 == 0) {
-                    rgb[i] = 0;
-                    continue;
-                }
-                int r = (rgb24 >>> 16) & 0xFF;
-                int g = (rgb24 >>> 8) & 0xFF;
-                int b = rgb24 & 0xFF;
-                int lum = (r * 30 + g * 59 + b * 11) / 100;
-                int inv = 255 - lum;
-                int aPix = (inv * a0) / 255;
-                int a = (aPix * alpha) / 255;
-                rgb[i] = (a << 24);
+        int[] rgb = new int[w * h];
+        base.getRGB(rgb, 0, w, 0, 0, w, h);
+        int key = keyRgb & 0x00FFFFFF;
+        for (int i = 0; i < rgb.length; i++) {
+            int p = rgb[i];
+            int rgb24 = p & 0x00FFFFFF;
+            if (rgb24 == key) {
+                rgb[i] = 0;
+                continue;
             }
-            img = Image.createRGBImage(rgb, w, h, true);
-        } catch (Throwable t) {
-            img = null;
+            int a0 = (p >>> 24) & 0xFF;
+            if (a0 == 0) {
+                rgb[i] = 0;
+                continue;
+            }
+            int r = (rgb24 >>> 16) & 0xFF;
+            int g = (rgb24 >>> 8) & 0xFF;
+            int b = rgb24 & 0xFF;
+            int lum = (r * 30 + g * 59 + b * 11) / 100;
+            int inv = 255 - lum;
+            int aPix = (inv * a0) / 255;
+            int a = (aPix * alpha) / 255;
+            rgb[i] = (a << 24);
         }
+        Image img = Image.createRGBImage(rgb, w, h, true);
 
-        if (img != null) {
-            int slot = alphaKeyImageCacheNext;
-            alphaKeyImageCacheNext = (alphaKeyImageCacheNext + 1) % alphaKeyImageCacheImg.length;
+        int slot = alphaKeyImageCacheNext;
+        alphaKeyImageCacheNext = (alphaKeyImageCacheNext + 1) % alphaKeyImageCacheImg.length;
 
-            alphaKeyImageCacheImg[slot] = img;
-            alphaKeyImageCacheImgIndex[slot] = imgIndex;
-            alphaKeyImageCacheAlpha[slot] = alpha;
-            alphaKeyImageCacheKeyRgb[slot] = keyRgb;
+        alphaKeyImageCacheImg[slot] = img;
+        alphaKeyImageCacheImgIndex[slot] = imgIndex;
+        alphaKeyImageCacheAlpha[slot] = alpha;
+        alphaKeyImageCacheKeyRgb[slot] = keyRgb;
 
-            perfAlphaKeyCreate++;
-        }
+        perfAlphaKeyCreate++;
         return img;
     }
 
@@ -192,9 +198,6 @@ public final class ImageBank {
         perfAlphaImageReq++;
 
         Image base = get(imgIndex);
-        if (base == null) {
-            return null;
-        }
 
         for (int i = 0; i < alphaImageCacheImg.length; i++) {
             Image cached = alphaImageCacheImg[i];
@@ -209,35 +212,28 @@ public final class ImageBank {
 
         int w = base.getWidth();
         int h = base.getHeight();
-        Image img;
-        try {
-            int[] rgb = new int[w * h];
-            base.getRGB(rgb, 0, w, 0, 0, w, h);
-            for (int i = 0; i < rgb.length; i++) {
-                int p = rgb[i];
-                int a0 = (p >>> 24) & 0xFF;
-                if (a0 == 0) {
-                    rgb[i] = 0;
-                    continue;
-                }
-                int a = (a0 * alpha) / 255;
-                rgb[i] = (a << 24) | (p & 0x00FFFFFF);
+        int[] rgb = new int[w * h];
+        base.getRGB(rgb, 0, w, 0, 0, w, h);
+        for (int i = 0; i < rgb.length; i++) {
+            int p = rgb[i];
+            int a0 = (p >>> 24) & 0xFF;
+            if (a0 == 0) {
+                rgb[i] = 0;
+                continue;
             }
-            img = Image.createRGBImage(rgb, w, h, true);
-        } catch (Throwable t) {
-            img = null;
+            int a = (a0 * alpha) / 255;
+            rgb[i] = (a << 24) | (p & 0x00FFFFFF);
         }
+        Image img = Image.createRGBImage(rgb, w, h, true);
 
-        if (img != null) {
-            int slot = alphaImageCacheNext;
-            alphaImageCacheNext = (alphaImageCacheNext + 1) % alphaImageCacheImg.length;
+        int slot = alphaImageCacheNext;
+        alphaImageCacheNext = (alphaImageCacheNext + 1) % alphaImageCacheImg.length;
 
-            alphaImageCacheImg[slot] = img;
-            alphaImageCacheImgIndex[slot] = imgIndex;
-            alphaImageCacheAlpha[slot] = alpha;
+        alphaImageCacheImg[slot] = img;
+        alphaImageCacheImgIndex[slot] = imgIndex;
+        alphaImageCacheAlpha[slot] = alpha;
 
-            perfAlphaImageCreate++;
-        }
+        perfAlphaImageCreate++;
         return img;
     }
 
@@ -255,9 +251,6 @@ public final class ImageBank {
         perfAlphaRegionReq++;
 
         Image base = get(imgIndex);
-        if (base == null) {
-            return null;
-        }
 
         int physicalX = srcX;
         int physicalY = srcY;
@@ -285,39 +278,32 @@ public final class ImageBank {
             }
         }
 
-        Image img;
-        try {
-            int[] rgb = new int[w * h];
-            base.getRGB(rgb, 0, w, physicalX, physicalY, w, h);
-            for (int i = 0; i < rgb.length; i++) {
-                int p = rgb[i];
-                int a0 = (p >>> 24) & 0xFF;
-                if (a0 == 0) {
-                    rgb[i] = 0;
-                    continue;
-                }
-                int a = (a0 * alpha) / 255;
-                rgb[i] = (a << 24) | (p & 0x00FFFFFF);
+        int[] rgb = new int[w * h];
+        base.getRGB(rgb, 0, w, physicalX, physicalY, w, h);
+        for (int i = 0; i < rgb.length; i++) {
+            int p = rgb[i];
+            int a0 = (p >>> 24) & 0xFF;
+            if (a0 == 0) {
+                rgb[i] = 0;
+                continue;
             }
-            img = Image.createRGBImage(rgb, w, h, true);
-        } catch (Throwable t) {
-            img = null;
+            int a = (a0 * alpha) / 255;
+            rgb[i] = (a << 24) | (p & 0x00FFFFFF);
         }
+        Image img = Image.createRGBImage(rgb, w, h, true);
 
-        if (img != null) {
-            int slot = alphaRegionCacheNext;
-            alphaRegionCacheNext = (alphaRegionCacheNext + 1) % alphaRegionCacheImg.length;
+        int slot = alphaRegionCacheNext;
+        alphaRegionCacheNext = (alphaRegionCacheNext + 1) % alphaRegionCacheImg.length;
 
-            alphaRegionCacheImg[slot] = img;
-            alphaRegionCacheImgIndex[slot] = imgIndex;
-            alphaRegionCacheX[slot] = srcX;
-            alphaRegionCacheY[slot] = srcY;
-            alphaRegionCacheW[slot] = w;
-            alphaRegionCacheH[slot] = h;
-            alphaRegionCacheAlpha[slot] = alpha;
+        alphaRegionCacheImg[slot] = img;
+        alphaRegionCacheImgIndex[slot] = imgIndex;
+        alphaRegionCacheX[slot] = srcX;
+        alphaRegionCacheY[slot] = srcY;
+        alphaRegionCacheW[slot] = w;
+        alphaRegionCacheH[slot] = h;
+        alphaRegionCacheAlpha[slot] = alpha;
 
-            perfAlphaRegionCreate++;
-        }
+        perfAlphaRegionCreate++;
         return img;
     }
 
@@ -376,8 +362,7 @@ public final class ImageBank {
         return v;
     }
 
-    // Clear all alpha caches to free memory. Does NOT call System.gc().
-    public void clearAlphaCaches() {
+    private void clearAlphaCaches() {
         for (int i = 0; i < alphaImageCacheImg.length; i++) {
             alphaImageCacheImg[i] = null;
         }
@@ -392,55 +377,12 @@ public final class ImageBank {
         alphaRegionCacheNext = 0;
     }
 
-    private void recoverForImageLoad() {
-        long now = System.currentTimeMillis();
-        if (now - lastRecoverAt < 1000) {
-            return;
+    private Image buildStageExVariantFromBase(int baseImgIndex, int tdIndex) throws IOException {
+        byte[] png = ResourceLoader.readRequiredBytes(catalog.imagePath(baseImgIndex));
+        if (!applyPngPalette(png, STAGEEX_TD[tdIndex])) {
+            throw new IOException("Missing PNG palette: " + baseImgIndex);
         }
-        lastRecoverAt = now;
-
-        for (int i = 0; i < alphaImageCacheImg.length; i++) {
-            alphaImageCacheImg[i] = null;
-        }
-        for (int i = 0; i < alphaKeyImageCacheImg.length; i++) {
-            alphaKeyImageCacheImg[i] = null;
-        }
-        for (int i = 0; i < alphaRegionCacheImg.length; i++) {
-            alphaRegionCacheImg[i] = null;
-        }
-        alphaImageCacheNext = 0;
-        alphaKeyImageCacheNext = 0;
-        alphaRegionCacheNext = 0;
-
-        System.gc();
-    }
-
-    private Image buildStageExVariantFromBase(int baseImgIndex, int tdIndex) {
-        if (tdIndex < 0 || tdIndex >= STAGEEX_TD.length) {
-            return null;
-        }
-
-        String basePath = catalog.imagePath(baseImgIndex);
-        byte[] base = ResourceLoader.readOptionalBytes(basePath);
-        if (base == null) {
-            return null;
-        }
-
-        byte[] modified;
-        try {
-            modified = new byte[base.length];
-            System.arraycopy(base, 0, modified, 0, base.length);
-        } catch (Throwable t) {
-            return null;
-        }
-
-        if (!applyPngPalette(modified, STAGEEX_TD[tdIndex])) return null;
-
-        try {
-            return Image.createImage(modified, 0, modified.length);
-        } catch (Throwable t) {
-            return null;
-        }
+        return Image.createImage(png, 0, png.length);
     }
 
     private static boolean applyPngPalette(byte[] pngBytes, int[] palette) {

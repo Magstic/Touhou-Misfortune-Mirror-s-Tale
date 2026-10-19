@@ -3,12 +3,9 @@ package touhou.ui;
 import javax.microedition.lcdui.Graphics;
 
 import touhou.SpriteRenderer;
-import touhou.GameOptions;
 import touhou.ImageBank;
 import touhou.ResultStats;
 import touhou.SoundEffectSystem;
-import touhou.battle.SpellPracticeCatalog;
-import touhou.stage.StagePreloader;
 import touhou.UnlockFlags;
 
 public final class UiController {
@@ -68,8 +65,6 @@ public final class UiController {
     private OptionScreen option;
     private QuitScreen quit;
 
-    private final StagePreloader stagePreloader = new StagePreloader();
-
     private int state;
 
     public UiController(ImageBank images, SpriteRenderer sprites, Listener listener) {
@@ -113,27 +108,6 @@ public final class UiController {
             }
         });
         quit = new QuitScreen();
-    }
-
-    private void preloadStageSync(int stage, int chara, int type) {
-        if (images == null || sprites == null) {
-            return;
-        }
-
-        // Avoid first-time hitch when the boss spell name is first shown.
-
-        int[] opt = GameOptions.load();
-        boolean playerShotAlphaEnabled = GameOptions.isPlayerShotAlphaEnabled(opt);
-        boolean bossSpellCutInAlphaEnabled = GameOptions.isBossSpellCutInAlphaEnabled(opt);
-
-        stagePreloader.setPlayerShotAlphaEnabled(playerShotAlphaEnabled);
-        stagePreloader.setBossSpellCutInAlphaEnabled(bossSpellCutInAlphaEnabled);
-
-        stagePreloader.enter(stage, chara);
-        int guard = stagePreloader.getStepMax() + 8;
-        for (int i = 0; i < guard && !stagePreloader.isDone(); i++) {
-            stagePreloader.update(images, sprites);
-        }
     }
 
     public void returnToTitleKeepCursor() {
@@ -185,7 +159,7 @@ public final class UiController {
     }
 
     private void updateLoading(int pressed) {
-        loading.update(pressed, images, sprites);
+        loading.update(pressed);
         if (loading.isDone()) {
             startupLanguage.enter();
             transitionTo(STATE_STARTUP_LANGUAGE);
@@ -294,7 +268,6 @@ public final class UiController {
         if (r.kind == StartSetupScreen.Result.KIND_BACK_TO_TITLE) {
             returnToTitleKeepCursor();
         } else if (r.kind == StartSetupScreen.Result.KIND_START_GAME) {
-            preloadStageSync(r.startStage, r.chara, r.type);
             if (listener != null) {
                 listener.onStartGameRequested(r.gamemode, r.level, r.chara, r.type, r.startStage, r.pracBoss);
             }
@@ -328,7 +301,6 @@ public final class UiController {
             if (r.chara == 2 && !UnlockFlags.isAliceUnlocked()) {
                 return false;
             }
-            preloadStageSync(SpellPracticeCatalog.getStage(r.spellId), r.chara, r.type);
             if (listener != null) {
                 listener.onStartSpellPracticeRequested(r.chara, r.type, r.spellId);
             }
@@ -418,6 +390,38 @@ public final class UiController {
     }
 
     private void transitionTo(int nextState) {
+        int[] sheets;
+        switch (nextState) {
+            case STATE_STARTUP_LANGUAGE:
+                sheets = new int[] { 0, 2, 3, 5, 127 };
+                break;
+            case STATE_TITLE:
+            case STATE_QUIT:
+                sheets = new int[] { 0, 1, 2, 3, 5 };
+                break;
+            case STATE_START_SETUP:
+                sheets = new int[] { 6, 7, 8, 28, 37 };
+                break;
+            case STATE_HELP:
+                sheets = new int[] { 4, 10 };
+                break;
+            case STATE_SPELL_PRACTICE:
+                sheets = new int[] { 6 };
+                break;
+            case STATE_STORY:
+                sheets = new int[] { 83 };
+                break;
+            case STATE_REPLAY:
+            case STATE_REPLAY_RECEIVE:
+            case STATE_REPLAY_SEND:
+                sheets = new int[] { 37 };
+                break;
+            default:
+                sheets = new int[0];
+                break;
+        }
+        images.retain(new int[][] { sheets });
+        for (int i = 0; i < sheets.length; i++) images.get(sheets[i]);
         state = nextState;
     }
 

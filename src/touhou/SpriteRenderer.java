@@ -15,6 +15,41 @@ public final class SpriteRenderer {
     }
     public ImageBank getImages() { return images; }
 
+    /** One reusable ARGB region for a normal sprite whose opacity changes over time. */
+    public AlphaSprite createAlphaSprite(int id) {
+        return new AlphaSprite(images.get(catalog.getImgIndex(id)), catalog, id);
+    }
+
+    public static final class AlphaSprite {
+        private final Image source;
+        private final int sourceX, sourceY, width, height, offsetX, offsetY;
+        private final int[] pixels;
+        private int alpha = -1;
+
+        private AlphaSprite(Image source, SpriteCatalog catalog, int id) {
+            this.source = source;
+            sourceX = catalog.pixelX(id);
+            sourceY = catalog.pixelY(id);
+            width = catalog.renderW(id);
+            height = catalog.renderH(id);
+            offsetX = catalog.trimX(id) - catalog.getAx(id);
+            offsetY = catalog.trimY(id) - catalog.getAy(id);
+            pixels = new int[width * height];
+        }
+
+        public void draw(Graphics g, int x, int y, int alpha) {
+            if (this.alpha != alpha) {
+                source.getRGB(pixels, 0, width, sourceX, sourceY, width, height);
+                for (int i = 0; i < pixels.length; i++) {
+                    int pixel = pixels[i];
+                    pixels[i] = ((((pixel >>> 24) * alpha) / 255) << 24) | (pixel & 0xFFFFFF);
+                }
+                this.alpha = alpha;
+            }
+            g.drawRGB(pixels, 0, width, x + offsetX, y + offsetY, width, height, true);
+        }
+    }
+
     public boolean getSizeAndAnchor(int id, int[] out) {
         if (!catalog.hasSpriteMeta(id) || out == null || out.length < 4) return false;
         out[0] = catalog.getW(id); out[1] = catalog.getH(id);

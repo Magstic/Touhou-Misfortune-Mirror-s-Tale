@@ -117,7 +117,7 @@ public final class BattleScene {
                 nextStage = st + 1;
             }
         }
-        StageClearResultPanel.Result r = panel.updateWithStagePreload(pressed, nextStage, core.bossHostGetChara(), core.bossHostGetType(), core.battleFlowImgs(), core.battleFlowSprites());
+        StageClearResultPanel.Result r = panel.update(pressed, nextStage);
 
         if (!wasLeaving && panel.isLeaving()) {
             core.battleFlowClearStageClearPhoto();
@@ -135,6 +135,7 @@ public final class BattleScene {
         }
 
         if (r != null && r.kind == StageClearResultPanel.Result.KIND_ADVANCE_STAGE) {
+            panel.leave(core.battleFlowImgs());
             core.battleFlowSetStageClearPanelActive(false);
             core.battleFlowClearStageClearPhoto();
             core.battleFlowClearReplayPending();

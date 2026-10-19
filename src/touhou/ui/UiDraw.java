@@ -410,6 +410,28 @@ public final class UiDraw {
         fillArgb(g, x, y, w, h, (alpha << 24) | (rgb & 0x00FFFFFF));
     }
 
+    public static void fillCheckerboardAlpha(Graphics g, int x, int y, int w, int h, int rgb, int alpha) {
+        int left = Math.max(x, g.getClipX()), top = Math.max(y, g.getClipY());
+        int right = Math.min(x + w, g.getClipX() + g.getClipWidth());
+        int bottom = Math.min(y + h, g.getClipY() + g.getClipHeight());
+        if (left >= right || top >= bottom) return;
+        int blockW = Math.min(right - left, ALPHA_STRIP_WIDTH);
+        int blockH = Math.min(bottom - top, ALPHA_STRIP_HEIGHT);
+        int argb = (alpha << 24) | (rgb & 0xFFFFFF);
+        for (int row = 0; row < blockH; row++) {
+            for (int col = 0; col < blockW; col++) {
+                alphaPixels[row * blockW + col] = (((left - x + col) | (top - y + row)) & 1) != 0 ? argb : 0;
+            }
+        }
+        // Repeated blocks use even strip dimensions, keeping the pattern aligned.
+        for (int yy = top; yy < bottom; yy += blockH) {
+            for (int xx = left; xx < right; xx += blockW) {
+                g.drawRGB(alphaPixels, 0, blockW, xx, yy,
+                        Math.min(blockW, right - xx), Math.min(blockH, bottom - yy), true);
+            }
+        }
+    }
+
     private static void fillArgb(Graphics g, int x, int y, int w, int h, int argb) {
         if (w <= 0 || h <= 0 || g.getClipWidth() <= 0 || g.getClipHeight() <= 0) return;
         int left = Math.max(x, g.getClipX()), top = Math.max(y, g.getClipY());

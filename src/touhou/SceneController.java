@@ -30,6 +30,7 @@ public final class SceneController {
             EndingScreen.Result r = endingScreen.update(pressed);
             if (r != null && r.kind == EndingScreen.Result.KIND_DONE) {
                 core.sceneSetEndingActive(false);
+                endingScreen.leave();
                 staffRollScreen.enter(core.sceneImgs(), core.sceneSprites());
                 core.sceneSetStaffRollActive(true);
             }
@@ -65,6 +66,7 @@ public final class SceneController {
                 core.battleFlowSetStageClearPanelActive(false);
                 core.battleFlowClearStageClearPhoto();
                 core.battleFlowClearReplayPending();
+                stageClearResultPanel.leave(core.sceneImgs());
 
                 UiController ui = core.sceneUi();
                 if (ui != null) {

@@ -3,9 +3,6 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
-import touhou.SpriteRenderer;
-import touhou.SpriteSheetCatalog;
-import touhou.ImageBank;
 import touhou.UnlockFlags;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
@@ -20,96 +17,19 @@ public final class LoadingScreen {
         step = 0;
         done = false;
 
-        // Keep this in sync with tickOneStep().
-        stepMax = 6;
+        stepMax = 1;
     }
 
     public boolean isDone() {
         return done;
     }
 
-    public void update(int pressed, ImageBank imgs, SpriteRenderer sprites) {
-        if (done) {
-            return;
+    public void update(int pressed) {
+        if (!UnlockFlags.isReplayRmsWarmed() && ReplaySlotStore.warmup()) {
+            UnlockFlags.setReplayRmsWarmed(true);
         }
-
-        // Allow skipping on emulator/testing.
-        if (UiInput.confirm(pressed) && UnlockFlags.isReplayRmsWarmed()) {
-            done = true;
-            return;
-        }
-
-        tickOneStep(imgs, sprites);
-    }
-
-    private void tickOneStep(ImageBank imgs, SpriteRenderer sprites) {
-        if (imgs == null || sprites == null) {
-            done = true;
-            return;
-        }
-
-        switch (step) {
-            case 0:
-                // Title background/UI.
-                imgs.get(0);
-                imgs.get(1);
-                imgs.get(SpriteSheetCatalog.TITLE_GLYPHS_IMAGE);
-                imgs.get(SpriteSheetCatalog.TITLE_CAPTION_IMAGE);
-                imgs.get(SpriteSheetCatalog.HELP_ARROWS_IMAGE);
-                imgs.get(5);
-                break;
-            case 1:
-                // Start setup backgrounds.
-                imgs.get(37);
-                imgs.get(28);
-                break;
-            case 2:
-                // Title menu sprites.
-                preloadSpriteRange(imgs, sprites, 766, 783, 255);
-                break;
-            case 3:
-                // Difficulty and character selection sprites.
-                preloadSpriteRange(imgs, sprites, 467, 482, 255);
-                break;
-            case 4:
-                // Character thumbnails are drawn with alpha=128 (player-origin draw).
-                preloadSpriteRange(imgs, sprites, 477, 479, 128);
-                break;
-            case 5:
-                // One-time RMS warmup for Replay menu on first launch.
-                if (!UnlockFlags.isReplayRmsWarmed()) {
-                    boolean ok = ReplaySlotStore.warmup();
-                    if (ok) {
-                        UnlockFlags.setReplayRmsWarmed(true);
-                    }
-                }
-                break;
-            default:
-                done = true;
-                return;
-        }
-
-        step++;
-        if (step >= stepMax) {
-            done = true;
-        }
-    }
-
-    private static void preloadSpriteRange(ImageBank imgs, SpriteRenderer sprites, int idFrom, int idTo, int alpha) {
-        if (imgs == null || sprites == null) {
-            return;
-        }
-        for (int id = idFrom; id <= idTo; id++) {
-            int imgIndex = sprites.getImageIndex(id);
-            if (imgIndex < 0) {
-                continue;
-            }
-            imgs.get(imgIndex);
-            if (alpha != 255) {
-                // Precreate the most common alpha region for this sprite.
-                sprites.precacheAlphaRegion(id, alpha);
-            }
-        }
+        step = stepMax;
+        done = true;
     }
 
     public void render(Graphics g) {

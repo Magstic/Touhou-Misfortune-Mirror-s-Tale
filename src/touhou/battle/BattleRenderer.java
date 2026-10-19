@@ -62,7 +62,8 @@ public final class BattleRenderer {
 
     // Stage 6 (Extra Stage) background: caches for additive RGB blending.
     // We cache RGB arrays to avoid calling Image.getRGB every frame.
-    private int stage6CacheD4;
+    private int stage6CacheD4 = -1;
+    private boolean stage6CacheHeavy;
     private Image stage6CacheBaseImg;
     private int[] stage6CacheBaseRgb;
     private int stage6CacheBaseW;
@@ -75,9 +76,6 @@ public final class BattleRenderer {
 
     private int[] stage6BlendOutRgb;
 
-    // Pre-built death checkerboard overlay (replaces 200 drawLine calls per frame).
-    private Image deathCheckerboard;
-
     // Scratch arrays used by background renderers to sort draw order.
     private final int[] bgKeys4 = new int[4];
     private final int[] bgRanks4 = new int[4];
@@ -86,6 +84,15 @@ public final class BattleRenderer {
     private final int[] bgKeys24 = new int[24];
     private final int[] bgRanks24 = new int[24];
     private final int[] dialoguePortrait = new int[4];
+
+    public void release() {
+        stage6CacheD4 = -1;
+        stage6CacheBaseImg = null;
+        stage6CacheOverlayImg = null;
+        stage6CacheBaseRgb = null;
+        stage6CacheOverlayRgb = null;
+        stage6BlendOutRgb = null;
+    }
 
     /**
      * Entry point for battle rendering.
@@ -160,10 +167,7 @@ public final class BattleRenderer {
         }
 
         if (a.deadcnt() > 0) {
-            Image cb = getDeathCheckerboard();
-            if (cb != null) {
-                g.drawImage(cb, PLAY_X, PLAY_Y, Graphics.TOP | Graphics.LEFT);
-            }
+            UiDraw.fillCheckerboardAlpha(g, PLAY_X, PLAY_Y, PLAY_W, PLAY_H, 0xFF7F7F, 128);
         }
         g.setClip(0, 0, LOGICAL_W, LOGICAL_H);
 
@@ -915,36 +919,17 @@ public final class BattleRenderer {
         boolean heavy = a.heavyBgEnabled();
         int d4 = (a.bgMoveSpd() >> 9) & 0x3;
 
-        ensureStage6Cache(a, d4, heavy);
+        ensureStage6Cache(a.imgs(), d4, heavy);
 
         // Simplified-background mode: base image + overlay scrolling (normal draw).
         // Skips additive blend and ratio color oscillation.
         if (!heavy) {
-            if (this.stage6CacheBaseImg != null) {
-                g.drawImage(this.stage6CacheBaseImg, 0, 0, Graphics.TOP | Graphics.LEFT);
-            } else {
-                g.setColor(0x303030);
-                g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
-            }
-            // Draw overlay with normal compositing for scrolling effect.
-            if (this.stage6CacheOverlayImg != null && this.stage6CacheOverlayH > 0) {
-                int scroll = (a.bgMoveSpd() >> 1) % this.stage6CacheOverlayH;
-                int x0 = PLAY_X + a.originX();
-                int y0 = PLAY_Y + a.originY() + scroll;
-                g.drawImage(this.stage6CacheOverlayImg, x0, y0, Graphics.TOP | Graphics.LEFT);
-                g.drawImage(this.stage6CacheOverlayImg, x0, y0 - this.stage6CacheOverlayH, Graphics.TOP | Graphics.LEFT);
-            }
-            return;
-        }
-
-        if (this.stage6CacheBaseImg == null || this.stage6CacheBaseRgb == null) {
-            g.setColor(0x303030);
-            g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
-            return;
-        }
-
-        if (this.stage6CacheOverlayImg == null || this.stage6CacheOverlayRgb == null || this.stage6CacheOverlayW <= 0 || this.stage6CacheOverlayH <= 0) {
-            g.drawImage(this.stage6CacheBaseImg, 0, 0, Graphics.TOP | Graphics.LEFT);
+            g.drawImage(stage6CacheBaseImg, 0, 0, Graphics.TOP | Graphics.LEFT);
+            int scroll = (a.bgMoveSpd() >> 1) % stage6CacheOverlayH;
+            int x0 = PLAY_X + a.originX();
+            int y0 = PLAY_Y + a.originY() + scroll;
+            g.drawImage(stage6CacheOverlayImg, x0, y0, Graphics.TOP | Graphics.LEFT);
+            g.drawImage(stage6CacheOverlayImg, x0, y0 - stage6CacheOverlayH, Graphics.TOP | Graphics.LEFT);
             return;
         }
 
@@ -959,141 +944,46 @@ public final class BattleRenderer {
         blendStage6Add(a, g, d3, scroll);
     }
 
-    // Builds/refreshes Stage 6 (Extra Stage) cached RGB buffers when the phase changes.
-    // When heavy=false (simplified bg), only resolves base Image; skips RGB
-    // extraction, overlay loading, and blend buffer to save memory.
-    private void ensureStage6Cache(GameCore.BattleRenderAccess a, int d4, boolean heavy) {
-        ImageBank imgs = a.imgs();
-        if (imgs == null) {
-            return;
+    // Keep only the current EX palette pair and its optional RGB buffers.
+    private void ensureStage6Cache(ImageBank images, int phase, boolean heavy) {
+        if (stage6CacheD4 == phase && stage6CacheHeavy == heavy) return;
+        int previousPhase = stage6CacheD4 < 0 ? 0 : stage6CacheD4;
+        if (previousPhase != phase) {
+            images.release(BattleRenderRules.backgroundBaseImage(6, previousPhase));
+            images.release(BattleRenderRules.backgroundOverlayImage(6, previousPhase));
         }
+        stage6CacheBaseImg = null;
+        stage6CacheOverlayImg = null;
+        stage6CacheBaseRgb = null;
+        stage6CacheOverlayRgb = null;
 
-        boolean cached = (this.stage6CacheD4 == d4);
-        if (!heavy) {
-            // Simplified mode: need base + overlay Image refs for scrolling.
-            if (cached && this.stage6CacheBaseImg != null && this.stage6CacheOverlayImg != null) {
-                return;
-            }
+        stage6CacheD4 = phase;
+        stage6CacheHeavy = heavy;
+        stage6CacheBaseImg = images.get(BattleRenderRules.backgroundBaseImage(6, phase));
+        stage6CacheOverlayImg = images.get(BattleRenderRules.backgroundOverlayImage(6, phase));
+        stage6CacheBaseW = stage6CacheBaseImg.getWidth();
+        stage6CacheBaseH = stage6CacheBaseImg.getHeight();
+        stage6CacheOverlayW = stage6CacheOverlayImg.getWidth();
+        stage6CacheOverlayH = stage6CacheOverlayImg.getHeight();
+        if (heavy) {
+            stage6CacheBaseRgb = new int[stage6CacheBaseW * stage6CacheBaseH];
+            stage6CacheBaseImg.getRGB(stage6CacheBaseRgb, 0, stage6CacheBaseW, 0, 0,
+                    stage6CacheBaseW, stage6CacheBaseH);
+            stage6CacheOverlayRgb = new int[stage6CacheOverlayW * stage6CacheOverlayH];
+            stage6CacheOverlayImg.getRGB(stage6CacheOverlayRgb, 0, stage6CacheOverlayW, 0, 0,
+                    stage6CacheOverlayW, stage6CacheOverlayH);
+            if (stage6BlendOutRgb == null) stage6BlendOutRgb = new int[PLAY_W * PLAY_H];
         } else {
-            if (cached && this.stage6CacheBaseRgb != null && this.stage6CacheOverlayRgb != null) {
-                return;
-            }
-        }
-
-        this.stage6CacheD4 = d4;
-
-        Image base = imgs.get(BattleRenderRules.backgroundBaseImage(6, d4));
-        if (base != null) {
-            try {
-                if (base.getWidth() <= 1 || base.getHeight() <= 1) {
-                    base = null;
-                }
-            } catch (Throwable t) {
-                base = null;
-            }
-        }
-        if (base == null) {
-            base = imgs.get(BattleRenderRules.backgroundBaseImage(6, 0));
-        }
-
-        this.stage6CacheBaseImg = base;
-
-        Image overlay = imgs.get(BattleRenderRules.backgroundOverlayImage(6, d4));
-        if (overlay != null) {
-            try {
-                if (overlay.getWidth() <= 1 || overlay.getHeight() <= 1) {
-                    overlay = null;
-                }
-            } catch (Throwable t) {
-                overlay = null;
-            }
-        }
-        if (overlay == null) {
-            overlay = imgs.get(BattleRenderRules.backgroundOverlayImage(6, 0));
-        }
-
-        this.stage6CacheOverlayImg = overlay;
-
-        this.stage6CacheBaseRgb = null;
-        this.stage6CacheOverlayRgb = null;
-        this.stage6CacheBaseW = 0;
-        this.stage6CacheBaseH = 0;
-        this.stage6CacheOverlayW = 0;
-        this.stage6CacheOverlayH = 0;
-
-        // Simplified mode: Image refs are enough for drawImage scrolling.
-        // Skip RGB extraction and blend buffer to save memory.
-        if (!heavy) {
-            // Resolve overlay dimensions for scroll modulo.
-            if (overlay != null) {
-                try {
-                    this.stage6CacheOverlayW = overlay.getWidth();
-                    this.stage6CacheOverlayH = overlay.getHeight();
-                } catch (Throwable t) {
-                    this.stage6CacheOverlayW = 240;
-                    this.stage6CacheOverlayH = 240;
-                }
-            }
-            return;
-        }
-
-        if (base != null) {
-            try {
-                int w = base.getWidth();
-                int h = base.getHeight();
-                int[] rgb = new int[w * h];
-                base.getRGB(rgb, 0, w, 0, 0, w, h);
-                this.stage6CacheBaseRgb = rgb;
-                this.stage6CacheBaseW = w;
-                this.stage6CacheBaseH = h;
-            } catch (Throwable t) {
-                this.stage6CacheBaseRgb = null;
-                this.stage6CacheBaseW = 0;
-                this.stage6CacheBaseH = 0;
-            }
-        }
-
-        if (overlay != null) {
-            try {
-                int w = overlay.getWidth();
-                int h = overlay.getHeight();
-                int[] rgb = new int[w * h];
-                overlay.getRGB(rgb, 0, w, 0, 0, w, h);
-                this.stage6CacheOverlayRgb = rgb;
-                this.stage6CacheOverlayW = w;
-                this.stage6CacheOverlayH = h;
-            } catch (Throwable t) {
-                this.stage6CacheOverlayRgb = null;
-                this.stage6CacheOverlayW = 0;
-                this.stage6CacheOverlayH = 0;
-            }
-        }
-
-        if (this.stage6BlendOutRgb == null || this.stage6BlendOutRgb.length != PLAY_W * PLAY_H) {
-            try {
-                this.stage6BlendOutRgb = new int[PLAY_W * PLAY_H];
-            } catch (Throwable t) {
-                this.stage6BlendOutRgb = null;
-            }
+            stage6BlendOutRgb = null;
         }
     }
 
-    // CPU-side additive blend for the Extra Stage background; draw the base image when blending is unavailable.
+    // CPU-side additive blend for the Extra Stage background.
     private void blendStage6Add(GameCore.BattleRenderAccess a, Graphics g, int ratio, int scroll) {
-        if (this.stage6BlendOutRgb == null) {
-            g.drawImage(this.stage6CacheBaseImg, 0, 0, Graphics.TOP | Graphics.LEFT);
-            return;
-        }
-
         int baseW = this.stage6CacheBaseW;
         int baseH = this.stage6CacheBaseH;
         int overlayW = this.stage6CacheOverlayW;
         int overlayH = this.stage6CacheOverlayH;
-        if (baseW <= 0 || baseH <= 0 || overlayW <= 0 || overlayH <= 0) {
-            g.drawImage(this.stage6CacheBaseImg, 0, 0, Graphics.TOP | Graphics.LEFT);
-            return;
-        }
-
         int outIndex = 0;
         for (int y = 0; y < PLAY_H; y++) {
             int by = PLAY_Y + y;
@@ -1380,34 +1270,6 @@ public final class BattleRenderer {
         if (right < PLAY_X + PLAY_W) {
             UiDraw.fillRectAlpha(g, right, top, PLAY_X + PLAY_W - right, size, 0x000000, alpha);
         }
-    }
-
-    // Lazily build a PLAY_W x PLAY_H checkerboard overlay for the death flash effect.
-    private Image getDeathCheckerboard() {
-        if (deathCheckerboard != null) {
-            return deathCheckerboard;
-        }
-        try {
-            int w = PLAY_W;
-            int h = PLAY_H;
-            int[] rgb = new int[w * h];
-            // Original draws 0xFF7F7F lines on odd columns and odd rows.
-            // Equivalent: pixels where (col is odd) OR (row is odd) get the color.
-            int color = 0x80FF7F7F;
-            for (int y = 0; y < h; y++) {
-                int rowOdd = y & 1;
-                int base = y * w;
-                for (int x = 0; x < w; x++) {
-                    if (rowOdd != 0 || (x & 1) != 0) {
-                        rgb[base + x] = color;
-                    }
-                }
-            }
-            deathCheckerboard = Image.createRGBImage(rgb, w, h, true);
-        } catch (Throwable t) {
-            // Fall through; callers handle null.
-        }
-        return deathCheckerboard;
     }
 
     // Boss HUD: HP bar, name, remaining lives/stocks, timer, and current spell name.

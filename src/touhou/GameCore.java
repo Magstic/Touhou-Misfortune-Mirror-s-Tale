@@ -24,6 +24,7 @@ import touhou.replay.ReplayTimeScaleController;
 import touhou.stage.BossController;
 import touhou.stage.StageDochu;
 import touhou.stage.StageRuntime;
+import touhou.stage.StageAssets;
 import touhou.i18n.I18nBootstrap;
 import touhou.i18n.SpellText;
 import touhou.ui.BattlePauseScreen;
@@ -69,6 +70,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     private final SceneController sceneController;
     private final BattleScene battleScene;
     private final BattleRenderer battleRenderer;
+    private final StageAssets stageAssets = new StageAssets();
     private final BattleRenderAccess battleRenderAccess;
     private final BattleVisualState battleVisualState;
     private final BulletSystem bullets;
@@ -744,6 +746,9 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         enemyBullets.clear();
         enemies.clear();
         player = null;
+        battleRenderer.release();
+        stageClearResultPanel.leave(imgs);
+        imgs.clear();
     }
 
     private void startBattleSession(BattleSessionConfig nextSession) {
@@ -857,6 +862,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     }
 
     private void initializeSessionStage() {
+        loadStageAssets();
         ensureStageDatLoaded();
         ensureTalkTableLoaded();
         if (session.isSpellPractice()) {
@@ -868,6 +874,13 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             stageCe();
             ensureTalkTableLoaded();
         }
+    }
+
+    private void loadStageAssets() {
+        battleRenderer.release();
+        stageAssets.enter(imgs, sprites, session.getStage(), session.getCharacter(),
+                session.isSpellPractice() ? SpellPracticeCatalog.getBossStep(session.getSpellId()) : -1,
+                session.isSpellPractice() || session.isPracticeBoss(), GameOptions.load());
     }
 
     private void createSessionPlayer() {
@@ -1461,10 +1474,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
     public ImageBank battleFlowImgs() {
         return imgs;
-    }
-
-    public SpriteRenderer battleFlowSprites() {
-        return sprites;
     }
 
     public SpellPracticeEndScreen battleFlowSpellPracticeEndScreen() {
@@ -2171,6 +2180,10 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     public void battleVisualEndFrame() {
         int spellId = (bossController == null) ? -1 : bossController.getSpellId();
         battleVisualState.endFrame(mStage, mBossmodef, spellId, sBossf, optBlindMaskFadeEnabled);
+        if (inGame) {
+            stageAssets.updateSpellAssets(imgs, sprites, bossController, battleVisualState,
+                    bossSpellCutInChara, timeStop, enemylist, effectlist);
+        }
     }
 
     // Render full battle UI and playfield.
@@ -3279,6 +3292,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     // Advance stage script and spawn events.
     private void stageMa() {
         stageRuntime.stageMa();
+        stageAssets.update(imgs, mBossmodef, battleRenderAccess.dialogueVisible(), effectlist, enemylist);
     }
 
     private void resetStageResultCounters() {
@@ -3492,6 +3506,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         session = session.atStage(mStage + 1);
         mStage = session.getStage();
         bgMoveSpd = 0;
+        loadStageAssets();
 
         stageInitialContinueCount = continueSystem.getRemainingContinues();
         resetStageResultCounters();

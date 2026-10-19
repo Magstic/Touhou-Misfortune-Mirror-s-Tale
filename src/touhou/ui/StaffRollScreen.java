@@ -56,7 +56,8 @@ public final class StaffRollScreen {
 
     private ImageBank imgs;
 
-    private Image[] back;
+    private Image back;
+    private int backIndex = -1;
 
     private int count;
 
@@ -64,13 +65,17 @@ public final class StaffRollScreen {
         this.imgs = imgs;
         this.sprites = sprites;
         count = 0;
-        buildBackImages();
+        back = null;
+        backIndex = -1;
+        imgs.retain(new int[][] { { 37 } });
     }
 
     public void leave() {
+        imgs.clear();
         imgs = null;
         sprites = null;
         back = null;
+        backIndex = -1;
     }
 
     public Result update(int keys, int pressed) {
@@ -86,6 +91,14 @@ public final class StaffRollScreen {
                 return new Result(Result.KIND_DONE);
             }
         }
+        for (int i = 0; i < WIPE_EVENTS.length; i++) {
+            int start = WIPE_EVENTS[i][0];
+            if (count > start && count < start + 100 && backIndex != WIPE_EVENTS[i][4]) {
+                buildBackImage(WIPE_EVENTS[i][4]);
+            }
+        }
+        int[] lastWipe = WIPE_EVENTS[WIPE_EVENTS.length - 1];
+        if (count >= lastWipe[0] + 100) back = null;
         return null;
     }
 
@@ -174,7 +187,7 @@ public final class StaffRollScreen {
             dstX = x + w - (n >> 1) - 100;
         }
 
-        drawBackWindow(g, backIndex, dstX, y + 10, srcCx - 50, srcCy - 30, 100, 60);
+        drawBackWindow(g, dstX, y + 10, srcCx - 50, srcCy - 30, 100, 60);
         UiDraw.fillRectAlpha(g, dstX, y + 10, 100, 60, 0x000000, 128);
     }
 
@@ -214,19 +227,12 @@ public final class StaffRollScreen {
             dstY = y + h - (n >> 1) - 100;
         }
 
-        drawBackWindow(g, backIndex, x + 10, dstY, srcCx - 30, srcCy - 50, 60, 100);
+        drawBackWindow(g, x + 10, dstY, srcCx - 30, srcCy - 50, 60, 100);
         UiDraw.fillRectAlpha(g, x + 10, dstY, 60, 100, 0x000000, 128);
     }
 
-    private void drawBackWindow(Graphics g, int backIndex, int dstX, int dstY, int srcX, int srcY, int w, int h) {
-        if (back == null || backIndex < 0 || backIndex >= back.length) {
-            return;
-        }
-        Image img = back[backIndex];
-        if (img == null) {
-            return;
-        }
-        UiDraw.drawRegion(g, img, dstX, dstY, srcX, srcY, w, h);
+    private void drawBackWindow(Graphics g, int dstX, int dstY, int srcX, int srcY, int w, int h) {
+        UiDraw.drawRegion(g, back, dstX, dstY, srcX, srcY, w, h);
     }
 
     private void renderStaffText(Graphics g) {
@@ -264,133 +270,37 @@ public final class StaffRollScreen {
         }
     }
 
-    private void buildBackImages() {
+    private void buildBackImage(int index) {
         back = null;
-        try {
-            back = new Image[6];
-        } catch (Throwable t) {
-            return;
+        Image image = Image.createImage(240, 240);
+        Graphics g = image.getGraphics();
+        if (index <= 2) drawFull(g, 45);
+        else if (index == 3) drawFull(g, 92);
+        else if (index == 4) {
+            drawFull(g, 96);
+            drawFull(g, 97);
+        } else drawFull(g, 106);
+
+        switch (index) {
+            case 0:
+                sprites.draw(g, 169, 50, 38);
+                sprites.draw(g, 174, 130, 58);
+                sprites.draw(g, 181, 50, 98);
+                break;
+            case 1: sprites.draw(g, 205, 100, 108); break;
+            case 2: sprites.draw(g, 227, 100, 108); break;
+            case 3: sprites.draw(g, 365, 100, 108); break;
+            case 4: sprites.draw(g, 516, 100, 108); break;
+            case 5: sprites.draw(g, 711, 100, 108); break;
         }
-
-
-        buildBack0();
-        buildBack1();
-        buildBack2();
-        buildBack3();
-        buildBack4();
-        buildBack5();
+        back = image;
+        backIndex = index;
+        // The composed picture owns its pixels; its source sheets can be released.
+        imgs.retain(new int[][] { { 37 } });
     }
 
-    private void buildBack0() {
-        Image img = createBackImage();
-        if (img == null) {
-            return;
-        }
-        Graphics g = img.getGraphics();
-
-        // DoJa builds _m_backImage[] by rendering the scene and then drawing cc icons.
-        // Do not draw sprite-sheet images full-frame here, or the wipe windows will expose multiple frames.
-        drawFull(g, 45);
-
-        sprites.draw(g, 169, 50, 38);
-        sprites.draw(g, 174, 130, 58);
-        sprites.draw(g, 181, 50, 98);
-
-        back[0] = img;
-    }
-
-    private void buildBack1() {
-        Image img = createBackImage();
-        if (img == null) {
-            return;
-        }
-        Graphics g = img.getGraphics();
-
-        // Base background (avoid drawing sprite sheets full-frame).
-        drawFull(g, 45);
-
-        sprites.draw(g, 205, 100, 108);
-
-        back[1] = img;
-    }
-
-    private void buildBack2() {
-        Image img = createBackImage();
-        if (img == null) {
-            return;
-        }
-        Graphics g = img.getGraphics();
-
-        // Base background (avoid drawing sprite sheets full-frame).
-        drawFull(g, 45);
-
-        sprites.draw(g, 227, 100, 108);
-
-        back[2] = img;
-    }
-
-    private void buildBack3() {
-        Image img = createBackImage();
-        if (img == null) {
-            return;
-        }
-        Graphics g = img.getGraphics();
-
-        // Primary scene background.
-        drawFull(g, 92);
-
-        sprites.draw(g, 365, 100, 108);
-
-        back[3] = img;
-    }
-
-    private void buildBack4() {
-        Image img = createBackImage();
-        if (img == null) {
-            return;
-        }
-        Graphics g = img.getGraphics();
-
-        // Base scene backgrounds.
-        drawFull(g, 96);
-        drawFull(g, 97);
-
-        sprites.draw(g, 516, 100, 108);
-
-        back[4] = img;
-    }
-
-    private void buildBack5() {
-        Image img = createBackImage();
-        if (img == null) {
-            return;
-        }
-        Graphics g = img.getGraphics();
-
-        // Base scene background.
-        drawFull(g, 106);
-
-        sprites.draw(g, 711, 100, 108);
-
-        back[5] = img;
-    }
-
-    private Image createBackImage() {
-        try {
-            return Image.createImage(240, 240);
-        } catch (Throwable t) {
-            return null;
-        }
-    }
-
-    private void drawFull(Graphics g, int imgIndex) {
-        if (imgs == null) {
-            return;
-        }
-        try {
-            g.drawImage(imgs.get(imgIndex), 0, 0, Graphics.TOP | Graphics.LEFT);
-        } catch (Throwable t) {
-        }
+    private void drawFull(Graphics g, int imageIndex) {
+        g.drawImage(imgs.get(imageIndex), 0, 0, Graphics.TOP | Graphics.LEFT);
     }
 
     private static int scaleRgb(int rgb, int alpha) {

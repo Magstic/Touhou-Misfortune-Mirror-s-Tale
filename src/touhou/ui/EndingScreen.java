@@ -189,6 +189,16 @@ public final class EndingScreen {
         consumeDirectives();
     }
 
+    public void leave() {
+        currRgb = null;
+        nextRgb = null;
+        blendRgb = null;
+        i18nTextLines = null;
+        i18nTextIndexByScriptLine = null;
+        imgs.clear();
+        imgs = null;
+    }
+
     private static String[] loadEndingTextLines(int chara) {
         if (chara < 0 || chara >= ENDING_TEXT_FILES.length) {
             return null;
@@ -224,6 +234,7 @@ public final class EndingScreen {
                 currRgb = nextRgb;
                 nextImgIndex = -1;
                 nextRgb = null;
+                blendRgb = null;
             }
         }
 
@@ -273,21 +284,18 @@ public final class EndingScreen {
             this.imgs = imgs;
         }
 
-        renderPicture(g, this.imgs);
+        renderPicture(g);
         renderBgFade(g);
         renderText(g);
     }
 
-    private void renderPicture(Graphics g, ImageBank imgs) {
+    private void renderPicture(Graphics g) {
         if (currImgIndex < 0) {
             return;
         }
 
-        if (imgFade <= 0 || nextImgIndex < 0 || currRgb == null || nextRgb == null) {
-            Image img = (imgs != null) ? imgs.get(currImgIndex) : null;
-            if (img != null) {
-                UiDraw.drawRegion(g, img, PIC_X, PIC_Y, 0, 0, PIC_W, PIC_H);
-            }
+        if (imgFade <= 0 || nextImgIndex < 0) {
+            g.drawRGB(currRgb, 0, PIC_W, PIC_X, PIC_Y, PIC_W, PIC_H, true);
             return;
         }
 
@@ -303,14 +311,7 @@ public final class EndingScreen {
             t = total;
         }
 
-        if (blendRgb == null || blendRgb.length != w * h) {
-            try {
-                blendRgb = new int[w * h];
-            } catch (Throwable t2) {
-                blendRgb = null;
-                return;
-            }
-        }
+        if (blendRgb == null) blendRgb = new int[w * h];
 
         int aNew = (t * 255) / total;
         int aOld = 255 - aNew;
@@ -334,10 +335,7 @@ public final class EndingScreen {
             blendRgb[i] = (0xFF << 24) | (r << 16) | (gg << 8) | bb;
         }
 
-        try {
-            g.drawRGB(blendRgb, 0, w, PIC_X, PIC_Y, w, h, true);
-        } catch (Throwable ignore) {
-        }
+        g.drawRGB(blendRgb, 0, w, PIC_X, PIC_Y, w, h, true);
     }
 
     private void renderBgFade(Graphics g) {
@@ -473,51 +471,14 @@ public final class EndingScreen {
 
         nextImgIndex = idx;
         nextRgb = loadRgb(idx);
-        if (nextRgb != null) {
-            imgFade = 30;
-        } else {
-            currImgIndex = idx;
-            currRgb = null;
-            nextImgIndex = -1;
-            nextRgb = null;
-            imgFade = 0;
-        }
+        imgFade = 30;
     }
 
     private int[] loadRgb(int imgIndex) {
-        if (imgs == null) {
-            return null;
-        }
-
         Image img = imgs.get(imgIndex);
-        if (img == null) {
-            return null;
-        }
-
-        int w;
-        int h;
-        try {
-            w = img.getWidth();
-            h = img.getHeight();
-        } catch (Throwable t) {
-            return null;
-        }
-
-        if (w < PIC_W || h < PIC_H) {
-            return null;
-        }
-
-        int[] rgb;
-        try {
-            rgb = new int[PIC_W * PIC_H];
-            img.getRGB(rgb, 0, PIC_W, 0, 0, PIC_W, PIC_H);
-        } catch (Throwable t) {
-            return null;
-        }
-
-        for (int i = 0; i < rgb.length; i++) {
-            rgb[i] |= (0xFF << 24);
-        }
+        int[] rgb = new int[PIC_W * PIC_H];
+        img.getRGB(rgb, 0, PIC_W, 0, 0, PIC_W, PIC_H);
+        imgs.release(imgIndex);
         return rgb;
     }
 

@@ -5,12 +5,10 @@ import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
 import touhou.SpriteRenderer;
-import touhou.GameOptions;
 import touhou.ImageBank;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 import touhou.replay.ReplaySaveService;
-import touhou.stage.StagePreloader;
 
 public final class StageClearResultPanel {
     public static final class Result {
@@ -61,6 +59,7 @@ public final class StageClearResultPanel {
     private int chara;
 
     private Image photo;
+    private SpriteRenderer.AlphaSprite portrait;
 
     private int hiScore;
     private int score;
@@ -85,9 +84,6 @@ public final class StageClearResultPanel {
     // DoJa  (game-end result): the OK key is accepted only after count > 10.
     private int finalCount;
 
-    // Stage-to-stage preloading (no separate loading screen).
-    private final StagePreloader stagePreloader = new StagePreloader();
-
     public void enter(Image photo, int hiScore, int score, int continuesUsed, int missCount, int bombUsedCount, int spellBonusCount, int spellSeenCount,
             boolean allowReplaySave, int chara) {
         // Stage clear panel: show photo/portrait and allow replay save depending on run state.
@@ -97,6 +93,7 @@ public final class StageClearResultPanel {
         this.slide = 0;
         this.leaving = false;
         this.chara = chara;
+        portrait = null;
 
         this.photo = photo;
         this.hiScore = hiScore;
@@ -129,6 +126,7 @@ public final class StageClearResultPanel {
         this.finalCount = 0;
 
         this.photo = null;
+        portrait = null;
         this.hiScore = hiScore;
         this.score = score;
         this.continuesUsed = continuesUsed;
@@ -147,22 +145,25 @@ public final class StageClearResultPanel {
         scaledH = 0;
     }
 
-    public Result update(int pressed) {
-        replayAnimationTick++;
-        if (mode == MODE_FINAL) {
-            return updateFinal(pressed);
-        }
-        return updateStageClear(pressed);
+    public void leave(ImageBank images) {
+        photo = null;
+        portrait = null;
+        photoRgb = null;
+        scaledRgb = null;
+        images.release(6);
+        images.release(37);
     }
 
-    // Update stage clear panel with preloading support.
-    // nextStage: 0..5 for Stage1..Stage6, or -1 if unavailable.
-    public Result updateWithStagePreload(int pressed, int nextStage, int chara, int type, ImageBank imgs, SpriteRenderer sprites) {
+    public Result update(int pressed) {
+        return update(pressed, -1);
+    }
+
+    public Result update(int pressed, int nextStage) {
         replayAnimationTick++;
         if (mode == MODE_FINAL) {
             return updateFinal(pressed);
         }
-        return updateStageClearWithPreload(pressed, nextStage, chara, type, imgs, sprites);
+        return updateStageClear(pressed, nextStage);
     }
 
     private Result updateFinal(int pressed) {
@@ -222,11 +223,7 @@ public final class StageClearResultPanel {
         return null;
     }
 
-    private Result updateStageClear(int pressed) {
-        return updateStageClearWithPreload(pressed, -1, 0, 0, null, null);
-    }
-
-    private Result updateStageClearWithPreload(int pressed, int nextStage, int chara, int type, ImageBank imgs, SpriteRenderer sprites) {
+    private Result updateStageClear(int pressed, int nextStage) {
         if (scene == SCENE_MAIN) {
             if (!leaving && slide >= SLIDE_MAX) {
                 if (UiInput.dismiss(pressed)) {
@@ -234,22 +231,8 @@ public final class StageClearResultPanel {
                         // Practice mode: no next stage, skip slide-out animation (DoJa: u()).
                         return new Result(Result.KIND_ADVANCE_STAGE);
                     }
-                    if (imgs != null && sprites != null) {
-                        // Synchronous preload: keep the panel frozen and allow a short stall.
-                        int[] opt = GameOptions.load();
-                        boolean playerShotAlphaEnabled = GameOptions.isPlayerShotAlphaEnabled(opt);
-                        boolean bossSpellCutInAlphaEnabled = GameOptions.isBossSpellCutInAlphaEnabled(opt);
-
-                        stagePreloader.setPlayerShotAlphaEnabled(playerShotAlphaEnabled);
-                        stagePreloader.setBossSpellCutInAlphaEnabled(bossSpellCutInAlphaEnabled);
-
-                        stagePreloader.enter(nextStage, chara);
-                        int guard = stagePreloader.getStepMax() + 4;
-                        for (int i = 0; i < guard && !stagePreloader.isDone(); i++) {
-                            stagePreloader.update(imgs, sprites);
-                        }
-                    }
                     leaving = true;
+                    portrait = null;
                 } else if (allowReplaySave && UiInput.replaySave(pressed)) {
                     enterReplaySlotScene(SCENE_REPLAY_SLOT);
                 }
@@ -405,26 +388,15 @@ public final class StageClearResultPanel {
             return;
         }
 
-        int id;
-        switch (chara) {
-            case 1:
-                id = 194;
-                break;
-            case 2:
-                id = 195;
-                break;
-            case 0:
-            default:
-                id = 193;
-                break;
-        }
+        if (portrait == null) portrait = sprites.createAlphaSprite(193 + chara);
 
         int x = 56 - subsecCount;
         int y = 206;
-        int alpha = 255 - (128 * subsecCount) / 10;
+        int alpha = UiDraw.spriteAlpha(255 - (128 * subsecCount) / 10);
 
-        sprites.drawAlpha(g, id, x, y, UiDraw.spriteAlpha(alpha));
-        sprites.drawAlpha(g, id, x, y, UiDraw.spriteAlpha(alpha));
+        // The original panel composites the portrait twice.
+        portrait.draw(g, x, y, alpha);
+        portrait.draw(g, x, y, alpha);
     }
 
     // DoJa : a(Graphics, 0, 8, 194, 234) driven by slide (a.b).
