@@ -162,11 +162,12 @@ public final class BattleRenderer {
 
         stageHb(a, g);
         renderBossCrossLineOverlay(a, g);
+        int bulletRenderMs = 0;
         if (a.debugPerfEnabled()) {
             long br0 = System.currentTimeMillis();
             a.bullets().renderPlayerBullets(g);
             long br1 = System.currentTimeMillis();
-            Debug.perfSetBulletRenderMs((int) (br1 - br0));
+            bulletRenderMs = (int) (br1 - br0);
         } else {
             a.bullets().renderPlayerBullets(g);
         }
@@ -184,7 +185,14 @@ public final class BattleRenderer {
         }
 
         g.setClip(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
-        a.bullets().renderEnemyBullets(g);
+        if (a.debugPerfEnabled()) {
+            long br0 = System.currentTimeMillis();
+            a.bullets().renderEnemyBullets(g);
+            long br1 = System.currentTimeMillis();
+            Debug.perfSetBulletRenderMs(bulletRenderMs + (int) (br1 - br0));
+        } else {
+            a.bullets().renderEnemyBullets(g);
+        }
         g.setClip(0, 0, LOGICAL_W, LOGICAL_H);
 
         g.setClip(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
