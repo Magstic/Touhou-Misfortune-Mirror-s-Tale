@@ -1942,6 +1942,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
                     return true;
                 }
                 if (continueSystem.canOfferContinue(mGamemode, session.isSpellPractice()) && pauseScreen != null) {
+                    battleVisualState.setFlash(0);
                     battlePaused = true;
                     audioSystem.pauseBgm();
                     pauseScreen.enterContinue(continueSystem.getRemainingContinues());
