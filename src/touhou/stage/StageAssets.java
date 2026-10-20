@@ -77,6 +77,10 @@ public final class StageAssets {
         return stage == 3 && bossStep == 37 ? LAST_WORD : BOSSES[stage];
     }
 
+    public void releaseBoss(ImageBank images) {
+        release(images, bossImages());
+    }
+
     public static void setBackgroundDarkness(ImageBank images, int stage, int levels) {
         int[] backgrounds = BACKGROUNDS[stage];
         for (int i = 0; i < backgrounds.length; i++) images.setDarkness(backgrounds[i], levels);

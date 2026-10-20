@@ -3406,6 +3406,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         replayRecording.clearPending();
 
         stageClearPhoto = captureBattlePhoto();
+        stageAssets.releaseBoss(imgs);
 
         int hiScore = scoreSystem.getHiScore();
         int score = scoreSystem.getScore();
