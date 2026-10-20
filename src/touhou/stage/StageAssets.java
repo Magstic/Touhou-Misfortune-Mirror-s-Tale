@@ -16,6 +16,7 @@ public final class StageAssets {
             { 45, 71, 72, 73, 74, 75, 76, 77 }, { 83, 92 },
             { 96, 97, 98 }, { 106, 107 }, { 114, 115 }
     };
+    private static final int[] STAGE5_BOSS_BACKGROUNDS = { 97, 98 };
     private static final int[][] BOSSES = {
             { 51, 52, 53 }, { 68 }, { 80, 81 }, { 86 }, { 101 }, { 102 }, { 112 }
     };
@@ -65,7 +66,8 @@ public final class StageAssets {
         openingActive = false;
         dialogueActive = false;
         for (int i = 0; i < activeSpellImages.length; i++) activeSpellImages[i] = false;
-        int[][] groups = { COMMON, BACKGROUNDS[stage], PLAYERS[character], bossPhase ? bossImages() : ROUTE,
+        int[][] groups = { COMMON, stage == 4 && bossPhase ? STAGE5_BOSS_BACKGROUNDS : BACKGROUNDS[stage],
+                PLAYERS[character], bossPhase ? bossImages() : ROUTE,
                 bossOnly ? EMPTY : OPENINGS[stage] };
         images.retain(groups);
         for (int i = 0; i < groups.length; i++) load(images, groups[i]);
@@ -109,6 +111,7 @@ public final class StageAssets {
         if (bossMode && !bossPhase) {
             release(images, ROUTE);
             release(images, OPENINGS[stage]);
+            if (stage == 4) images.release(96);
             load(images, bossImages());
             bossPhase = true;
             midbossActive = false;

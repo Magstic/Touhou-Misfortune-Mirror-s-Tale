@@ -788,7 +788,7 @@ public final class BattleRenderer {
         }
     }
 
-    // Stage 4 (Stage 5) background: base image pair + overlay, with an optional time-stop distortion effect.
+    // Stage 4 (Stage 5): route backdrop transition, then only the boss backdrop + overlay.
     private void renderBgStage4(GameCore.BattleRenderAccess a, Graphics g) {
         if (a.timeStop() > 0) {
             // The opaque 240px clock covers the 194px playfield, including bomb shake (up to 15px).
@@ -808,12 +808,13 @@ public final class BattleRenderer {
             return;
         }
 
-        int d0 = a.fi() >> 2;
+        boolean boss = a.bossMode();
+        int d0 = boss ? 240 : a.fi() >> 2;
         if (d0 > 240) {
             d0 = 240;
         }
 
-        Image a0 = imgs.get(BattleRenderRules.backgroundBaseImage(4, 0));
+        Image a0 = boss ? null : imgs.get(BattleRenderRules.backgroundBaseImage(4, 0));
         Image a1 = imgs.get(BattleRenderRules.backgroundSecondaryImage(4));
         if (a0 != null) {
             int x0 = PLAY_X + a.originX();
@@ -824,6 +825,8 @@ public final class BattleRenderer {
             int x0 = PLAY_X + a.originX();
             int y0 = PLAY_Y + a.originY() + d0 - 240;
             g.drawImage(a1, x0, y0, Graphics.TOP | Graphics.LEFT);
+            // Continue the boss texture below the viewport when bomb shake exposes its lower edge.
+            if (boss) g.drawImage(a1, x0, y0 + 240, Graphics.TOP | Graphics.LEFT);
         }
         if (a0 == null && a1 == null) {
             g.setColor(ImageBank.darkenColor(0x303030, backgroundDarkness));
