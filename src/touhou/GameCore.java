@@ -277,7 +277,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     // Rendering options: alpha rendering toggles.
     private boolean optBombOverlayAlphaEnabled;
     private boolean optBossSpellCutInAlphaEnabled;
-    private boolean optPlayerShotAlphaEnabled;
 
     // Rendering option: if disabled, Stage2 blind mask switches instantly (no fade).
     private boolean optBlindMaskFadeEnabled;
@@ -2802,7 +2801,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
         optBombOverlayAlphaEnabled = GameOptions.isBombOverlayAlphaEnabled(opt);
         optBossSpellCutInAlphaEnabled = GameOptions.isBossSpellCutInAlphaEnabled(opt);
-        optPlayerShotAlphaEnabled = GameOptions.isPlayerShotAlphaEnabled(opt);
 
         optBlindMaskFadeEnabled = GameOptions.isBlindMaskFadeEnabled(opt);
 
@@ -2813,10 +2811,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         optDebugFpsEnabled = GameOptions.isDebugFpsEnabled(opt);
         optDebugPerfEnabled = GameOptions.isDebugPerfEnabled(opt);
         optDebugResourceEnabled = GameOptions.isDebugResourceEnabled(opt);
-
-        if (sprites != null) {
-            bullets.setPlayerShotAlphaEnabled(optPlayerShotAlphaEnabled);
-        }
 
         // Cheat is ignored in spell practice (no bomb usage in this mode).
         boolean optDisableShield = GameOptions.isCheatDisableBossBombShield(opt);

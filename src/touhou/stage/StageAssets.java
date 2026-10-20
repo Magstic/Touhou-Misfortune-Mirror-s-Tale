@@ -30,6 +30,9 @@ public final class StageAssets {
             { 18, 19, 20, 21, 22, 30, 35, 36 },
             { 24, 25, 26, 27, 31 }
     };
+    private static final int[][] PLAYER_SHOTS = {
+            { 15, 16, 32 }, { 19, 20, 21, 22, 35, 36 }, { 26, 27 }
+    };
     private static final int[][] OPENINGS = {
             { 43, 44 }, { 57, 58 }, { 69, 70 }, { 89, 90 },
             { 94, 95 }, { 109, 110 }, { 116, 117 }
@@ -50,6 +53,9 @@ public final class StageAssets {
         this.stage = stage;
         setBackgroundDarkness(images, stage, 0);
         setBackgroundOpacity(images, stage, GameOptions.isHeavyBgEnabled(options));
+        int shotAlpha = GameOptions.isPlayerShotAlphaEnabled(options) ? 128 : 255;
+        int[] shots = PLAYER_SHOTS[character];
+        for (int i = 0; i < shots.length; i++) images.setOpacity(shots[i], shotAlpha);
         this.bossStep = bossStep;
         bossPhase = bossOnly;
         bossCutInAlpha = GameOptions.isBossSpellCutInAlphaEnabled(options);
@@ -63,15 +69,6 @@ public final class StageAssets {
         for (int i = 0; i < groups.length; i++) load(images, groups[i]);
 
         for (int i = 0; i < 4; i++) sprites.precacheAlphaRegion(SpriteSheetCatalog.PLAYER_AURA_BASE + i, 128);
-        if (GameOptions.isPlayerShotAlphaEnabled(options)) {
-            int[] player = PLAYERS[character];
-            for (int i = 2; i < player.length; i++) {
-                if (player[i] != 29 + character) images.getAlphaImage(player[i], 128);
-            }
-            if (character == 1) {
-                for (int id = 100; id <= 102; id++) sprites.precacheAlphaRegion(id, 128);
-            }
-        }
     }
 
     private int[] bossImages() {

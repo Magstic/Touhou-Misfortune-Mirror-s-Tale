@@ -20,9 +20,6 @@ public final class Debug {
     private static int perfKillRate;
     private static int perfAllocFailRate;
 
-    private static int perfAlphaImgReqRate;
-    private static int perfAlphaImgHitRate;
-    private static int perfAlphaImgCreateRate;
     private static int perfAlphaRegReqRate;
     private static int perfAlphaRegHitRate;
     private static int perfAlphaRegCreateRate;
@@ -57,9 +54,6 @@ public final class Debug {
     private static int perfKillAccum;
     private static int perfAllocFailAccum;
 
-    private static int perfAlphaImgReqAccum;
-    private static int perfAlphaImgHitAccum;
-    private static int perfAlphaImgCreateAccum;
     private static int perfAlphaRegReqAccum;
     private static int perfAlphaRegHitAccum;
     private static int perfAlphaRegCreateAccum;
@@ -213,9 +207,6 @@ public final class Debug {
             allocFail = bullets.consumePerfAllocFailCount();
         }
 
-        int aImgReq = 0;
-        int aImgHit = 0;
-        int aImgCreate = 0;
         int aRegReq = 0;
         int aRegHit = 0;
         int aRegCreate = 0;
@@ -223,9 +214,6 @@ public final class Debug {
         int aKeyHit = 0;
         int aKeyCreate = 0;
         if (imgs != null) {
-            aImgReq = imgs.consumePerfAlphaImageReq();
-            aImgHit = imgs.consumePerfAlphaImageHit();
-            aImgCreate = imgs.consumePerfAlphaImageCreate();
             aRegReq = imgs.consumePerfAlphaRegionReq();
             aRegHit = imgs.consumePerfAlphaRegionHit();
             aRegCreate = imgs.consumePerfAlphaRegionCreate();
@@ -238,9 +226,6 @@ public final class Debug {
         perfKillAccum += kill;
         perfAllocFailAccum += allocFail;
 
-        perfAlphaImgReqAccum += aImgReq;
-        perfAlphaImgHitAccum += aImgHit;
-        perfAlphaImgCreateAccum += aImgCreate;
         perfAlphaRegReqAccum += aRegReq;
         perfAlphaRegHitAccum += aRegHit;
         perfAlphaRegCreateAccum += aRegCreate;
@@ -261,18 +246,12 @@ public final class Debug {
                 perfKillAccum = 0;
                 perfAllocFailAccum = 0;
 
-                perfAlphaImgReqRate = (int) ((perfAlphaImgReqAccum * 1000L) / dt);
-                perfAlphaImgHitRate = (int) ((perfAlphaImgHitAccum * 1000L) / dt);
-                perfAlphaImgCreateRate = (int) ((perfAlphaImgCreateAccum * 1000L) / dt);
                 perfAlphaRegReqRate = (int) ((perfAlphaRegReqAccum * 1000L) / dt);
                 perfAlphaRegHitRate = (int) ((perfAlphaRegHitAccum * 1000L) / dt);
                 perfAlphaRegCreateRate = (int) ((perfAlphaRegCreateAccum * 1000L) / dt);
                 perfAlphaKeyReqRate = (int) ((perfAlphaKeyReqAccum * 1000L) / dt);
                 perfAlphaKeyHitRate = (int) ((perfAlphaKeyHitAccum * 1000L) / dt);
                 perfAlphaKeyCreateRate = (int) ((perfAlphaKeyCreateAccum * 1000L) / dt);
-                perfAlphaImgReqAccum = 0;
-                perfAlphaImgHitAccum = 0;
-                perfAlphaImgCreateAccum = 0;
                 perfAlphaRegReqAccum = 0;
                 perfAlphaRegHitAccum = 0;
                 perfAlphaRegCreateAccum = 0;
@@ -288,9 +267,8 @@ public final class Debug {
         String l1 = "perf ms u" + perfBulletUpdateMs + " c" + perfPlayerCollisionMs + " r" + perfBulletRenderMs + " b" + perfBlindOverlayMs;
         String l2 = "perf b act" + act + " sp" + perfSpawnRate + " kl" + perfKillRate + " af" + perfAllocFailRate;
 
-        String l3 = "alpha img r" + perfAlphaImgReqRate + " h" + perfAlphaImgHitRate + " c" + perfAlphaImgCreateRate;
-        String l4 = "alpha reg r" + perfAlphaRegReqRate + " h" + perfAlphaRegHitRate + " c" + perfAlphaRegCreateRate;
-        String l5 = "alpha key r" + perfAlphaKeyReqRate + " h" + perfAlphaKeyHitRate + " c" + perfAlphaKeyCreateRate;
+        String l3 = "alpha reg r" + perfAlphaRegReqRate + " h" + perfAlphaRegHitRate + " c" + perfAlphaRegCreateRate;
+        String l4 = "alpha key r" + perfAlphaKeyReqRate + " h" + perfAlphaKeyHitRate + " c" + perfAlphaKeyCreateRate;
 
         // Spike lines shown for 5s after detection.
         String spikeStr = null;
@@ -320,7 +298,6 @@ public final class Debug {
         count = wrapLineInto(font, l2, maxW, wrapLinesBuf, count);
         count = wrapLineInto(font, l3, maxW, wrapLinesBuf, count);
         count = wrapLineInto(font, l4, maxW, wrapLinesBuf, count);
-        count = wrapLineInto(font, l5, maxW, wrapLinesBuf, count);
         if (spikeStr != null) {
             count = wrapLineInto(font, spikeStr, maxW, wrapLinesBuf, count);
         }

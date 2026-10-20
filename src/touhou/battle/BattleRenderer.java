@@ -172,7 +172,7 @@ public final class BattleRenderer {
         Player player = a.player();
         if (player != null) {
             g.setClip(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
-            player.render(g, a.sprites(), a.bullets().isPlayerShotAlphaEnabled());
+            player.render(g, a.sprites());
             g.setClip(0, 0, LOGICAL_W, LOGICAL_H);
         }
 

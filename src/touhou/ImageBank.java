@@ -26,11 +26,6 @@ public final class ImageBank {
     private final int[] opacity;
     private final int[] tints;
 
-    private final Image[] alphaImageCacheImg;
-    private final int[] alphaImageCacheImgIndex;
-    private final int[] alphaImageCacheAlpha;
-    private int alphaImageCacheNext;
-
     private final Image[] alphaKeyImageCacheImg;
     private final int[] alphaKeyImageCacheImgIndex;
     private final int[] alphaKeyImageCacheAlpha;
@@ -47,9 +42,6 @@ public final class ImageBank {
     private int alphaRegionCacheNext;
 
     // Perf: alpha cache statistics (per instance).
-    private int perfAlphaImageReq;
-    private int perfAlphaImageHit;
-    private int perfAlphaImageCreate;
     private int perfAlphaRegionReq;
     private int perfAlphaRegionHit;
     private int perfAlphaRegionCreate;
@@ -64,11 +56,6 @@ public final class ImageBank {
         opacity = new int[images.length];
         tints = new int[images.length];
         for (int i = 0; i < opacity.length; i++) opacity[i] = 255;
-
-        alphaImageCacheImg = new Image[24];
-        alphaImageCacheImgIndex = new int[24];
-        alphaImageCacheAlpha = new int[24];
-        alphaImageCacheNext = 0;
 
         alphaKeyImageCacheImg = new Image[12];
         alphaKeyImageCacheImgIndex = new int[12];
@@ -141,7 +128,7 @@ public final class ImageBank {
         return (rgb >>> levels) & ((255 >>> levels) * 0x010101);
     }
 
-    /** Keep the fixed-opacity background sheet in its regular slot, without an opaque duplicate. */
+    /** Keep a fixed-opacity sheet in its regular slot, without an opaque duplicate. */
     public void setOpacity(int imgIndex, int alpha) {
         if (opacity[imgIndex] == alpha) return;
         opacity[imgIndex] = alpha;
@@ -156,9 +143,6 @@ public final class ImageBank {
 
     public void release(int imgIndex) {
         images[imgIndex] = null;
-        for (int i = 0; i < alphaImageCacheImg.length; i++) {
-            if (alphaImageCacheImgIndex[i] == imgIndex) alphaImageCacheImg[i] = null;
-        }
         for (int i = 0; i < alphaKeyImageCacheImg.length; i++) {
             if (alphaKeyImageCacheImgIndex[i] == imgIndex) alphaKeyImageCacheImg[i] = null;
         }
@@ -227,42 +211,6 @@ public final class ImageBank {
         alphaKeyImageCacheKeyRgb[slot] = keyRgb;
 
         perfAlphaKeyCreate++;
-        return img;
-    }
-
-    public Image getAlphaImage(int imgIndex, int alpha) {
-        if (alpha <= 0) {
-            return null;
-        }
-        if (alpha >= 255) {
-            return get(imgIndex);
-        }
-
-        perfAlphaImageReq++;
-
-        Image base = get(imgIndex);
-
-        for (int i = 0; i < alphaImageCacheImg.length; i++) {
-            Image cached = alphaImageCacheImg[i];
-            if (cached == null) {
-                continue;
-            }
-            if (alphaImageCacheImgIndex[i] == imgIndex && alphaImageCacheAlpha[i] == alpha) {
-                perfAlphaImageHit++;
-                return cached;
-            }
-        }
-
-        Image img = createAlphaImage(base, alpha);
-
-        int slot = alphaImageCacheNext;
-        alphaImageCacheNext = (alphaImageCacheNext + 1) % alphaImageCacheImg.length;
-
-        alphaImageCacheImg[slot] = img;
-        alphaImageCacheImgIndex[slot] = imgIndex;
-        alphaImageCacheAlpha[slot] = alpha;
-
-        perfAlphaImageCreate++;
         return img;
     }
 
@@ -350,24 +298,6 @@ public final class ImageBank {
     }
 
     // Perf counters are sampled by Debug overlay.
-    public int consumePerfAlphaImageReq() {
-        int v = perfAlphaImageReq;
-        perfAlphaImageReq = 0;
-        return v;
-    }
-
-    public int consumePerfAlphaImageHit() {
-        int v = perfAlphaImageHit;
-        perfAlphaImageHit = 0;
-        return v;
-    }
-
-    public int consumePerfAlphaImageCreate() {
-        int v = perfAlphaImageCreate;
-        perfAlphaImageCreate = 0;
-        return v;
-    }
-
     public int consumePerfAlphaRegionReq() {
         int v = perfAlphaRegionReq;
         perfAlphaRegionReq = 0;
@@ -405,16 +335,12 @@ public final class ImageBank {
     }
 
     private void clearAlphaCaches() {
-        for (int i = 0; i < alphaImageCacheImg.length; i++) {
-            alphaImageCacheImg[i] = null;
-        }
         for (int i = 0; i < alphaKeyImageCacheImg.length; i++) {
             alphaKeyImageCacheImg[i] = null;
         }
         for (int i = 0; i < alphaRegionCacheImg.length; i++) {
             alphaRegionCacheImg[i] = null;
         }
-        alphaImageCacheNext = 0;
         alphaKeyImageCacheNext = 0;
         alphaRegionCacheNext = 0;
     }

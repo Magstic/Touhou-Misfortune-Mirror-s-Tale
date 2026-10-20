@@ -73,10 +73,10 @@ public final class SpriteRenderer {
         paint(g, id, x, y, alpha, 0, 0, catalog.getW(id), catalog.getH(id), false,
                 g.getClipX(), g.getClipY(), g.getClipWidth(), g.getClipHeight());
     }
-    public void drawFast(Graphics g, int id, int x, int y, int alpha,
+    public void drawFast(Graphics g, int id, int x, int y,
             int clipX, int clipY, int clipW, int clipH) {
         requireSprite(id);
-        paint(g, id, x, y, alpha, 0, 0, catalog.getW(id), catalog.getH(id), true,
+        paint(g, id, x, y, 255, 0, 0, catalog.getW(id), catalog.getH(id), true,
                 clipX, clipY, clipW, clipH);
     }
     public void drawAlphaCropRight(Graphics g, int id, int x, int y, int alpha, int cutRight) {
@@ -122,7 +122,7 @@ public final class SpriteRenderer {
         if (alpha <= 0 || w <= 0 || h <= 0 || cw <= 0 || ch <= 0 || catalog.renderW(id) == 0) return;
         if (alpha > 255) alpha = 255;
         if (catalog.renderMode(id) == SpriteCatalog.QUARTER || catalog.renderMode(id) == SpriteCatalog.HALF) {
-            paintMirrored(g, id, x, y, alpha, left, top, w, h, fast, cx, cy, cw, ch);
+            paintMirrored(g, id, x, y, alpha, left, top, w, h, cx, cy, cw, ch);
             return;
         }
         int tx = catalog.trimX(id), ty = catalog.trimY(id);
@@ -143,13 +143,12 @@ public final class SpriteRenderer {
         int px = mirrored ? catalog.renderW(id) - (x0 - tx) - dw : x0 - tx;
         int sx = catalog.pixelX(id) + px, sy = catalog.pixelY(id) + y0 - ty;
         if (alpha < 255) {
-            // Fast bullets use a full-sheet cache; regular sprites use compact cached regions.
-            Image a = fast ? images.getAlphaImage(imageId, alpha)
-                    : images.getAlphaRegion(imageId, catalog.pixelX(id), catalog.pixelY(id),
-                            catalog.renderW(id), catalog.renderH(id), alpha);
+            Image a = images.getAlphaRegion(imageId, catalog.pixelX(id), catalog.pixelY(id),
+                    catalog.renderW(id), catalog.renderH(id), alpha);
             if (a == null) throw new ResourceException("Cannot create sprite alpha image: " + id);
             img = a;
-            if (!fast) { sx = px; sy = y0 - ty; }
+            sx = px;
+            sy = y0 - ty;
         }
         if (fast || mirrored) {
             g.drawRegion(img, sx, sy, dw, dh, mirrored ? Sprite.TRANS_MIRROR : Sprite.TRANS_NONE,
@@ -166,7 +165,7 @@ public final class SpriteRenderer {
     // Clip each reflected section in logical coordinates before sampling its atlas region.
     // This also keeps drawFast's contract: no Graphics clip changes and no temporary image assembly.
     private void paintMirrored(Graphics g, int id, int x, int y, int alpha,
-            int left, int top, int w, int h, boolean fast, int cx, int cy, int cw, int ch) {
+            int left, int top, int w, int h, int cx, int cy, int cw, int ch) {
         int originX = x - catalog.getAx(id), originY = y - catalog.getAy(id);
         int x0 = Math.max(0, Math.max(left, cx - originX));
         int y0 = Math.max(0, Math.max(top, cy - originY));
@@ -177,7 +176,6 @@ public final class SpriteRenderer {
         int sx = catalog.pixelX(id), sy = catalog.pixelY(id);
         Image image;
         if (alpha == 255) image = images.get(imageId);
-        else if (fast) image = images.getAlphaImage(imageId, alpha);
         else {
             image = images.getAlphaRegion(imageId, sx, sy, rw, rh, alpha);
             sx = sy = 0;

@@ -55,7 +55,6 @@ public final class BulletSystem {
     private final int[] enemyBulletLock = new int[3];
 
     private SpriteRenderer sprites;
-    private boolean playerShotAlphaEnabled = true;
 
     private EnemyTargetRegistry enemies;
 
@@ -233,14 +232,6 @@ public final class BulletSystem {
             y0[i] = y[i];
             t[i] = 0;
         }
-    }
-
-    public void setPlayerShotAlphaEnabled(boolean enabled) {
-        playerShotAlphaEnabled = enabled;
-    }
-
-    public boolean isPlayerShotAlphaEnabled() {
-        return playerShotAlphaEnabled;
     }
 
     public void setSprites(SpriteRenderer sprites) {
@@ -3220,7 +3211,7 @@ public final class BulletSystem {
         }
 
         if (sprites == null) throw new ResourceException("Sprite renderer not initialized");
-        sprites.drawFast(g, drawId, px, py, fromPlayer[i] && playerShotAlphaEnabled ? 128 : 255,
+        sprites.drawFast(g, drawId, px, py,
                 clipX, clipY, clipW, clipH);
     }
 

@@ -1482,7 +1482,7 @@ public final class Player {
     }
 
     // Draw options, player sprite, and slow aura.
-    public void render(Graphics g, SpriteRenderer sprites, boolean playerShotAlphaEnabled) {
+    public void render(Graphics g, SpriteRenderer sprites) {
         if (g == null) {
             return;
         }
@@ -1507,8 +1507,8 @@ public final class Player {
                 int y1 = Fixed.toInt(optcy[1]);
                 int x0 = Fixed.toInt(optcx[0]);
                 int y0 = Fixed.toInt(optcy[0]);
-                sprites.drawAlpha(g, id, x1, y1, playerShotAlphaEnabled ? 128 : 255);
-                sprites.drawAlpha(g, id, x0, y0, playerShotAlphaEnabled ? 128 : 255);
+                sprites.draw(g, id, x1, y1);
+                sprites.draw(g, id, x0, y0);
             } else {
                 int id = 731;
                 if (type == 0) {
