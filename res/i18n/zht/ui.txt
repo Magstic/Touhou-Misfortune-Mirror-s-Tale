@@ -147,9 +147,7 @@ Crash2
 Power
 Life
 Shot
-Alice
-Reimu
-Marisa
+SC
 Back
 游標移動
 確定
@@ -162,9 +160,7 @@ Back
 火力提升
 殘機/炸彈增加
 射擊命中
-符卡：愛麗絲
-符卡：靈夢
-符卡：魔理沙
+自機符卡
 返回
 - 遊戲設定 -
 PlayerStock

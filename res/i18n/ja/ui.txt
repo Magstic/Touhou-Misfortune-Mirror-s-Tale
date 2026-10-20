@@ -147,9 +147,7 @@ Crash2
 Power
 Life
 Shot
-Alice
-Reimu
-Marisa
+SC
 Back
 カーソル移動
 決定
@@ -162,9 +160,7 @@ Back
 パワーアップ
 残機/ボム増加
 ショット命中
-アリスボム
-霊夢ボム
-魔理沙ボム
+自機スペルカード
 戻る
 - ゲーム設定 -
 PlayerStock

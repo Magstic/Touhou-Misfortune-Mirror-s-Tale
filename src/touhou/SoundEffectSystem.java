@@ -22,6 +22,7 @@ public final class SoundEffectSystem {
     public static final int SE_ALICE_BOMB = 11;
     public static final int SE_REIMU_BOMB = 12;
     public static final int SE_MARISA_BOMB = 13;
+    public static final int SE_SC_MASK = (1 << SE_ALICE_BOMB) | (1 << SE_REIMU_BOMB) | (1 << SE_MARISA_BOMB);
 
     private static final int SE_COUNT = 14;
     private static final int STATE_STARTED = 400;
@@ -72,7 +73,8 @@ public final class SoundEffectSystem {
         if (volume == 0) {
             return;
         }
-        if ((enabledMask & (1 << seId)) == 0) {
+        int mask = seId >= SE_ALICE_BOMB ? SE_SC_MASK : 1 << seId;
+        if ((enabledMask & mask) == 0) {
             return;
         }
 

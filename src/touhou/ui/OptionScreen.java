@@ -4,6 +4,7 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
 import touhou.GameOptions;
+import touhou.SoundEffectSystem;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 
@@ -90,7 +91,8 @@ public final class OptionScreen {
 
     private static final int MENU_OPTION_COUNT = 8;
 
-    private static final String[] MENU_SE = new String[] { "Nav", "Select", "Back", "CD", "Crash", "Graze", "Pause", "Crash2", "Power", "Life", "Shot", "Alice", "Reimu", "Marisa", "Back" };
+    private static final String[] MENU_SE = new String[] { "Nav", "Select", "Back", "CD", "Crash", "Graze", "Pause", "Crash2", "Power", "Life", "Shot", "SC", "Back" };
+    private static final int SE_MENU_ROWS = (MENU_SE.length - 1) / 2;
 
     private static final String[] MENU_GAME = new String[] { "PlayerStock", "TenkeyMove", "ShotKey", "SlowKey", "SpellKey", "Rendering", "Cheating", "Back" };
 
@@ -340,7 +342,7 @@ public final class OptionScreen {
             return null;
         }
         int mask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
-        return ((mask & (1 << idx)) == 0) ? UiText.get(TextId.COMMON_OFF) : UiText.get(TextId.COMMON_ON);
+        return ((mask & seOptionMask(idx)) == 0) ? UiText.get(TextId.COMMON_OFF) : UiText.get(TextId.COMMON_ON);
     }
 
     private Result updateGameConfig(int pressed) {
@@ -464,33 +466,33 @@ public final class OptionScreen {
             if (cursorUD == MENU_SE.length - 1) {
                 return null;
             }
-            int row = cursorUD % 7;
-            int col = cursorUD / 7;
-            if (row == 6) {
+            int row = cursorUD % SE_MENU_ROWS;
+            int col = cursorUD / SE_MENU_ROWS;
+            if (row == SE_MENU_ROWS - 1) {
                 cursorUD = MENU_SE.length - 1;
             } else {
                 row = row + 1;
-                cursorUD = row + col * 7;
+                cursorUD = row + col * SE_MENU_ROWS;
             }
             return null;
         }
         if (UiInput.up(pressed)) {
             if (cursorUD == MENU_SE.length - 1) {
-                cursorUD = 6;
+                cursorUD = SE_MENU_ROWS - 1;
                 return null;
             }
-            int row = cursorUD % 7;
-            int col = cursorUD / 7;
-            row = MenuCursor.move(row, -1, 7);
-            cursorUD = row + col * 7;
+            int row = cursorUD % SE_MENU_ROWS;
+            int col = cursorUD / SE_MENU_ROWS;
+            row = MenuCursor.move(row, -1, SE_MENU_ROWS);
+            cursorUD = row + col * SE_MENU_ROWS;
             return null;
         }
         if (UiInput.left(pressed)) {
             if (cursorUD == MENU_SE.length - 1) {
                 return null;
             }
-            if (cursorUD >= 7) {
-                cursorUD -= 7;
+            if (cursorUD >= SE_MENU_ROWS) {
+                cursorUD -= SE_MENU_ROWS;
             }
             return null;
         }
@@ -498,8 +500,8 @@ public final class OptionScreen {
             if (cursorUD == MENU_SE.length - 1) {
                 return null;
             }
-            if (cursorUD < 7) {
-                cursorUD += 7;
+            if (cursorUD < SE_MENU_ROWS) {
+                cursorUD += SE_MENU_ROWS;
             }
             return null;
         }
@@ -519,12 +521,17 @@ public final class OptionScreen {
         return null;
     }
 
+    private static int seOptionMask(int idx) {
+        return idx == MENU_SE.length - 2 ? SoundEffectSystem.SE_SC_MASK : 1 << idx;
+    }
+
     private void toggleSeBit(int seIdx) {
-        if (seIdx < 0 || seIdx >= 14) {
+        if (seIdx < 0 || seIdx >= MENU_SE.length - 1) {
             return;
         }
         int mask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
-        mask ^= (1 << seIdx);
+        int bits = seOptionMask(seIdx);
+        mask = (mask & bits) == 0 ? mask | bits : mask & ~bits;
         opt[GameOptions.IDX_SE_MASK] = mask & 0xFF;
         opt[GameOptions.IDX_SE_MASK_HI] = (mask >> 8) & 0xFF;
 
@@ -669,8 +676,8 @@ public final class OptionScreen {
                 sh = 3355443;
             }
 
-            int row = i % 7;
-            int col = i / 7;
+            int row = i % SE_MENU_ROWS;
+            int col = i / SE_MENU_ROWS;
             int x = (col == 0) ? 25 : 125;
             int y = 50 + row * 20;
             UiDraw.drawString2(g, font, UiText.get(TextId.OPTION_SE_MENU_0 + i), x, y, 0, main, sh);
@@ -698,8 +705,8 @@ public final class OptionScreen {
         if (cursorUD == backIdx) {
             g.drawLine(30, 196, 210, 196);
         } else {
-            int row = cursorUD % 7;
-            int col = cursorUD / 7;
+            int row = cursorUD % SE_MENU_ROWS;
+            int col = cursorUD / SE_MENU_ROWS;
             int y = 54 + row * 20;
             if (col == 0) {
                 g.drawLine(15, y, 110, y);
