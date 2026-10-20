@@ -63,6 +63,7 @@ public final class BattleRenderer {
     private static final String[] BOSS_NAMES = new String[] { "Sunny Milk", "Luna Child", "Star Sapphire", "Sunny Luna Star", "Mystia Lorelei", "Chen", "Keine Kamishirasawa", "Sakuya Izayoi", "Marisa Vision", "Alice Vision" };
 
     private int backgroundDarkness;
+    private SpriteRenderer.AlphaSprite bossShield;
     // EX uses indexed pixels for additive mode and native images for simplified mode.
     private int stage6CacheD4 = -1;
     private int stage6CacheDarkness = -1;
@@ -84,6 +85,7 @@ public final class BattleRenderer {
 
     public void release() {
         backgroundDarkness = 0;
+        bossShield = null;
         stage6CacheD4 = -1;
         stage6CacheDarkness = -1;
         stage6CacheBaseImg = null;
@@ -99,6 +101,7 @@ public final class BattleRenderer {
      */
     public void render(GameCore.BattleRenderAccess a, Graphics g) {
         if (a.stageClearPanelActive()) {
+            bossShield = null;
             StageClearResultPanel panel = a.stageClearResultPanel();
             if (panel.isLeaving()) {
                 renderBattleUi(a, g);
@@ -248,6 +251,7 @@ public final class BattleRenderer {
             return;
         }
         int[][] enemylist = a.enemylist();
+        boolean shielding = false;
         for (int i = 0; i < 32; i++) {
             if (enemylist[i][0] == 0) {
                 continue;
@@ -265,12 +269,15 @@ public final class BattleRenderer {
             int type = enemylist[i][1];
             if ((type == 17 || type == 19) && !a.disableBossBombShieldCheat()
                     && a.bossVisualShieldActive() && a.bombCnt() > 0) {
-                drawSpriteAlpha(a, g, spriteId, x, y,
-                        BattleEnemyVisuals.bossShieldAlpha(a.bombCnt()));
+                shielding = true;
+                if (bossShield == null) bossShield = a.sprites().createAlphaSprite(spriteId);
+                else bossShield.setSprite(spriteId);
+                bossShield.draw(g, x, y, BattleEnemyVisuals.bossShieldAlpha(a.bombCnt()));
             } else {
                 drawSprite(a, g, spriteId, x, y);
             }
         }
+        if (!shielding) bossShield = null;
     }
 
     // Debug text overlay shown on top of the playfield.

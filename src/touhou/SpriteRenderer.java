@@ -17,30 +17,41 @@ public final class SpriteRenderer {
 
     /** One reusable ARGB region for a normal sprite whose opacity changes over time. */
     public AlphaSprite createAlphaSprite(int id) {
-        return new AlphaSprite(images.get(catalog.getImgIndex(id)), catalog, id);
+        return new AlphaSprite(images, catalog, id);
     }
 
     public static final class AlphaSprite {
-        private final Image source;
-        private final int sourceX, sourceY, width, height, offsetX, offsetY;
-        private final int[] pixels;
+        private final ImageBank images;
+        private final SpriteCatalog catalog;
+        private int spriteId = -1;
+        private int imageId, sourceX, sourceY, width, height, offsetX, offsetY;
+        private int[] pixels;
         private int alpha = -1;
 
-        private AlphaSprite(Image source, SpriteCatalog catalog, int id) {
-            this.source = source;
+        private AlphaSprite(ImageBank images, SpriteCatalog catalog, int id) {
+            this.images = images;
+            this.catalog = catalog;
+            setSprite(id);
+        }
+
+        public void setSprite(int id) {
+            if (spriteId == id) return;
+            spriteId = id;
+            imageId = catalog.getImgIndex(id);
             sourceX = catalog.pixelX(id);
             sourceY = catalog.pixelY(id);
             width = catalog.renderW(id);
             height = catalog.renderH(id);
             offsetX = catalog.trimX(id) - catalog.getAx(id);
             offsetY = catalog.trimY(id) - catalog.getAy(id);
-            pixels = new int[width * height];
+            if (pixels == null || pixels.length < width * height) pixels = new int[width * height];
+            alpha = -1;
         }
 
         public void draw(Graphics g, int x, int y, int alpha) {
             if (this.alpha != alpha) {
-                source.getRGB(pixels, 0, width, sourceX, sourceY, width, height);
-                for (int i = 0; i < pixels.length; i++) {
+                images.get(imageId).getRGB(pixels, 0, width, sourceX, sourceY, width, height);
+                for (int i = 0; i < width * height; i++) {
                     int pixel = pixels[i];
                     pixels[i] = ((((pixel >>> 24) * alpha) / 255) << 24) | (pixel & 0xFFFFFF);
                 }
