@@ -6,6 +6,7 @@ import javax.microedition.lcdui.Image;
 import touhou.SpriteCatalog;
 import touhou.SpriteRenderer;
 import touhou.SpriteSheetCatalog;
+import touhou.AdditiveBackground;
 import touhou.Debug;
 import touhou.GameCore;
 import touhou.ImageBank;
@@ -61,23 +62,16 @@ public final class BattleRenderer {
     // Boss display names used by the boss HUD.
     private static final String[] BOSS_NAMES = new String[] { "Sunny Milk", "Luna Child", "Star Sapphire", "Sunny Luna Star", "Mystia Lorelei", "Chen", "Keine Kamishirasawa", "Sakuya Izayoi", "Marisa Vision", "Alice Vision" };
 
-    // Stage 6 (Extra Stage) background: caches for additive RGB blending.
-    // We cache RGB arrays to avoid calling Image.getRGB every frame.
     private int backgroundDarkness;
+    // EX uses indexed pixels for additive mode and native images for simplified mode.
     private int stage6CacheD4 = -1;
     private int stage6CacheDarkness = -1;
     private boolean stage6CacheHeavy;
     private Image stage6CacheBaseImg;
-    private int[] stage6CacheBaseRgb;
-    private int stage6CacheBaseW;
-    private int stage6CacheBaseH;
 
     private Image stage6CacheOverlayImg;
-    private int[] stage6CacheOverlayRgb;
-    private int stage6CacheOverlayW;
     private int stage6CacheOverlayH;
-
-    private int[] stage6BlendOutRgb;
+    private AdditiveBackground stage6Blend;
 
     // Scratch arrays used by background renderers to sort draw order.
     private final int[] bgKeys4 = new int[4];
@@ -94,9 +88,7 @@ public final class BattleRenderer {
         stage6CacheDarkness = -1;
         stage6CacheBaseImg = null;
         stage6CacheOverlayImg = null;
-        stage6CacheBaseRgb = null;
-        stage6CacheOverlayRgb = null;
-        stage6BlendOutRgb = null;
+        stage6Blend = null;
     }
 
     /**
@@ -659,10 +651,7 @@ public final class BattleRenderer {
             }
 
             int overlayImage = BattleRenderRules.backgroundOverlayImage(1, 0);
-            Image overlay = imgs.getAlphaImage(overlayImage, 128);
-            if (overlay == null) {
-                overlay = imgs.get(overlayImage);
-            }
+            Image overlay = imgs.get(overlayImage);
             if (overlay != null) {
                 int scroll = a.bgMoveSpd() % 240;
                 int x0 = PLAY_X + a.originX();
@@ -741,10 +730,7 @@ public final class BattleRenderer {
             }
 
             int scroll = (a.bgMoveSpd() << 1) % 240;
-            Image left = imgs.getAlphaImage(72, 128);
-            if (left == null) {
-                left = imgs.get(72);
-            }
+            Image left = imgs.get(72);
             if (left != null) {
                 int x0 = PLAY_X + a.originX();
                 int y0 = PLAY_Y + a.originY() + scroll;
@@ -755,10 +741,7 @@ public final class BattleRenderer {
             UiDraw.fillRectAlpha(g, PLAY_X + a.originX() + 73, PLAY_Y + a.originY(), 40, PLAY_H,
                     ImageBank.darkenColor(0xCFE2FF, backgroundDarkness), 128);
 
-            Image right = imgs.getAlphaImage(73, 128);
-            if (right == null) {
-                right = imgs.get(73);
-            }
+            Image right = imgs.get(73);
             if (right != null) {
                 int x0 = PLAY_X + a.originX() + 194 - 81;
                 int y0 = PLAY_Y + a.originY() + scroll;
@@ -768,7 +751,7 @@ public final class BattleRenderer {
         }
     }
 
-    // Stage 3 (Stage 4) background: single base + two scrolling overlays (different speeds).
+    // Stage 3 (Stage 4) background: base + one overlay scrolling at twice the base speed.
     private void renderBgStage3(GameCore.BattleRenderAccess a, Graphics g) {
         ImageBank imgs = a.imgs();
         if (imgs == null) {
@@ -789,14 +772,11 @@ public final class BattleRenderer {
             g.fillRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
         }
 
-        // Two semi-transparent scrolling overlays at different speeds.
+        // One semi-transparent scrolling overlay.
         // Skipped in simplified-background mode.
         if (a.heavyBgEnabled()) {
             int overlayImage = BattleRenderRules.backgroundOverlayImage(3, 0);
-            Image overlay = imgs.getAlphaImage(overlayImage, 127);
-            if (overlay == null) {
-                overlay = imgs.get(overlayImage);
-            }
+            Image overlay = imgs.get(overlayImage);
             if (overlay != null) {
                 int x0 = PLAY_X + a.originX();
 
@@ -804,17 +784,23 @@ public final class BattleRenderer {
                 int y0 = PLAY_Y + a.originY() + scroll;
                 g.drawImage(overlay, x0, y0, Graphics.TOP | Graphics.LEFT);
                 g.drawImage(overlay, x0, y0 - 240, Graphics.TOP | Graphics.LEFT);
-
-                int scroll2 = (a.bgMoveSpd() << 1) % 240;
-                int y1 = PLAY_Y + a.originY() + scroll2;
-                g.drawImage(overlay, x0, y1, Graphics.TOP | Graphics.LEFT);
-                g.drawImage(overlay, x0, y1 - 240, Graphics.TOP | Graphics.LEFT);
             }
         }
     }
 
     // Stage 4 (Stage 5) background: base image pair + overlay, with an optional time-stop distortion effect.
     private void renderBgStage4(GameCore.BattleRenderAccess a, Graphics g) {
+        if (a.timeStop() > 0) {
+            // The opaque 240px clock covers the 194px playfield, including bomb shake (up to 15px).
+            // Its gray tint is baked into the palette; underlying layers are fully occluded.
+            int baseX = PLAY_X + a.originX();
+            int t = a.timeStop() << 2;
+            for (int i = 0; i < PLAY_H; i++) {
+                int dx = baseX - 23 + (Trig.sin(t + i) >> 13);
+                a.sprites().drawWindow(g, SpriteSheetCatalog.CLOCK_FACE, dx, PLAY_Y, 0, i, 240, 1, 255);
+            }
+            return;
+        }
         ImageBank imgs = a.imgs();
         if (imgs == null) {
             g.setColor(ImageBank.darkenColor(0x303030, backgroundDarkness));
@@ -848,10 +834,7 @@ public final class BattleRenderer {
         // Skipped in simplified-background mode.
         if (a.heavyBgEnabled()) {
             int overlayImage = BattleRenderRules.backgroundOverlayImage(4, 0);
-            Image overlay = imgs.getAlphaImage(overlayImage, 128);
-            if (overlay == null) {
-                overlay = imgs.get(overlayImage);
-            }
+            Image overlay = imgs.get(overlayImage);
             if (overlay != null) {
                 int scroll = a.bgMoveSpd() % 240;
                 int x0 = PLAY_X + a.originX();
@@ -859,23 +842,6 @@ public final class BattleRenderer {
                 g.drawImage(overlay, x0, y0, Graphics.TOP | Graphics.LEFT);
                 g.drawImage(overlay, x0, y0 - 240, Graphics.TOP | Graphics.LEFT);
             }
-        }
-
-        // Time-stop effect: gameplay mechanic, always rendered regardless of bg mode.
-        if (a.timeStop() > 0) {
-            // Time-stop visual: wavy clock stripes + gray tint.
-            SpriteRenderer sprites = a.sprites();
-            if (sprites != null) {
-                int baseX = PLAY_X + a.originX();
-                int t = a.timeStop() << 2;
-                for (int i = 0; i < PLAY_H; i++) {
-                    int dx = baseX + (-23) + (Trig.sin(t + i) >> 13);
-                    sprites.drawWindow(g, SpriteSheetCatalog.CLOCK_FACE, dx, PLAY_Y, 0, i, 240, 1, 255);
-                }
-            }
-
-            UiDraw.fillRectAlpha(g, PLAY_X, PLAY_Y, PLAY_W, PLAY_H,
-                    ImageBank.darkenColor(0xBFBFBF, backgroundDarkness), 128);
         }
     }
 
@@ -917,7 +883,7 @@ public final class BattleRenderer {
                 int x = PLAY_X + a.originX() + d4;
                 int y = PLAY_Y + a.originY() - 10 + d5;
                 int spriteId = 728 + ((base + i) & 0x1);
-                drawSpriteAlpha(a, g, spriteId, x, y, 128);
+                drawSprite(a, g, spriteId, x, y);
             }
         }
     }
@@ -949,10 +915,10 @@ public final class BattleRenderer {
         }
 
         int scroll = (a.bgMoveSpd() >> 1) % this.stage6CacheOverlayH;
-        blendStage6Add(a, g, d3, scroll);
+        stage6Blend.draw(g, d3, scroll, a.originX(), a.originY(), backgroundDarkness);
     }
 
-    // Keep only the current EX palette pair and its optional RGB buffers.
+    // Keep only the current EX palette pair and its optional indexed compositor.
     private void ensureStage6Cache(ImageBank images, int phase, boolean heavy) {
         int darkness = heavy ? 0 : backgroundDarkness;
         if (stage6CacheD4 == phase && stage6CacheHeavy == heavy && stage6CacheDarkness == darkness) return;
@@ -963,105 +929,20 @@ public final class BattleRenderer {
         }
         stage6CacheBaseImg = null;
         stage6CacheOverlayImg = null;
-        stage6CacheBaseRgb = null;
-        stage6CacheOverlayRgb = null;
+        stage6Blend = null;
 
         stage6CacheD4 = phase;
         stage6CacheDarkness = darkness;
         stage6CacheHeavy = heavy;
         stage6CacheBaseImg = images.get(BattleRenderRules.backgroundBaseImage(6, phase));
         stage6CacheOverlayImg = images.get(BattleRenderRules.backgroundOverlayImage(6, phase));
-        stage6CacheBaseW = stage6CacheBaseImg.getWidth();
-        stage6CacheBaseH = stage6CacheBaseImg.getHeight();
-        stage6CacheOverlayW = stage6CacheOverlayImg.getWidth();
         stage6CacheOverlayH = stage6CacheOverlayImg.getHeight();
         if (heavy) {
-            stage6CacheBaseRgb = new int[stage6CacheBaseW * stage6CacheBaseH];
-            stage6CacheBaseImg.getRGB(stage6CacheBaseRgb, 0, stage6CacheBaseW, 0, 0,
-                    stage6CacheBaseW, stage6CacheBaseH);
-            stage6CacheOverlayRgb = new int[stage6CacheOverlayW * stage6CacheOverlayH];
-            stage6CacheOverlayImg.getRGB(stage6CacheOverlayRgb, 0, stage6CacheOverlayW, 0, 0,
-                    stage6CacheOverlayW, stage6CacheOverlayH);
-            if (stage6BlendOutRgb == null) stage6BlendOutRgb = new int[PLAY_W * PLAY_H];
-        } else {
-            stage6BlendOutRgb = null;
-        }
-    }
-
-    // CPU-side additive blend for the Extra Stage background.
-    private void blendStage6Add(GameCore.BattleRenderAccess a, Graphics g, int ratio, int scroll) {
-        int baseW = this.stage6CacheBaseW;
-        int baseH = this.stage6CacheBaseH;
-        int overlayW = this.stage6CacheOverlayW;
-        int overlayH = this.stage6CacheOverlayH;
-        int shift = backgroundDarkness;
-        int colorMask = (255 >>> shift) * 0x010101;
-        int outIndex = 0;
-        for (int y = 0; y < PLAY_H; y++) {
-            int by = PLAY_Y + y;
-            if (by < 0) {
-                by = 0;
-            } else if (by >= baseH) {
-                by = baseH - 1;
-            }
-            int baseRow = by * baseW;
-
-            int oy = y - a.originY() - scroll;
-            oy %= overlayH;
-            if (oy < 0) {
-                oy += overlayH;
-            }
-            int overlayRow = oy * overlayW;
-
-            for (int x = 0; x < PLAY_W; x++) {
-                int dx = x;
-                if (dx < 0) {
-                    dx = 0;
-                } else if (dx >= baseW) {
-                    dx = baseW - 1;
-                }
-
-                int dst = this.stage6CacheBaseRgb[baseRow + dx];
-
-                int ox = x - a.originX();
-                if (ox < 0 || ox >= overlayW) {
-                    this.stage6BlendOutRgb[outIndex++] = 0xFF000000 | ((dst >>> shift) & colorMask);
-                    continue;
-                }
-                int src = this.stage6CacheOverlayRgb[overlayRow + ox];
-
-                int srcA = (src >>> 24) & 0xFF;
-                if (srcA == 0) {
-                    this.stage6BlendOutRgb[outIndex++] = 0xFF000000 | ((dst >>> shift) & colorMask);
-                    continue;
-                }
-
-                int dstR = (dst >> 16) & 0xFF;
-                int dstG = (dst >> 8) & 0xFF;
-                int dstB = dst & 0xFF;
-
-                int srcR = (src >> 16) & 0xFF;
-                int srcG = (src >> 8) & 0xFF;
-                int srcB = src & 0xFF;
-
-                int outR = (dstR * ratio + srcR * ratio) / 255;
-                int outG = (dstG * ratio + srcG * ratio) / 255;
-                int outB = (dstB * ratio + srcB * ratio) / 255;
-
-                int rgb = (outR << 16) | (outG << 8) | outB;
-                this.stage6BlendOutRgb[outIndex++] = 0xFF000000 | ((rgb >>> shift) & colorMask);
-            }
-        }
-
-        try {
-            g.drawRGB(this.stage6BlendOutRgb, 0, PLAY_W, PLAY_X, PLAY_Y, PLAY_W, PLAY_H, false);
-        } catch (Throwable t) {
-            try {
-                Image img = Image.createRGBImage(this.stage6BlendOutRgb, PLAY_W, PLAY_H, false);
-                g.drawImage(img, PLAY_X, PLAY_Y, Graphics.TOP | Graphics.LEFT);
-            } catch (Throwable ignore) {
-                g.drawImage(this.stage6CacheBaseImg, 0, 0, Graphics.TOP | Graphics.LEFT);
-            }
+            stage6Blend = new AdditiveBackground(stage6CacheBaseImg, stage6CacheOverlayImg);
+            images.release(BattleRenderRules.backgroundBaseImage(6, phase));
+            images.release(BattleRenderRules.backgroundOverlayImage(6, phase));
+            stage6CacheBaseImg = null;
+            stage6CacheOverlayImg = null;
         }
     }
 

@@ -23,6 +23,8 @@ public final class ImageBank {
     private final SpriteCatalog catalog;
     private final Image[] images;
     private final byte[] darkness;
+    private final int[] opacity;
+    private final int[] tints;
 
     private final Image[] alphaImageCacheImg;
     private final int[] alphaImageCacheImgIndex;
@@ -59,6 +61,9 @@ public final class ImageBank {
         this.catalog = catalog;
         images = new Image[catalog.imageCount()];
         darkness = new byte[images.length];
+        opacity = new int[images.length];
+        tints = new int[images.length];
+        for (int i = 0; i < opacity.length; i++) opacity[i] = 255;
 
         alphaImageCacheImg = new Image[24];
         alphaImageCacheImgIndex = new int[24];
@@ -86,9 +91,10 @@ public final class ImageBank {
         Image cached = images[imgIndex];
         if (cached != null) return cached;
         try {
-            Image img = catalog.variantBase(imgIndex) >= 0 || darkness[imgIndex] != 0
+            Image img = catalog.variantBase(imgIndex) >= 0 || darkness[imgIndex] != 0 || tints[imgIndex] != 0
                     ? buildPaletteImage(imgIndex)
                     : Image.createImage(catalog.imagePath(imgIndex));
+            if (opacity[imgIndex] != 255) img = createAlphaImage(img, opacity[imgIndex]);
             images[imgIndex] = img;
             return img;
         } catch (IOException e) {
@@ -112,6 +118,8 @@ public final class ImageBank {
         for (int i = 0; i < images.length; i++) {
             images[i] = null;
             darkness[i] = 0;
+            opacity[i] = 255;
+            tints[i] = 0;
         }
         clearAlphaCaches();
     }
@@ -131,6 +139,19 @@ public final class ImageBank {
 
     public static int darkenColor(int rgb, int levels) {
         return (rgb >>> levels) & ((255 >>> levels) * 0x010101);
+    }
+
+    /** Keep the fixed-opacity background sheet in its regular slot, without an opaque duplicate. */
+    public void setOpacity(int imgIndex, int alpha) {
+        if (opacity[imgIndex] == alpha) return;
+        opacity[imgIndex] = alpha;
+        release(imgIndex);
+    }
+
+    public void setTint(int imgIndex, int argb) {
+        if (tints[imgIndex] == argb) return;
+        tints[imgIndex] = argb;
+        release(imgIndex);
     }
 
     public void release(int imgIndex) {
@@ -232,21 +253,7 @@ public final class ImageBank {
             }
         }
 
-        int w = base.getWidth();
-        int h = base.getHeight();
-        int[] rgb = new int[w * h];
-        base.getRGB(rgb, 0, w, 0, 0, w, h);
-        for (int i = 0; i < rgb.length; i++) {
-            int p = rgb[i];
-            int a0 = (p >>> 24) & 0xFF;
-            if (a0 == 0) {
-                rgb[i] = 0;
-                continue;
-            }
-            int a = (a0 * alpha) / 255;
-            rgb[i] = (a << 24) | (p & 0x00FFFFFF);
-        }
-        Image img = Image.createRGBImage(rgb, w, h, true);
+        Image img = createAlphaImage(base, alpha);
 
         int slot = alphaImageCacheNext;
         alphaImageCacheNext = (alphaImageCacheNext + 1) % alphaImageCacheImg.length;
@@ -257,6 +264,19 @@ public final class ImageBank {
 
         perfAlphaImageCreate++;
         return img;
+    }
+
+    private static Image createAlphaImage(Image base, int alpha) {
+        int w = base.getWidth(), h = base.getHeight();
+        int[] rgb = new int[w * h];
+        base.getRGB(rgb, 0, w, 0, 0, w, h);
+        for (int i = 0; i < rgb.length; i++) {
+            int p = rgb[i];
+            int originalAlpha = p >>> 24;
+            int a = (originalAlpha * alpha) / 255;
+            rgb[i] = originalAlpha == 0 ? 0 : (a << 24) | (p & 0xFFFFFF);
+        }
+        return Image.createRGBImage(rgb, w, h, true);
     }
 
     Image getAlphaRegion(int imgIndex, int srcX, int srcY, int w, int h, int alpha) {
@@ -403,13 +423,13 @@ public final class ImageBank {
         int base = catalog.variantBase(imgIndex);
         byte[] png = ResourceLoader.readRequiredBytes(catalog.imagePath(base < 0 ? imgIndex : base));
         int[] palette = base < 0 ? null : STAGEEX_TD[catalog.variantPalette(imgIndex)];
-        if (!applyPngPalette(png, palette, darkness[imgIndex])) {
+        if (!applyPngPalette(png, palette, darkness[imgIndex], tints[imgIndex])) {
             throw new IOException("Missing PNG palette: " + imgIndex);
         }
         return Image.createImage(png, 0, png.length);
     }
 
-    private static boolean applyPngPalette(byte[] pngBytes, int[] palette, int levels) {
+    private static boolean applyPngPalette(byte[] pngBytes, int[] palette, int levels, int tint) {
         int offset = 8;
         while (offset <= pngBytes.length - 12) {
             int length = readPngInt(pngBytes, offset);
@@ -421,6 +441,14 @@ public final class ImageBank {
                     int c = palette != null && i < palette.length ? palette[i]
                             : ((pngBytes[p] & 255) << 16) | ((pngBytes[p + 1] & 255) << 8) | (pngBytes[p + 2] & 255);
                     c = darkenColor(c, levels);
+                    int alpha = tint >>> 24;
+                    if (alpha != 0) {
+                        int color = darkenColor(tint, levels), inverse = 255 - alpha;
+                        int r = ((c >> 16 & 255) * inverse + (color >> 16 & 255) * alpha + 127) / 255;
+                        int g = ((c >> 8 & 255) * inverse + (color >> 8 & 255) * alpha + 127) / 255;
+                        int b = ((c & 255) * inverse + (color & 255) * alpha + 127) / 255;
+                        c = (r << 16) | (g << 8) | b;
+                    }
                     pngBytes[p] = (byte) (c >> 16);
                     pngBytes[p + 1] = (byte) (c >> 8);
                     pngBytes[p + 2] = (byte) c;
@@ -450,5 +478,6 @@ public final class ImageBank {
         return ((bytes[offset] & 0xFF) << 24) | ((bytes[offset + 1] & 0xFF) << 16)
                 | ((bytes[offset + 2] & 0xFF) << 8) | (bytes[offset + 3] & 0xFF);
     }
+
 
 }

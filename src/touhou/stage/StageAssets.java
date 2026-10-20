@@ -49,6 +49,7 @@ public final class StageAssets {
             boolean bossOnly, int[] options) {
         this.stage = stage;
         setBackgroundDarkness(images, stage, 0);
+        setBackgroundOpacity(images, stage, GameOptions.isHeavyBgEnabled(options));
         this.bossStep = bossStep;
         bossPhase = bossOnly;
         bossCutInAlpha = GameOptions.isBossSpellCutInAlphaEnabled(options);
@@ -60,21 +61,6 @@ public final class StageAssets {
                 bossOnly ? EMPTY : OPENINGS[stage] };
         images.retain(groups);
         for (int i = 0; i < groups.length; i++) load(images, groups[i]);
-        if (GameOptions.isHeavyBgEnabled(options)) {
-            switch (stage) {
-                case 1: images.getAlphaImage(59, 128); break;
-                case 2:
-                    images.getAlphaImage(72, 128);
-                    images.getAlphaImage(73, 128);
-                    break;
-                case 3: images.getAlphaImage(83, 127); break;
-                case 4: images.getAlphaImage(98, 128); break;
-                case 5:
-                    sprites.precacheAlphaRegion(728, 128);
-                    sprites.precacheAlphaRegion(729, 128);
-                    break;
-            }
-        }
 
         for (int i = 0; i < 4; i++) sprites.precacheAlphaRegion(SpriteSheetCatalog.PLAYER_AURA_BASE + i, 128);
         if (GameOptions.isPlayerShotAlphaEnabled(options)) {
@@ -96,6 +82,23 @@ public final class StageAssets {
         int[] backgrounds = BACKGROUNDS[stage];
         for (int i = 0; i < backgrounds.length; i++) images.setDarkness(backgrounds[i], levels);
         if (stage == 4) images.setDarkness(100, levels);
+    }
+
+    public static void setBackgroundOpacity(ImageBank images, int stage, boolean heavy) {
+        int alpha = heavy ? 128 : 255;
+        switch (stage) {
+            case 1: images.setOpacity(59, alpha); break;
+            case 2:
+                images.setOpacity(72, alpha);
+                images.setOpacity(73, alpha);
+                break;
+            case 3: images.setOpacity(83, heavy ? 127 : 255); break;
+            case 4:
+                images.setOpacity(98, alpha);
+                images.setTint(100, 0x80BFBFBF);
+                break;
+            case 5: images.setOpacity(107, alpha); break;
+        }
     }
 
     public void update(ImageBank images, boolean bossMode,
