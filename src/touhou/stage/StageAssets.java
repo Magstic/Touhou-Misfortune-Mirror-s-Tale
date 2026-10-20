@@ -53,6 +53,8 @@ public final class StageAssets {
         this.stage = stage;
         setBackgroundDarkness(images, stage, 0);
         setBackgroundOpacity(images, stage, GameOptions.isHeavyBgEnabled(options));
+        images.setOpacity(sprites.getImageIndex(SpriteSheetCatalog.BOMB_PORTRAIT_BASE + character),
+                GameOptions.isBombOverlayAlphaEnabled(options) ? 128 : 255);
         int shotAlpha = GameOptions.isPlayerShotAlphaEnabled(options) ? 128 : 255;
         int[] shots = PLAYER_SHOT_ALPHA_IMAGES[character];
         for (int i = 0; i < shots.length; i++) images.setOpacity(shots[i], shotAlpha);
@@ -190,12 +192,10 @@ public final class StageAssets {
                     break;
             }
             if (needed && !activeSpellImages[i]) {
-                images.get(image);
-                if (bossCutInAlpha && (image == cutInImage || (stage == 0 && image >= 54 && image <= 56))) {
-                    int sprite = stage == 0 ? (image == 55 ? SpriteSheetCatalog.SUNNY_CUTIN
-                            : image == 56 ? SpriteSheetCatalog.LUNA_CUTIN : SpriteSheetCatalog.STAR_CUTIN) : cutInSprite;
-                    sprites.precacheAlphaRegion(sprite, 128);
+                if (image == cutInImage || (stage == 0 && image >= 54 && image <= 56)) {
+                    images.setOpacity(image, bossCutInAlpha ? 128 : 255);
                 }
+                images.get(image);
             }
             if (!needed && activeSpellImages[i]) images.release(image);
             activeSpellImages[i] = needed;

@@ -311,7 +311,7 @@ public final class BattleRenderer {
             if (sprite >= 0 && d0 < 25) {
                 int x = BattleRenderRules.bombOverlayX(a.currentChara(), d0);
                 int y = BattleRenderRules.bombOverlayY(d0);
-                a.sprites().drawAlpha(g, sprite, x, y, a.bombOverlayAlphaEnabled() ? 128 : 255);
+                a.sprites().draw(g, sprite, x, y);
             }
 
             if (a.currentChara() == 0) {
@@ -1017,9 +1017,6 @@ public final class BattleRenderer {
         try {
             g.setClip(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
 
-            boolean alphaEnabled = a.bossSpellCutInAlphaEnabled();
-            int alpha = alphaEnabled ? 128 : 255;
-
             SpriteRenderer sprites = a.sprites();
             int sprite = BattleRenderRules.bossSpellCutInSprite(a.bossSpellCutInStage(), a.gameMode(),
                     a.bossController().host().getSpellPracticeBossStep());
@@ -1032,38 +1029,38 @@ public final class BattleRenderer {
                 case 0:
                     switch (a.bossSpellCutInChara()) {
                         case 108:
-                            sprites.drawAlpha(g, SpriteSheetCatalog.SUNNY_CUTIN, 130, 20 - (gc >> 2), alpha);
+                            sprites.draw(g, SpriteSheetCatalog.SUNNY_CUTIN, 130, 20 - (gc >> 2));
                             break;
                         case 110:
-                            sprites.drawAlpha(g, SpriteSheetCatalog.LUNA_CUTIN, 130, 20 - (gc >> 2), alpha);
+                            sprites.draw(g, SpriteSheetCatalog.LUNA_CUTIN, 130, 20 - (gc >> 2));
                             break;
                         case 109:
-                            sprites.drawAlpha(g, SpriteSheetCatalog.STAR_CUTIN, 0, 20 - (gc >> 2), alpha);
+                            sprites.draw(g, SpriteSheetCatalog.STAR_CUTIN, 0, 20 - (gc >> 2));
                             break;
                         case 111:
-                            sprites.drawAlpha(g, SpriteSheetCatalog.STAR_CUTIN, 0, 20 - (gc >> 2), alpha);
-                            sprites.drawAlpha(g, SpriteSheetCatalog.SUNNY_CUTIN, 64, gc >> 2, alpha);
-                            sprites.drawAlpha(g, SpriteSheetCatalog.LUNA_CUTIN, 130, 20 - (gc >> 2), alpha);
+                            sprites.draw(g, SpriteSheetCatalog.STAR_CUTIN, 0, 20 - (gc >> 2));
+                            sprites.draw(g, SpriteSheetCatalog.SUNNY_CUTIN, 64, gc >> 2);
+                            sprites.draw(g, SpriteSheetCatalog.LUNA_CUTIN, 130, 20 - (gc >> 2));
                             break;
                     }
                     break;
                 case 1:
-                    sprites.drawAlpha(g, sprite, 0, 8 + (gc >> 3), alpha);
+                    sprites.draw(g, sprite, 0, 8 + (gc >> 3));
                     break;
                 case 2:
-                    sprites.drawAlpha(g, sprite, 14 - (gc >> 2), 8 + (gc >> 2), alpha);
+                    sprites.draw(g, sprite, 14 - (gc >> 2), 8 + (gc >> 2));
                     break;
                 case 3:
-                    sprites.drawAlpha(g, sprite, 0, gc >> 2, alpha);
+                    sprites.draw(g, sprite, 0, gc >> 2);
                     break;
                 case 4:
-                    sprites.drawAlpha(g, sprite, 0 - (gc >> 2), gc >> 2, alpha);
+                    sprites.draw(g, sprite, 0 - (gc >> 2), gc >> 2);
                     break;
                 case 5:
-                    sprites.drawAlpha(g, sprite, -20 + (gc >> 1), gc >> 2, alpha);
+                    sprites.draw(g, sprite, -20 + (gc >> 1), gc >> 2);
                     break;
                 case 6:
-                    sprites.drawAlpha(g, sprite, 0, 8 - (gc >> 2), alpha);
+                    sprites.draw(g, sprite, 0, 8 - (gc >> 2));
                     break;
             }
         } finally {
