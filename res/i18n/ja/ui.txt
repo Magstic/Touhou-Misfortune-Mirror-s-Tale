@@ -189,14 +189,12 @@ Back
 - Compatible -
 HeavyBG
 Mystia Fade
-Alpha: BOMB Close-up
-Alpha: BOSS Close-up
+Alpha: Close-UP
 Alpha: Player Bullets
 Back
 ゴージャスな背景
 Stage2 暗幕フェード
-特写の半透明処理
-特写の半透明処理
+ボス／自機のカットイン半透明
 自機弾の半透明処理
 戻る
 - DEBUG -

@@ -21,8 +21,7 @@ public final class GameOptions {
     // Rendering and debug switches packed into opt[3].
     private static final int IDX_RENDER_FLAGS = 3;
     private static final int ALPHA_MASK = 0x07;
-    private static final int ALPHA_BOMB = 0x01;
-    private static final int ALPHA_BOSS_CUTIN = 0x02;
+    private static final int ALPHA_CLOSE_UP = 0x03;
     private static final int ALPHA_PLAYER_SHOT = 0x04;
 
     // Other rendering switches packed into opt[10].
@@ -52,12 +51,8 @@ public final class GameOptions {
         }
     }
 
-    public static boolean isBombOverlayAlphaEnabled(int[] opt) {
-        return (alphaFlags(opt) & ALPHA_BOMB) != 0;
-    }
-
-    public static boolean isBossSpellCutInAlphaEnabled(int[] opt) {
-        return (alphaFlags(opt) & ALPHA_BOSS_CUTIN) != 0;
+    public static boolean isCloseUpAlphaEnabled(int[] opt) {
+        return (alphaFlags(opt) & ALPHA_CLOSE_UP) != 0;
     }
 
     public static boolean isPlayerShotAlphaEnabled(int[] opt) {
@@ -88,12 +83,9 @@ public final class GameOptions {
         return (debugFlags(opt) & DEBUG_RESOURCE) != 0;
     }
 
-    public static void toggleBombOverlayAlpha(int[] opt) {
-        toggleAlphaBit(opt, ALPHA_BOMB);
-    }
-
-    public static void toggleBossSpellCutInAlpha(int[] opt) {
-        toggleAlphaBit(opt, ALPHA_BOSS_CUTIN);
+    public static void toggleCloseUpAlpha(int[] opt) {
+        opt[IDX_RENDER_FLAGS] = isCloseUpAlphaEnabled(opt)
+                ? opt[IDX_RENDER_FLAGS] & ~ALPHA_CLOSE_UP : opt[IDX_RENDER_FLAGS] | ALPHA_CLOSE_UP;
     }
 
     public static void togglePlayerShotAlpha(int[] opt) {

@@ -275,8 +275,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     private int bossSpellCutInStartFi;
 
     // Rendering options: alpha rendering toggles.
-    private boolean optBombOverlayAlphaEnabled;
-    private boolean optBossSpellCutInAlphaEnabled;
+    private boolean optCloseUpAlphaEnabled;
 
     // Rendering option: if disabled, Stage2 blind mask switches instantly (no fade).
     private boolean optBlindMaskFadeEnabled;
@@ -2799,8 +2798,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         scoreSystem.attachHud(m);
         int[] opt = GameOptions.load();
 
-        optBombOverlayAlphaEnabled = GameOptions.isBombOverlayAlphaEnabled(opt);
-        optBossSpellCutInAlphaEnabled = GameOptions.isBossSpellCutInAlphaEnabled(opt);
+        optCloseUpAlphaEnabled = GameOptions.isCloseUpAlphaEnabled(opt);
 
         optBlindMaskFadeEnabled = GameOptions.isBlindMaskFadeEnabled(opt);
 
@@ -3780,12 +3778,8 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             return core.bossSpellCutInStartFi;
         }
 
-        public boolean bombOverlayAlphaEnabled() {
-            return core.optBombOverlayAlphaEnabled;
-        }
-
-        public boolean bossSpellCutInAlphaEnabled() {
-            return core.optBossSpellCutInAlphaEnabled;
+        public boolean closeUpAlphaEnabled() {
+            return core.optCloseUpAlphaEnabled;
         }
 
         public boolean blindMaskFadeEnabled() {

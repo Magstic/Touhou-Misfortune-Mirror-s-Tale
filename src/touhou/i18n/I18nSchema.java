@@ -1,7 +1,7 @@
 package touhou.i18n;
 
 public final class I18nSchema {
-    public static final int UI_LINE_COUNT = 573;
+    public static final int UI_LINE_COUNT = 571;
     public static final int SPELL_LINE_COUNT = 116;
 
     private I18nSchema() {

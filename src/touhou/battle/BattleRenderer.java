@@ -439,12 +439,12 @@ public final class BattleRenderer {
      */
     private void renderBattleBackground(GameCore.BattleRenderAccess a, Graphics g) {
         backgroundDarkness = 0;
-        if ((a.bossSpellCutInAlphaEnabled() || a.bombOverlayAlphaEnabled())
+        if (a.closeUpAlphaEnabled()
                 && (a.bombCnt() > 0 || (a.timeStop() <= 0 && a.bossController().getBspellstep() != 0
                 && !a.bossSpellCutInActive()))) {
             backgroundDarkness++;
         }
-        if (a.bossSpellCutInActive() && a.bossSpellCutInAlphaEnabled()
+        if (a.bossSpellCutInActive() && a.closeUpAlphaEnabled()
                 && !a.dialogueVisible() && a.taCnt() == 0) {
             backgroundDarkness++;
         }

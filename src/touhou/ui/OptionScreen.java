@@ -98,7 +98,7 @@ public final class OptionScreen {
 
     private static final String[] MENU_CHEAT = new String[] { "Boss Shield", "Item Collection Limit", "Back" };
 
-    private static final String[] MENU_RENDERING = new String[] { "HeavyBG", "Mystia Fade", "Hit Spark", "Alpha: BOMB Close-up", "Alpha: BOSS Close-up", "Alpha: Player Bullets", "Back" };
+    private static final String[] MENU_RENDERING = new String[] { "HeavyBG", "Mystia Fade", "Hit Spark", "Alpha: Close-UP", "Alpha: Player Bullets", "Back" };
 
     private static final int[] RENDER_MENU_TEXT_IDS = new int[] {
             TextId.OPTION_RENDER_MENU_1,
@@ -106,8 +106,7 @@ public final class OptionScreen {
             TextId.OPTION_RENDER_HIT_SPARK_MENU,
             TextId.OPTION_RENDER_MENU_3,
             TextId.OPTION_RENDER_MENU_4,
-            TextId.OPTION_RENDER_MENU_5,
-            TextId.OPTION_RENDER_MENU_6
+            TextId.OPTION_RENDER_MENU_5
     };
 
     private static final int[] RENDER_DESC_TEXT_IDS = new int[] {
@@ -116,8 +115,7 @@ public final class OptionScreen {
             TextId.OPTION_RENDER_HIT_SPARK_DESC,
             TextId.OPTION_RENDER_DESC_3,
             TextId.OPTION_RENDER_DESC_4,
-            TextId.OPTION_RENDER_DESC_5,
-            TextId.OPTION_RENDER_DESC_6
+            TextId.OPTION_RENDER_DESC_5
     };
 
     private static final String[] MENU_DEBUG = new String[] { "FPS", "Profiler", "Resource", "Back" };
@@ -324,10 +322,8 @@ public final class OptionScreen {
             } else if (cursorUD == 2) {
                 GameOptions.toggleHitSpark(opt);
             } else if (cursorUD == 3) {
-                GameOptions.toggleBombOverlayAlpha(opt);
+                GameOptions.toggleCloseUpAlpha(opt);
             } else if (cursorUD == 4) {
-                GameOptions.toggleBossSpellCutInAlpha(opt);
-            } else if (cursorUD == 5) {
                 GameOptions.togglePlayerShotAlpha(opt);
             }
             GameOptions.save(opt);
@@ -847,12 +843,9 @@ public final class OptionScreen {
             return GameOptions.isHitSparkEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
         if (idx == 3) {
-            return GameOptions.isBombOverlayAlphaEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
+            return GameOptions.isCloseUpAlphaEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
         if (idx == 4) {
-            return GameOptions.isBossSpellCutInAlphaEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
-        }
-        if (idx == 5) {
             return GameOptions.isPlayerShotAlphaEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
         if (idx == MENU_RENDERING.length - 1) {

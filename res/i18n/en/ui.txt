@@ -189,14 +189,12 @@ Back
 - Compatible -
 HeavyBG
 Mystia Fade
-Alpha: BOMB Close-up
-Alpha: BOSS Close-up
+Alpha: Close-UP
 Alpha: Player Bullets
 Back
 Fancy background
 Stage2 dark mask fade
-Overlay alpha
-Overlay alpha
+Alpha blend player/BOSS close-ups
 Player bullets alpha
 Back
 - Debug -

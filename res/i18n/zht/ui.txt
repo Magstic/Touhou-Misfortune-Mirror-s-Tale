@@ -189,14 +189,12 @@ BOSS 炸彈護盾
 - 相容設定 -
 HeavyBG
 Mystia Fade
-Alpha: BOMB Close-up
-Alpha: BOSS Close-up
+Alpha: Close-UP
 Alpha: Player Bullets
 Back
 華麗的背景
 Stage2 暗幕 漸入/漸出
-半透明特寫
-半透明特寫
+BOSS／自機符卡特寫半透明
 半透明自機彈幕
 返回
 - 偵錯 -

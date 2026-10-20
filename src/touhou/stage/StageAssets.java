@@ -43,7 +43,7 @@ public final class StageAssets {
     private int stage;
     private int bossStep;
     private boolean bossPhase;
-    private boolean bossCutInAlpha;
+    private boolean closeUpAlpha;
     private boolean midbossActive;
     private boolean openingActive;
     private boolean dialogueActive;
@@ -54,14 +54,14 @@ public final class StageAssets {
         this.stage = stage;
         setBackgroundDarkness(images, stage, 0);
         setBackgroundOpacity(images, stage, GameOptions.isHeavyBgEnabled(options));
+        closeUpAlpha = GameOptions.isCloseUpAlphaEnabled(options);
         images.setOpacity(sprites.getImageIndex(SpriteSheetCatalog.BOMB_PORTRAIT_BASE + character),
-                GameOptions.isBombOverlayAlphaEnabled(options) ? 128 : 255);
+                closeUpAlpha ? 128 : 255);
         int shotAlpha = GameOptions.isPlayerShotAlphaEnabled(options) ? 128 : 255;
         int[] shots = PLAYER_SHOT_ALPHA_IMAGES[character];
         for (int i = 0; i < shots.length; i++) images.setOpacity(shots[i], shotAlpha);
         this.bossStep = bossStep;
         bossPhase = bossOnly;
-        bossCutInAlpha = GameOptions.isBossSpellCutInAlphaEnabled(options);
         midbossActive = false;
         openingActive = false;
         dialogueActive = false;
@@ -200,7 +200,7 @@ public final class StageAssets {
             }
             if (needed && !activeSpellImages[i]) {
                 if (image == cutInImage || (stage == 0 && image >= 54 && image <= 56)) {
-                    images.setOpacity(image, bossCutInAlpha ? 128 : 255);
+                    images.setOpacity(image, closeUpAlpha ? 128 : 255);
                 }
                 images.get(image);
             }
