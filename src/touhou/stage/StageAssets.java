@@ -30,8 +30,8 @@ public final class StageAssets {
             { 18, 19, 20, 21, 22, 30, 35, 36 },
             { 24, 25, 26, 27, 31 }
     };
-    private static final int[][] PLAYER_SHOTS = {
-            { 15, 16, 32 }, { 19, 20, 21, 22, 35, 36 }, { 26, 27 }
+    private static final int[][] PLAYER_SHOT_ALPHA_IMAGES = {
+            { 15, 16, 32 }, { 19, 20, 21, 22, 35, 36 }, { 26 }
     };
     private static final int[][] OPENINGS = {
             { 43, 44 }, { 57, 58 }, { 69, 70 }, { 89, 90 },
@@ -54,7 +54,7 @@ public final class StageAssets {
         setBackgroundDarkness(images, stage, 0);
         setBackgroundOpacity(images, stage, GameOptions.isHeavyBgEnabled(options));
         int shotAlpha = GameOptions.isPlayerShotAlphaEnabled(options) ? 128 : 255;
-        int[] shots = PLAYER_SHOTS[character];
+        int[] shots = PLAYER_SHOT_ALPHA_IMAGES[character];
         for (int i = 0; i < shots.length; i++) images.setOpacity(shots[i], shotAlpha);
         this.bossStep = bossStep;
         bossPhase = bossOnly;
