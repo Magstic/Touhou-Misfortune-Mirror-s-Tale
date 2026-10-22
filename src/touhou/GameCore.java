@@ -599,6 +599,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             softkeys = new SoftkeyBar();
 
             audioSystem.setVolumes(opt[1], opt[2]);
+            audioSystem.setHeavyBgmEnabled(GameOptions.isHeavyBgmEnabled(opt));
             int seMask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
             audioSystem.setSeEnabledMask14(seMask);
             // Title BGM (00): request once; actual start is driven by polling tick().
@@ -635,6 +636,10 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
                 public void onSeMaskChanged(int mask) {
                     audioSystem.setSeEnabledMask14(mask);
+                }
+
+                public void onHeavyBgmChanged(boolean enabled) {
+                    audioSystem.setHeavyBgmEnabled(enabled);
                 }
 
                 public void onMusicRoomVolumeChanged(int bgmVol) {
@@ -1276,6 +1281,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
                 audioOptPollCnt = 30;
                 int[] opt = GameOptions.load();
                 audioSystem.setVolumes(opt[1], opt[2]);
+                audioSystem.setHeavyBgmEnabled(GameOptions.isHeavyBgmEnabled(opt));
                 int seMask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
                 audioSystem.setSeEnabledMask14(seMask);
             }

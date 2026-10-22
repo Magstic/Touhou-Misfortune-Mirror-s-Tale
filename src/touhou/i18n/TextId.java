@@ -424,249 +424,251 @@ public final class TextId {
     public static final int OPTION_CHEAT_WARN_LINE1 = 387;
     public static final int OPTION_CHEAT_WARN_LINE2 = 388;
 
-    // Rendering
+    // Compatibility
     public static final int OPTION_RENDER_TITLE = 390;
     public static final int OPTION_RENDER_MENU_1 = 391;
-    public static final int OPTION_RENDER_MENU_2 = 392;
-    public static final int OPTION_RENDER_HIT_SPARK_MENU = 393;
-    public static final int OPTION_RENDER_MENU_3 = 394;
-    public static final int OPTION_RENDER_MENU_4 = 395;
-    public static final int OPTION_RENDER_MENU_5 = 396;
-    public static final int OPTION_RENDER_DESC_1 = 397;
-    public static final int OPTION_RENDER_DESC_2 = 398;
-    public static final int OPTION_RENDER_HIT_SPARK_DESC = 399;
-    public static final int OPTION_RENDER_DESC_3 = 400;
-    public static final int OPTION_RENDER_DESC_4 = 401;
-    public static final int OPTION_RENDER_DESC_5 = 402;
+    public static final int OPTION_HEAVY_BGM_MENU = 392;
+    public static final int OPTION_RENDER_MENU_2 = 393;
+    public static final int OPTION_RENDER_HIT_SPARK_MENU = 394;
+    public static final int OPTION_RENDER_MENU_3 = 395;
+    public static final int OPTION_RENDER_MENU_4 = 396;
+    public static final int OPTION_RENDER_MENU_5 = 397;
+    public static final int OPTION_RENDER_DESC_1 = 398;
+    public static final int OPTION_HEAVY_BGM_DESC = 399;
+    public static final int OPTION_RENDER_DESC_2 = 400;
+    public static final int OPTION_RENDER_HIT_SPARK_DESC = 401;
+    public static final int OPTION_RENDER_DESC_3 = 402;
+    public static final int OPTION_RENDER_DESC_4 = 403;
+    public static final int OPTION_RENDER_DESC_5 = 404;
 
     // Debug
-    public static final int OPTION_DEBUG_TITLE = 404;
-    public static final int OPTION_DEBUG_MENU_0 = 405;
-    public static final int OPTION_DEBUG_MENU_1 = 406;
-    public static final int OPTION_DEBUG_MENU_2 = 407;
-    public static final int OPTION_DEBUG_MENU_3 = 408;
-    public static final int OPTION_DEBUG_DESC_0 = 409;
-    public static final int OPTION_DEBUG_DESC_1 = 410;
-    public static final int OPTION_DEBUG_DESC_2 = 411;
-    public static final int OPTION_DEBUG_DESC_3 = 412;
+    public static final int OPTION_DEBUG_TITLE = 406;
+    public static final int OPTION_DEBUG_MENU_0 = 407;
+    public static final int OPTION_DEBUG_MENU_1 = 408;
+    public static final int OPTION_DEBUG_MENU_2 = 409;
+    public static final int OPTION_DEBUG_MENU_3 = 410;
+    public static final int OPTION_DEBUG_DESC_0 = 411;
+    public static final int OPTION_DEBUG_DESC_1 = 412;
+    public static final int OPTION_DEBUG_DESC_2 = 413;
+    public static final int OPTION_DEBUG_DESC_3 = 414;
 
     // Help headings
-    public static final int HELP_TITLE_PREFIX = 414;
-    public static final int HELP_PAGE_SUFFIX = 415;
-    public static final int HELP_PAGE_HEADER_0 = 416;
-    public static final int HELP_PAGE_HEADER_1 = 417;
-    public static final int HELP_PAGE_HEADER_2 = 418;
-    public static final int HELP_PAGE_HEADER_3 = 419;
-    public static final int HELP_PAGE_HEADER_4 = 420;
-    public static final int HELP_PAGE_HEADER_5 = 421;
-    public static final int HELP_PAGE_HEADER_6 = 422;
-    public static final int HELP_PAGE_HEADER_7 = 423;
-    public static final int HELP_PAGE_HEADER_8 = 424;
-    public static final int HELP_PAGE_HEADER_9 = 425;
-    public static final int HELP_PAGE_HEADER_10 = 426;
-    public static final int HELP_PAGE_HEADER_11 = 427;
-    public static final int HELP_PAGE_HEADER_12 = 428;
-    public static final int HELP_PAGE_HEADER_13 = 429;
-    public static final int HELP_PAGE_HEADER_14 = 430;
+    public static final int HELP_TITLE_PREFIX = 416;
+    public static final int HELP_PAGE_SUFFIX = 417;
+    public static final int HELP_PAGE_HEADER_0 = 418;
+    public static final int HELP_PAGE_HEADER_1 = 419;
+    public static final int HELP_PAGE_HEADER_2 = 420;
+    public static final int HELP_PAGE_HEADER_3 = 421;
+    public static final int HELP_PAGE_HEADER_4 = 422;
+    public static final int HELP_PAGE_HEADER_5 = 423;
+    public static final int HELP_PAGE_HEADER_6 = 424;
+    public static final int HELP_PAGE_HEADER_7 = 425;
+    public static final int HELP_PAGE_HEADER_8 = 426;
+    public static final int HELP_PAGE_HEADER_9 = 427;
+    public static final int HELP_PAGE_HEADER_10 = 428;
+    public static final int HELP_PAGE_HEADER_11 = 429;
+    public static final int HELP_PAGE_HEADER_12 = 430;
+    public static final int HELP_PAGE_HEADER_13 = 431;
+    public static final int HELP_PAGE_HEADER_14 = 432;
 
     // Help page 0
-    public static final int HELP_CONTENT_P0_LABEL_START = 432;
-    public static final int HELP_CONTENT_P0_DESC_START = 433;
-    public static final int HELP_CONTENT_P0_LABEL_EXTRA_START = 434;
-    public static final int HELP_CONTENT_P0_DESC_EXTRA_START = 435;
-    public static final int HELP_CONTENT_P0_LABEL_SPELL_PRACTICE = 436;
-    public static final int HELP_CONTENT_P0_DESC_SPELL_PRACTICE = 437;
-    public static final int HELP_CONTENT_P0_LABEL_PRACTICE_START = 438;
-    public static final int HELP_CONTENT_P0_DESC_PRACTICE_START = 439;
-    public static final int HELP_CONTENT_P0_LABEL_REPLAY = 440;
-    public static final int HELP_CONTENT_P0_DESC_REPLAY = 441;
-    public static final int HELP_CONTENT_P0_LABEL_RESULT = 442;
-    public static final int HELP_CONTENT_P0_DESC_RESULT = 443;
+    public static final int HELP_CONTENT_P0_LABEL_START = 434;
+    public static final int HELP_CONTENT_P0_DESC_START = 435;
+    public static final int HELP_CONTENT_P0_LABEL_EXTRA_START = 436;
+    public static final int HELP_CONTENT_P0_DESC_EXTRA_START = 437;
+    public static final int HELP_CONTENT_P0_LABEL_SPELL_PRACTICE = 438;
+    public static final int HELP_CONTENT_P0_DESC_SPELL_PRACTICE = 439;
+    public static final int HELP_CONTENT_P0_LABEL_PRACTICE_START = 440;
+    public static final int HELP_CONTENT_P0_DESC_PRACTICE_START = 441;
+    public static final int HELP_CONTENT_P0_LABEL_REPLAY = 442;
+    public static final int HELP_CONTENT_P0_DESC_REPLAY = 443;
+    public static final int HELP_CONTENT_P0_LABEL_RESULT = 444;
+    public static final int HELP_CONTENT_P0_DESC_RESULT = 445;
 
     // Help page 1
-    public static final int HELP_CONTENT_P1_LABEL_MUSIC_ROOM = 445;
-    public static final int HELP_CONTENT_P1_DESC_MUSIC_ROOM = 446;
-    public static final int HELP_CONTENT_P1_LABEL_OPTION = 447;
-    public static final int HELP_CONTENT_P1_DESC_OPTION = 448;
-    public static final int HELP_CONTENT_P1_LABEL_QUIT = 449;
-    public static final int HELP_CONTENT_P1_DESC_QUIT = 450;
+    public static final int HELP_CONTENT_P1_LABEL_MUSIC_ROOM = 447;
+    public static final int HELP_CONTENT_P1_DESC_MUSIC_ROOM = 448;
+    public static final int HELP_CONTENT_P1_LABEL_OPTION = 449;
+    public static final int HELP_CONTENT_P1_DESC_OPTION = 450;
+    public static final int HELP_CONTENT_P1_LABEL_QUIT = 451;
+    public static final int HELP_CONTENT_P1_DESC_QUIT = 452;
 
     // Help page 2
-    public static final int HELP_CONTENT_P2_TITLE_NORMAL = 452;
-    public static final int HELP_CONTENT_P2_MOVE = 453;
-    public static final int HELP_CONTENT_P2_KEY_1_9_UNUSED = 454;
-    public static final int HELP_CONTENT_P2_KEY_OK_UNUSED = 455;
-    public static final int HELP_CONTENT_P2_KEY_STAR_SHOT = 456;
-    public static final int HELP_CONTENT_P2_KEY_0_SPEED = 457;
-    public static final int HELP_CONTENT_P2_KEY_HASH_BOMB = 458;
-    public static final int HELP_CONTENT_P2_NOTE_OPTIONS = 459;
-    public static final int HELP_CONTENT_P2_TITLE_TALK = 460;
-    public static final int HELP_CONTENT_P2_KEY_OK_MESSAGE = 461;
+    public static final int HELP_CONTENT_P2_TITLE_NORMAL = 454;
+    public static final int HELP_CONTENT_P2_MOVE = 455;
+    public static final int HELP_CONTENT_P2_KEY_1_9_UNUSED = 456;
+    public static final int HELP_CONTENT_P2_KEY_OK_UNUSED = 457;
+    public static final int HELP_CONTENT_P2_KEY_STAR_SHOT = 458;
+    public static final int HELP_CONTENT_P2_KEY_0_SPEED = 459;
+    public static final int HELP_CONTENT_P2_KEY_HASH_BOMB = 460;
+    public static final int HELP_CONTENT_P2_NOTE_OPTIONS = 461;
+    public static final int HELP_CONTENT_P2_TITLE_TALK = 462;
+    public static final int HELP_CONTENT_P2_KEY_OK_MESSAGE = 463;
 
     // Help page 3
-    public static final int HELP_CONTENT_P3_LABEL_HISCORE = 463;
-    public static final int HELP_CONTENT_P3_DESC_HISCORE = 464;
-    public static final int HELP_CONTENT_P3_LABEL_SCORE = 465;
-    public static final int HELP_CONTENT_P3_DESC_SCORE = 466;
-    public static final int HELP_CONTENT_P3_LABEL_PLAYER = 467;
-    public static final int HELP_CONTENT_P3_DESC_PLAYER = 468;
-    public static final int HELP_CONTENT_P3_LABEL_SPELL = 469;
-    public static final int HELP_CONTENT_P3_DESC_SPELL = 470;
-    public static final int HELP_CONTENT_P3_LABEL_POWER = 471;
-    public static final int HELP_CONTENT_P3_DESC_POWER = 472;
-    public static final int HELP_CONTENT_P3_LABEL_GRAZE = 473;
-    public static final int HELP_CONTENT_P3_DESC_GRAZE = 474;
+    public static final int HELP_CONTENT_P3_LABEL_HISCORE = 465;
+    public static final int HELP_CONTENT_P3_DESC_HISCORE = 466;
+    public static final int HELP_CONTENT_P3_LABEL_SCORE = 467;
+    public static final int HELP_CONTENT_P3_DESC_SCORE = 468;
+    public static final int HELP_CONTENT_P3_LABEL_PLAYER = 469;
+    public static final int HELP_CONTENT_P3_DESC_PLAYER = 470;
+    public static final int HELP_CONTENT_P3_LABEL_SPELL = 471;
+    public static final int HELP_CONTENT_P3_DESC_SPELL = 472;
+    public static final int HELP_CONTENT_P3_LABEL_POWER = 473;
+    public static final int HELP_CONTENT_P3_DESC_POWER = 474;
+    public static final int HELP_CONTENT_P3_LABEL_GRAZE = 475;
+    public static final int HELP_CONTENT_P3_DESC_GRAZE = 476;
 
     // Help page 4
-    public static final int HELP_CONTENT_P4_LABEL_P_SMALL = 476;
-    public static final int HELP_CONTENT_P4_DESC_P_SMALL_1 = 477;
-    public static final int HELP_CONTENT_P4_DESC_P_SMALL_2 = 478;
-    public static final int HELP_CONTENT_P4_LABEL_POINT = 479;
-    public static final int HELP_CONTENT_P4_DESC_POINT_1 = 480;
-    public static final int HELP_CONTENT_P4_DESC_POINT_2 = 481;
-    public static final int HELP_CONTENT_P4_LABEL_P_BIG = 482;
-    public static final int HELP_CONTENT_P4_DESC_P_BIG = 483;
-    public static final int HELP_CONTENT_P4_LABEL_F = 484;
-    public static final int HELP_CONTENT_P4_DESC_F = 485;
+    public static final int HELP_CONTENT_P4_LABEL_P_SMALL = 478;
+    public static final int HELP_CONTENT_P4_DESC_P_SMALL_1 = 479;
+    public static final int HELP_CONTENT_P4_DESC_P_SMALL_2 = 480;
+    public static final int HELP_CONTENT_P4_LABEL_POINT = 481;
+    public static final int HELP_CONTENT_P4_DESC_POINT_1 = 482;
+    public static final int HELP_CONTENT_P4_DESC_POINT_2 = 483;
+    public static final int HELP_CONTENT_P4_LABEL_P_BIG = 484;
+    public static final int HELP_CONTENT_P4_DESC_P_BIG = 485;
+    public static final int HELP_CONTENT_P4_LABEL_F = 486;
+    public static final int HELP_CONTENT_P4_DESC_F = 487;
 
     // Help page 5
-    public static final int HELP_CONTENT_P5_LABEL_B = 487;
-    public static final int HELP_CONTENT_P5_DESC_B = 488;
-    public static final int HELP_CONTENT_P5_LABEL_1UP = 489;
-    public static final int HELP_CONTENT_P5_DESC_1UP = 490;
-    public static final int HELP_CONTENT_P5_LABEL_STAR = 491;
-    public static final int HELP_CONTENT_P5_DESC_STAR_1 = 492;
-    public static final int HELP_CONTENT_P5_DESC_STAR_2 = 493;
+    public static final int HELP_CONTENT_P5_LABEL_B = 489;
+    public static final int HELP_CONTENT_P5_DESC_B = 490;
+    public static final int HELP_CONTENT_P5_LABEL_1UP = 491;
+    public static final int HELP_CONTENT_P5_DESC_1UP = 492;
+    public static final int HELP_CONTENT_P5_LABEL_STAR = 493;
+    public static final int HELP_CONTENT_P5_DESC_STAR_1 = 494;
+    public static final int HELP_CONTENT_P5_DESC_STAR_2 = 495;
 
     // Help page 6
-    public static final int HELP_CONTENT_P6_TITLE_SPELL_CARD = 495;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_CARD_1 = 496;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_CARD_2 = 497;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_CARD_3 = 498;
-    public static final int HELP_CONTENT_P6_NOTE_SPELL_CARD = 499;
-    public static final int HELP_CONTENT_P6_TITLE_SPELL_BONUS = 500;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_1 = 501;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_2 = 502;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_3 = 503;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_4 = 504;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_5 = 505;
+    public static final int HELP_CONTENT_P6_TITLE_SPELL_CARD = 497;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_CARD_1 = 498;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_CARD_2 = 499;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_CARD_3 = 500;
+    public static final int HELP_CONTENT_P6_NOTE_SPELL_CARD = 501;
+    public static final int HELP_CONTENT_P6_TITLE_SPELL_BONUS = 502;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_1 = 503;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_2 = 504;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_3 = 505;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_4 = 506;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_5 = 507;
 
     // Help page 7
-    public static final int HELP_CONTENT_P7_TITLE_EXTEND = 507;
-    public static final int HELP_CONTENT_P7_DESC_EXTEND_1 = 508;
-    public static final int HELP_CONTENT_P7_DESC_EXTEND_2 = 509;
-    public static final int HELP_CONTENT_P7_DESC_EXTEND_3 = 510;
-    public static final int HELP_CONTENT_P7_TITLE_DEATH_BOMB = 511;
-    public static final int HELP_CONTENT_P7_DESC_DEATH_BOMB_1 = 512;
-    public static final int HELP_CONTENT_P7_DESC_DEATH_BOMB_2 = 513;
-    public static final int HELP_CONTENT_P7_DESC_DEATH_BOMB_3 = 514;
-    public static final int HELP_CONTENT_P7_TITLE_AUTO_COLLECT = 515;
-    public static final int HELP_CONTENT_P7_DESC_AUTO_COLLECT_1 = 516;
-    public static final int HELP_CONTENT_P7_DESC_AUTO_COLLECT_2 = 517;
-    public static final int HELP_CONTENT_P7_DESC_AUTO_COLLECT_3 = 518;
+    public static final int HELP_CONTENT_P7_TITLE_EXTEND = 509;
+    public static final int HELP_CONTENT_P7_DESC_EXTEND_1 = 510;
+    public static final int HELP_CONTENT_P7_DESC_EXTEND_2 = 511;
+    public static final int HELP_CONTENT_P7_DESC_EXTEND_3 = 512;
+    public static final int HELP_CONTENT_P7_TITLE_DEATH_BOMB = 513;
+    public static final int HELP_CONTENT_P7_DESC_DEATH_BOMB_1 = 514;
+    public static final int HELP_CONTENT_P7_DESC_DEATH_BOMB_2 = 515;
+    public static final int HELP_CONTENT_P7_DESC_DEATH_BOMB_3 = 516;
+    public static final int HELP_CONTENT_P7_TITLE_AUTO_COLLECT = 517;
+    public static final int HELP_CONTENT_P7_DESC_AUTO_COLLECT_1 = 518;
+    public static final int HELP_CONTENT_P7_DESC_AUTO_COLLECT_2 = 519;
+    public static final int HELP_CONTENT_P7_DESC_AUTO_COLLECT_3 = 520;
 
     // Help page 8
-    public static final int HELP_CONTENT_P8_TITLE_SAVE_METHOD = 520;
-    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_1 = 521;
-    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_2 = 522;
-    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_3 = 523;
-    public static final int HELP_CONTENT_P8_NOTE_SAVE_METHOD = 524;
-    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_4 = 525;
-    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_5 = 526;
-    public static final int HELP_CONTENT_P8_TITLE_SPECIAL_CONTROLS = 527;
-    public static final int HELP_CONTENT_P8_DESC_SPECIAL_CONTROLS_1 = 528;
-    public static final int HELP_CONTENT_P8_DESC_SPECIAL_CONTROLS_2 = 529;
+    public static final int HELP_CONTENT_P8_TITLE_SAVE_METHOD = 522;
+    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_1 = 523;
+    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_2 = 524;
+    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_3 = 525;
+    public static final int HELP_CONTENT_P8_NOTE_SAVE_METHOD = 526;
+    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_4 = 527;
+    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_5 = 528;
+    public static final int HELP_CONTENT_P8_TITLE_SPECIAL_CONTROLS = 529;
+    public static final int HELP_CONTENT_P8_DESC_SPECIAL_CONTROLS_1 = 530;
+    public static final int HELP_CONTENT_P8_DESC_SPECIAL_CONTROLS_2 = 531;
 
     // Help page 9
-    public static final int HELP_CONTENT_P9_TITLE_HOMEPAGE_DOWNLOAD = 531;
-    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_DOWNLOAD_1 = 532;
-    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_DOWNLOAD_2 = 533;
-    public static final int HELP_CONTENT_P9_NOTE_HOMEPAGE_DOWNLOAD = 534;
-    public static final int HELP_CONTENT_P9_TITLE_HOMEPAGE_UPLOAD = 535;
-    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_UPLOAD_1 = 536;
-    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_UPLOAD_2 = 537;
-    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_UPLOAD_3 = 538;
-    public static final int HELP_CONTENT_P9_NOTE_HOMEPAGE_UPLOAD_1 = 539;
-    public static final int HELP_CONTENT_P9_NOTE_HOMEPAGE_UPLOAD_2 = 540;
+    public static final int HELP_CONTENT_P9_TITLE_HOMEPAGE_DOWNLOAD = 533;
+    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_DOWNLOAD_1 = 534;
+    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_DOWNLOAD_2 = 535;
+    public static final int HELP_CONTENT_P9_NOTE_HOMEPAGE_DOWNLOAD = 536;
+    public static final int HELP_CONTENT_P9_TITLE_HOMEPAGE_UPLOAD = 537;
+    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_UPLOAD_1 = 538;
+    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_UPLOAD_2 = 539;
+    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_UPLOAD_3 = 540;
+    public static final int HELP_CONTENT_P9_NOTE_HOMEPAGE_UPLOAD_1 = 541;
+    public static final int HELP_CONTENT_P9_NOTE_HOMEPAGE_UPLOAD_2 = 542;
 
     // Help page 10
-    public static final int HELP_CONTENT_P10_TITLE_SD_CARD_SAVE = 542;
-    public static final int HELP_CONTENT_P10_DESC_SD_CARD_SAVE_1 = 543;
-    public static final int HELP_CONTENT_P10_DESC_SD_CARD_SAVE_2 = 544;
-    public static final int HELP_CONTENT_P10_DESC_SD_CARD_SAVE_3 = 545;
-    public static final int HELP_CONTENT_P10_NOTE_SD_CARD_SAVE_1 = 546;
-    public static final int HELP_CONTENT_P10_NOTE_SD_CARD_SAVE_2 = 547;
+    public static final int HELP_CONTENT_P10_TITLE_SD_CARD_SAVE = 544;
+    public static final int HELP_CONTENT_P10_DESC_SD_CARD_SAVE_1 = 545;
+    public static final int HELP_CONTENT_P10_DESC_SD_CARD_SAVE_2 = 546;
+    public static final int HELP_CONTENT_P10_DESC_SD_CARD_SAVE_3 = 547;
+    public static final int HELP_CONTENT_P10_NOTE_SD_CARD_SAVE_1 = 548;
+    public static final int HELP_CONTENT_P10_NOTE_SD_CARD_SAVE_2 = 549;
 
     // Help page 11
-    public static final int HELP_CONTENT_P11_TITLE_RANKING_JOIN = 549;
-    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_1 = 550;
-    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_2 = 551;
-    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_3 = 552;
-    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_4 = 553;
-    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_5 = 554;
-    public static final int HELP_CONTENT_P11_TITLE_REGISTRATION_NOTES = 555;
-    public static final int HELP_CONTENT_P11_DESC_REGISTRATION_NOTES_1 = 556;
-    public static final int HELP_CONTENT_P11_DESC_REGISTRATION_NOTES_2 = 557;
-    public static final int HELP_CONTENT_P11_DESC_REGISTRATION_NOTES_3 = 558;
+    public static final int HELP_CONTENT_P11_TITLE_RANKING_JOIN = 551;
+    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_1 = 552;
+    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_2 = 553;
+    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_3 = 554;
+    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_4 = 555;
+    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_5 = 556;
+    public static final int HELP_CONTENT_P11_TITLE_REGISTRATION_NOTES = 557;
+    public static final int HELP_CONTENT_P11_DESC_REGISTRATION_NOTES_1 = 558;
+    public static final int HELP_CONTENT_P11_DESC_REGISTRATION_NOTES_2 = 559;
+    public static final int HELP_CONTENT_P11_DESC_REGISTRATION_NOTES_3 = 560;
 
     // Help page 12
-    public static final int HELP_CONTENT_P12_TITLE_GHOST_MODE = 560;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_1 = 561;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_2 = 562;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_3 = 563;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_4 = 564;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_5 = 565;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_6 = 566;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_7 = 567;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_8 = 568;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_9 = 569;
+    public static final int HELP_CONTENT_P12_TITLE_GHOST_MODE = 562;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_1 = 563;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_2 = 564;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_3 = 565;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_4 = 566;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_5 = 567;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_6 = 568;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_7 = 569;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_8 = 570;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_9 = 571;
 
     // Credits: staff
-    public static final int CREDITS_CATEGORY_PROGRAM = 571;
-    public static final int CREDITS_CATEGORY_GRAPHIC = 572;
-    public static final int CREDITS_CATEGORY_SOUND = 573;
-    public static final int CREDITS_CATEGORY_SUPPORT = 574;
-    public static final int CREDITS_PERSON_SHIINA = 575;
-    public static final int CREDITS_PERSON_FU = 576;
-    public static final int CREDITS_PERSON_RADRAM = 577;
-    public static final int CREDITS_PERSON_SCIROCCO = 578;
-    public static final int CREDITS_PERSON_MEGRA = 579;
-    public static final int CREDITS_PERSON_KAJI = 580;
-    public static final int CREDITS_PERSON_HONAMI = 581;
-    public static final int CREDITS_PERSON_KINMACHI = 582;
+    public static final int CREDITS_CATEGORY_PROGRAM = 573;
+    public static final int CREDITS_CATEGORY_GRAPHIC = 574;
+    public static final int CREDITS_CATEGORY_SOUND = 575;
+    public static final int CREDITS_CATEGORY_SUPPORT = 576;
+    public static final int CREDITS_PERSON_SHIINA = 577;
+    public static final int CREDITS_PERSON_FU = 578;
+    public static final int CREDITS_PERSON_RADRAM = 579;
+    public static final int CREDITS_PERSON_SCIROCCO = 580;
+    public static final int CREDITS_PERSON_MEGRA = 581;
+    public static final int CREDITS_PERSON_KAJI = 582;
+    public static final int CREDITS_PERSON_HONAMI = 583;
+    public static final int CREDITS_PERSON_KINMACHI = 584;
 
     // Credits: organizations
-    public static final int CREDITS_TITLE_TOUHOU_PROJECT = 584;
-    public static final int CREDITS_TITLE_HYOUIBANA_DEV = 585;
-    public static final int CREDITS_TOUHOU_TEAM_SHANGHAI = 586;
-    public static final int CREDITS_TOUHOU_URL = 587;
-    public static final int CREDITS_HYOUIBANA_L_GARDEN = 588;
-    public static final int CREDITS_HYOUIBANA_L_GARDEN_URL = 589;
-    public static final int CREDITS_HYOUIBANA_TOPPATU = 590;
-    public static final int CREDITS_HYOUIBANA_TOPPATU_URL = 591;
-    public static final int CREDITS_NOTE_DERIVATIVE_1 = 592;
-    public static final int CREDITS_NOTE_DERIVATIVE_2 = 593;
+    public static final int CREDITS_TITLE_TOUHOU_PROJECT = 586;
+    public static final int CREDITS_TITLE_HYOUIBANA_DEV = 587;
+    public static final int CREDITS_TOUHOU_TEAM_SHANGHAI = 588;
+    public static final int CREDITS_TOUHOU_URL = 589;
+    public static final int CREDITS_HYOUIBANA_L_GARDEN = 590;
+    public static final int CREDITS_HYOUIBANA_L_GARDEN_URL = 591;
+    public static final int CREDITS_HYOUIBANA_TOPPATU = 592;
+    public static final int CREDITS_HYOUIBANA_TOPPATU_URL = 593;
+    public static final int CREDITS_NOTE_DERIVATIVE_1 = 594;
+    public static final int CREDITS_NOTE_DERIVATIVE_2 = 595;
 
     // Quit
-    public static final int QUIT_TITLE = 595;
-    public static final int QUIT_OPTION_CONTINUE = 596;
-    public static final int QUIT_OPTION_QUIT = 597;
+    public static final int QUIT_TITLE = 597;
+    public static final int QUIT_OPTION_CONTINUE = 598;
+    public static final int QUIT_OPTION_QUIT = 599;
 
     // Device softkeys
-    public static final int SOFTKEY_HELP = 599;
-    public static final int SOFTKEY_STORY = 600;
-    public static final int SOFTKEY_BACK = 601;
-    public static final int SOFTKEY_TYPE = 602;
-    public static final int SOFTKEY_RECEIVE = 603;
-    public static final int SOFTKEY_PAUSE = 604;
-    public static final int SOFTKEY_SLOW = 605;
-    public static final int SOFTKEY_FAST = 606;
-    public static final int SOFTKEY_RESUME = 607;
-    public static final int SOFTKEY_BGM = 608;
-    public static final int SOFTKEY_SKIP = 609;
-    public static final int SOFTKEY_OK = 610;
-    public static final int SOFTKEY_NEXT = 611;
-    public static final int SOFTKEY_CANCEL = 612;
+    public static final int SOFTKEY_HELP = 601;
+    public static final int SOFTKEY_STORY = 602;
+    public static final int SOFTKEY_BACK = 603;
+    public static final int SOFTKEY_TYPE = 604;
+    public static final int SOFTKEY_RECEIVE = 605;
+    public static final int SOFTKEY_PAUSE = 606;
+    public static final int SOFTKEY_SLOW = 607;
+    public static final int SOFTKEY_FAST = 608;
+    public static final int SOFTKEY_RESUME = 609;
+    public static final int SOFTKEY_BGM = 610;
+    public static final int SOFTKEY_SKIP = 611;
+    public static final int SOFTKEY_OK = 612;
+    public static final int SOFTKEY_NEXT = 613;
+    public static final int SOFTKEY_CANCEL = 614;
 
     private TextId() {
     }

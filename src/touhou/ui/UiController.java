@@ -44,6 +44,8 @@ public final class UiController {
 
         void onSeMaskChanged(int mask);
 
+        void onHeavyBgmChanged(boolean enabled);
+
         void onMusicRoomVolumeChanged(int bgmVol);
     }
 
@@ -105,6 +107,12 @@ public final class UiController {
             public void onSeMaskChanged(int seMask) {
                 if (UiController.this.listener != null) {
                     UiController.this.listener.onSeMaskChanged(seMask);
+                }
+            }
+
+            public void onHeavyBgmChanged(boolean enabled) {
+                if (UiController.this.listener != null) {
+                    UiController.this.listener.onHeavyBgmChanged(enabled);
                 }
             }
         });

@@ -24,12 +24,13 @@ public final class GameOptions {
     private static final int ALPHA_CLOSE_UP = 0x03;
     private static final int ALPHA_PLAYER_SHOT = 0x04;
 
-    // Other rendering switches packed into opt[10].
+    // Compatibility switches packed into opt[10].
     private static final int IDX_RENDER_MISC_FLAGS = 10;
     private static final int RENDER_HEAVY_BG_OFF = 0x01;
     private static final int RENDER_BLIND_MASK_NO_FADE = 0x02;
     private static final int RENDER_HIT_SPARK_OFF = 0x04;
-    private static final int RENDER_MISC_MASK = RENDER_HEAVY_BG_OFF | RENDER_BLIND_MASK_NO_FADE | RENDER_HIT_SPARK_OFF;
+    private static final int HEAVY_BGM_OFF = 0x08;
+    private static final int RENDER_MISC_MASK = RENDER_HEAVY_BG_OFF | RENDER_BLIND_MASK_NO_FADE | RENDER_HIT_SPARK_OFF | HEAVY_BGM_OFF;
 
     // Debug overlay switches packed into opt[3].
     private static final int DEBUG_MASK = 0x38;
@@ -63,6 +64,10 @@ public final class GameOptions {
         return (opt[IDX_RENDER_MISC_FLAGS] & RENDER_HEAVY_BG_OFF) == 0;
     }
 
+    public static boolean isHeavyBgmEnabled(int[] opt) {
+        return (opt[IDX_RENDER_MISC_FLAGS] & HEAVY_BGM_OFF) == 0;
+    }
+
     public static boolean isBlindMaskFadeEnabled(int[] opt) {
         return (opt[IDX_RENDER_MISC_FLAGS] & RENDER_BLIND_MASK_NO_FADE) == 0;
     }
@@ -94,6 +99,10 @@ public final class GameOptions {
 
     public static void toggleHeavyBg(int[] opt) {
         opt[IDX_RENDER_MISC_FLAGS] ^= RENDER_HEAVY_BG_OFF;
+    }
+
+    public static void toggleHeavyBgm(int[] opt) {
+        opt[IDX_RENDER_MISC_FLAGS] ^= HEAVY_BGM_OFF;
     }
 
     public static void toggleBlindMaskFade(int[] opt) {

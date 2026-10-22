@@ -14,20 +14,22 @@ public final class BgmPackBuilder {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args == null || args.length != 2) {
-            throw new IllegalArgumentException("Usage: BgmPackBuilder <res/bgm> <output bgm.dat>");
+        if (args.length != 2) {
+            throw new IllegalArgumentException("Usage: BgmPackBuilder <res directory> <output snd directory>");
         }
         File sourceDir = new File(args[0]);
-        File outputFile = new File(args[1]);
-        build(sourceDir, outputFile);
+        File outputDir = new File(args[1]);
+        build(new File(sourceDir, "bgm"), new File(outputDir, "bgm.dat"), false);
+        build(new File(sourceDir, "bgm-lite"), new File(outputDir, "bgm-lite.dat"), true);
     }
 
-    static void build(File sourceDir, File outputFile) throws IOException {
-        validateSourceEntries(sourceDir);
+    static void build(File sourceDir, File outputFile, boolean lite) throws IOException {
+        validateSourceEntries(sourceDir, lite);
 
         int entryCount = BgmCatalog.TRACK_COUNT * BgmCatalog.PART_COUNT;
         byte[][] entries = new byte[entryCount][];
         for (int track = 0; track < BgmCatalog.TRACK_COUNT; track++) {
+            if (lite && !BgmCatalog.isBattleTrack(track)) continue;
             File split = new File(sourceDir, String.valueOf(track));
             File single = new File(sourceDir, track + ".mid");
             int base = track * BgmCatalog.PART_COUNT;
@@ -85,7 +87,7 @@ public final class BgmPackBuilder {
                 + " tracks=" + BgmCatalog.TRACK_COUNT + " bytes=" + pack.length);
     }
 
-    private static void validateSourceEntries(File sourceDir) throws IOException {
+    private static void validateSourceEntries(File sourceDir, boolean lite) throws IOException {
         if (!sourceDir.isDirectory()) {
             throw new IOException("BGM source directory not found: " + sourceDir.getPath());
         }
@@ -105,13 +107,13 @@ public final class BgmPackBuilder {
             } else {
                 throw new IOException("Unexpected BGM source entry: " + child.getPath());
             }
-            if (!BgmCatalog.isTrack(track) || found[track]) {
+            if (!BgmCatalog.isTrack(track) || (lite && !BgmCatalog.isBattleTrack(track)) || found[track]) {
                 throw new IOException("Invalid or duplicate BGM track: " + name);
             }
             found[track] = true;
         }
         for (int track = 0; track < found.length; track++) {
-            if (!found[track]) {
+            if (!found[track] && (!lite || BgmCatalog.isBattleTrack(track))) {
                 throw new IOException("Missing BGM track " + track);
             }
         }

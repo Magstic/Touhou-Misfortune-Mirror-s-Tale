@@ -390,12 +390,14 @@ Press any key to close
 
 - Compatible -
 HeavyBG
+HeavyBGM
 Mystia Fade
 Hit Spark
 Alpha: Close-UP
 Alpha: Player Bullets
 Back
 Fancy background
+Full BGM arrangement
 Stage2 dark mask fade
 Red hit spark effect
 Alpha blend player/BOSS close-ups

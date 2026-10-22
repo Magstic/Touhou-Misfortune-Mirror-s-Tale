@@ -16,4 +16,8 @@ public final class BgmCatalog {
     public static boolean isTrack(int trackId) {
         return trackId >= 0 && trackId < TRACK_COUNT;
     }
+
+    public static boolean isBattleTrack(int trackId) {
+        return (trackId >= 1 && trackId <= 14) || trackId == 17;
+    }
 }

@@ -16,11 +16,12 @@ public final class AudioSystem implements PlayerListener {
 
     private static final int TRACK_CACHE_SIZE = BgmCatalog.TRACK_COUNT;
 
-    // MIDI only: load BGM from one packed resource with indexed segments.
+    // MIDI only: load the selected arrangement from indexed segments.
     private static final String PACK_PREFIX = "pack:";
 
     // Offsets and lengths are read lazily from the BGMP file header.
-    private static final BgmPack PACK_MIDI = new BgmPack(ResourcePaths.BGM_PACK);
+    private BgmPack midiPack = new BgmPack(ResourcePaths.BGM_PACK);
+    private boolean heavyBgmEnabled = true;
 
     // Some real devices have expensive JSR-135 Player.getState().
     // When native looping is unavailable, we only need to poll state periodically
@@ -86,6 +87,27 @@ public final class AudioSystem implements PlayerListener {
     private boolean midiPackAvailable;
 
     public AudioSystem() {
+    }
+
+    public void setHeavyBgmEnabled(boolean enabled) {
+        if (heavyBgmEnabled == enabled) return;
+        heavyBgmEnabled = enabled;
+        if (BgmCatalog.isBattleTrack(currentTrack)) stopBgm();
+    }
+
+    private void selectPack(int trackId) {
+        String path = !heavyBgmEnabled && BgmCatalog.isBattleTrack(trackId)
+                ? ResourcePaths.BGM_LITE_PACK : ResourcePaths.BGM_PACK;
+        if (midiPack.resourcePath.equals(path)) return;
+        midiPack = new BgmPack(path);
+        packAvailabilityChecked = false;
+        midiPackAvailable = false;
+        for (int i = 0; i < TRACK_CACHE_SIZE; i++) {
+            trackResolved[i] = false;
+            cachedIntroPath[i] = null;
+            cachedLoopPath[i] = null;
+            cachedSinglePath[i] = null;
+        }
     }
 
     public void toggleBgmEnabled() {
@@ -289,6 +311,7 @@ public final class AudioSystem implements PlayerListener {
     private void switchToTrack(int trackId, boolean loop) {
         closePendingLoopPlayer();
         closePlayer();
+        selectPack(trackId);
 
         currentTrack = trackId;
         currentLoop = loop;
@@ -422,7 +445,7 @@ public final class AudioSystem implements PlayerListener {
             return;
         }
         packAvailabilityChecked = true;
-        midiPackAvailable = ResourceLoader.exists(ResourcePaths.BGM_PACK);
+        midiPackAvailable = ResourceLoader.exists(midiPack.resourcePath);
     }
 
     private static boolean isPackPath(String path) {
@@ -437,7 +460,7 @@ public final class AudioSystem implements PlayerListener {
         if (!midiPackAvailable) {
             return null;
         }
-        if (!PACK_MIDI.hasEntry(entryIndex)) {
+        if (!midiPack.hasEntry(entryIndex)) {
             return null;
         }
         return makePackPath(entryIndex);
@@ -455,7 +478,7 @@ public final class AudioSystem implements PlayerListener {
 
         InputStream is = null;
         try {
-            is = PACK_MIDI.openEntry(entry);
+            is = midiPack.openEntry(entry);
             if (is == null) {
                 return;
             }
@@ -765,7 +788,7 @@ public final class AudioSystem implements PlayerListener {
 
         InputStream is = null;
         try {
-            is = PACK_MIDI.openEntry(entry);
+            is = midiPack.openEntry(entry);
             if (is == null) {
                 return;
             }

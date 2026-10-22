@@ -13,6 +13,8 @@ public final class OptionScreen {
         void onVolumesChanged(int bgmVol, int seVol);
 
         void onSeMaskChanged(int seMask);
+
+        void onHeavyBgmChanged(boolean enabled);
     }
 
     private void renderRendering(Graphics g, Font font) {
@@ -98,10 +100,11 @@ public final class OptionScreen {
 
     private static final String[] MENU_CHEAT = new String[] { "Boss Shield", "Item Collection Limit", "Back" };
 
-    private static final String[] MENU_RENDERING = new String[] { "HeavyBG", "Mystia Fade", "Hit Spark", "Alpha: Close-UP", "Alpha: Player Bullets", "Back" };
+    private static final String[] MENU_RENDERING = new String[] { "HeavyBG", "HeavyBGM", "Mystia Fade", "Hit Spark", "Alpha: Close-UP", "Alpha: Player Bullets", "Back" };
 
     private static final int[] RENDER_MENU_TEXT_IDS = new int[] {
             TextId.OPTION_RENDER_MENU_1,
+            TextId.OPTION_HEAVY_BGM_MENU,
             TextId.OPTION_RENDER_MENU_2,
             TextId.OPTION_RENDER_HIT_SPARK_MENU,
             TextId.OPTION_RENDER_MENU_3,
@@ -111,6 +114,7 @@ public final class OptionScreen {
 
     private static final int[] RENDER_DESC_TEXT_IDS = new int[] {
             TextId.OPTION_RENDER_DESC_1,
+            TextId.OPTION_HEAVY_BGM_DESC,
             TextId.OPTION_RENDER_DESC_2,
             TextId.OPTION_RENDER_HIT_SPARK_DESC,
             TextId.OPTION_RENDER_DESC_3,
@@ -157,6 +161,7 @@ public final class OptionScreen {
         listener.onVolumesChanged(opt[1], opt[2]);
         int mask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
         listener.onSeMaskChanged(mask);
+        listener.onHeavyBgmChanged(GameOptions.isHeavyBgmEnabled(opt));
     }
 
     public Result update(int pressed) {
@@ -287,6 +292,7 @@ public final class OptionScreen {
             if (cursorUD == 6) {
                 opt = GameOptions.defaults();
                 GameOptions.save(opt);
+                notifyAudioOptionsChanged();
                 return null;
             }
             if (cursorUD == 7) {
@@ -318,15 +324,20 @@ public final class OptionScreen {
             if (cursorUD == 0) {
                 GameOptions.toggleHeavyBg(opt);
             } else if (cursorUD == 1) {
-                GameOptions.toggleBlindMaskFade(opt);
+                GameOptions.toggleHeavyBgm(opt);
             } else if (cursorUD == 2) {
-                GameOptions.toggleHitSpark(opt);
+                GameOptions.toggleBlindMaskFade(opt);
             } else if (cursorUD == 3) {
-                GameOptions.toggleCloseUpAlpha(opt);
+                GameOptions.toggleHitSpark(opt);
             } else if (cursorUD == 4) {
+                GameOptions.toggleCloseUpAlpha(opt);
+            } else if (cursorUD == 5) {
                 GameOptions.togglePlayerShotAlpha(opt);
             }
             GameOptions.save(opt);
+            if (cursorUD == 1 && listener != null) {
+                listener.onHeavyBgmChanged(GameOptions.isHeavyBgmEnabled(opt));
+            }
             return null;
         }
 
@@ -837,15 +848,18 @@ public final class OptionScreen {
             return GameOptions.isHeavyBgEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
         if (idx == 1) {
-            return GameOptions.isBlindMaskFadeEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
+            return GameOptions.isHeavyBgmEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
         if (idx == 2) {
-            return GameOptions.isHitSparkEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
+            return GameOptions.isBlindMaskFadeEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
         if (idx == 3) {
-            return GameOptions.isCloseUpAlphaEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
+            return GameOptions.isHitSparkEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
         if (idx == 4) {
+            return GameOptions.isCloseUpAlphaEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
+        }
+        if (idx == 5) {
             return GameOptions.isPlayerShotAlphaEnabled(opt) ? UiText.get(TextId.COMMON_ON) : UiText.get(TextId.COMMON_OFF);
         }
         if (idx == MENU_RENDERING.length - 1) {

@@ -8,7 +8,6 @@
     <property name="tools.classes.dir" value="${build.dir}/tools-classes"/>
     <property name="generated.res.dir" value="${build.dir}/generated-res"/>
     <property name="i18n.font.work.dir" value="${build.dir}/i18n-font"/>
-    <property name="bgm.src.dir"       value="${res.dir}/bgm"/>
     <property name="dist.dir"          value="dist"/>
 
     <!-- ===== MIDlet metadata ===== -->
@@ -115,8 +114,8 @@
     <target name="bgm-pack" depends="prepare-generated-resources">
         <java classname="BgmPackBuilder" fork="true" failonerror="true">
             <classpath><pathelement location="${tools.classes.dir}"/></classpath>
-            <arg value="${bgm.src.dir}"/>
-            <arg value="${generated.res.dir}/snd/bgm.dat"/>
+            <arg value="${res.dir}"/>
+            <arg value="${generated.res.dir}/snd"/>
         </java>
     </target>
 
@@ -138,6 +137,7 @@
             <zipfileset dir="${res.dir}" includes="**/*">
                 <exclude name="i18n/**"/>
                 <exclude name="bgm/**"/>
+                <exclude name="bgm-lite/**"/>
                 <exclude name="snd/**"/>
             </zipfileset>
             <zipfileset dir="${generated.res.dir}" includes="**/*"/>

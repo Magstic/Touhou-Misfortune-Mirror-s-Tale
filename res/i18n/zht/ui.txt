@@ -390,12 +390,14 @@ WARNING
 
 - 相容設定 -
 HeavyBG
+HeavyBGM
 Mystia Fade
 Hit Spark
 Alpha: Close-UP
 Alpha: Player Bullets
 Back
 華麗的背景
+完整編曲
 Stage2 暗幕 漸入/漸出
 渲染敵人被彈粒子
 BOSS／自機符卡特寫半透明
