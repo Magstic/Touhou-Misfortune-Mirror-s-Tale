@@ -112,6 +112,10 @@ public final class StartSetupScreen {
 
     private final int[] progressByDifficulty = new int[] { 6, 6, 6, 6 };
 
+    public int getGameMode() {
+        return gamemode;
+    }
+
     public void enter(int gamemode) {
         this.gamemode = gamemode;
 

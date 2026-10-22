@@ -400,7 +400,7 @@ public final class UiController {
                 sheets = new int[] { 0, 1, 2, 3, 5 };
                 break;
             case STATE_START_SETUP:
-                sheets = new int[] { 6, 7, 8, 28, 37 };
+                sheets = new int[] { 6, setup.getGameMode() == 1 ? 8 : 7, 28, 37 };
                 break;
             case STATE_HELP:
                 sheets = new int[] { 4, 10 };
