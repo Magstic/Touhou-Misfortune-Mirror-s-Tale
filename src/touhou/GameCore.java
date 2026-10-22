@@ -3819,10 +3819,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             return core.optCloseUpAlphaEnabled;
         }
 
-        public boolean blindMaskFadeEnabled() {
-            return core.optBlindMaskFadeEnabled;
-        }
-
         public boolean heavyBgEnabled() {
             return core.optHeavyBgEnabled;
         }

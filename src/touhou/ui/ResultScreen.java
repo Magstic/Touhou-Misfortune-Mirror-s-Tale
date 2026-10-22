@@ -191,15 +191,12 @@ public final class ResultScreen {
 
         for (int i = 0; i < 5; i++) {
             int main;
-            int sh;
             if (i == cursorUD && scene == SCENE_MENU) {
                 main = 0xFFFFFF;
-                sh = 7829367;
             } else {
                 main = 6710886;
-                sh = 3355443;
             }
-            UiDraw.drawString2(g, font, menuText(i), 30 - effect2, 50 + i * 20, 0, main, sh);
+            UiDraw.drawStringPlain(g, font, menuText(i), 30 - effect2, 50 + i * 20, 0, main);
         }
 
         if (scene == SCENE_MENU) {
@@ -230,7 +227,7 @@ public final class ResultScreen {
         } else if (cursorUD == 3) {
             renderOther(g, font);
         } else if (cursorUD == 2) {
-            UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_PREVIEW_NET_NOT_IMPLEMENTED), 120, 120, 1, 0xFFFFFF, 0x777777);
+            UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_PREVIEW_NET_NOT_IMPLEMENTED), 120, 120, 1, 0xFFFFFF);
         }
     }
 
@@ -239,7 +236,7 @@ public final class ResultScreen {
         int pageCount = (spellTotal - 1) / PAGE_SIZE + 1;
 
         UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_SPELLCARD_TITLE_PREFIX) + charaText(cursor2) + UiText.get(TextId.RESULT_SPELLCARD_TITLE_SUFFIX), 120 + effect1, 22, 1, 16711680);
-        UiDraw.drawString2(g, font, String.valueOf(cursorLR + 1) + "/" + pageCount, 220 + effect1, 40, 2, 16720418, 7807522);
+        UiDraw.drawStringPlain(g, font, String.valueOf(cursorLR + 1) + "/" + pageCount, 220 + effect1, 40, 2, 16720418);
 
         int[] bonus = new int[GameProgress.SPELL_COUNT];
         int[] seen = new int[GameProgress.SPELL_COUNT];
@@ -252,7 +249,7 @@ public final class ResultScreen {
             }
         }
 
-        UiDraw.drawStringOutline(g, font, UiText.get(TextId.RESULT_SPELLCARD_CAPTURED_PREFIX) + captured + "/" + spellTotal, 20 + effect1, 40, 0, 2237183, 7829503);
+        UiDraw.drawStringOutline(g, font, UiText.get(TextId.RESULT_SPELLCARD_CAPTURED_PREFIX) + captured + "/" + spellTotal, 20 + effect1, 40, 0, 2237183, 0xFFFFFF);
 
         int start = cursorLR * PAGE_SIZE;
         for (int i = 0; i < PAGE_SIZE && start + i < spellTotal; i++) {
@@ -268,10 +265,10 @@ public final class ResultScreen {
                     name = UiDraw.ellipsize(font, name, maxW);
                 }
             }
-            UiDraw.drawString2(g, font, name, 20 + effect1, 60 + i * 18, 0, 0xFFFFFF, 7829367);
-            UiDraw.drawString2(g, font, String.valueOf(bonus[id]) + "/" + String.valueOf(seen[id]), 235 + effect1, 60 + i * 18, 2, 0xFFFFFF, 7829367);
+            UiDraw.drawStringPlain(g, font, name, 20 + effect1, 60 + i * 18, 0, 0xFFFFFF);
+            UiDraw.drawStringPlain(g, font, String.valueOf(bonus[id]) + "/" + String.valueOf(seen[id]), 235 + effect1, 60 + i * 18, 2, 0xFFFFFF);
             if (bonus[id] != 0) {
-                UiDraw.drawString2(g, font, UiText.get(TextId.SPELL_PRACTICE_STAR), 5 + effect1, 60 + i * 18, 0, 0xFFFFFF, 7829367);
+                UiDraw.drawStringPlain(g, font, UiText.get(TextId.SPELL_PRACTICE_STAR), 5 + effect1, 60 + i * 18, 0, 0xFFFFFF);
             }
             g.setColor(0x777777);
             g.drawLine(20 + effect1, 60 + i * 18 + 4, 235 + effect1, 60 + i * 18 + 4);
@@ -293,16 +290,16 @@ public final class ResultScreen {
         int baseY = 40;
 
         if (cursorLR == 0) {
-            drawScoreBlock(g, font, UiText.get(TextId.RESULT_SCORE_EASY), 30 - effect1, baseY + 0, scores, 0, 7829503, 10066329);
-            drawScoreBlock(g, font, UiText.get(TextId.RESULT_SCORE_NORMAL), 70 + effect1, baseY + 48, scores, 3, 7864183, 10066329);
-            drawScoreBlock(g, font, UiText.get(TextId.RESULT_SCORE_HARD), 110 - effect1, baseY + 96, scores, 6, 16742263, 10066329);
-            drawScoreBlock(g, font, UiText.get(TextId.RESULT_SCORE_LUNATIC), 150 + effect1, baseY + 144, scores, 9, 16777079, 10066329);
+            drawScoreBlock(g, font, UiText.get(TextId.RESULT_SCORE_EASY), 30 - effect1, baseY + 0, scores, 0, 7829503);
+            drawScoreBlock(g, font, UiText.get(TextId.RESULT_SCORE_NORMAL), 70 + effect1, baseY + 48, scores, 3, 7864183);
+            drawScoreBlock(g, font, UiText.get(TextId.RESULT_SCORE_HARD), 110 - effect1, baseY + 96, scores, 6, 16742263);
+            drawScoreBlock(g, font, UiText.get(TextId.RESULT_SCORE_LUNATIC), 150 + effect1, baseY + 144, scores, 9, 16777079);
         } else {
-            UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_SCORE_EXTRA), 75 - effect1, baseY + 84, 0, 10448895, 11513775);
-            UiDraw.drawString2(g, font, "1: " + String.valueOf(scores[12]), 75 - effect1, baseY + 96, 0, 11501567, 11513775);
-            UiDraw.drawString2(g, font, "2: " + String.valueOf(scores[13]), 75 - effect1, baseY + 108, 0, 11501567, 11513775);
-            UiDraw.drawString2(g, font, "3: " + String.valueOf(scores[14]), 75 - effect1, baseY + 120, 0, 11501567, 11513775);
-            UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_SCORE_UPLOAD_NOT_IMPLEMENTED), 120, 230, 1, 0xFFFFFF, 0x777777);
+            UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_SCORE_EXTRA), 75 - effect1, baseY + 84, 0, 10448895);
+            UiDraw.drawStringPlain(g, font, "1: " + String.valueOf(scores[12]), 75 - effect1, baseY + 96, 0, 11501567);
+            UiDraw.drawStringPlain(g, font, "2: " + String.valueOf(scores[13]), 75 - effect1, baseY + 108, 0, 11501567);
+            UiDraw.drawStringPlain(g, font, "3: " + String.valueOf(scores[14]), 75 - effect1, baseY + 120, 0, 11501567);
+            UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_SCORE_UPLOAD_NOT_IMPLEMENTED), 120, 230, 1, 0xFFFFFF);
         }
     }
 
@@ -326,34 +323,33 @@ public final class ResultScreen {
         }
 
         int main = 0xFFFFFF;
-        int sh = 8355711;
 
-        UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_BOOT_TIME), 115 + effect1, 48, 2, main, sh);
-        UiDraw.drawString2(g, font, formatTimeSeconds(ResultStats.INSTANCE.getBootTimeSecondsNow()), 205 + effect1, 48, 2, main, sh);
+        UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_OTHER_BOOT_TIME), 115 + effect1, 48, 2, main);
+        UiDraw.drawStringPlain(g, font, formatTimeSeconds(ResultStats.INSTANCE.getBootTimeSecondsNow()), 205 + effect1, 48, 2, main);
 
-        UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_PLAY_TIME), 115 + effect1, 64, 2, main, sh);
-        UiDraw.drawString2(g, font, formatTimeSeconds(ud[1]), 205 + effect1, 64, 2, main, sh);
+        UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_OTHER_PLAY_TIME), 115 + effect1, 64, 2, main);
+        UiDraw.drawStringPlain(g, font, formatTimeSeconds(ud[1]), 205 + effect1, 64, 2, main);
 
-        UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_TOTAL_CLEAR), 115 + effect1, 80, 2, main, sh);
-        UiDraw.drawString2(g, font, String.valueOf(ud[2]), 205 + effect1, 80, 2, main, sh);
+        UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_OTHER_TOTAL_CLEAR), 115 + effect1, 80, 2, main);
+        UiDraw.drawStringPlain(g, font, String.valueOf(ud[2]), 205 + effect1, 80, 2, main);
 
-        UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_CONTINUE_COUNT), 115 + effect1, 96, 2, main, sh);
-        UiDraw.drawString2(g, font, String.valueOf(ud[3]), 205 + effect1, 96, 2, main, sh);
+        UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_OTHER_CONTINUE_COUNT), 115 + effect1, 96, 2, main);
+        UiDraw.drawStringPlain(g, font, String.valueOf(ud[3]), 205 + effect1, 96, 2, main);
 
-        UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_RETRY_COUNT), 115 + effect1, 112, 2, main, sh);
-        UiDraw.drawString2(g, font, String.valueOf(ud[4]), 205 + effect1, 112, 2, main, sh);
+        UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_OTHER_RETRY_COUNT), 115 + effect1, 112, 2, main);
+        UiDraw.drawStringPlain(g, font, String.valueOf(ud[4]), 205 + effect1, 112, 2, main);
 
-        UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_PLAY_COUNT), 60 + effect1, 138, 1, main, sh);
-        UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_NORMAL), 120 + effect1, 138, 1, main, sh);
-        UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_PRACTICE), 180 + effect1, 138, 1, main, sh);
+        UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_OTHER_PLAY_COUNT), 60 + effect1, 138, 1, main);
+        UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_OTHER_NORMAL), 120 + effect1, 138, 1, main);
+        UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_OTHER_PRACTICE), 180 + effect1, 138, 1, main);
 
-        drawPlayCountRow(g, font, UiText.get(TextId.REPLAY_DIFFICULTY_EASY), 154, ud[9], ud[5], main, sh);
-        drawPlayCountRow(g, font, UiText.get(TextId.REPLAY_DIFFICULTY_NORMAL), 170, ud[10], ud[6], main, sh);
-        drawPlayCountRow(g, font, UiText.get(TextId.REPLAY_DIFFICULTY_HARD), 186, ud[11], ud[7], main, sh);
-        drawPlayCountRow(g, font, UiText.get(TextId.REPLAY_DIFFICULTY_LUNATIC), 202, ud[12], ud[8], main, sh);
-        UiDraw.drawString2(g, font, UiText.get(TextId.RESULT_OTHER_EXTRA), 85 + effect1, 218, 2, main, sh);
-        UiDraw.drawString2(g, font, String.valueOf(ud[13]), 145 + effect1, 218, 2, main, sh);
-        UiDraw.drawString2(g, font, "-", 205 + effect1, 218, 2, main, sh);
+        drawPlayCountRow(g, font, UiText.get(TextId.REPLAY_DIFFICULTY_EASY), 154, ud[9], ud[5], main);
+        drawPlayCountRow(g, font, UiText.get(TextId.REPLAY_DIFFICULTY_NORMAL), 170, ud[10], ud[6], main);
+        drawPlayCountRow(g, font, UiText.get(TextId.REPLAY_DIFFICULTY_HARD), 186, ud[11], ud[7], main);
+        drawPlayCountRow(g, font, UiText.get(TextId.REPLAY_DIFFICULTY_LUNATIC), 202, ud[12], ud[8], main);
+        UiDraw.drawStringPlain(g, font, UiText.get(TextId.RESULT_OTHER_EXTRA), 85 + effect1, 218, 2, main);
+        UiDraw.drawStringPlain(g, font, String.valueOf(ud[13]), 145 + effect1, 218, 2, main);
+        UiDraw.drawStringPlain(g, font, "-", 205 + effect1, 218, 2, main);
     }
 
     private static String getSpellDisplayName(int id, boolean seen) {
@@ -381,17 +377,17 @@ public final class ResultScreen {
         return hh + ":" + mm + ":" + ss;
     }
 
-    private void drawPlayCountRow(Graphics g, Font font, String label, int y, int normal, int practice, int main, int sh) {
-        UiDraw.drawString2(g, font, label, 85 + effect1, y, 2, main, sh);
-        UiDraw.drawString2(g, font, String.valueOf(normal), 145 + effect1, y, 2, main, sh);
-        UiDraw.drawString2(g, font, String.valueOf(practice), 205 + effect1, y, 2, main, sh);
+    private void drawPlayCountRow(Graphics g, Font font, String label, int y, int normal, int practice, int main) {
+        UiDraw.drawStringPlain(g, font, label, 85 + effect1, y, 2, main);
+        UiDraw.drawStringPlain(g, font, String.valueOf(normal), 145 + effect1, y, 2, main);
+        UiDraw.drawStringPlain(g, font, String.valueOf(practice), 205 + effect1, y, 2, main);
     }
 
-    private void drawScoreBlock(Graphics g, Font font, String label, int x, int y, int[] scores, int baseIndex, int cMain, int cShadow) {
-        UiDraw.drawString2(g, font, label, x, y + 0, 0, cMain, cShadow);
-        UiDraw.drawString2(g, font, "1: " + String.valueOf(scores[baseIndex + 0]), x, y + 12, 0, cMain, cShadow);
-        UiDraw.drawString2(g, font, "2: " + String.valueOf(scores[baseIndex + 1]), x, y + 24, 0, cMain, cShadow);
-        UiDraw.drawString2(g, font, "3: " + String.valueOf(scores[baseIndex + 2]), x, y + 36, 0, cMain, cShadow);
+    private void drawScoreBlock(Graphics g, Font font, String label, int x, int y, int[] scores, int baseIndex, int cMain) {
+        UiDraw.drawStringPlain(g, font, label, x, y + 0, 0, cMain);
+        UiDraw.drawStringPlain(g, font, "1: " + String.valueOf(scores[baseIndex + 0]), x, y + 12, 0, cMain);
+        UiDraw.drawStringPlain(g, font, "2: " + String.valueOf(scores[baseIndex + 1]), x, y + 24, 0, cMain);
+        UiDraw.drawStringPlain(g, font, "3: " + String.valueOf(scores[baseIndex + 2]), x, y + 36, 0, cMain);
     }
 
     
