@@ -106,6 +106,7 @@ public final class StartSetupScreen {
     private int effectB;
     private int effectC;
     private int effectD;
+    private SpriteRenderer.AlphaSprite difficultyFade;
 
     private final int[] work = new int[6];
 
@@ -146,6 +147,7 @@ public final class StartSetupScreen {
         effectB = 0;
         effectC = 255;
         effectD = 0;
+        difficultyFade = null;
 
         pracBoss = false;
         resetWork();
@@ -173,6 +175,7 @@ public final class StartSetupScreen {
                     return null;
                 }
                 if (UiInput.cancel(pressed)) {
+                    difficultyFade = null;
                     return new Result(Result.KIND_BACK_TO_TITLE, gamemode, sLevel, sChara, sType, startStage, pracBoss);
                 }
                 return null;
@@ -374,19 +377,15 @@ private void renderTopHints(Graphics g) {
             if (typeMax > 1) {
                 y += 10;
             }
-            int alpha = effectD;
-            if (alpha < 0) {
-                alpha = 0;
-            }
-            if (alpha > 255) {
-                alpha = 255;
-            }
-
             int id = 472 + sLevel;
             if (gamemode == 1) {
                 id = 476;
             }
-            sprites.drawAlpha(g, id, 120, y, UiDraw.spriteAlpha(alpha));
+            if (difficultyFade == null) difficultyFade = sprites.createAlphaSprite(id);
+            else difficultyFade.setSprite(id);
+            difficultyFade.draw(g, 120, y, UiDraw.spriteAlpha(effectD));
+        } else {
+            difficultyFade = null;
         }
     }
 
