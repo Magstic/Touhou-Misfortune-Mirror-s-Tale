@@ -129,31 +129,20 @@ public final class SpellPracticeEndScreen {
             return;
         }
 
-        if (scene == SCENE_RETRY_ASK) {
+        if (scene == SCENE_RETRY_ASK || scene == SCENE_REPLAY_ASK_SAVE) {
+            boolean retry = scene == SCENE_RETRY_ASK;
             // semi-transparent black background (DoJa style)
             UiDraw.fillRectAlpha(g, 0, 8, 194, 226, 0x000000, 128);
-            UiDraw.drawString2(g, FONT, UiText.get(TextId.SPELL_PRACTICE_RETRY_ASK), 97, 105, 1, 0xFF0000, 0x770000);
-            String s0 = UiText.get(TextId.SPELL_PRACTICE_RETRY_YES);
-            String s1 = UiText.get(TextId.SPELL_PRACTICE_RETRY_NO);
+            UiDraw.drawString2(g, FONT, UiText.get(retry ? TextId.SPELL_PRACTICE_RETRY_ASK : TextId.STAGECLEAR_ASK_SAVE_REPLAY),
+                    97, 105, 1, 0xFF0000, 0x770000);
+            String s0 = UiText.get(retry ? TextId.SPELL_PRACTICE_RETRY_YES : TextId.STAGECLEAR_SAVE_NO);
+            String s1 = UiText.get(retry ? TextId.SPELL_PRACTICE_RETRY_NO : TextId.STAGECLEAR_SAVE_YES);
             if (cursor == 0) {
                 UiDraw.drawString2(g, FONT, s0, 97, 130, 1, 0xFFFFFF, 0x777777);
                 UiDraw.drawString2(g, FONT, s1, 97, 150, 1, 0x777777, 0x333333);
             } else {
                 UiDraw.drawString2(g, FONT, s0, 97, 130, 1, 0x777777, 0x333333);
                 UiDraw.drawString2(g, FONT, s1, 97, 150, 1, 0xFFFFFF, 0x777777);
-            }
-            return;
-        }
-
-        if (scene == SCENE_REPLAY_ASK_SAVE) {
-            ReplayUi.renderBackground(g, sprites);
-            UiDraw.drawString2(g, FONT, UiText.get(TextId.STAGECLEAR_ASK_SAVE_REPLAY), 120, 105, 1, 0xFFFFFF, 0x777777);
-            if (cursor == 0) {
-                UiDraw.drawString2(g, FONT, UiText.get(TextId.STAGECLEAR_SAVE_NO), 120, 130, 1, 0xFFFFFF, 0x777777);
-                UiDraw.drawString2(g, FONT, UiText.get(TextId.STAGECLEAR_SAVE_YES), 120, 150, 1, 0x777777, 0x333333);
-            } else {
-                UiDraw.drawString2(g, FONT, UiText.get(TextId.STAGECLEAR_SAVE_NO), 120, 130, 1, 0x777777, 0x333333);
-                UiDraw.drawString2(g, FONT, UiText.get(TextId.STAGECLEAR_SAVE_YES), 120, 150, 1, 0xFFFFFF, 0x777777);
             }
             return;
         }
