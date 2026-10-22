@@ -51,6 +51,14 @@ public final class BattlePauseScreen {
         return updatePause(pressed);
     }
 
+    public int getLeftSoftkeyTextId() {
+        return mode == MODE_PAUSE ? TextId.SOFTKEY_RESUME : -1;
+    }
+
+    public int getRightSoftkeyTextId() {
+        return mode == MODE_PAUSE ? TextId.SOFTKEY_BGM : -1;
+    }
+
     private Result updatePause(int pressed) {
         if (UiInput.cancel(pressed)) {
             return new Result(Result.KIND_RESUME);

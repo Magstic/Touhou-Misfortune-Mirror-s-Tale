@@ -223,6 +223,15 @@ public final class StageClearResultPanel {
         return null;
     }
 
+    public int getLeftSoftkeyTextId() {
+        if (mode == MODE_FINAL) {
+            return scene == SCENE_FINAL_REPLAY_SLOT || scene == SCENE_FINAL_REPLAY_OK || scene == SCENE_FINAL_REPLAY_FAIL
+                    ? TextId.SOFTKEY_BACK : -1;
+        }
+        if (leaving || slide < SLIDE_MAX || scene == SCENE_REPLAY_SAVE) return -1;
+        return scene == SCENE_MAIN ? TextId.SOFTKEY_NEXT : TextId.SOFTKEY_BACK;
+    }
+
     private Result updateStageClear(int pressed, int nextStage) {
         if (scene == SCENE_MAIN) {
             if (!leaving && slide >= SLIDE_MAX) {

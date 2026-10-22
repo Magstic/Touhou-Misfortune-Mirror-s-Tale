@@ -124,6 +124,10 @@ public final class SpellPracticeEndScreen {
         return null;
     }
 
+    public int getLeftSoftkeyTextId() {
+        return scene == SCENE_RETRY_ASK || scene == SCENE_REPLAY_SAVE ? -1 : TextId.SOFTKEY_BACK;
+    }
+
     public void render(Graphics g, SpriteRenderer sprites) {
         if (g == null) {
             return;

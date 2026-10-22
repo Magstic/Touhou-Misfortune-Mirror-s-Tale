@@ -652,6 +652,22 @@ public final class TextId {
     public static final int QUIT_OPTION_CONTINUE = 596;
     public static final int QUIT_OPTION_QUIT = 597;
 
+    // Device softkeys
+    public static final int SOFTKEY_HELP = 599;
+    public static final int SOFTKEY_STORY = 600;
+    public static final int SOFTKEY_BACK = 601;
+    public static final int SOFTKEY_TYPE = 602;
+    public static final int SOFTKEY_RECEIVE = 603;
+    public static final int SOFTKEY_PAUSE = 604;
+    public static final int SOFTKEY_SLOW = 605;
+    public static final int SOFTKEY_FAST = 606;
+    public static final int SOFTKEY_RESUME = 607;
+    public static final int SOFTKEY_BGM = 608;
+    public static final int SOFTKEY_SKIP = 609;
+    public static final int SOFTKEY_OK = 610;
+    public static final int SOFTKEY_NEXT = 611;
+    public static final int SOFTKEY_CANCEL = 612;
+
     private TextId() {
     }
 }

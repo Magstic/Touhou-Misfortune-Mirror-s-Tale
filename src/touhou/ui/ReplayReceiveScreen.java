@@ -155,6 +155,11 @@ public final class ReplayReceiveScreen {
         return null;
     }
 
+    public int getLeftSoftkeyTextId() {
+        return scene == SCENE_RECEIVING || scene == SCENE_RECV_CONFIRM || scene == SCENE_OVERWRITE_CONFIRM
+                ? TextId.SOFTKEY_CANCEL : TextId.SOFTKEY_BACK;
+    }
+
     public void render(Graphics g, ImageBank imgs, SpriteRenderer sprites) {
         if (g == null) {
             return;

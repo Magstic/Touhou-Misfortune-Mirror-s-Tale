@@ -78,6 +78,10 @@ public final class StaffRollScreen {
         backIndex = -1;
     }
 
+    public int getLeftSoftkeyTextId() {
+        return count < STAFF_MAX ? TextId.SOFTKEY_SKIP : TextId.SOFTKEY_NEXT;
+    }
+
     public Result update(int keys, int pressed) {
         if (count < STAFF_MAX) {
             if ((keys & GameCore.FIRE_PRESSED) != 0) {

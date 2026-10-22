@@ -27,9 +27,11 @@ import touhou.stage.StageRuntime;
 import touhou.stage.StageAssets;
 import touhou.i18n.I18nBootstrap;
 import touhou.i18n.SpellText;
+import touhou.i18n.TextId;
 import touhou.ui.BattlePauseScreen;
 import touhou.ui.EndingScreen;
 import touhou.ui.InputSystem;
+import touhou.ui.SoftkeyBar;
 import touhou.ui.SpellPracticeEndScreen;
 import touhou.ui.StaffRollScreen;
 import touhou.ui.StageClearResultPanel;
@@ -218,6 +220,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     private boolean staffRollActive;
 
     private UiController ui;
+    private SoftkeyBar softkeys;
 
     // Current player and pause UI.
     private Player player;
@@ -593,6 +596,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             int[] opt = GameOptions.load();
 
             I18nBootstrap.initFromOptions(opt);
+            softkeys = new SoftkeyBar();
 
             audioSystem.setVolumes(opt[1], opt[2]);
             int seMask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
@@ -2079,6 +2083,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     // Top-level render dispatch.
     private void render() {
         Graphics g = getGraphics();
+        g.setClip(0, 0, getWidth(), getHeight());
         g.setColor(0x000000);
         g.fillRect(0, 0, getWidth(), getHeight());
 
@@ -2096,8 +2101,40 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         }
 
         g.translate(-ox, -oy);
+        g.setClip(0, 0, getWidth(), getHeight());
+        if (!hasFailure()) {
+            renderSoftkeys(g);
+        }
 
         flushGraphics();
+    }
+
+    private void renderSoftkeys(Graphics g) {
+        int left = -1;
+        int right = -1;
+        if (replayPlayback.isActive()) {
+            left = TextId.SOFTKEY_BACK;
+        } else if (endingFadeToWhite > 0) {
+            return;
+        } else if (endingActive) {
+            left = TextId.SOFTKEY_SKIP;
+        } else if (staffRollActive) {
+            left = staffRollScreen.getLeftSoftkeyTextId();
+        } else if (stageClearPanelActive) {
+            left = stageClearResultPanel.getLeftSoftkeyTextId();
+        } else if (!inGame) {
+            left = ui.getLeftSoftkeyTextId();
+            right = ui.getRightSoftkeyTextId();
+        } else if (spellPracticeEndActive) {
+            left = spellPracticeEndScreen.getLeftSoftkeyTextId();
+        } else if (battlePaused) {
+            left = pauseScreen.getLeftSoftkeyTextId();
+            right = pauseScreen.getRightSoftkeyTextId();
+        } else {
+            left = TextId.SOFTKEY_PAUSE;
+            right = player.isSlow() ? TextId.SOFTKEY_FAST : TextId.SOFTKEY_SLOW;
+        }
+        softkeys.render(g, getWidth(), getHeight(), left, right);
     }
 
     private void renderFailure(Graphics g) {

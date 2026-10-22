@@ -109,6 +109,10 @@ public final class ReplaySendScreen {
         return null;
     }
 
+    public int getLeftSoftkeyTextId() {
+        return scene == SCENE_SENDING ? TextId.SOFTKEY_CANCEL : TextId.SOFTKEY_BACK;
+    }
+
     public void render(Graphics g, ImageBank imgs, SpriteRenderer sprites) {
         if (g == null) {
             return;

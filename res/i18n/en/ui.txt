@@ -596,3 +596,18 @@ work of Touhou Project
 - Quit? -
 Continue
 Quit
+
+Help
+Story
+Back
+Type
+Recv
+Pause
+Slow
+Fast
+Resume
+BGM
+Skip
+OK
+Next
+Cancel

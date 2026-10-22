@@ -167,6 +167,11 @@ public final class ReplayScreen {
         return null;
     }
 
+    public int getRightSoftkeyTextId() {
+        return scene == SCENE_LIST && !leaving && contentFrame == TRANSITION_FRAMES
+                ? TextId.SOFTKEY_RECEIVE : -1;
+    }
+
     public void render(Graphics g, ImageBank imgs, SpriteRenderer sprites) {
         if (g == null) {
             return;

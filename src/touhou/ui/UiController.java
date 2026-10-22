@@ -7,6 +7,7 @@ import touhou.ImageBank;
 import touhou.ResultStats;
 import touhou.SoundEffectSystem;
 import touhou.UnlockFlags;
+import touhou.i18n.TextId;
 
 public final class UiController {
     public static final int STATE_TITLE = 0;
@@ -499,5 +500,35 @@ public final class UiController {
     
     public int getState() {
         return state;
+    }
+
+    public int getLeftSoftkeyTextId() {
+        switch (state) {
+            case STATE_LOADING:
+                return -1;
+            case STATE_STARTUP_LANGUAGE:
+                return TextId.SOFTKEY_OK;
+            case STATE_TITLE:
+                return TextId.SOFTKEY_HELP;
+            case STATE_REPLAY_RECEIVE:
+                return replayReceive.getLeftSoftkeyTextId();
+            case STATE_REPLAY_SEND:
+                return replaySend.getLeftSoftkeyTextId();
+            default:
+                return TextId.SOFTKEY_BACK;
+        }
+    }
+
+    public int getRightSoftkeyTextId() {
+        switch (state) {
+            case STATE_TITLE:
+                return TextId.SOFTKEY_STORY;
+            case STATE_SPELL_PRACTICE:
+                return TextId.SOFTKEY_TYPE;
+            case STATE_REPLAY:
+                return replay.getRightSoftkeyTextId();
+            default:
+                return -1;
+        }
     }
 }
