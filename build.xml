@@ -23,6 +23,8 @@
     <property name="ivy.cache.dir"    location="${deps.dir}/cache"/>
     <property name="ivy.version"      value="2.5.3"/>
     <property name="api.version"      value="2.0.4"/>
+    <!-- Eclipse 4.20 uses ECJ 3.26.0. -->
+    <property name="ecj.version"      value="3.26.0"/>
     <property name="proguard.version" value="6.0.3"/>
     <property name="ivy.jar"          value="${deps.dir}/ivy/ivy-${ivy.version}.jar"/>
     <property name="ivy.url"          value="https://repo.maven.apache.org/maven2/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"/>
@@ -30,18 +32,13 @@
     <property name="midp.jar"         value="${deps.lib}/midpapi20-${api.version}.jar"/>
     <property name="jsr082.jar"       value="${deps.lib}/microemu-jsr-82-${api.version}.jar"/>
     <property name="proguard.jar"     value="${deps.lib}/proguard-base-${proguard.version}.jar"/>
+    <property name="ecj.jar"          value="${deps.lib}/ecj-${ecj.version}.jar"/>
 
     <path id="j2me.bootclasspath">
         <pathelement location="${cldc.jar}"/>
         <pathelement location="${midp.jar}"/>
         <pathelement location="${jsr082.jar}"/>
     </path>
-
-    <target name="check-build-jdk">
-        <fail message="JDK 8 is required for Java 1.3 source / CLDC 1.1 bytecode. Set JAVA_HOME to a JDK 8 installation.">
-            <condition><not><equals arg1="${ant.java.version}" arg2="1.8"/></not></condition>
-        </fail>
-    </target>
 
     <target name="check-ivy">
         <available file="${ivy.jar}" property="ivy.present"/>
@@ -53,7 +50,7 @@
         <move file="${ivy.jar}.part" tofile="${ivy.jar}"/>
     </target>
 
-    <target name="dependencies" depends="check-build-jdk,bootstrap-ivy">
+    <target name="dependencies" depends="bootstrap-ivy">
         <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpath="${ivy.jar}"/>
         <ivy:settings file="ivysettings.xml"/>
         <ivy:resolve file="ivy.xml" conf="j2me,build"/>
@@ -75,13 +72,14 @@
     <target name="compile" depends="dependencies,init">
         <delete dir="${classes.dir}" failonerror="false"/>
         <mkdir dir="${classes.dir}"/>
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" encoding="UTF-8" includeantruntime="false" debug="true" source="1.3" target="1.1">
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" encoding="UTF-8" includeantruntime="false" debug="true"
+               source="1.3" target="1.1" compiler="org.eclipse.jdt.core.JDTCompilerAdapter">
+            <compilerclasspath><pathelement location="${ecj.jar}"/></compilerclasspath>
             <bootclasspath refid="j2me.bootclasspath"/>
-            <compilerarg value="-Xlint:-options"/>
         </javac>
     </target>
 
-    <target name="compile-tools-resources" depends="check-build-jdk,init">
+    <target name="compile-tools-resources" depends="init">
         <delete dir="${tools.classes.dir}" failonerror="false"/>
         <mkdir dir="${tools.classes.dir}"/>
         <javac srcdir="${src.dir}" destdir="${tools.classes.dir}" encoding="UTF-8" includeantruntime="false"
@@ -187,18 +185,4 @@ MIDlet-Jar-Size: ${jar.size}
     </target>
 
     <target name="dist" depends="write-jad"/>
-
-    <target name="run" depends="dist">
-        <fail message="Place freej2me.jar in the project's emulator/ directory before running ant run.">
-            <condition><not><available file="${basedir}/emulator/freej2me.jar" type="file"/></not></condition>
-        </fail>
-
-        <!-- Keep emulator runtime files outside the project root. -->
-        <exec executable="java" dir="${basedir}/emulator" spawn="true" failonerror="false">
-            <arg value="-Dfile.encoding=ISO_8859_1"/>
-            <arg value="-jar"/>
-            <arg file="${basedir}/emulator/freej2me.jar"/>
-            <arg file="${dist.dir}/${dist.name}.jar"/>
-        </exec>
-    </target>
 </project>

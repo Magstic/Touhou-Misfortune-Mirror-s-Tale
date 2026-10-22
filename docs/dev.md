@@ -4,7 +4,8 @@
 
 - **Visual Studio Code**
   - JAVA Runtime: Zulu JDK 17
-  - Build JDK: OpenJDK 8 (set `JAVA_HOME` for Ant).
+  - Build JDK: JDK 8 or later; JDK 21 recommended (set `JAVA_HOME` for Ant).
+  - Game compiler: ECJ from Eclipse 4.20 (`org.eclipse.jdt:ecj:3.26.0`), downloaded by Ivy.
   - Run `ant` to fetch the API JARs into `.deps/lib/`.
   - Libraries: `cldcapi11-2.0.4.jar`, `midpapi20-2.0.4.jar`, `microemu-jsr-82-2.0.4.jar`
 

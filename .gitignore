@@ -12,6 +12,3 @@ docs/dev/
 
 # IDE
 .vscode/
-
-# Emulator runtime
-emulator/

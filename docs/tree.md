@@ -199,7 +199,6 @@ Touhou_Misfortune_MirrorS_Tale/
 │   ├── dev.md                       #   Development guide, directory overview, I18N, tools
 │   └── tree.md                      #   This file
 │
-├── emulator/                        # (gitignored) FreeJ2ME runtime directory
 ├── build/                           # (gitignored) Ant build output
 └── dist/                            # (gitignored) Final JAR + JAD
 ```
@@ -213,9 +212,9 @@ flowchart TD
     CLEAN["ant clean (explicit)<br/>remove build/ dist/"]
     CLEAN -. "optional before package" .-> ANT
     ANT["ant (default: package)"] --> INIT["init<br/>mkdir build/classes/"]
-    ANT --> DEPS["dependencies<br/>bootstrap Ivy; resolve APIs + ProGuard<br/>Maven Central -> .deps/"]
+    ANT --> DEPS["dependencies<br/>bootstrap Ivy; resolve APIs + ECJ + ProGuard<br/>Maven Central -> .deps/"]
     DEPS --> COMPILE
-    INIT --> COMPILE["compile<br/>JDK 8 javac src/ -> build/classes/<br/>(bootclasspath: Ivy cldc+midp+jsr82)"]
+    INIT --> COMPILE["compile<br/>ECJ 4.20 src/ -> build/classes/<br/>(bootclasspath: Ivy cldc+midp+jsr82)"]
     INIT --> TOOLS["compile-tools-resources<br/>javac resource tools -> build/tools-classes/"]
     TOOLS --> I18N["i18n-pack<br/>validate UTF-8/schema and generate<br/>build/generated-res/i18n/<lang>.dat"]
     TOOLS --> BGM["bgm-pack<br/>validate res/bgm tracks 0–17 and generate<br/>build/generated-res/snd/bgm.dat"]
