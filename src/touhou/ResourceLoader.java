@@ -4,8 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.microedition.lcdui.Image;
-
 public final class ResourceLoader {
     private ResourceLoader() {
     }
@@ -32,35 +30,12 @@ public final class ResourceLoader {
         return true;
     }
 
-    public static byte[] readOptionalBytes(String path) {
-        InputStream in = openOptional(path);
-        if (in == null) {
-            return null;
-        }
-        try {
-            return readAll(in);
-        } catch (IOException e) {
-            return null;
-        } finally {
-            closeQuietly(in);
-        }
-    }
-
     public static byte[] readRequiredBytes(String path) throws IOException {
         InputStream in = openRequired(path);
         try {
             return readAll(in);
         } finally {
             closeQuietly(in);
-        }
-    }
-
-    public static Image loadOptionalImage(String path) {
-        ResourcePaths.requireCanonical(path);
-        try {
-            return Image.createImage(path);
-        } catch (IOException e) {
-            return null;
         }
     }
 

@@ -14,31 +14,19 @@ public final class ReplaySaveService {
         pending = null;
     }
 
-    public static boolean armPending(ReplayHeader header, byte[] name, ReplayStageRecorder recorder,
-            byte[] stageSnapshot) {
-        if (header == null || recorder == null) {
-            return false;
-        }
-
+    public static boolean armPending(ReplayHeader header, ReplayStageRecorder recorder, byte[] stageSnapshot) {
         byte[] fullInput = recorder.encodeFull();
         if (fullInput == null) {
             return false;
         }
         byte[] fixedName = new byte[ReplayFormat.NAME_SIZE];
-        if (name != null) {
-            int length = name.length;
-            if (length > fixedName.length) {
-                length = fixedName.length;
-            }
-            System.arraycopy(name, 0, fixedName, 0, length);
-        }
 
         ReplaySlotData data = new ReplaySlotData(header, fixedName, fullInput, stageSnapshot);
         if (!ReplaySlotIntegrity.seal(data)) {
             return false;
         }
         pending = ReplaySlotData.copyOf(data);
-        return pending != null;
+        return true;
     }
 
     public static boolean savePendingToSlot(int slot) {
@@ -46,6 +34,6 @@ public final class ReplaySaveService {
             return false;
         }
         ReplaySlotData data = ReplaySlotData.copyOf(pending);
-        return data != null && ReplaySlotStore.saveSlot(slot, data);
+        return ReplaySlotStore.saveSlot(slot, data);
     }
 }

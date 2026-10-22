@@ -10,17 +10,6 @@ public final class ReplayShareService {
                 ? ReplayShareCodec.encode(data) : null;
     }
 
-    public static boolean importToSlotFromPacket(int slot, byte[] packet) {
-        if (slot < 0 || slot >= ReplayFormat.SLOT_COUNT) {
-            return false;
-        }
-        ReplaySlotData data = ReplayShareCodec.decode(packet);
-        if (data == null) {
-            return false;
-        }
-        return importToSlot(slot, data);
-    }
-
     public static boolean importToSlot(int slot, ReplaySlotData data) {
         data.header.setFlag(ReplayHeader.FLAG_IMPORTED);
         return ReplaySlotStore.saveSlot(slot, data);

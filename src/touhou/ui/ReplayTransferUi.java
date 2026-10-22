@@ -16,13 +16,27 @@ final class ReplayTransferUi {
         if (cancelRequested) {
             return UiText.get(TextId.BT_MSG_CANCELING);
         }
-        if (status == BtSppLink.STATUS_SELECT_SERVICE) return UiText.get(TextId.BT_STATUS_SELECT_SERVICE);
-        if (status == BtSppLink.STATUS_CONNECTING) return UiText.get(TextId.BT_STATUS_CONNECTING);
-        if (status == BtSppLink.STATUS_CONNECTED) return UiText.get(TextId.BT_STATUS_CONNECTED);
-        if (receiving && status == BtSppLink.STATUS_RECEIVING) return UiText.get(TextId.BT_STATUS_RECEIVING);
-        if (!receiving && status == BtSppLink.STATUS_SENDING) return UiText.get(TextId.BT_STATUS_SENDING);
-        if (status == BtSppLink.STATUS_DONE) return UiText.get(TextId.BT_STATUS_DONE);
-        if (status == BtSppLink.STATUS_CANCELED) return UiText.get(TextId.BT_STATUS_CANCELED);
+        if (status == BtSppLink.STATUS_SELECT_SERVICE) {
+            return UiText.get(TextId.BT_STATUS_SELECT_SERVICE);
+        }
+        if (status == BtSppLink.STATUS_CONNECTING) {
+            return UiText.get(TextId.BT_STATUS_CONNECTING);
+        }
+        if (status == BtSppLink.STATUS_CONNECTED) {
+            return UiText.get(TextId.BT_STATUS_CONNECTED);
+        }
+        if (receiving && status == BtSppLink.STATUS_RECEIVING) {
+            return UiText.get(TextId.BT_STATUS_RECEIVING);
+        }
+        if (!receiving && status == BtSppLink.STATUS_SENDING) {
+            return UiText.get(TextId.BT_STATUS_SENDING);
+        }
+        if (status == BtSppLink.STATUS_DONE) {
+            return UiText.get(TextId.BT_STATUS_DONE);
+        }
+        if (status == BtSppLink.STATUS_CANCELED) {
+            return UiText.get(TextId.BT_STATUS_CANCELED);
+        }
         return UiText.get(TextId.BT_STATUS_WAITING);
     }
 

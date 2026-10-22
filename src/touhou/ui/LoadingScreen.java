@@ -11,24 +11,19 @@ import touhou.replay.ReplaySlotStore;
 public final class LoadingScreen {
     private static final int MIN_DISPLAY_MS = 500;
 
-    private int step;
-    private int stepMax;
     private boolean done;
     private long shownAt;
 
     public void enter() {
-        step = 0;
         done = false;
         shownAt = 0;
-
-        stepMax = 1;
     }
 
     public boolean isDone() {
         return done && System.currentTimeMillis() - shownAt >= MIN_DISPLAY_MS;
     }
 
-    public void update(int pressed) {
+    public void update() {
         // Let the first loading frame reach the screen before touching RMS.
         if (shownAt == 0 || done) {
             return;
@@ -36,7 +31,6 @@ public final class LoadingScreen {
         if (!UnlockFlags.isReplayRmsWarmed() && ReplaySlotStore.warmup()) {
             UnlockFlags.setReplayRmsWarmed(true);
         }
-        step = stepMax;
         done = true;
     }
 
@@ -66,23 +60,8 @@ public final class LoadingScreen {
         g.setColor(0xFFFFFF);
         g.drawRect(bx - 1, by - 1, barW + 1, barH + 1);
 
-        int p = step;
-        if (p < 0) {
-            p = 0;
-        }
-        if (p > stepMax) {
-            p = stepMax;
-        }
-        int fillW = (stepMax <= 0) ? barW : (barW * p) / stepMax;
-        if (fillW < 0) {
-            fillW = 0;
-        }
-        if (fillW > barW) {
-            fillW = barW;
-        }
-
         g.setColor(0x0000FF);
-        g.fillRect(bx, by, fillW, barH);
+        g.fillRect(bx, by, done ? barW : 0, barH);
         if (shownAt == 0) {
             shownAt = System.currentTimeMillis();
         }

@@ -22,7 +22,7 @@ public final class ReplayRecordingController {
     }
 
     public boolean isActive() {
-        return enabled && recorder.isRecording();
+        return recorder.isRecording();
     }
 
     public void startSession(boolean bossAtStart) {
@@ -47,42 +47,32 @@ public final class ReplayRecordingController {
     }
 
     public void onFrame(int keys, int pressed, int fireActionPressed) {
-        if (!enabled) {
-            return;
-        }
         recorder.onFrame(keys, pressed, fireActionPressed);
     }
 
     public void recordDialoguePageCount(int encounterIndex, int pageCount) {
-        if (!enabled) {
-            return;
-        }
         recorder.recordDialoguePageCount(encounterIndex, pageCount);
     }
 
     public void markBossStart() {
-        if (enabled) {
-            recorder.markBossStart(recorder.getFramePos());
-        }
+        recorder.markBossStart(recorder.getFramePos());
     }
 
     public void captureStageStartSnapshot(ReplayRng random, BattleContinueSystem continueSystem, BattleHudData hud, ScoreSystem scoreSystem, Player player) {
-        if (!enabled) {
+        if (!enabled || stageSnapshot != null) {
             return;
         }
-        stageSnapshot = ReplayStageSnapshotService.captureIfNeeded(stageSnapshot, random, continueSystem, hud, scoreSystem, player);
+        stageSnapshot = ReplayStageSnapshotCodec.encode(random, continueSystem, hud, scoreSystem, player);
     }
 
-    public boolean armPendingForStageClear(byte[] name32,
-            int flag, int difficulty, int chara, int stage, int score, int type, int mode, int spellId) {
-
+    public boolean armPendingForStageClear(int difficulty, int chara, int stage, int score, int type, int mode, int spellId) {
         if (!enabled) {
             ReplaySaveService.clearPending();
             return false;
         }
 
         ReplayHeader h = new ReplayHeader();
-        recorder.fillHeaderForSave(h, flag, difficulty, chara, stage, score, type, mode, spellId);
-        return ReplaySaveService.armPending(h, name32, recorder, stageSnapshot);
+        recorder.fillHeaderForSave(h, difficulty, chara, stage, score, type, mode, spellId);
+        return ReplaySaveService.armPending(h, recorder, stageSnapshot);
     }
 }

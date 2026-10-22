@@ -84,17 +84,12 @@ public final class BattleStageHost implements StageRuntime.Host {
         core.stageHostSetIFlash(v);
     }
 
-    public void playSound(int id, boolean loop) {
-        // Script sound routing: loop -> BGM, else -> SE.
-        if (loop) {
-            if (core.battleFlowIsStageClearPanelActive()) {
-                return;
-            }
-            GameProgress.INSTANCE.markMusicPlayed(id);
-            audioSystem.requestBgm(id, true);
+    public void requestBgm(int trackId) {
+        if (core.battleFlowIsStageClearPanelActive()) {
             return;
         }
-        audioSystem.playSeType(id);
+        GameProgress.INSTANCE.markMusicPlayed(trackId);
+        audioSystem.requestBgm(trackId, true);
     }
 
     public boolean shouldEnterEndingAfterStageClear() {

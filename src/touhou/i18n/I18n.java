@@ -2,8 +2,8 @@ package touhou.i18n;
 
 import java.io.UnsupportedEncodingException;
 
-import touhou.ResourcePaths;
 import touhou.ResourceException;
+import touhou.ResourcePaths;
 
 public final class I18n {
     public static final int LANG_JA = 0;

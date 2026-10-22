@@ -5,10 +5,6 @@ import java.io.ByteArrayOutputStream;
 public final class ReplaySnapshotWriter {
     private final ByteArrayOutputStream out;
 
-    public ReplaySnapshotWriter() {
-        this(1024);
-    }
-
     public ReplaySnapshotWriter(int initialCapacity) {
         out = new ByteArrayOutputStream(initialCapacity);
     }
@@ -27,5 +23,4 @@ public final class ReplaySnapshotWriter {
         out.write((v >> 16) & 0xFF);
         out.write((v >> 24) & 0xFF);
     }
-
 }

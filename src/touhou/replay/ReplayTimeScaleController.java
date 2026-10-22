@@ -3,14 +3,11 @@ package touhou.replay;
 import javax.microedition.lcdui.game.GameCanvas;
 
 public final class ReplayTimeScaleController {
-    private static final int MAX_STEPS_PER_UPDATE = 32;
+    private static final int AUTO_FAST_FORWARD_STEPS = 16;
+    private static final int FAST_FORWARD_STEPS = 8;
 
     private int slowCounter;
-    private int autoFastForwardTargetFrame;
-
-    public ReplayTimeScaleController() {
-        reset();
-    }
+    private int autoFastForwardTargetFrame = -1;
 
     public void reset() {
         slowCounter = 0;
@@ -18,11 +15,7 @@ public final class ReplayTimeScaleController {
     }
 
     public void startAutoFastForwardToFrame(int frameIndex) {
-        if (frameIndex < 0) {
-            autoFastForwardTargetFrame = -1;
-            return;
-        }
-        autoFastForwardTargetFrame = frameIndex;
+        autoFastForwardTargetFrame = frameIndex < 0 ? -1 : frameIndex;
     }
 
     // Returns how many replay simulation steps should run in this render frame.
@@ -36,17 +29,7 @@ public final class ReplayTimeScaleController {
             int pos = playback.getFramePos();
             int remaining = target - pos;
             if (remaining > 0) {
-                int steps = 16;
-                if (steps > remaining) {
-                    steps = remaining;
-                }
-                if (steps > MAX_STEPS_PER_UPDATE) {
-                    steps = MAX_STEPS_PER_UPDATE;
-                }
-                if (steps < 1) {
-                    steps = 1;
-                }
-                return steps;
+                return Math.min(AUTO_FAST_FORWARD_STEPS, remaining);
             }
 
             autoFastForwardTargetFrame = -1;
@@ -54,7 +37,7 @@ public final class ReplayTimeScaleController {
 
         if ((liveKeys & GameCanvas.RIGHT_PRESSED) != 0) {
             slowCounter = 0;
-            return 8;
+            return FAST_FORWARD_STEPS;
         }
 
         if ((liveKeys & GameCanvas.LEFT_PRESSED) != 0) {

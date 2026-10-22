@@ -3,25 +3,14 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
-import touhou.ResultStats;
 import touhou.GameProgress;
-import touhou.i18n.SpellText;
+import touhou.ResultStats;
 import touhou.i18n.I18n;
+import touhou.i18n.SpellText;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 
 public final class ResultScreen {
-    public static final class Result {
-        public static final int KIND_NONE = 0;
-        public static final int KIND_BACK_TO_TITLE = 1;
-
-        public final int kind;
-
-        public Result(int kind) {
-            this.kind = kind;
-        }
-    }
-
     private static final int SCENE_MENU = 0;
     private static final int SCENE_SPELLCARD = 1;
     private static final int SCENE_SCORE = 2;
@@ -84,7 +73,7 @@ public final class ResultScreen {
         effect2 = 0;
     }
 
-    public Result update(int pressed) {
+    public boolean update(int pressed) {
         if (scene == SCENE_MENU) {
             effect1 = (effect1 << 1) + 1;
             if (effect1 > 255) {
@@ -101,12 +90,12 @@ public final class ResultScreen {
 
         if (UiInput.cancel(pressed)) {
             if (scene == SCENE_MENU) {
-                return new Result(Result.KIND_BACK_TO_TITLE);
+                return true;
             }
             scene = SCENE_MENU;
             cursorLR = 0;
             cursor2 = 0;
-            return null;
+            return false;
         }
 
         if (scene == SCENE_MENU) {
@@ -119,21 +108,17 @@ public final class ResultScreen {
                     scene = SCENE_SPELLCARD;
                     cursorLR = 0;
                     cursor2 = 0;
-                } else if (cursorUD == 1) {
-                    scene = SCENE_SCORE;
-                    cursorLR = 0;
-                    cursor2 = 0;
-                } else if (cursorUD == 2) {
+                } else if (cursorUD == 1 || cursorUD == 2) {
                     scene = SCENE_SCORE;
                     cursorLR = 0;
                     cursor2 = 0;
                 } else if (cursorUD == 3) {
                     scene = SCENE_OTHER;
                 } else {
-                    return new Result(Result.KIND_BACK_TO_TITLE);
+                    return true;
                 }
             }
-            return null;
+            return false;
         }
 
         if (scene == SCENE_SPELLCARD) {
@@ -151,7 +136,7 @@ public final class ResultScreen {
             } else if (UiInput.down(pressed)) {
                 cursor2 = MenuCursor.move(cursor2, 1, 7);
             }
-            return null;
+            return false;
         }
 
         if (scene == SCENE_SCORE) {
@@ -168,14 +153,10 @@ public final class ResultScreen {
             } else if (UiInput.down(pressed)) {
                 cursor2 = MenuCursor.move(cursor2, 1, 6);
             }
-            return null;
+            return false;
         }
 
-        if (scene == SCENE_OTHER) {
-            return null;
-        }
-
-        return null;
+        return false;
     }
 
     public void render(Graphics g) {
@@ -390,5 +371,4 @@ public final class ResultScreen {
         UiDraw.drawStringPlain(g, font, "3: " + String.valueOf(scores[baseIndex + 2]), x, y + 36, 0, cMain);
     }
 
-    
 }

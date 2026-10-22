@@ -163,7 +163,7 @@ public final class UiController {
         // Play UI S.E. after the screen update so Options volume changes take effect immediately.
         int stateBefore = state;
         if (state == STATE_LOADING) {
-            updateLoading(pressed);
+            updateLoading();
             return;
         }
 
@@ -172,8 +172,8 @@ public final class UiController {
         }
     }
 
-    private void updateLoading(int pressed) {
-        loading.update(pressed);
+    private void updateLoading() {
+        loading.update();
         if (loading.isDone()) {
             startupLanguage.enter();
             transitionTo(STATE_STARTUP_LANGUAGE);
@@ -231,8 +231,7 @@ public final class UiController {
     }
 
     private void updateStartupLanguage(int pressed) {
-        StartupLanguageMenu.Result r = startupLanguage.update(pressed);
-        if (r != null && r.kind == StartupLanguageMenu.Result.KIND_DONE) {
+        if (startupLanguage.update(pressed)) {
             openTitle(true);
         }
     }
@@ -297,15 +296,13 @@ public final class UiController {
     }
 
     private void updateHelp(int pressed) {
-        HelpScreen.Result r = help.update(pressed);
-        if (r != null && r.kind == HelpScreen.Result.KIND_BACK_TO_TITLE) {
+        if (help.update(pressed)) {
             returnToTitleKeepCursor();
         }
     }
 
     private void updateStory(int keys, int pressed) {
-        StoryScreen.Result r = story.update(keys, pressed);
-        if (r != null && r.kind == StoryScreen.Result.KIND_BACK_TO_TITLE) {
+        if (story.update(keys, pressed)) {
             returnToTitleKeepCursor();
         }
     }
@@ -354,24 +351,21 @@ public final class UiController {
     }
 
     private void updateReplayReceive(int pressed) {
-        ReplayReceiveScreen.Result r = replayReceive.update(pressed);
-        if (r != null && r.kind == ReplayReceiveScreen.Result.KIND_BACK_TO_REPLAY) {
+        if (replayReceive.update(pressed)) {
             replay.returnToList();
             transitionTo(STATE_REPLAY);
         }
     }
 
     private void updateReplaySend(int pressed) {
-        ReplaySendScreen.Result r = replaySend.update(pressed);
-        if (r != null && r.kind == ReplaySendScreen.Result.KIND_BACK_TO_REPLAY) {
+        if (replaySend.update(pressed)) {
             replay.returnToList();
             transitionTo(STATE_REPLAY);
         }
     }
 
     private void updateResult(int pressed) {
-        ResultScreen.Result r = result.update(pressed);
-        if (r != null && r.kind == ResultScreen.Result.KIND_BACK_TO_TITLE) {
+        if (result.update(pressed)) {
             returnToTitleKeepCursor();
         }
     }
@@ -395,20 +389,16 @@ public final class UiController {
     }
 
     private void updateOption(int pressed) {
-        OptionScreen.Result r = option.update(pressed);
-        if (r != null && r.kind == OptionScreen.Result.KIND_BACK_TO_TITLE) {
+        if (option.update(pressed)) {
             returnToTitleKeepCursor();
         }
     }
 
     private void updateQuit(int pressed) {
-        QuitScreen.Result r = quit.update(pressed);
-        if (r == null) {
-            return;
-        }
-        if (r.kind == QuitScreen.Result.KIND_BACK_TO_TITLE) {
+        int action = quit.update(pressed);
+        if (action == QuitScreen.ACTION_BACK_TO_TITLE) {
             returnToTitleKeepCursor();
-        } else if (r.kind == QuitScreen.Result.KIND_QUIT && listener != null) {
+        } else if (action == QuitScreen.ACTION_QUIT && listener != null) {
             listener.onQuitRequested();
         }
     }
@@ -418,17 +408,17 @@ public final class UiController {
         switch (nextState) {
             case STATE_STARTUP_LANGUAGE:
                 sheets = new int[] { SpriteSheetCatalog.TITLE_BACKGROUND_IMAGE, SpriteSheetCatalog.TITLE_GLYPHS_IMAGE,
-                        SpriteSheetCatalog.TITLE_CAPTION_IMAGE, SpriteSheetCatalog.TITLE_PORTRAIT_IMAGE, 127 };
+                    SpriteSheetCatalog.TITLE_CAPTION_IMAGE, SpriteSheetCatalog.TITLE_PORTRAIT_IMAGE, 127 };
                 break;
             case STATE_TITLE:
             case STATE_QUIT:
                 sheets = new int[] { SpriteSheetCatalog.TITLE_BACKGROUND_IMAGE, 1, SpriteSheetCatalog.TITLE_GLYPHS_IMAGE,
-                        SpriteSheetCatalog.TITLE_CAPTION_IMAGE, SpriteSheetCatalog.TITLE_PORTRAIT_IMAGE };
+                    SpriteSheetCatalog.TITLE_CAPTION_IMAGE, SpriteSheetCatalog.TITLE_PORTRAIT_IMAGE };
                 break;
             case STATE_START_SETUP:
                 sheets = new int[] { SpriteSheetCatalog.CHARACTER_PORTRAITS_IMAGE,
-                        setup.getGameMode() == BattleSessionConfig.MODE_EXTRA ? SpriteSheetCatalog.EXTRA_DIFFICULTY_IMAGE : SpriteSheetCatalog.DIFFICULTY_IMAGE,
-                        28, SpriteSheetCatalog.MENU_BACKGROUND_IMAGE };
+                    setup.getGameMode() == BattleSessionConfig.MODE_EXTRA ? SpriteSheetCatalog.EXTRA_DIFFICULTY_IMAGE : SpriteSheetCatalog.DIFFICULTY_IMAGE,
+                    28, SpriteSheetCatalog.MENU_BACKGROUND_IMAGE };
                 break;
             case STATE_HELP:
                 sheets = new int[] { SpriteSheetCatalog.HELP_ARROWS_IMAGE, 10 };
@@ -452,7 +442,9 @@ public final class UiController {
                 break;
         }
         images.retain(new int[][] { sheets });
-        for (int i = 0; i < sheets.length; i++) images.get(sheets[i]);
+        for (int i = 0; i < sheets.length; i++) {
+            images.get(sheets[i]);
+        }
         state = nextState;
     }
 
@@ -499,16 +491,16 @@ public final class UiController {
                 story.render(g, images);
                 break;
             case STATE_SPELL_PRACTICE:
-                spellPractice.render(g, images, sprites);
+                spellPractice.render(g, sprites);
                 break;
             case STATE_REPLAY:
                 replay.render(g, images, sprites);
                 break;
             case STATE_REPLAY_RECEIVE:
-                replayReceive.render(g, images, sprites);
+                replayReceive.render(g, images);
                 break;
             case STATE_REPLAY_SEND:
-                replaySend.render(g, images, sprites);
+                replaySend.render(g, images);
                 break;
             case STATE_REPLAY_FILES:
                 replayFiles.render(g, images);
@@ -528,7 +520,7 @@ public final class UiController {
                 break;
         }
     }
-    
+
     public int getState() {
         return state;
     }

@@ -2,7 +2,6 @@ package touhou.battle;
 
 import touhou.stage.StageRuntime;
 
-
 /** Update-owned transient visual state. Rendering reads this object without mutating it. */
 public final class BattleVisualState {
     private static final int BLIND_ALPHA_MAX = 128;

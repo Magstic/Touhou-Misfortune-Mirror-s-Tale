@@ -41,9 +41,6 @@ public final class EnemyBulletSystem {
         if (moveType == 6 || moveType == 7 || moveType == 8 || moveType == 9) {
             return bullets.spawnEnemyStopTurnAccel(bulletId, moveType, angleDeg, speedParam, spawnXFixed, spawnYFixed);
         }
-        if (moveType == 26) {
-            return bullets.spawn(bulletId, moveType, angleDeg, speedParam, spawnXFixed, spawnYFixed);
-        }
         if (moveType == 3) {
             int ang = BattleMath.arcTan2Deg(playerYFixed - spawnYFixed, playerXFixed - spawnXFixed) % 360;
             return bullets.spawn(bulletId, 0, ang, speedParam, spawnXFixed, spawnYFixed);
@@ -65,9 +62,6 @@ public final class EnemyBulletSystem {
         if (moveType == 41) {
             return bullets.spawnEnemyRamp41(bulletId, angleDeg, speedParam, spawnXFixed, spawnYFixed);
         }
-        if (moveType == 0) {
-            return bullets.spawn(bulletId, 0, angleDeg, speedParam, spawnXFixed, spawnYFixed);
-        }
         return bullets.spawn(bulletId, moveType, angleDeg, speedParam, spawnXFixed, spawnYFixed);
     }
 
@@ -83,11 +77,7 @@ public final class EnemyBulletSystem {
         playerHit = false;
     }
 
-    public void applyPlayerCollision(int playerXFixed, int playerYFixed, int playerRadiusFixed, boolean allowGraze, boolean allowHit) {
-        if (bullets == null) {
-            return;
-        }
-
+    public void applyPlayerCollision(int playerXFixed, int playerYFixed, int playerRadiusFixed) {
         grazeCount = 0;
         playerHit = false;
 
@@ -128,7 +118,7 @@ public final class EnemyBulletSystem {
             int bw = (br << 1);
             int bh = (br << 1);
 
-            if (allowGraze && canGraze[i]) {
+            if (canGraze[i]) {
                 if (BattleMath.rectsOverlapFixed(bl - GRAZE_MARGIN_FIXED, bt - GRAZE_MARGIN_FIXED, bw + (GRAZE_MARGIN_FIXED << 1), bh + (GRAZE_MARGIN_FIXED << 1),
                         playerLeft, playerTop, playerSize, playerSize)) {
                     canGraze[i] = false;
@@ -136,11 +126,9 @@ public final class EnemyBulletSystem {
                 }
             }
 
-            if (allowHit) {
-                if (BattleMath.rectsOverlapFixed(bl, bt, bw, bh, playerLeft, playerTop, playerSize, playerSize)) {
-                    playerHit = true;
-                    bullets.deactivate(i);
-                }
+            if (BattleMath.rectsOverlapFixed(bl, bt, bw, bh, playerLeft, playerTop, playerSize, playerSize)) {
+                playerHit = true;
+                bullets.deactivate(i);
             }
         }
     }

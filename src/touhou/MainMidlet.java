@@ -24,14 +24,6 @@ public final class MainMidlet extends MIDlet {
         canvas.start();
     }
 
-    public void startGameAfterLanguageSelect() {
-        if (canvas == null) {
-            canvas = new GameCore(this);
-        }
-        Display.getDisplay(this).setCurrent(canvas);
-        canvas.start();
-    }
-
     protected void pauseApp() {
         if (canvas != null) {
             canvas.pause();

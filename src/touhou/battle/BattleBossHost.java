@@ -112,15 +112,7 @@ final class BattleBossHost implements BossController.Host {
         return stageRuntime.getEnemyList();
     }
 
-    public void playSound(int id, boolean loop) {
-        // Script sound routing: loop -> BGM, else -> SE.
-        if (loop) {
-            if (core.battleFlowIsStageClearPanelActive()) {
-                return;
-            }
-            audioSystem.requestBgm(id, true);
-            return;
-        }
+    public void playSe(int id) {
         audioSystem.playSeType(id);
     }
 

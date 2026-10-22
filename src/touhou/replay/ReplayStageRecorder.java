@@ -7,11 +7,7 @@ public final class ReplayStageRecorder {
     private int dialoguePageCountLen;
 
     private boolean recording;
-    private int bossStartFrame;
-
-    public ReplayStageRecorder() {
-        reset();
-    }
+    private int bossStartFrame = -1;
 
     public void reset() {
         full.clear();
@@ -88,12 +84,9 @@ public final class ReplayStageRecorder {
         return ReplayCodec.encode(full.raw());
     }
 
-    public void fillHeaderForSave(ReplayHeader header, int flag, int difficulty, int chara, int stage, int score, int type, int mode, int spellId) {
-        if (header == null) {
-            return;
-        }
+    public void fillHeaderForSave(ReplayHeader header, int difficulty, int chara, int stage, int score, int type, int mode, int spellId) {
         header.clear();
-        header.setFlag(flag);
+        header.setFlag(ReplayHeader.FLAG_LOCAL);
         header.setDifficulty(difficulty);
         header.setChara(chara);
         header.setStage(stage);

@@ -13,17 +13,9 @@ import touhou.i18n.UiText;
 import touhou.replay.ReplaySaveService;
 
 public final class StageClearResultPanel {
-    public static final class Result {
-        public static final int KIND_NONE = 0;
-        public static final int KIND_ADVANCE_STAGE = 1;
-        public static final int KIND_BACK_TO_TITLE = 2;
-
-        public final int kind;
-
-        public Result(int kind) {
-            this.kind = kind;
-        }
-    }
+    public static final int ACTION_NONE = 0;
+    public static final int ACTION_ADVANCE_STAGE = 1;
+    public static final int ACTION_BACK_TO_TITLE = 2;
 
     private static final int SCENE_MAIN = 0;
     private static final int SCENE_REPLAY_SLOT = 1;
@@ -156,11 +148,11 @@ public final class StageClearResultPanel {
         images.release(SpriteSheetCatalog.MENU_BACKGROUND_IMAGE);
     }
 
-    public Result update(int pressed) {
+    public int update(int pressed) {
         return update(pressed, -1);
     }
 
-    public Result update(int pressed, int nextStage) {
+    public int update(int pressed, int nextStage) {
         replayAnimationTick++;
         if (mode == MODE_FINAL) {
             return updateFinal(pressed);
@@ -168,7 +160,7 @@ public final class StageClearResultPanel {
         return updateStageClear(pressed, nextStage);
     }
 
-    private Result updateFinal(int pressed) {
+    private int updateFinal(int pressed) {
         // DoJa  if():
         // - After count > 10, OK triggers either replay save flow (if enabled) or return to title.
         if (scene == SCENE_MAIN) {
@@ -176,26 +168,26 @@ public final class StageClearResultPanel {
                 if (ReplaySaveService.hasPending()) {
                     scene = SCENE_FINAL_ASK_SAVE;
                     replayCursor = 0;
-                    return null;
+                    return ACTION_NONE;
                 }
-                return new Result(Result.KIND_BACK_TO_TITLE);
+                return ACTION_BACK_TO_TITLE;
             }
             finalCount++;
-            return null;
+            return ACTION_NONE;
         }
 
         if (scene == SCENE_FINAL_ASK_SAVE) {
             if (UiInput.anyVertical(pressed)) {
                 replayCursor = MenuCursor.toggleTwo(replayCursor);
-                return null;
+                return ACTION_NONE;
             }
             if (UiInput.confirm(pressed)) {
                 if (replayCursor == 0) {
-                    return new Result(Result.KIND_BACK_TO_TITLE);
+                    return ACTION_BACK_TO_TITLE;
                 }
                 enterReplaySlotScene(SCENE_FINAL_REPLAY_SLOT);
             }
-            return null;
+            return ACTION_NONE;
         }
 
         if (scene == SCENE_FINAL_REPLAY_SLOT) {
@@ -206,13 +198,10 @@ public final class StageClearResultPanel {
             } else if (UiInput.confirm(pressed)) {
                 scene = SCENE_FINAL_REPLAY_SAVE;
             } else if (UiInput.cancel(pressed)) {
-                return new Result(Result.KIND_BACK_TO_TITLE);
+                return ACTION_BACK_TO_TITLE;
             }
         } else if (scene == SCENE_FINAL_REPLAY_OK || scene == SCENE_FINAL_REPLAY_FAIL) {
-            if (UiInput.confirm(pressed)) {
-                enterReplaySlotScene(SCENE_FINAL_REPLAY_SLOT);
-            }
-            if (UiInput.cancel(pressed)) {
+            if (UiInput.dismiss(pressed)) {
                 enterReplaySlotScene(SCENE_FINAL_REPLAY_SLOT);
             }
         }
@@ -222,7 +211,7 @@ public final class StageClearResultPanel {
             scene = ok ? SCENE_FINAL_REPLAY_OK : SCENE_FINAL_REPLAY_FAIL;
         }
 
-        return null;
+        return ACTION_NONE;
     }
 
     public int getLeftSoftkeyTextId() {
@@ -230,17 +219,19 @@ public final class StageClearResultPanel {
             return scene == SCENE_FINAL_REPLAY_SLOT || scene == SCENE_FINAL_REPLAY_OK || scene == SCENE_FINAL_REPLAY_FAIL
                     ? TextId.SOFTKEY_BACK : -1;
         }
-        if (leaving || slide < SLIDE_MAX || scene == SCENE_REPLAY_SAVE) return -1;
+        if (leaving || slide < SLIDE_MAX || scene == SCENE_REPLAY_SAVE) {
+            return -1;
+        }
         return scene == SCENE_MAIN ? TextId.SOFTKEY_NEXT : TextId.SOFTKEY_BACK;
     }
 
-    private Result updateStageClear(int pressed, int nextStage) {
+    private int updateStageClear(int pressed, int nextStage) {
         if (scene == SCENE_MAIN) {
             if (!leaving && slide >= SLIDE_MAX) {
                 if (UiInput.dismiss(pressed)) {
                     if (nextStage < 0) {
                         // Practice mode: no next stage, skip slide-out animation (DoJa: u()).
-                        return new Result(Result.KIND_ADVANCE_STAGE);
+                        return ACTION_ADVANCE_STAGE;
                     }
                     leaving = true;
                     portrait = null;
@@ -283,7 +274,7 @@ public final class StageClearResultPanel {
                     slide = 0;
                 }
             } else {
-                return new Result(Result.KIND_ADVANCE_STAGE);
+                return ACTION_ADVANCE_STAGE;
             }
         }
 
@@ -292,7 +283,7 @@ public final class StageClearResultPanel {
             subsecCount = 10;
         }
 
-        return null;
+        return ACTION_NONE;
     }
 
     public void render(Graphics g, SpriteRenderer sprites) {
@@ -339,7 +330,6 @@ public final class StageClearResultPanel {
             renderFinalReplayOverlay(g, sprites);
         }
     }
-
 
     private void renderFinalReplayOverlay(Graphics g, SpriteRenderer sprites) {
         // Replay overlay for final result.
@@ -399,7 +389,9 @@ public final class StageClearResultPanel {
             return;
         }
 
-        if (portrait == null) portrait = sprites.createAlphaSprite(193 + chara);
+        if (portrait == null) {
+            portrait = sprites.createAlphaSprite(193 + chara);
+        }
 
         int x = 56 - subsecCount;
         int y = 206;

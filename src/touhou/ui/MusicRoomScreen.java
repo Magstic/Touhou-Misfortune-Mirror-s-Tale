@@ -12,7 +12,6 @@ import touhou.i18n.UiText;
 
 public final class MusicRoomScreen {
     public static final class Result {
-        public static final int KIND_NONE = 0;
         public static final int KIND_BACK_TO_TITLE = 1;
         public static final int KIND_PLAY_TRACK = 2;
         public static final int KIND_VOLUME_CHANGED = 3;
@@ -35,64 +34,64 @@ public final class MusicRoomScreen {
     private static final int MAX_VISIBLE = 8;
 
     private static final int[] ST_TITLE = new int[] {
-            TextId.MUSIC_TITLE_TITLE,
-            TextId.MUSIC_TITLE_ST1_MID,
-            TextId.MUSIC_TITLE_ST1_BOSS,
-            TextId.MUSIC_TITLE_ST2_MID,
-            TextId.MUSIC_TITLE_ST2_BOSS,
-            TextId.MUSIC_TITLE_ST3_MID,
-            TextId.MUSIC_TITLE_ST3_BOSS,
-            TextId.MUSIC_TITLE_ST4_MID,
-            TextId.MUSIC_TITLE_ST4_BOSS,
-            TextId.MUSIC_TITLE_ST5_MID,
-            TextId.MUSIC_TITLE_ST5_BOSS,
-            TextId.MUSIC_TITLE_ST6_MID,
-            TextId.MUSIC_TITLE_ST6_BOSS,
-            TextId.MUSIC_TITLE_EXTRA_MID,
-            TextId.MUSIC_TITLE_EXTRA_BOSS,
-            TextId.MUSIC_TITLE_EPILOGUE,
-            TextId.MUSIC_TITLE_ENDING,
-            TextId.MUSIC_TITLE_LASTWORD };
+        TextId.MUSIC_TITLE_TITLE,
+        TextId.MUSIC_TITLE_ST1_MID,
+        TextId.MUSIC_TITLE_ST1_BOSS,
+        TextId.MUSIC_TITLE_ST2_MID,
+        TextId.MUSIC_TITLE_ST2_BOSS,
+        TextId.MUSIC_TITLE_ST3_MID,
+        TextId.MUSIC_TITLE_ST3_BOSS,
+        TextId.MUSIC_TITLE_ST4_MID,
+        TextId.MUSIC_TITLE_ST4_BOSS,
+        TextId.MUSIC_TITLE_ST5_MID,
+        TextId.MUSIC_TITLE_ST5_BOSS,
+        TextId.MUSIC_TITLE_ST6_MID,
+        TextId.MUSIC_TITLE_ST6_BOSS,
+        TextId.MUSIC_TITLE_EXTRA_MID,
+        TextId.MUSIC_TITLE_EXTRA_BOSS,
+        TextId.MUSIC_TITLE_EPILOGUE,
+        TextId.MUSIC_TITLE_ENDING,
+        TextId.MUSIC_TITLE_LASTWORD };
 
     private static final int[] ST_ORIG = new int[] {
-            TextId.MUSIC_ORIG_01,
-            TextId.MUSIC_ORIG_02,
-            TextId.MUSIC_ORIG_03,
-            TextId.MUSIC_ORIG_04,
-            TextId.MUSIC_ORIG_05,
-            TextId.MUSIC_ORIG_06,
-            TextId.MUSIC_ORIG_07,
-            TextId.MUSIC_ORIG_08,
-            TextId.MUSIC_ORIG_09,
-            TextId.MUSIC_ORIG_10,
-            TextId.MUSIC_ORIG_11,
-            TextId.MUSIC_ORIG_12,
-            TextId.MUSIC_ORIG_13,
-            TextId.MUSIC_ORIG_14,
-            TextId.MUSIC_ORIG_15,
-            TextId.MUSIC_ORIG_16,
-            TextId.MUSIC_ORIG_17,
-            TextId.MUSIC_ORIG_18 };
+        TextId.MUSIC_ORIG_01,
+        TextId.MUSIC_ORIG_02,
+        TextId.MUSIC_ORIG_03,
+        TextId.MUSIC_ORIG_04,
+        TextId.MUSIC_ORIG_05,
+        TextId.MUSIC_ORIG_06,
+        TextId.MUSIC_ORIG_07,
+        TextId.MUSIC_ORIG_08,
+        TextId.MUSIC_ORIG_09,
+        TextId.MUSIC_ORIG_10,
+        TextId.MUSIC_ORIG_11,
+        TextId.MUSIC_ORIG_12,
+        TextId.MUSIC_ORIG_13,
+        TextId.MUSIC_ORIG_14,
+        TextId.MUSIC_ORIG_15,
+        TextId.MUSIC_ORIG_16,
+        TextId.MUSIC_ORIG_17,
+        TextId.MUSIC_ORIG_18 };
 
     private static final int[] ST_FROM_GAME = new int[] {
-            TextId.MUSIC_FROM_01,
-            TextId.MUSIC_FROM_02,
-            TextId.MUSIC_FROM_03,
-            TextId.MUSIC_FROM_04,
-            TextId.MUSIC_FROM_05,
-            TextId.MUSIC_FROM_06,
-            TextId.MUSIC_FROM_07,
-            TextId.MUSIC_FROM_08,
-            TextId.MUSIC_FROM_09,
-            TextId.MUSIC_FROM_10,
-            TextId.MUSIC_FROM_11,
-            TextId.MUSIC_FROM_12,
-            TextId.MUSIC_FROM_13,
-            TextId.MUSIC_FROM_14,
-            TextId.MUSIC_FROM_15,
-            TextId.MUSIC_FROM_16,
-            TextId.MUSIC_FROM_17,
-            TextId.MUSIC_FROM_18 };
+        TextId.MUSIC_FROM_01,
+        TextId.MUSIC_FROM_02,
+        TextId.MUSIC_FROM_03,
+        TextId.MUSIC_FROM_04,
+        TextId.MUSIC_FROM_05,
+        TextId.MUSIC_FROM_06,
+        TextId.MUSIC_FROM_07,
+        TextId.MUSIC_FROM_08,
+        TextId.MUSIC_FROM_09,
+        TextId.MUSIC_FROM_10,
+        TextId.MUSIC_FROM_11,
+        TextId.MUSIC_FROM_12,
+        TextId.MUSIC_FROM_13,
+        TextId.MUSIC_FROM_14,
+        TextId.MUSIC_FROM_15,
+        TextId.MUSIC_FROM_16,
+        TextId.MUSIC_FROM_17,
+        TextId.MUSIC_FROM_18 };
 
     private int selectedTrack;
     private int stVolume;

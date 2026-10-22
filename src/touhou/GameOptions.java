@@ -103,7 +103,7 @@ public final class GameOptions {
     }
 
     public static void togglePlayerShotAlpha(int[] opt) {
-        toggleAlphaBit(opt, ALPHA_PLAYER_SHOT);
+        opt[IDX_RENDER_FLAGS] ^= ALPHA_PLAYER_SHOT;
     }
 
     public static void toggleHeavyBg(int[] opt) {
@@ -132,10 +132,6 @@ public final class GameOptions {
 
     public static void toggleDebugResource(int[] opt) {
         toggleDebugBit(opt, DEBUG_RESOURCE);
-    }
-
-    private static void toggleAlphaBit(int[] opt, int bit) {
-        opt[IDX_RENDER_FLAGS] ^= bit;
     }
 
     private static void toggleDebugBit(int[] opt, int bit) {
@@ -246,28 +242,25 @@ public final class GameOptions {
         if (opt[IDX_LIVES] < 1 || opt[IDX_LIVES] > 6) {
             return false;
         }
-        if (opt[IDX_BGM_VOLUME] < 0 || opt[IDX_BGM_VOLUME] > 100) {
+        if (opt[IDX_BGM_VOLUME] > 100) {
             return false;
         }
-        if (opt[IDX_SE_VOLUME] < 0 || opt[IDX_SE_VOLUME] > 100) {
+        if (opt[IDX_SE_VOLUME] > 100) {
             return false;
         }
         if ((opt[IDX_RENDER_FLAGS] & ~(ALPHA_MASK | DEBUG_MASK)) != 0) {
             return false;
         }
-        if (opt[IDX_SHOT_KEY] < 0 || opt[IDX_SHOT_KEY] > 13) {
+        if (opt[IDX_SHOT_KEY] > 13) {
             return false;
         }
-        if (opt[IDX_SLOW_KEY] < 0 || opt[IDX_SLOW_KEY] > 13) {
+        if (opt[IDX_SLOW_KEY] > 13) {
             return false;
         }
-        if (opt[IDX_SPELL_KEY] < 0 || opt[IDX_SPELL_KEY] > 13) {
+        if (opt[IDX_SPELL_KEY] > 13) {
             return false;
         }
-        if (opt[IDX_SE_MASK] < 0 || opt[IDX_SE_MASK] > 255) {
-            return false;
-        }
-        if (opt[IDX_SE_MASK_HI] < 0 || opt[IDX_SE_MASK_HI] > 63) {
+        if (opt[IDX_SE_MASK_HI] > 63) {
             return false;
         }
         if (opt[IDX_CHEAT_DISABLE_BOSS_BOMB_SHIELD] != 0 && opt[IDX_CHEAT_DISABLE_BOSS_BOMB_SHIELD] != 1) {
@@ -279,7 +272,7 @@ public final class GameOptions {
         if ((opt[IDX_RENDER_MISC_FLAGS] & ~RENDER_MISC_MASK) != 0) {
             return false;
         }
-        if (opt[IDX_LANGUAGE] < 0 || opt[IDX_LANGUAGE] > LANG_ZHT) {
+        if (opt[IDX_LANGUAGE] > LANG_ZHT) {
             return false;
         }
         return true;

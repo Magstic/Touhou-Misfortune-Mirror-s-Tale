@@ -51,6 +51,7 @@ public final class BgmLiteBuilder {
         long end;
         int pitch;
         int velocity;
+
         Note(long start, int pitch, int velocity) {
             this.start = start;
             this.pitch = pitch;
@@ -59,11 +60,15 @@ public final class BgmLiteBuilder {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 2) throw new IllegalArgumentException("Usage: BgmLiteBuilder <res/bgm> <res/bgm-lite>");
+        if (args.length != 2) {
+            throw new IllegalArgumentException("Usage: BgmLiteBuilder <res/bgm> <res/bgm-lite>");
+        }
         File source = new File(args[0]);
         File output = new File(args[1]);
         for (int song = 0; song < LOOP.length; song++) {
-            if (!BgmCatalog.isBattleTrack(song)) continue;
+            if (!BgmCatalog.isBattleTrack(song)) {
+                continue;
+            }
             File single = new File(source, song + ".mid");
             if (single.isFile()) {
                 arrange(single, new File(output, single.getName()), song, false);
@@ -77,18 +82,29 @@ public final class BgmLiteBuilder {
 
     private static boolean melody(int song, boolean intro, int channel, double beat) {
         int[] plan = intro ? INTRO[song] : LOOP[song];
-        if (intro) return channel == plan[MELODY] || channel == plan[ALT_MELODY];
+        if (intro) {
+            return channel == plan[MELODY] || channel == plan[ALT_MELODY];
+        }
         // These arrangements hand the melody to another instrument between phrases.
         switch (song) {
-            case 3: return channel == (beat < 32 ? 3 : beat < 96 ? 0 : 1);
-            case 5: return channel == (beat >= 14 && beat < 144 ? 0 : 5);
-            case 6: return channel == (beat < 62 ? 0 : beat < 128 ? 4 : 12);
-            case 7: return channel == (beat < 160 ? 3 : 10);
-            case 9: return channel == (beat < 209 ? 0 : 3);
-            case 10: return channel == (beat < 31.5 ? 11 : 0);
-            case 13: return channel == (beat >= 127 && beat < 256 ? 0 : 1);
-            case 17: return channel == (beat < 64 ? 0 : 1);
-            default: return channel == plan[MELODY] || channel == plan[ALT_MELODY];
+            case 3:
+                return channel == (beat < 32 ? 3 : beat < 96 ? 0 : 1);
+            case 5:
+                return channel == (beat >= 14 && beat < 144 ? 0 : 5);
+            case 6:
+                return channel == (beat < 62 ? 0 : beat < 128 ? 4 : 12);
+            case 7:
+                return channel == (beat < 160 ? 3 : 10);
+            case 9:
+                return channel == (beat < 209 ? 0 : 3);
+            case 10:
+                return channel == (beat < 31.5 ? 11 : 0);
+            case 13:
+                return channel == (beat >= 127 && beat < 256 ? 0 : 1);
+            case 17:
+                return channel == (beat < 64 ? 0 : 1);
+            default:
+                return channel == plan[MELODY] || channel == plan[ALT_MELODY];
         }
     }
 
@@ -101,7 +117,9 @@ public final class BgmLiteBuilder {
                 MidiEvent event = track.get(i);
                 MidiMessage message = event.getMessage();
                 if (message instanceof MetaMessage && ((MetaMessage) message).getType() != META_END_OF_TRACK) {
-                    if (((MetaMessage) message).getType() != META_TRACK_NAME) conductor.add(copy(event));
+                    if (((MetaMessage) message).getType() != META_TRACK_NAME) {
+                        conductor.add(copy(event));
+                    }
                 } else if (message.getStatus() == 0xF0 || message.getStatus() == 0xF7) {
                     conductor.add(copy(event));
                 }
@@ -113,17 +131,23 @@ public final class BgmLiteBuilder {
         for (int channel = 0; channel < 16; channel++) {
             List<Note> notes = notes(original, channel);
             before += notes.size();
-            List<Note> selected = new ArrayList<Note>();
+            List<Note> selected = new ArrayList<Note> ();
             long[] drumAt = { -1000000, -1000000, -1000000, -1000000 };
             for (Note note : notes) {
                 double beat = note.start / (double) original.getResolution();
                 boolean lead = melody(song, intro, channel, beat);
                 if (channel == DRUM_CHANNEL) {
                     int family = drumFamily(note.pitch);
-                    if (family < 0) continue;
+                    if (family < 0) {
+                        continue;
+                    }
                     long gap = original.getResolution() / (family == 2 ? 2 : 4);
-                    if (family == 3 && note.start % (original.getResolution() * 4) > original.getResolution() / 16) continue;
-                    if (note.start - drumAt[family] < gap) continue;
+                    if (family == 3 && note.start % (original.getResolution() * 4) > original.getResolution() / 16) {
+                        continue;
+                    }
+                    if (note.start - drumAt[family] < gap) {
+                        continue;
+                    }
                     drumAt[family] = note.start;
                     note.end = Math.min(note.end, note.start + original.getResolution() / 4);
                 } else if (!lead && channel != plan[HARMONY] && channel != plan[BASS]) {
@@ -131,8 +155,12 @@ public final class BgmLiteBuilder {
                 }
                 selected.add(note);
             }
-            if (selected.isEmpty()) continue;
-            if (channel != DRUM_CHANNEL) selected = limitVoices(selected, channel == plan[BASS] ? 1 : 2, channel == plan[BASS]);
+            if (selected.isEmpty()) {
+                continue;
+            }
+            if (channel != DRUM_CHANNEL) {
+                selected = limitVoices(selected, channel == plan[BASS] ? 1 : 2, channel == plan[BASS]);
+            }
             Track target = lite.createTrack();
             String role = channel == DRUM_CHANNEL ? "Drums" : channel == plan[BASS] ? "Bass" : channel == plan[HARMONY] ? "Harmony" : "Melody";
             MetaMessage title = new MetaMessage();
@@ -142,11 +170,17 @@ public final class BgmLiteBuilder {
             for (Track track : original.getTracks()) {
                 for (int i = 0; i < track.size(); i++) {
                     MidiEvent event = track.get(i);
-                    if (!(event.getMessage() instanceof ShortMessage)) continue;
+                    if (!(event.getMessage() instanceof ShortMessage)) {
+                        continue;
+                    }
                     ShortMessage message = (ShortMessage) event.getMessage();
-                    if (message.getChannel() != channel || message.getCommand() == ShortMessage.NOTE_OFF || message.getCommand() == ShortMessage.NOTE_ON) continue;
+                    if (message.getChannel() != channel || message.getCommand() == ShortMessage.NOTE_OFF || message.getCommand() == ShortMessage.NOTE_ON) {
+                        continue;
+                    }
                     int cc = message.getData1();
-                    if (message.getCommand() == ShortMessage.CONTROL_CHANGE && (cc == CC_PAN || cc == CC_SUSTAIN || cc == CC_REVERB || cc == CC_CHORUS)) continue;
+                    if (message.getCommand() == ShortMessage.CONTROL_CHANGE && (cc == CC_PAN || cc == CC_SUSTAIN || cc == CC_REVERB || cc == CC_CHORUS)) {
+                        continue;
+                    }
                     target.add(copy(event));
                 }
             }
@@ -156,7 +190,9 @@ public final class BgmLiteBuilder {
             add(target, 0, ShortMessage.CONTROL_CHANGE, channel, CC_REVERB, 0);
             add(target, 0, ShortMessage.CONTROL_CHANGE, channel, CC_CHORUS, 0);
             for (Note note : selected) {
-                if (note.end <= note.start) continue;
+                if (note.end <= note.start) {
+                    continue;
+                }
                 add(target, note.start, ShortMessage.NOTE_ON, channel, note.pitch, note.velocity);
                 add(target, note.end, ShortMessage.NOTE_OFF, channel, note.pitch, 0);
                 after++;
@@ -169,52 +205,83 @@ public final class BgmLiteBuilder {
     }
 
     private static List<Note> notes(Sequence sequence, int channel) {
-        List<Note> result = new ArrayList<Note>();
-        List<long[]> pedals = new ArrayList<long[]>();
+        List<Note> result = new ArrayList<Note> ();
+        List<long[]> pedals = new ArrayList<long[]> ();
         long pedalStart = -1;
-        List<ArrayDeque<Note>> held = new ArrayList<ArrayDeque<Note>>();
-        for (int i = 0; i < 128; i++) held.add(new ArrayDeque<Note>());
-        for (Track track : sequence.getTracks()) for (int i = 0; i < track.size(); i++) {
-            MidiEvent event = track.get(i);
-            if (!(event.getMessage() instanceof ShortMessage)) continue;
-            ShortMessage message = (ShortMessage) event.getMessage();
-            if (message.getChannel() != channel) continue;
-            int command = message.getCommand(), pitch = message.getData1();
-            if (command == ShortMessage.NOTE_ON && message.getData2() > 0) {
-                Note note = new Note(event.getTick(), pitch, message.getData2());
-                note.end = sequence.getTickLength();
-                held.get(pitch).add(note); result.add(note);
-            } else if (command == ShortMessage.NOTE_OFF || command == ShortMessage.NOTE_ON) {
-                if (!held.get(pitch).isEmpty()) held.get(pitch).remove().end = event.getTick();
-            } else if (command == ShortMessage.CONTROL_CHANGE && pitch == CC_SUSTAIN) {
-                if (message.getData2() >= 64 && pedalStart < 0) pedalStart = event.getTick();
-                if (message.getData2() < 64 && pedalStart >= 0) {
-                    pedals.add(new long[] { pedalStart, event.getTick() }); pedalStart = -1;
+        List<ArrayDeque<Note>> held = new ArrayList<ArrayDeque<Note>> ();
+        for (int i = 0; i < 128; i++) {
+            held.add(new ArrayDeque<Note> ());
+        }
+        for (Track track : sequence.getTracks()) {
+            for (int i = 0; i < track.size(); i++) {
+                MidiEvent event = track.get(i);
+                if (!(event.getMessage() instanceof ShortMessage)) {
+                    continue;
+                }
+                ShortMessage message = (ShortMessage) event.getMessage();
+                if (message.getChannel() != channel) {
+                    continue;
+                }
+                int command = message.getCommand(), pitch = message.getData1();
+                if (command == ShortMessage.NOTE_ON && message.getData2() > 0) {
+                    Note note = new Note(event.getTick(), pitch, message.getData2());
+                    note.end = sequence.getTickLength();
+                    held.get(pitch).add(note);
+                    result.add(note);
+                } else if (command == ShortMessage.NOTE_OFF || command == ShortMessage.NOTE_ON) {
+                    if (!held.get(pitch).isEmpty()) {
+                        held.get(pitch).remove().end = event.getTick();
+                    }
+                } else if (command == ShortMessage.CONTROL_CHANGE && pitch == CC_SUSTAIN) {
+                    if (message.getData2() >= 64 && pedalStart < 0) {
+                        pedalStart = event.getTick();
+                    }
+                    if (message.getData2() < 64 && pedalStart >= 0) {
+                        pedals.add(new long[] { pedalStart, event.getTick() });
+                        pedalStart = -1;
+                    }
                 }
             }
         }
-        if (pedalStart >= 0) pedals.add(new long[] { pedalStart, sequence.getTickLength() });
-        for (Note note : result) for (long[] pedal : pedals) {
-            if (note.end >= pedal[0] && note.end < pedal[1]) { note.end = pedal[1]; break; }
+        if (pedalStart >= 0) {
+            pedals.add(new long[] { pedalStart, sequence.getTickLength() });
         }
-        Collections.sort(result, new Comparator<Note>() {
-            public int compare(Note a, Note b) { return a.start == b.start ? b.pitch - a.pitch : Long.compare(a.start, b.start); }
+        for (Note note : result) {
+            for (long[] pedal : pedals) {
+                if (note.end >= pedal[0] && note.end < pedal[1]) {
+                    note.end = pedal[1];
+                    break;
+                }
+            }
+        }
+        Collections.sort(result, new Comparator<Note> () {
+            public int compare(Note a, Note b) {
+                return a.start == b.start ? b.pitch - a.pitch : Long.compare(a.start, b.start);
+            }
         });
         return result;
     }
 
     private static List<Note> limitVoices(List<Note> source, int limit, boolean bass) {
-        List<Note> result = new ArrayList<Note>(), active = new ArrayList<Note>();
+        List<Note> result = new ArrayList<Note> (), active = new ArrayList<Note> ();
         for (int i = 0; i < source.size();) {
             long tick = source.get(i).start;
             int end = i + 1;
-            while (end < source.size() && source.get(end).start == tick) end++;
-            for (int n = active.size() - 1; n >= 0; n--) if (active.get(n).end <= tick) active.remove(n);
-            List<Note> chord = new ArrayList<Note>();
+            while (end < source.size() && source.get(end).start == tick) {
+                end++;
+            }
+            for (int n = active.size() - 1; n >= 0; n--) {
+                if (active.get(n).end <= tick) {
+                    active.remove(n);
+                }
+            }
+            List<Note> chord = new ArrayList<Note> ();
             for (int n = i; n < end && chord.size() < limit; n++) {
                 Note note = source.get(bass ? end - 1 - (n - i) : n);
                 // Identical note-ons are stacked unison copies, not another voice.
-                if (chord.isEmpty() || chord.get(chord.size() - 1).pitch != note.pitch) chord.add(note);
+                if (chord.isEmpty() || chord.get(chord.size() - 1).pitch != note.pitch) {
+                    chord.add(note);
+                }
             }
             for (int n = active.size() - 1; n >= 0; n--) {
                 for (Note note : chord) {
@@ -223,10 +290,12 @@ public final class BgmLiteBuilder {
                         break;
                     }
                 }
+            } while (active.size() + chord.size() > limit) {
+                active.remove(0).end = tick;
             }
-            while (active.size() + chord.size() > limit) { active.remove(0).end = tick; }
             for (Note note : chord) {
-                active.add(note); result.add(note);
+                active.add(note);
+                result.add(note);
             }
             i = end;
         }
@@ -234,17 +303,31 @@ public final class BgmLiteBuilder {
     }
 
     private static int drumFamily(int pitch) {
-        if (pitch == 35 || pitch == 36) return 0;
-        if (pitch == 38 || pitch == 40) return 1;
-        if (pitch == 42 || pitch == 46) return 2;
+        if (pitch == 35 || pitch == 36) {
+            return 0;
+        }
+        if (pitch == 38 || pitch == 40) {
+            return 1;
+        }
+        if (pitch == 42 || pitch == 46) {
+            return 2;
+        }
         return pitch == 49 ? 3 : -1;
     }
 
-    private static MidiEvent copy(MidiEvent event) { return new MidiEvent((MidiMessage) event.getMessage().clone(), event.getTick()); }
-    private static void add(Track track, long tick, int command, int channel, int a, int b) throws Exception {
-        ShortMessage message = new ShortMessage(); message.setMessage(command, channel, a, b); track.add(new MidiEvent(message, tick));
+    private static MidiEvent copy(MidiEvent event) {
+        return new MidiEvent((MidiMessage) event.getMessage().clone(), event.getTick());
     }
+
+    private static void add(Track track, long tick, int command, int channel, int a, int b) throws Exception {
+        ShortMessage message = new ShortMessage();
+        message.setMessage(command, channel, a, b);
+        track.add(new MidiEvent(message, tick));
+    }
+
     private static void finish(Track track, long tick) throws Exception {
-        MetaMessage end = new MetaMessage(); end.setMessage(META_END_OF_TRACK, new byte[0], 0); track.add(new MidiEvent(end, tick));
+        MetaMessage end = new MetaMessage();
+        end.setMessage(META_END_OF_TRACK, new byte[0], 0);
+        track.add(new MidiEvent(end, tick));
     }
 }

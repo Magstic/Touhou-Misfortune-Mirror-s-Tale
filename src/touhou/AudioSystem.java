@@ -14,11 +14,6 @@ public final class AudioSystem implements PlayerListener {
     private static final int STATE_UNREALIZED = 100;
     private static final int STATE_PREFETCHED = 300;
 
-    private static final int TRACK_CACHE_SIZE = BgmCatalog.TRACK_COUNT;
-
-    // MIDI only: load the selected arrangement from indexed segments.
-    private static final String PACK_PREFIX = "pack:";
-
     // Offsets and lengths are read lazily from the BGMP file header.
     private BgmPack midiPack = new BgmPack(ResourcePaths.BGM_PACK);
     private boolean heavyBgmEnabled = true;
@@ -52,14 +47,9 @@ public final class AudioSystem implements PlayerListener {
     private boolean phaseIntro;
     private boolean phaseStarted;
 
-    private String introPath;
-    private String loopPath;
-    private String singlePath;
-
-    private final boolean[] trackResolved = new boolean[TRACK_CACHE_SIZE];
-    private final String[] cachedIntroPath = new String[TRACK_CACHE_SIZE];
-    private final String[] cachedLoopPath = new String[TRACK_CACHE_SIZE];
-    private final String[] cachedSinglePath = new String[TRACK_CACHE_SIZE];
+    private int introEntry = -1;
+    private int loopEntry = -1;
+    private int singleEntry = -1;
 
     private Player player;
 
@@ -83,31 +73,23 @@ public final class AudioSystem implements PlayerListener {
     private boolean pendingLoopNativeLoop;
     private boolean pendingLoopListenerActive;
 
-    private boolean packAvailabilityChecked;
-    private boolean midiPackAvailable;
-
-    public AudioSystem() {
-    }
-
     public void setHeavyBgmEnabled(boolean enabled) {
-        if (heavyBgmEnabled == enabled) return;
+        if (heavyBgmEnabled == enabled) {
+            return;
+        }
         heavyBgmEnabled = enabled;
-        if (BgmCatalog.isBattleTrack(currentTrack)) stopBgm();
+        if (BgmCatalog.isBattleTrack(currentTrack)) {
+            stopBgm();
+        }
     }
 
     private void selectPack(int trackId) {
         String path = !heavyBgmEnabled && BgmCatalog.isBattleTrack(trackId)
                 ? ResourcePaths.BGM_LITE_PACK : ResourcePaths.BGM_PACK;
-        if (midiPack.resourcePath.equals(path)) return;
-        midiPack = new BgmPack(path);
-        packAvailabilityChecked = false;
-        midiPackAvailable = false;
-        for (int i = 0; i < TRACK_CACHE_SIZE; i++) {
-            trackResolved[i] = false;
-            cachedIntroPath[i] = null;
-            cachedLoopPath[i] = null;
-            cachedSinglePath[i] = null;
+        if (midiPack.resourcePath.equals(path)) {
+            return;
         }
+        midiPack = new BgmPack(path);
     }
 
     public void toggleBgmEnabled() {
@@ -192,9 +174,9 @@ public final class AudioSystem implements PlayerListener {
         currentTrack = -1;
         phaseIntro = false;
         phaseStarted = false;
-        introPath = null;
-        loopPath = null;
-        singlePath = null;
+        introEntry = -1;
+        loopEntry = -1;
+        singleEntry = -1;
         bgmPaused = false;
         bgmPausedMediaTimeValid = false;
         bgmStatePollCnt = 0;
@@ -316,40 +298,19 @@ public final class AudioSystem implements PlayerListener {
         currentTrack = trackId;
         currentLoop = loop;
 
-        resolveTrackPaths(trackId);
-        phaseIntro = (introPath != null);
+        resolveTrackEntries(trackId);
+        phaseIntro = introEntry >= 0;
         phaseStarted = false;
 
         bgmStatePollCnt = 0;
         bgmEndOfMediaPending = false;
     }
 
-    private void resolveTrackPaths(int trackId) {
-        introPath = null;
-        loopPath = null;
-        singlePath = null;
-
-        if (trackId >= 0 && trackId < TRACK_CACHE_SIZE && trackResolved[trackId]) {
-            introPath = cachedIntroPath[trackId];
-            loopPath = cachedLoopPath[trackId];
-            singlePath = cachedSinglePath[trackId];
-            return;
-        }
-
-        ensurePackAvailabilityChecked();
-        if (midiPackAvailable) {
-            int base = trackId * BgmCatalog.PART_COUNT;
-            introPath = resolvePackEntryPath(base + BgmCatalog.PART_INTRO);
-            loopPath = resolvePackEntryPath(base + BgmCatalog.PART_LOOP);
-            singlePath = resolvePackEntryPath(base + BgmCatalog.PART_SINGLE);
-        }
-
-        if (trackId >= 0 && trackId < TRACK_CACHE_SIZE) {
-            cachedIntroPath[trackId] = introPath;
-            cachedLoopPath[trackId] = loopPath;
-            cachedSinglePath[trackId] = singlePath;
-            trackResolved[trackId] = true;
-        }
+    private void resolveTrackEntries(int trackId) {
+        int base = trackId * BgmCatalog.PART_COUNT;
+        introEntry = resolvePackEntry(base + BgmCatalog.PART_INTRO);
+        loopEntry = resolvePackEntry(base + BgmCatalog.PART_LOOP);
+        singleEntry = resolvePackEntry(base + BgmCatalog.PART_SINGLE);
     }
 
     private boolean switchFromIntroToLoopOrSingle() {
@@ -371,19 +332,8 @@ public final class AudioSystem implements PlayerListener {
         }
 
         // Create synchronously when no pre-created player is available.
-        if (!currentLoop && singlePath != null) {
-            createPlayerFromPath(singlePath);
-            return player != null;
-        }
-        if (loopPath != null) {
-            createPlayerFromPath(loopPath);
-            return player != null;
-        }
-        if (singlePath != null) {
-            createPlayerFromPath(singlePath);
-            return player != null;
-        }
-        return false;
+        createPlayerFromEntry(loopOrSingleEntry());
+        return player != null;
     }
 
     private void ensurePlayerCreated() {
@@ -396,23 +346,7 @@ public final class AudioSystem implements PlayerListener {
             return;
         }
 
-        String path;
-        if (phaseIntro) {
-            path = introPath;
-        } else {
-            if (!currentLoop && singlePath != null) {
-                path = singlePath;
-            } else if (loopPath != null) {
-                path = loopPath;
-            } else {
-                path = singlePath;
-            }
-        }
-
-        if (path == null) {
-            return;
-        }
-        createPlayerFromPath(path);
+        createPlayerFromEntry(phaseIntro ? introEntry : loopOrSingleEntry());
 
         // Pre-create loop player while intro plays, so intro->loop switch is instant.
         if (player != null && phaseIntro) {
@@ -420,59 +354,19 @@ public final class AudioSystem implements PlayerListener {
         }
     }
 
-    private void createPlayerFromPath(String path) {
-        if (effectiveBgmVol() == 0) {
-            return;
+    private int loopOrSingleEntry() {
+        if (!currentLoop && singleEntry >= 0) {
+            return singleEntry;
         }
-        if (path == null) {
-            return;
-        }
-        createPlayerFromPackPath(path);
+        return loopEntry >= 0 ? loopEntry : singleEntry;
     }
 
-    private boolean shouldNativeLoopPath(String path) {
-        if (path == null) {
-            return false;
-        }
-        if (loopPath != null) {
-            return path.equals(loopPath);
-        }
-        return path.equals(singlePath);
+    private int resolvePackEntry(int entryIndex) {
+        return midiPack.hasEntry(entryIndex) ? entryIndex : -1;
     }
 
-    private void ensurePackAvailabilityChecked() {
-        if (packAvailabilityChecked) {
-            return;
-        }
-        packAvailabilityChecked = true;
-        midiPackAvailable = ResourceLoader.exists(midiPack.resourcePath);
-    }
-
-    private static boolean isPackPath(String path) {
-        return path != null && path.startsWith(PACK_PREFIX);
-    }
-
-    private static String makePackPath(int entryIndex) {
-        return PACK_PREFIX + entryIndex;
-    }
-
-    private String resolvePackEntryPath(int entryIndex) {
-        if (!midiPackAvailable) {
-            return null;
-        }
-        if (!midiPack.hasEntry(entryIndex)) {
-            return null;
-        }
-        return makePackPath(entryIndex);
-    }
-
-    private void createPlayerFromPackPath(String path) {
-        if (!isPackPath(path)) {
-            return;
-        }
-
-        int entry = entryIndexFromPath(path);
-        if (entry < 0) {
+    private void createPlayerFromEntry(int entry) {
+        if (effectiveBgmVol() == 0 || entry < 0) {
             return;
         }
 
@@ -502,7 +396,7 @@ public final class AudioSystem implements PlayerListener {
             } catch (Throwable ignore) {
             }
 
-            boolean wantNativeLoop = !phaseIntro && currentLoop && shouldNativeLoopPath(path);
+            boolean wantNativeLoop = !phaseIntro && currentLoop;
             if (wantNativeLoop) {
                 try {
                     player.setLoopCount(-1);
@@ -527,17 +421,6 @@ public final class AudioSystem implements PlayerListener {
                 } catch (Throwable ignore) {
                 }
             }
-        }
-    }
-
-    private static int entryIndexFromPath(String path) {
-        if (!isPackPath(path)) {
-            return -1;
-        }
-        try {
-            return Integer.parseInt(path.substring(PACK_PREFIX.length()));
-        } catch (Throwable t) {
-            return -1;
         }
     }
 
@@ -615,7 +498,6 @@ public final class AudioSystem implements PlayerListener {
         final String resourcePath;
 
         // Lazily populated from file header
-        private int trackCount;
         private int[] offsets;
         private int[] lengths;
         private boolean headerLoaded;
@@ -640,7 +522,7 @@ public final class AudioSystem implements PlayerListener {
 
                 // Validate magic
                 int m = dis.readInt();
-                if (m != 0x42474D50) { // 'B','G','M','P'
+                if (m != BgmCatalog.PACK_MAGIC) {
                     headerFailed = true;
                     return;
                 }
@@ -648,7 +530,7 @@ public final class AudioSystem implements PlayerListener {
                 int version = dis.readShort() & 0xFFFF;
                 int codec = dis.readByte() & 0xFF;
                 int partCount = dis.readByte() & 0xFF;
-                trackCount = dis.readShort() & 0xFFFF;
+                int trackCount = dis.readShort() & 0xFFFF;
                 int entryCount = dis.readShort() & 0xFFFF;
                 int reserved = dis.readInt();
                 if (version != BgmCatalog.PACK_VERSION || codec != BgmCatalog.CODEC_MIDI || partCount != BgmCatalog.PART_COUNT
@@ -686,26 +568,17 @@ public final class AudioSystem implements PlayerListener {
                 headerFailed = true;
             } finally {
                 if (raw != null) {
-                    try { raw.close(); } catch (Throwable ignore) {}
+                    try {
+                        raw.close();
+                    } catch (Throwable ignore) {
+                    }
                 }
             }
         }
 
         boolean hasEntry(int entryIndex) {
             ensureHeader();
-            if (!headerLoaded) {
-                return false;
-            }
-            if (entryIndex < 0) {
-                return false;
-            }
-            if (entryIndex >= trackCount * BgmCatalog.PART_COUNT) {
-                return false;
-            }
-            if (entryIndex >= offsets.length || entryIndex >= lengths.length) {
-                return false;
-            }
-            return offsets[entryIndex] >= 0 && lengths[entryIndex] > 0;
+            return headerLoaded && entryIndex >= 0 && entryIndex < lengths.length && lengths[entryIndex] > 0;
         }
 
         InputStream openEntry(int entryIndex) throws IOException {
@@ -769,19 +642,7 @@ public final class AudioSystem implements PlayerListener {
         if (pendingLoopPlayer != null) {
             return;
         }
-        String path;
-        if (!currentLoop && singlePath != null) {
-            path = singlePath;
-        } else if (loopPath != null) {
-            path = loopPath;
-        } else {
-            path = singlePath;
-        }
-        if (path == null || !isPackPath(path)) {
-            return;
-        }
-
-        int entry = entryIndexFromPath(path);
+        int entry = loopOrSingleEntry();
         if (entry < 0) {
             return;
         }
@@ -811,7 +672,7 @@ public final class AudioSystem implements PlayerListener {
             }
 
             pendingLoopNativeLoop = false;
-            boolean wantNativeLoop = currentLoop && shouldNativeLoopPath(path);
+            boolean wantNativeLoop = currentLoop;
             if (wantNativeLoop) {
                 try {
                     pendingLoopPlayer.setLoopCount(-1);

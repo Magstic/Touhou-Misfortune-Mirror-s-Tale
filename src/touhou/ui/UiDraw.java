@@ -188,8 +188,12 @@ public final class UiDraw {
 
     // UI fade steps retain the original 16-level sprite-alpha policy; the renderer itself is exact.
     public static int spriteAlpha(int alpha) {
-        if (alpha <= 0) return 0;
-        if (alpha >= 255) return 255;
+        if (alpha <= 0) {
+            return 0;
+        }
+        if (alpha >= 255) {
+            return 255;
+        }
         int a = (alpha + 8) & 0xF0;
         return a <= 0 ? 16 : a >= 255 ? 255 : a;
     }
@@ -396,7 +400,9 @@ public final class UiDraw {
 
     public static void drawGradationAlpha(Graphics g, int x, int y, int w, int h,
             int colorFrom, int colorTo, int steps, int alpha) {
-        if (steps <= 0 || w <= 0 || h <= 0 || alpha <= 0) return;
+        if (steps <= 0 || w <= 0 || h <= 0 || alpha <= 0) {
+            return;
+        }
         alpha = Math.min(alpha, 255);
         int stepH = h / steps;
         int r = (colorFrom >> 16) & 255, green = (colorFrom >> 8) & 255, blue = colorFrom & 255;
@@ -412,7 +418,9 @@ public final class UiDraw {
     }
 
     public static void fillRectAlpha(Graphics g, int x, int y, int w, int h, int rgb, int alpha) {
-        if (w <= 0 || h <= 0 || alpha <= 0) return;
+        if (w <= 0 || h <= 0 || alpha <= 0) {
+            return;
+        }
         if (alpha >= 255) {
             g.setColor(rgb & 0x00FFFFFF);
             g.fillRect(x, y, w, h);
@@ -425,7 +433,9 @@ public final class UiDraw {
         int left = Math.max(x, g.getClipX()), top = Math.max(y, g.getClipY());
         int right = Math.min(x + w, g.getClipX() + g.getClipWidth());
         int bottom = Math.min(y + h, g.getClipY() + g.getClipHeight());
-        if (left >= right || top >= bottom) return;
+        if (left >= right || top >= bottom) {
+            return;
+        }
         int blockW = Math.min(right - left, ALPHA_STRIP_WIDTH);
         int blockH = Math.min(bottom - top, ALPHA_STRIP_HEIGHT);
         int argb = (alpha << 24) | (rgb & 0xFFFFFF);
@@ -444,14 +454,20 @@ public final class UiDraw {
     }
 
     private static void fillArgb(Graphics g, int x, int y, int w, int h, int argb) {
-        if (w <= 0 || h <= 0 || g.getClipWidth() <= 0 || g.getClipHeight() <= 0) return;
+        if (w <= 0 || h <= 0 || g.getClipWidth() <= 0 || g.getClipHeight() <= 0) {
+            return;
+        }
         int left = Math.max(x, g.getClipX()), top = Math.max(y, g.getClipY());
         int right = Math.min(x + w, g.getClipX() + g.getClipWidth());
         int bottom = Math.min(y + h, g.getClipY() + g.getClipHeight());
-        if (left >= right || top >= bottom) return;
+        if (left >= right || top >= bottom) {
+            return;
+        }
         int blockW = Math.min(right - left, ALPHA_STRIP_WIDTH);
         int blockH = Math.min(bottom - top, ALPHA_STRIP_HEIGHT);
-        for (int i = 0; i < blockW * blockH; i++) alphaPixels[i] = argb;
+        for (int i = 0; i < blockW * blockH; i++) {
+            alphaPixels[i] = argb;
+        }
         // drawRGB consumes the strip synchronously; reuse it for every visible block.
         for (int yy = top; yy < bottom; yy += blockH) {
             for (int xx = left; xx < right; xx += blockW) {

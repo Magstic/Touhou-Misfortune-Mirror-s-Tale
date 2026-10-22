@@ -630,9 +630,7 @@ public class StageDochu {
             int ang = 0;
             if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
                 ang = (360 / div >> 1);
-            }
-
-            while (ang < 360) {
+            } while (ang < 360) {
                 enemyBullets.spawn(82, moveType, base + ang, d3 << 3, ex, ey, px, py);
                 ang += 360 / div;
             }
@@ -663,8 +661,7 @@ public class StageDochu {
             int ang = 0;
             if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
                 ang = (360 / div >> 1) + (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] << 3);
-            }
-            while (ang < 360) {
+            } while (ang < 360) {
                 enemyBullets.spawn(82, moveType, base + ang, d3 << 3, ex, ey, px, py);
                 ang += 360 / div;
             }
@@ -792,7 +789,7 @@ public class StageDochu {
     }
 
     // Mirrors GameCanvas.stageEb (partial): stage 4 fodder shooting patterns (enemyType 70).
-    public void tickEnemyShootingStageJ(int enemyIndex, int[][] enemylist, int enemyType, int ex, int ey, int px, int py, int level) {
+    public void tickEnemyShootingStageJ(int enemyIndex, int[][] enemylist, int enemyType, int ex, int ey, int px, int py) {
         if (enemyBullets == null) {
             return;
         }
@@ -813,7 +810,7 @@ public class StageDochu {
     }
 
     // Mirrors GameCanvas.stageEb (partial): stage EXTRA fodder enemy bullet patterns (enemyType 90-97).
-    public void tickEnemyShootingStageK(int enemyIndex, int[][] enemylist, int enemyType, int ex, int ey, int px, int py, int level) {
+    public void tickEnemyShootingStageK(int enemyIndex, int[][] enemylist, int enemyType, int ex, int ey, int px, int py) {
         if (enemyBullets == null) {
             return;
         }
@@ -896,8 +893,7 @@ public class StageDochu {
                 int ang = 0;
                 if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
                     ang = (360 / div) >> 1;
-                }
-                while (ang < 360) {
+                } while (ang < 360) {
                     enemyBullets.spawn(86, mt, enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + ang, 40, ex, ey, px, py);
                     ang += 360 / div;
                 }

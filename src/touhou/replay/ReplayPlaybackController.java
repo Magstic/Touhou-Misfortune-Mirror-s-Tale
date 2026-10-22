@@ -2,18 +2,7 @@ package touhou.replay;
 
 import touhou.battle.BattleSessionConfig;
 
-
 public final class ReplayPlaybackController {
-    public static final class StartParams {
-        public int gamemode;
-        public int level;
-        public int chara;
-        public int type;
-        public int startStage;
-        public int spellId;
-        public boolean practiceBoss;
-    }
-
     public static final class FrameInput {
         public int keys;
         public int pressed;
@@ -24,15 +13,8 @@ public final class ReplayPlaybackController {
     private int framePos;
     private byte[] frames;
 
-    private final byte[] dialoguePageCounts = new byte[ReplayHeader.DIALOGUE_MAX];
-    private int dialoguePageCountLen;
-
-    private final ReplayHeader header = new ReplayHeader();
+    private ReplayHeader header;
     private final FrameInput frameInput = new FrameInput();
-
-    public ReplayPlaybackController() {
-        stop();
-    }
 
     public boolean isActive() {
         return active;
@@ -42,36 +24,19 @@ public final class ReplayPlaybackController {
         return framePos;
     }
 
-    public int getBossStartFrame() {
-        return header.getBossStartFrame();
-    }
-
     public void stop() {
         active = false;
         framePos = 0;
         frames = null;
-
-        for (int i = 0; i < dialoguePageCounts.length; i++) {
-            dialoguePageCounts[i] = 0;
-        }
-        dialoguePageCountLen = 0;
+        header = null;
     }
 
-    public StartParams startFromSlot(int slot, boolean bossOnly) {
+    public ReplaySlotData startFromSlot(int slot, boolean bossOnly) {
         ReplaySlotData data = ReplaySlotStore.loadSlot(slot);
         if (data == null || (bossOnly && (data.header.getBossStartFrame() < 0 || data.header.getMode() == BattleSessionConfig.MODE_SPELL_PRACTICE))) {
             stop();
             return null;
         }
-        header.clear();
-        header.load(data.header.bytes());
-
-        dialoguePageCountLen = header.getDialoguePageCountLen();
-        for (int i = 0; i < dialoguePageCounts.length; i++) {
-            int v = header.getDialoguePageCountAt(i);
-            dialoguePageCounts[i] = (byte) ((v < 0) ? 0 : (v & 0xFF));
-        }
-
         frames = ReplayCodec.decode(data.fullInput);
         if (frames == null) {
             stop();
@@ -80,30 +45,12 @@ public final class ReplayPlaybackController {
 
         active = true;
         framePos = 0;
-
-        StartParams sp = new StartParams();
-        sp.gamemode = header.getMode();
-        sp.level = header.getDifficulty();
-        sp.chara = header.getChara();
-        sp.type = header.getType();
-        sp.startStage = header.getStage();
-        sp.spellId = header.getSpellId();
-        // A practice recording marked at frame zero starts in Boss practice, not at the stage intro.
-        sp.practiceBoss = sp.gamemode == BattleSessionConfig.MODE_STAGE_PRACTICE && header.getBossStartFrame() == 0;
-        return sp;
+        header = data.header;
+        return data;
     }
 
     public int getRecordedDialoguePageCount(int encounterIndex) {
-        if (!active) {
-            return -1;
-        }
-        if (encounterIndex < 0 || encounterIndex >= ReplayHeader.DIALOGUE_MAX) {
-            return -1;
-        }
-        if (encounterIndex >= dialoguePageCountLen) {
-            return -1;
-        }
-        return dialoguePageCounts[encounterIndex] & 0xFF;
+        return active ? header.getDialoguePageCountAt(encounterIndex) : -1;
     }
 
     public boolean wantsQuitToMenu(int pressed) {
@@ -111,11 +58,7 @@ public final class ReplayPlaybackController {
     }
 
     public FrameInput nextFrame() {
-        if (!active) {
-            return null;
-        }
-
-        if (frames == null || framePos >= ReplayCodec.FRAME_COUNT) {
+        if (!active || framePos >= ReplayCodec.FRAME_COUNT) {
             return null;
         }
 

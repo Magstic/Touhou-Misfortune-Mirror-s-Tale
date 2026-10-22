@@ -32,7 +32,9 @@ public final class UiTextLayout {
             if (c == '\r' || c == '\n') {
                 addLine(lines, text, lineStart, i);
                 i++;
-                if (c == '\r' && i < text.length() && text.charAt(i) == '\n') i++;
+                if (c == '\r' && i < text.length() && text.charAt(i) == '\n') {
+                    i++;
+                }
                 lineStart = i;
                 width = 0;
                 breakEnd = -1;
@@ -124,16 +126,26 @@ public final class UiTextLayout {
             return false;
         }
         int next = index;
-        while (next < text.length() && isWhitespace(text.charAt(next))) next++;
-        if (next < text.length() && isClosing(text, next)) return false;
-        if (next != index) return true;
+        while (next < text.length() && isWhitespace(text.charAt(next))) {
+            next++;
+        }
+        if (next < text.length() && isClosing(text, next)) {
+            return false;
+        }
+        if (next != index) {
+            return true;
+        }
         return !isWordPart(text, index - 1) || !isWordPart(text, index);
     }
 
     private static boolean isOpening(String text, int index) {
         char c = text.charAt(index);
-        if (OPENING.indexOf(c) >= 0) return true;
-        if (c != '\'' && c != '"') return false;
+        if (OPENING.indexOf(c) >= 0) {
+            return true;
+        }
+        if (c != '\'' && c != '"') {
+            return false;
+        }
         return index == 0 || isWhitespace(text.charAt(index - 1))
                 || text.charAt(index - 1) == '\r' || text.charAt(index - 1) == '\n'
                 || OPENING.indexOf(text.charAt(index - 1)) >= 0;
@@ -146,7 +158,9 @@ public final class UiTextLayout {
 
     private static boolean isWordPart(String text, int index) {
         char c = text.charAt(index);
-        if (isWordChar(c)) return true;
+        if (isWordChar(c)) {
+            return true;
+        }
         return (c == '\'' || c == '’') && index > 0 && index + 1 < text.length()
                 && isWordChar(text.charAt(index - 1)) && isWordChar(text.charAt(index + 1));
     }
@@ -157,7 +171,9 @@ public final class UiTextLayout {
     }
 
     private static void addLine(Vector lines, String text, int start, int end) {
-        while (end > start && isWhitespace(text.charAt(end - 1))) end--;
+        while (end > start && isWhitespace(text.charAt(end - 1))) {
+            end--;
+        }
         lines.addElement(text.substring(start, end));
     }
 

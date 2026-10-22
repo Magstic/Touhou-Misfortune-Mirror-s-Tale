@@ -149,9 +149,6 @@ final class I18nPack {
         for (int i = 0; i < count; i++) {
             int slot = mix(parsedKeys[i].hashCode()) & mask;
             while (slots[slot] != 0) {
-                if (parsedKeys[slots[slot] - 1].equals(parsedKeys[i])) {
-                    return false;
-                }
                 slot = (slot + 1) & mask;
             }
             slots[slot] = i + 1;

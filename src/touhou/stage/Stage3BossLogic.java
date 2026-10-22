@@ -6,15 +6,6 @@ import touhou.battle.BattleSessionConfig;
 
 final class Stage3BossLogic extends AbstractBossStageLogic {
     void tickBossImpl(int enemyIdx) {
-        pb(enemyIdx);
-    }
-
-    void tickMidbossImpl(int enemyIdx) {
-        mb(enemyIdx);
-    }
-
-    // Boss
-    void pb(int enemyIdx) {
         int[][] enemylist = host.getEnemyList();
         int[] bossx = host.getBossX();
         int[] bossy = host.getBossY();
@@ -34,7 +25,6 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 bossx[idx] = 97;
                 bossy[idx] = 56;
                 core.bspellcnt = 255;
-                core.batkf = false;
                 host.setResetFlag(4);
                 return;
 
@@ -50,7 +40,6 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 core.bspellcnt = 255;
                 enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 393216;
                 enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 393216;
-                core.batkf = false;
                 if (gc <= 10) {
                     return;
                 }
@@ -58,7 +47,7 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 if (host.getGameMode() == BattleSessionConfig.MODE_SPELL_PRACTICE) {
                     core.bspellcnt = 120;
                     int step = host.getSpellPracticeBossStep();
-                    wb(step);
+                    transitionBossPhase(step);
                     switch (step) {
                         case 10:
                             core.j = 1200;
@@ -73,28 +62,28 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                             core.j = 5100;
                             break;
                     }
-                    yb(enemyIdx, 5, 3);
+                    core.beginHpBarAnimation(enemyIdx, 5, 3);
                     return;
                 }
 
                 switch (host.getBstock()) {
                     case 2:
                         core.j = 1000;
-                        yb(enemyIdx, 5, 1);
+                        core.beginHpBarAnimation(enemyIdx, 5, 1);
                         core.bspellcnt = 34;
-                        wb(3);
+                        transitionBossPhase(3);
                         return;
                     case 1:
                         core.j = 1000;
-                        yb(enemyIdx, 5, 1);
+                        core.beginHpBarAnimation(enemyIdx, 5, 1);
                         core.bspellcnt = 39;
-                        wb(4);
+                        transitionBossPhase(4);
                         return;
                     case 0:
                         core.j = 1800;
-                        yb(enemyIdx, 5, 3);
+                        core.beginHpBarAnimation(enemyIdx, 5, 3);
                         core.bspellcnt = 59;
-                        wb(16);
+                        transitionBossPhase(16);
                         host.setBbaria(2);
                         return;
                 }
@@ -104,12 +93,11 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 if (core.m == 2 || core.bspellcnt < 0) {
                     host.setResetFlag(4);
                     core.j = 65535;
-                    yb(core.l, core.n, 2);
-                    wb(10);
+                    core.beginHpBarAnimation(core.l, core.n, 2);
+                    transitionBossPhase(10);
                     return;
                 }
                 host.setBbaria(0);
-                core.batkf = true;
                 int d0 = gc % 200;
                 if ((d0 % 50) == 0) {
                     if (host.getPlayerXFixed() < enemylist[enemyIdx][StageRuntime.ENEMY_X]) {
@@ -161,8 +149,8 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
 
                     for (int pos = 0; pos < 360; pos += stepPos) {
                         int dir = baseDir + pos;
-                        int se = (int) ((((long) Trig.cos(dir)) * 400L) >> 3);
-                        int te = (int) ((((long) Trig.sin(dir)) * 400L) >> 3);
+                        int se = (int) (((Trig.cos(dir)) * 400L) >> 3);
+                        int te = (int) (((Trig.sin(dir)) * 400L) >> 3);
                         int sx = enemylist[enemyIdx][StageRuntime.ENEMY_X] + se;
                         int sy = enemylist[enemyIdx][StageRuntime.ENEMY_Y] + te;
 
@@ -181,12 +169,11 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 if (core.m == 2 || core.bspellcnt < 0) {
                     host.setResetFlag(4);
                     core.j = 65535;
-                    yb(core.l, core.n, 2);
-                    wb(13);
+                    core.beginHpBarAnimation(core.l, core.n, 2);
+                    transitionBossPhase(13);
                     return;
                 }
                 host.setBbaria(0);
-                core.batkf = true;
                 d0 = gc % 110;
                 if (d0 == 95) {
                     if ((gc / 100) == 0) {
@@ -232,8 +219,8 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
 
                     if (((d3 << 1) * step) < 180) {
                         int dir = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] + 90 - ((d3 << 1) * step);
-                        int se = (int) ((((long) Trig.cos(dir)) * 400L) >> 3);
-                        int te = (int) ((((long) Trig.sin(dir)) * 400L) >> 3);
+                        int se = (int) (((Trig.cos(dir)) * 400L) >> 3);
+                        int te = (int) (((Trig.sin(dir)) * 400L) >> 3);
                         int sx = ex4 + se;
                         int sy = ey4 + (te >> 1);
 
@@ -271,8 +258,8 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
 
                     if (((d3 << 1) * step) < 180) {
                         int dir = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] - 90 + ((d3 << 1) * step);
-                        int se = (int) ((((long) Trig.cos(dir)) * 400L) >> 3);
-                        int te = (int) ((((long) Trig.sin(dir)) * 400L) >> 3);
+                        int se = (int) (((Trig.cos(dir)) * 400L) >> 3);
+                        int te = (int) (((Trig.sin(dir)) * 400L) >> 3);
                         int sx = ex4 + se;
                         int sy = ey4 + (te >> 1);
 
@@ -327,13 +314,12 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 bossy[idx] = 68;
                 enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
                 enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
-                core.batkf = false;
                 host.setBbaria(2);
                 if (gc > 30) {
                     host.setQ(true);
                     core.bspellstep = 1;
                     core.spellId = 34 + host.getLevel();
-                    wb(11);
+                    transitionBossPhase(11);
                 }
                 return;
 
@@ -352,11 +338,10 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 if (gc > 30) {
                     enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
-                    core.batkf = true;
                     host.setBbaria(0);
-                    wb(12);
+                    transitionBossPhase(12);
                     core.j = 1200;
-                    yb(enemyIdx, 5, 2);
+                    core.beginHpBarAnimation(enemyIdx, 5, 2);
                 }
                 return;
 
@@ -529,13 +514,12 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 bossy[idx] = 68;
                 enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
                 enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
-                core.batkf = false;
                 host.setBbaria(2);
                 if (gc > 30) {
                     host.setQ(true);
                     core.bspellstep = 1;
                     core.spellId = 38 + host.getLevel();
-                    wb(14);
+                    transitionBossPhase(14);
                 }
                 return;
 
@@ -554,11 +538,10 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 if (gc > 30) {
                     enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
-                    core.batkf = true;
                     host.setBbaria(0);
-                    wb(15);
+                    transitionBossPhase(15);
                     core.j = 2000;
-                    yb(enemyIdx, 5, 2);
+                    core.beginHpBarAnimation(enemyIdx, 5, 2);
                 }
                 return;
 
@@ -616,8 +599,8 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                     } else {
                         for (int g = 0; g < groups; g++) {
                             int dir = d0 + (360 * g) / groups;
-                            int se = (int) ((((long) Trig.cos(dir)) * 480L) >> 3);
-                            int te = (int) ((((long) Trig.sin(dir)) * 480L) >> 3);
+                            int se = (int) (((Trig.cos(dir)) * 480L) >> 3);
+                            int te = (int) (((Trig.sin(dir)) * 480L) >> 3);
                             int sx = ex15 + se;
                             int sy = ey15 + te;
                             for (int a = 0; a < 360; a += step) {
@@ -661,14 +644,13 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 bossy[idx] = 121;
                 enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
                 enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
-                core.batkf = false;
                 if (gc > 30) {
                     host.setQ(true);
                     enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 65536;
                     enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 65536;
                     core.bspellstep = 1;
                     core.spellId = 42 + host.getLevel();
-                    wb(17);
+                    transitionBossPhase(17);
                 }
                 return;
 
@@ -689,9 +671,8 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                     enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 0;
                     enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
-                    core.batkf = true;
                     host.setBbaria(0);
-                    wb(18);
+                    transitionBossPhase(18);
                 }
                 return;
 
@@ -1077,13 +1058,12 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 bossy[idx] = 68;
                 enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
                 enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
-                core.batkf = false;
                 host.setBbaria(2);
                 if (gc > 30) {
                     host.setQ(true);
                     core.bspellstep = 1;
                     core.spellId = 111;
-                    wb(38);
+                    transitionBossPhase(38);
                 }
                 return;
 
@@ -1102,9 +1082,8 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 if (gc > 30) {
                     enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
-                    core.batkf = true;
                     host.setBbaria(0);
-                    wb(39);
+                    transitionBossPhase(39);
                 }
                 return;
 
@@ -1627,8 +1606,7 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
         }
     }
 
-    // midboss
-    void mb(int enemyIdx) {
+    void tickMidbossImpl(int enemyIdx) {
         int[][] enemylist = host.getEnemyList();
         int[] bossx = host.getBossX();
         int[] bossy = host.getBossY();
@@ -1638,14 +1616,13 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 bossx[0] = 97;
                 bossy[0] = 68;
                 core.bspellcnt = 255;
-                core.batkf = false;
                 host.setResetFlag(4);
                 enemylist[enemyIdx][StageRuntime.ENEMY_TARGETABLE] = 0;
                 if (host.getMGCnt() > 250) {
                     enemylist[enemyIdx][StageRuntime.ENEMY_TARGETABLE] = 1;
                     core.j = enemylist[enemyIdx][StageRuntime.ENEMY_HP];
-                    yb(enemyIdx, 5, 1);
-                    vb(enemyIdx, 1);
+                    core.beginHpBarAnimation(enemyIdx, 5, 1);
+                    transitionEnemyState(enemyIdx, 1);
                     return;
                 }
                 return;
@@ -1658,24 +1635,22 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                     bossx[0] = 97;
                     bossy[0] = 68;
                 }
-                core.batkf = false;
                 enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                 if (host.getGameMode() == BattleSessionConfig.MODE_SPELL_PRACTICE) {
                     core.bspellcnt = 120;
                     enemylist[enemyIdx][StageRuntime.ENEMY_HP] = 1200;
                     core.j = enemylist[enemyIdx][StageRuntime.ENEMY_HP];
-                    yb(enemyIdx, 5, 3);
-                    vb(enemyIdx, 8);
+                    core.beginHpBarAnimation(enemyIdx, 5, 3);
+                    transitionEnemyState(enemyIdx, 8);
                 } else {
                     core.bspellcnt = 29;
-                    vb(enemyIdx, 3);
+                    transitionEnemyState(enemyIdx, 3);
                 }
                 host.getBossWrk()[1] = 1;
                 return;
 
             case 3:
                 enemylist[enemyIdx][StageRuntime.ENEMY_TARGETABLE] = 1;
-                core.batkf = true;
                 enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
 
                 int mg3 = host.getMGCnt();
@@ -1798,7 +1773,7 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 }
 
                 if (core.bspellcnt < 0) {
-                    vb(enemyIdx, 2);
+                    transitionEnemyState(enemyIdx, 2);
                     return;
                 }
                 return;
@@ -1808,13 +1783,12 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 bossy[0] = 58;
                 enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
                 enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
-                core.batkf = false;
                 enemylist[enemyIdx][StageRuntime.ENEMY_TARGETABLE] = 0;
                 if (host.getMGCnt() > 30) {
                     host.setQ(true);
                     core.bspellstep = 1;
                     core.spellId = 30 + host.getLevel();
-                    vb(enemyIdx, 9);
+                    transitionEnemyState(enemyIdx, 9);
                     return;
                 }
                 return;
@@ -1834,12 +1808,11 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                 if (host.getMGCnt() > 30) {
                     enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
-                    core.batkf = true;
                     enemylist[enemyIdx][StageRuntime.ENEMY_TARGETABLE] = 1;
-                    vb(enemyIdx, 10);
+                    transitionEnemyState(enemyIdx, 10);
                     enemylist[enemyIdx][StageRuntime.ENEMY_HP] = 1200;
                     core.j = enemylist[enemyIdx][StageRuntime.ENEMY_HP];
-                    yb(enemyIdx, 5, 2);
+                    core.beginHpBarAnimation(enemyIdx, 5, 2);
                     return;
                 }
                 return;
@@ -1853,7 +1826,7 @@ final class Stage3BossLogic extends AbstractBossStageLogic {
                         return;
                     }
                     host.setResetFlag(4);
-                    vb(enemyIdx, 2);
+                    transitionEnemyState(enemyIdx, 2);
                     return;
                 }
 

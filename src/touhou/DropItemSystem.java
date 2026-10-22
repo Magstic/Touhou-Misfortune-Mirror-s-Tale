@@ -60,18 +60,6 @@ public final class DropItemSystem {
         this.listener = listener;
     }
 
-    public int capacity() {
-        return slots.capacity();
-    }
-
-    public int activeCount() {
-        return slots.activeCount();
-    }
-
-    public boolean isActive(int index) {
-        return slots.isActive(index);
-    }
-
     public void clear() {
         slots.clear();
         for (int i = 0; i < CAPACITY; i++) {

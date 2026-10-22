@@ -161,7 +161,7 @@ public final class GameProgress {
         }
         ensureLoaded();
         if (stage > stageProgress[level]) {
-            SpStore.write(OFFSET_STAGE_PROGRESS + level, new byte[] { (byte) stage });
+            SpStore.write(OFFSET_STAGE_PROGRESS + level, new byte[] {(byte) stage });
             stageProgress[level] = stage;
         }
     }
@@ -253,12 +253,15 @@ public final class GameProgress {
     public synchronized void incClearCount() {
         incrementCounter(UD_TOTAL_CLEAR_COUNT);
     }
+
     public synchronized void incContinueCount() {
         incrementCounter(UD_TOTAL_CONTINUE_COUNT);
     }
+
     public synchronized void incRetryCount() {
         incrementCounter(UD_TOTAL_RETRY_COUNT);
     }
+
     public synchronized void incPlayCountExtra() {
         incrementCounter(UD_EXTRA_COUNT);
     }

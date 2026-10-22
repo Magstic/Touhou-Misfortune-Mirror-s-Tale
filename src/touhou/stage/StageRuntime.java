@@ -64,7 +64,7 @@ public final class StageRuntime {
     public static final int ENEMY_CAPACITY = 32;
     public static final int EFFECT_CAPACITY = 64;
     private static final int BOSS_WORK_SIZE = 28;
-    private static final UiTextLayout.Measurer DIALOGUE_MEASURER = new FontTextMeasurer(null);
+    private static final UiTextLayout.Measurer DIALOGUE_MEASURER = new FontTextMeasurer();
 
     private static void fillPlayRect(Graphics g, int x, int y, int w, int h, int playX, int playY, int playW, int playH) {
         if (w <= 0 || h <= 0) {
@@ -97,12 +97,13 @@ public final class StageRuntime {
     }
 
     public interface StageServices {
-        void playSound(int id, boolean loop);
+        void requestBgm(int trackId);
 
         // Toggle rendering of red hit spark rectangles (DoJa effectId 2/21).
         boolean isHitSparkEnabled();
 
         int[][] getEffectTable();
+
         void spawnBulletEffect(int effectId, int xFixed, int yFixed);
 
         int randomNextInt();
@@ -112,19 +113,25 @@ public final class StageRuntime {
 
     public interface StageFlow {
         boolean shouldEnterEndingAfterStageClear();
+
         void beginEndingTransition();
+
         void enterStageClearResultPanel();
     }
 
     public interface Host extends StageServices, StageFlow {
         void clearDropItems();
+
         void clearEnemies();
+
         void resetBossController();
 
         int getStage();
+
         int getGameMode();
 
         int getBstock();
+
         void setBstock(int v);
 
         void setEnemyAabb(int idx, int xFixed, int yFixed,
@@ -134,53 +141,69 @@ public final class StageRuntime {
         int stageNa();
 
         int getStep();
+
         void setStep(int v);
 
         int getTaCnt();
+
         void setTaCnt(int v);
 
         void setIFlash(int v);
 
         void stageHd(int enemyIdx);
+
         void stageUb(int enemyIdx);
+
         void stageDb(int enemyIdx);
+
         void stageEb(int enemyIdx);
 
         void freeEnemy(int enemyIdx);
 
         int getOriginX();
+
         int getOriginY();
 
         int getPlayX();
+
         int getPlayY();
+
         int getPlayW();
+
         int getPlayH();
 
         int getBossF();
+
         void setBossF(int v);
 
         int getMGCnt();
+
         void setMGCnt(int v);
 
         void setBbaria(int v);
 
         void setLatterFlag(boolean v);
+
         void setBossMode(boolean v);
 
         int[] getBossX();
+
         int[] getBossY();
 
         int getStartLevel();
 
         boolean isReplayPlaybackActive();
+
         boolean isReplayRecordingActive();
 
         void recordDialoguePageCount(int encounterIndex, int pageCount);
+
         int getRecordedDialoguePageCount(int encounterIndex);
 
         void markBossStart();
 
         void setResetFlag(int v);
+
         void setHFlash(int v);
 
         void setTargetFps(int fps);
@@ -839,9 +862,7 @@ public final class StageRuntime {
 
         if (step < 0 || step >= stageTable[na].length) {
             return;
-        }
-
-        while (step >= 0 && step < stageTable[na].length && stageTable[na][step][StageDat.FRAME] <= gcnt) {
+        } while (step >= 0 && step < stageTable[na].length && stageTable[na][step][StageDat.FRAME] <= gcnt) {
             int op = stageTable[na][step][StageDat.OP];
             if (op == StageDat.RESTART) {
                 step = 0;
@@ -945,7 +966,7 @@ public final class StageRuntime {
                     int yFixed = stageTable[na][step][4] << 16;
                     stageKc(id, xFixed, yFixed);
                 } else if (op == StageDat.BGM) {
-                    host.playSound(stageTable[na][step][2], true);
+                    host.requestBgm(stageTable[na][step][2]);
                 } else if (op == StageDat.SAVE_PROGRESS) {
                     stagePd(stageTable[na][step][2]);
                 } else if (op == StageDat.UNLOCK) {
@@ -1307,7 +1328,9 @@ public final class StageRuntime {
         String[] lines = UiTextLayout.wrap(text.replace('|', '\n'), 168, DIALOGUE_MEASURER);
         StringBuffer out = new StringBuffer();
         for (int i = 0; i < lines.length; i++) {
-            if (i > 0) out.append('|');
+            if (i > 0) {
+                out.append('|');
+            }
             out.append(lines[i]);
         }
         return out.toString();

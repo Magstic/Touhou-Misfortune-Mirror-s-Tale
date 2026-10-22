@@ -62,7 +62,7 @@ public final class BattleScene {
         }
     }
 
-    public void render(GameCore core, Graphics g) {
+    public void render(Graphics g) {
         battleRenderer.render(battleRenderAccess, g);
     }
 
@@ -114,7 +114,7 @@ public final class BattleScene {
                 nextStage = st + 1;
             }
         }
-        StageClearResultPanel.Result r = panel.update(pressed, nextStage);
+        int action = panel.update(pressed, nextStage);
 
         if (!wasLeaving && panel.isLeaving()) {
             core.battleFlowClearStageClearPhoto();
@@ -131,7 +131,7 @@ public final class BattleScene {
             }
         }
 
-        if (r != null && r.kind == StageClearResultPanel.Result.KIND_ADVANCE_STAGE) {
+        if (action == StageClearResultPanel.ACTION_ADVANCE_STAGE) {
             panel.leave(core.battleFlowImgs());
             core.battleFlowSetStageClearPanelActive(false);
             core.battleFlowClearStageClearPhoto();
@@ -161,13 +161,11 @@ public final class BattleScene {
                 this.audioSystem.playSeType(SoundEffectSystem.SE_BACK);
             }
 
-            SpellPracticeEndScreen.Result r = core.battleFlowSpellPracticeEndScreen().update(pressed);
-            if (r != null) {
-                if (r.kind == SpellPracticeEndScreen.Result.KIND_RETRY) {
-                    core.restartBattle();
-                } else if (r.kind == SpellPracticeEndScreen.Result.KIND_EXIT) {
-                    core.endSpellPracticeToMenu();
-                }
+            int action = core.battleFlowSpellPracticeEndScreen().update(pressed);
+            if (action == SpellPracticeEndScreen.ACTION_RETRY) {
+                core.restartBattle();
+            } else if (action == SpellPracticeEndScreen.ACTION_EXIT) {
+                core.endSpellPracticeToMenu();
             }
             return true;
         }
@@ -197,29 +195,23 @@ public final class BattleScene {
 
         BattlePauseScreen pauseScreen = core.battlePauseScreen();
         if (pauseScreen != null) {
-            BattlePauseScreen.Result r = pauseScreen.update(pressed);
-            if (r != null) {
-                if (r.kind == BattlePauseScreen.Result.KIND_RESUME) {
-                    core.battlePauseResume();
-                } else if (r.kind == BattlePauseScreen.Result.KIND_TOGGLE_BGM) {
-                    audioSystem.toggleBgmEnabled();
-                } else if (r.kind == BattlePauseScreen.Result.KIND_QUIT_TO_TITLE) {
-                    core.battlePauseQuitToTitle();
-                } else if (r.kind == BattlePauseScreen.Result.KIND_RESTART) {
-                    if (core.battleFlowIsSpellPractice()) {
-                        core.battlePauseRestart();
-                    } else {
-                        if (core.bossHostGetGameMode() == 0) {
-                            core.battlePauseRestartFromBeginning();
-                        } else {
-                            core.battlePauseRestart();
-                        }
-                    }
-                } else if (r.kind == BattlePauseScreen.Result.KIND_CONTINUE_YES) {
-                    core.battlePauseTryContinueYes();
-                } else if (r.kind == BattlePauseScreen.Result.KIND_CONTINUE_NO) {
-                    core.battlePauseContinueNo();
+            int action = pauseScreen.update(pressed);
+            if (action == BattlePauseScreen.ACTION_RESUME) {
+                core.battlePauseResume();
+            } else if (action == BattlePauseScreen.ACTION_TOGGLE_BGM) {
+                audioSystem.toggleBgmEnabled();
+            } else if (action == BattlePauseScreen.ACTION_QUIT_TO_TITLE) {
+                core.battlePauseQuitToTitle();
+            } else if (action == BattlePauseScreen.ACTION_RESTART) {
+                if (!core.battleFlowIsSpellPractice() && core.bossHostGetGameMode() == BattleSessionConfig.MODE_STORY) {
+                    core.battlePauseRestartFromBeginning();
+                } else {
+                    core.battlePauseRestart();
                 }
+            } else if (action == BattlePauseScreen.ACTION_CONTINUE_YES) {
+                core.battlePauseTryContinueYes();
+            } else if (action == BattlePauseScreen.ACTION_CONTINUE_NO) {
+                core.battlePauseContinueNo();
             }
         }
         return true;
@@ -239,7 +231,7 @@ public final class BattleScene {
         int deadcntBefore = core.battleMainGetDeadcnt();
         boolean dialogueActive = core.battleMainIsDialogueActiveForInput();
 
-        core.battleMainTickInput(keys, pressed, fireActionPressed, dialogueActive);
+        core.battleMainTickInput(pressed, fireActionPressed, dialogueActive);
 
         if (core.battleMainAdvanceAndHandleDeath()) {
             return;

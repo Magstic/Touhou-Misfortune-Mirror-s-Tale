@@ -4,23 +4,14 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
 import touhou.SpriteRenderer;
-import touhou.GameCore;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 import touhou.replay.ReplaySaveService;
 
 public final class SpellPracticeEndScreen {
-    public static final class Result {
-        public static final int KIND_NONE = 0;
-        public static final int KIND_RETRY = 1;
-        public static final int KIND_EXIT = 2;
-
-        public final int kind;
-
-        public Result(int kind) {
-            this.kind = kind;
-        }
-    }
+    public static final int ACTION_NONE = 0;
+    public static final int ACTION_RETRY = 1;
+    public static final int ACTION_EXIT = 2;
 
     private static final int SCENE_RETRY_ASK = 0;
     private static final int SCENE_REPLAY_ASK_SAVE = 1;
@@ -49,45 +40,45 @@ public final class SpellPracticeEndScreen {
         replayAnimationTick = 0;
     }
 
-    public Result update(int pressed) {
+    public int update(int pressed) {
         replayAnimationTick++;
         if (scene == SCENE_RETRY_ASK) {
             if (UiInput.anyVertical(pressed)) {
                 cursor = MenuCursor.toggleTwo(cursor);
-                return null;
+                return ACTION_NONE;
             }
             if (UiInput.confirm(pressed)) {
                 if (cursor == 0) {
-                    return new Result(Result.KIND_RETRY);
+                    return ACTION_RETRY;
                 }
                 // If replay recording is disabled (e.g. cheat mode), there is no pending replay to save.
                 if (!ReplaySaveService.hasPending()) {
-                    return new Result(Result.KIND_EXIT);
+                    return ACTION_EXIT;
                 }
                 scene = SCENE_REPLAY_ASK_SAVE;
                 cursor = 0;
             }
-            return null;
+            return ACTION_NONE;
         }
 
         if (scene == SCENE_REPLAY_ASK_SAVE) {
             if (!ReplaySaveService.hasPending()) {
-                return new Result(Result.KIND_EXIT);
+                return ACTION_EXIT;
             }
             if (UiInput.anyVertical(pressed)) {
                 cursor = MenuCursor.toggleTwo(cursor);
-                return null;
+                return ACTION_NONE;
             }
             if (UiInput.confirm(pressed)) {
                 if (cursor == 0) {
-                    return new Result(Result.KIND_EXIT);
+                    return ACTION_EXIT;
                 }
                 enterReplaySlotScene();
             }
             if (UiInput.cancel(pressed)) {
-                return new Result(Result.KIND_EXIT);
+                return ACTION_EXIT;
             }
-            return null;
+            return ACTION_NONE;
         }
 
         if (scene == SCENE_REPLAY_SLOT) {
@@ -98,20 +89,17 @@ public final class SpellPracticeEndScreen {
             } else if (UiInput.confirm(pressed)) {
                 scene = SCENE_REPLAY_SAVE;
             } else if (UiInput.cancel(pressed)) {
-                return new Result(Result.KIND_EXIT);
+                return ACTION_EXIT;
             }
         } else if (scene == SCENE_REPLAY_OK) {
             if (UiInput.confirm(pressed)) {
                 enterReplaySlotScene();
             }
             if (UiInput.cancel(pressed)) {
-                return new Result(Result.KIND_EXIT);
+                return ACTION_EXIT;
             }
         } else if (scene == SCENE_REPLAY_FAIL) {
-            if (UiInput.confirm(pressed)) {
-                enterReplaySlotScene();
-            }
-            if (UiInput.cancel(pressed)) {
+            if (UiInput.dismiss(pressed)) {
                 enterReplaySlotScene();
             }
         }
@@ -121,7 +109,7 @@ public final class SpellPracticeEndScreen {
             scene = ok ? SCENE_REPLAY_OK : SCENE_REPLAY_FAIL;
         }
 
-        return null;
+        return ACTION_NONE;
     }
 
     public int getLeftSoftkeyTextId() {

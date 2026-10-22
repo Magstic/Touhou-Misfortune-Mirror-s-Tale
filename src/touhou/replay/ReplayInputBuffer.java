@@ -6,10 +6,6 @@ public final class ReplayInputBuffer {
     private final byte[] frames = new byte[FRAME_COUNT];
     private int pos;
 
-    public ReplayInputBuffer() {
-        clear();
-    }
-
     public void clear() {
         for (int i = 0; i < FRAME_COUNT; i++) {
             frames[i] = 0;

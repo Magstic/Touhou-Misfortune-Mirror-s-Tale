@@ -6,13 +6,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -65,9 +65,6 @@ public final class I18nPackBuilder {
     }
 
     private static void validateTextIds() throws Exception {
-        if (TextId.COUNT != I18nSchema.UI_LINE_COUNT) {
-            throw new IOException("TextId.COUNT differs from i18n schema");
-        }
         boolean[] used = new boolean[TextId.COUNT];
         Field[] fields = TextId.class.getFields();
         for (int i = 0; i < fields.length; i++) {
@@ -91,7 +88,7 @@ public final class I18nPackBuilder {
         if (!directory.isDirectory()) {
             throw new IOException("Missing i18n directory: " + directory.getPath());
         }
-        List<File> files = new ArrayList<File>();
+        List<File> files = new ArrayList<File> ();
         collectFiles(directory, files);
         if (files.size() == 0) {
             throw new IOException("Empty i18n directory: " + directory.getPath());
@@ -330,7 +327,7 @@ public final class I18nPackBuilder {
         if (length == 0) {
             return new String[0];
         }
-        List<String> lines = new ArrayList<String>();
+        List<String> lines = new ArrayList<String> ();
         int start = 0;
         for (int i = 0; i <= length; i++) {
             if (i < length && text.charAt(i) != '\n') {

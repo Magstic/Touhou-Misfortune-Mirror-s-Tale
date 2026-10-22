@@ -3,28 +3,16 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
-import touhou.SpriteRenderer;
 import touhou.ImageBank;
 import touhou.bt.BtSppLink;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
-import touhou.replay.ReplayHeader;
 import touhou.replay.ReplayFormat;
-import touhou.replay.ReplaySlotStore;
+import touhou.replay.ReplayHeader;
 import touhou.replay.ReplayShareService;
+import touhou.replay.ReplaySlotStore;
 
 public final class ReplaySendScreen {
-    public static final class Result {
-        public static final int KIND_NONE = 0;
-        public static final int KIND_BACK_TO_REPLAY = 1;
-
-        public final int kind;
-
-        public Result(int kind) {
-            this.kind = kind;
-        }
-    }
-
     private static final Font FONT = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
     private static final Font FONT_M = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_MEDIUM);
 
@@ -54,12 +42,11 @@ public final class ReplaySendScreen {
     private final ReplayPreview preview = new ReplayPreview();
     private final ReplayTransferProgress progress = new ReplayTransferProgress();
 
-    private ImageBank imgs;
-
     private BtSppLink.CancelRef cancelRef;
 
     // Used to ignore stale callbacks from previous worker threads.
     private int sessionId;
+
     public void enter(int slot) {
         sessionId++;
         this.slot = slot;
@@ -87,7 +74,7 @@ public final class ReplaySendScreen {
         startWorker();
     }
 
-    public Result update(int pressed) {
+    public boolean update(int pressed) {
         decoTick++;
         applyPendingFromWorker();
         progress.update(System.currentTimeMillis(), sendDone);
@@ -96,33 +83,25 @@ public final class ReplaySendScreen {
             if (scene == SCENE_SENDING) {
                 requestCancel();
             }
-            return new Result(Result.KIND_BACK_TO_REPLAY);
+            return true;
         }
 
         if (scene == SCENE_MESSAGE) {
             if (UiInput.dismiss(pressed)) {
-                return new Result(Result.KIND_BACK_TO_REPLAY);
+                return true;
             }
-            return null;
+            return false;
         }
 
-        return null;
+        return false;
     }
 
     public int getLeftSoftkeyTextId() {
         return scene == SCENE_SENDING ? TextId.SOFTKEY_CANCEL : TextId.SOFTKEY_BACK;
     }
 
-    public void render(Graphics g, ImageBank imgs, SpriteRenderer sprites) {
-        if (g == null) {
-            return;
-        }
-
-        if (imgs != null) {
-            this.imgs = imgs;
-        }
-
-        ReplayUi.renderBackground(g, this.imgs);
+    public void render(Graphics g, ImageBank imgs) {
+        ReplayUi.renderBackground(g, imgs);
 
         UiDraw.drawString2(g, FONT, UiText.get(TextId.BT_SEND_TITLE), 120, 25, 1, 0xFFFFFF, 0x777777);
 

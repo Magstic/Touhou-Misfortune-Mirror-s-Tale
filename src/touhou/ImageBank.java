@@ -6,19 +6,19 @@ import javax.microedition.lcdui.Image;
 
 public final class ImageBank {
     private static final int[][] STAGEEX_TD = new int[][] {
-            { 0x0E7625, 0x109325, 0x104C26, 0x0EB71B, 0x12A627, 0x0E8323, 0x16CE2A, 0x0C6322, 0x17EC28, 0x13D920, 0x10F90C, 0x22C44E, 0x26D356,
-                    0x0A4621, 0x083F1D, 0x073C1B },
-            { 0x600E76, 0x6F1093, 0x48104C, 0x7A0EB7, 0x7B12A6, 0x650E83, 0x9216CE, 0x530C63, 0xA017EC, 0x9013D9, 0x8F0CF9, 0xA922C4, 0xB826D3,
-                    0x430A46, 0x3C083F, 0x39073C },
-            { 0x766C0E, 0x937F10, 0x494C10, 0xB78E0E, 0xA68D12, 0x83730E, 0xCEA816, 0x635D0C, 0xECB917, 0xD9A713, 0xF9AA0C, 0xC4BC22, 0xD3CC26,
-                    0x42460A, 0x3B3F08, 0x383C07 },
-            { 0x0D5428, 0x106B2E, 0x0CFD0B, 0x158237, 0x19F62F, 0x18D033, 0x0B8A1A, 0x2CCD6A, 0x1BB041, 0x2BE664, 0x27B460, 0x1FEA43, 0x0EAA1D,
-                    0x1F9C4E, 0x1FCA48, 0x073C1C },
-            { 0x540D35, 0x6B1049, 0xFD0BF2, 0x82155A, 0xF619D4, 0xD018AB, 0x8A0B75, 0xCD2C87, 0xB01B82, 0xE62BA4, 0xB42774, 0xEA1FBC, 0xAA0E93,
-                    0x9C1F66, 0xCA1F99, 0x3C0724 },
-            { 0x39540D, 0x4D6B10, 0xFDFB0B, 0x608215, 0xDFF619, 0xB4D018, 0x7B8A0B, 0x8ECD2C, 0x89B01B, 0xACE62B, 0x7AB427, 0xC6EA1F, 0x9AAA0E,
-                    0x6C9C1F, 0xA1CA1F, 0x273C07 },
-    };
+        { 0x0E7625, 0x109325, 0x104C26, 0x0EB71B, 0x12A627, 0x0E8323, 0x16CE2A, 0x0C6322, 0x17EC28, 0x13D920, 0x10F90C, 0x22C44E, 0x26D356,
+            0x0A4621, 0x083F1D, 0x073C1B },
+        { 0x600E76, 0x6F1093, 0x48104C, 0x7A0EB7, 0x7B12A6, 0x650E83, 0x9216CE, 0x530C63, 0xA017EC, 0x9013D9, 0x8F0CF9, 0xA922C4, 0xB826D3,
+            0x430A46, 0x3C083F, 0x39073C },
+        { 0x766C0E, 0x937F10, 0x494C10, 0xB78E0E, 0xA68D12, 0x83730E, 0xCEA816, 0x635D0C, 0xECB917, 0xD9A713, 0xF9AA0C, 0xC4BC22, 0xD3CC26,
+            0x42460A, 0x3B3F08, 0x383C07 },
+        { 0x0D5428, 0x106B2E, 0x0CFD0B, 0x158237, 0x19F62F, 0x18D033, 0x0B8A1A, 0x2CCD6A, 0x1BB041, 0x2BE664, 0x27B460, 0x1FEA43, 0x0EAA1D,
+            0x1F9C4E, 0x1FCA48, 0x073C1C },
+        { 0x540D35, 0x6B1049, 0xFD0BF2, 0x82155A, 0xF619D4, 0xD018AB, 0x8A0B75, 0xCD2C87, 0xB01B82, 0xE62BA4, 0xB42774, 0xEA1FBC, 0xAA0E93,
+            0x9C1F66, 0xCA1F99, 0x3C0724 },
+        { 0x39540D, 0x4D6B10, 0xFDFB0B, 0x608215, 0xDFF619, 0xB4D018, 0x7B8A0B, 0x8ECD2C, 0x89B01B, 0xACE62B, 0x7AB427, 0xC6EA1F, 0x9AAA0E,
+            0x6C9C1F, 0xA1CA1F, 0x273C07 },
+            };
 
     private final SpriteCatalog catalog;
     private final Image[] images;
@@ -55,7 +55,9 @@ public final class ImageBank {
         darkness = new byte[images.length];
         opacity = new int[images.length];
         tints = new int[images.length];
-        for (int i = 0; i < opacity.length; i++) opacity[i] = 255;
+        for (int i = 0; i < opacity.length; i++) {
+            opacity[i] = 255;
+        }
 
         alphaKeyImageCacheImg = new Image[12];
         alphaKeyImageCacheImgIndex = new int[12];
@@ -76,12 +78,16 @@ public final class ImageBank {
 
     public Image get(int imgIndex) {
         Image cached = images[imgIndex];
-        if (cached != null) return cached;
+        if (cached != null) {
+            return cached;
+        }
         try {
             Image img = catalog.variantBase(imgIndex) >= 0 || darkness[imgIndex] != 0 || tints[imgIndex] != 0
                     ? buildPaletteImage(imgIndex)
                     : Image.createImage(catalog.imagePath(imgIndex));
-            if (opacity[imgIndex] != 255) img = createAlphaImage(img, opacity[imgIndex]);
+            if (opacity[imgIndex] != 255) {
+                img = createAlphaImage(img, opacity[imgIndex]);
+            }
             images[imgIndex] = img;
             return img;
         } catch (IOException e) {
@@ -94,10 +100,14 @@ public final class ImageBank {
         boolean[] keep = new boolean[images.length];
         for (int i = 0; i < groups.length; i++) {
             int[] group = groups[i];
-            for (int j = 0; j < group.length; j++) keep[group[j]] = true;
+            for (int j = 0; j < group.length; j++) {
+                keep[group[j]] = true;
+            }
         }
         for (int i = 0; i < images.length; i++) {
-            if (!keep[i]) release(i);
+            if (!keep[i]) {
+                release(i);
+            }
         }
     }
 
@@ -113,7 +123,9 @@ public final class ImageBank {
 
     /** Invalidate the current sheet and its alpha caches only when brightness changes. */
     public void setDarkness(int imgIndex, int levels) {
-        if (darkness[imgIndex] == levels) return;
+        if (darkness[imgIndex] == levels) {
+            return;
+        }
         darkness[imgIndex] = (byte) levels;
         release(imgIndex);
         for (int i = 0; i < images.length; i++) {
@@ -130,13 +142,17 @@ public final class ImageBank {
 
     /** Keep a fixed-opacity sheet in its regular slot, without an opaque duplicate. */
     public void setOpacity(int imgIndex, int alpha) {
-        if (opacity[imgIndex] == alpha) return;
+        if (opacity[imgIndex] == alpha) {
+            return;
+        }
         opacity[imgIndex] = alpha;
         release(imgIndex);
     }
 
     public void setTint(int imgIndex, int argb) {
-        if (tints[imgIndex] == argb) return;
+        if (tints[imgIndex] == argb) {
+            return;
+        }
         tints[imgIndex] = argb;
         release(imgIndex);
     }
@@ -144,10 +160,14 @@ public final class ImageBank {
     public void release(int imgIndex) {
         images[imgIndex] = null;
         for (int i = 0; i < alphaKeyImageCacheImg.length; i++) {
-            if (alphaKeyImageCacheImgIndex[i] == imgIndex) alphaKeyImageCacheImg[i] = null;
+            if (alphaKeyImageCacheImgIndex[i] == imgIndex) {
+                alphaKeyImageCacheImg[i] = null;
+            }
         }
         for (int i = 0; i < alphaRegionCacheImg.length; i++) {
-            if (alphaRegionCacheImgIndex[i] == imgIndex) alphaRegionCacheImg[i] = null;
+            if (alphaRegionCacheImgIndex[i] == imgIndex) {
+                alphaRegionCacheImg[i] = null;
+            }
         }
     }
 
@@ -359,9 +379,13 @@ public final class ImageBank {
         int offset = 8;
         while (offset <= pngBytes.length - 12) {
             int length = readPngInt(pngBytes, offset);
-            if (length < 0 || length > pngBytes.length - offset - 12) return false;
+            if (length < 0 || length > pngBytes.length - offset - 12) {
+                return false;
+            }
             if (readPngInt(pngBytes, offset + 4) == 0x504C5445) {
-                if (palette != null && length < palette.length * 3) return false;
+                if (palette != null && length < palette.length * 3) {
+                    return false;
+                }
                 for (int i = 0; i < length / 3; i++) {
                     int p = offset + 8 + i * 3;
                     int c = palette != null && i < palette.length ? palette[i]
@@ -404,6 +428,5 @@ public final class ImageBank {
         return ((bytes[offset] & 0xFF) << 24) | ((bytes[offset + 1] & 0xFF) << 16)
                 | ((bytes[offset + 2] & 0xFF) << 8) | (bytes[offset + 3] & 0xFF);
     }
-
 
 }

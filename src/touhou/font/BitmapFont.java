@@ -2,8 +2,8 @@ package touhou.font;
 
 import javax.microedition.lcdui.Graphics;
 
-import touhou.i18n.I18n;
 import touhou.ResourceException;
+import touhou.i18n.I18n;
 
 public final class BitmapFont {
     private static final int FORMAT_VERSION = 2;
@@ -106,7 +106,9 @@ public final class BitmapFont {
             return;
         }
         byte[] mask = outlineMask;
-        for (int i = 0; i < mask.length; i++) mask[i] = 0;
+        for (int i = 0; i < mask.length; i++) {
+            mask[i] = 0;
+        }
         int drawX = x;
         int previousX = x;
         int drawY = baselineY - baseline - 1;
@@ -114,7 +116,9 @@ public final class BitmapFont {
         int outline = 0xFF000000 | rgbOutline;
         for (int i = 0; i < text.length(); i++) {
             char value = text.charAt(i);
-            if (value == '\n' || value == '\r') continue;
+            if (value == '\n' || value == '\r') {
+                continue;
+            }
             int glyph = findGlyph(value);
             if (value != ' ' && glyph >= 0) {
                 shiftOutlineMask(drawX - previousX);
@@ -192,8 +196,11 @@ public final class BitmapFont {
             int end = row + width;
             int source = row + distance;
             // Keep overlapping foreground strokes; new outlines must not cover them.
-            while (source < end) mask[output++] = (byte) (mask[source++] & 1);
-            while (output < end) mask[output++] = 0;
+            while (source < end) {
+                mask[output++] = (byte) (mask[source++] & 1);
+            } while (output < end) {
+                mask[output++] = 0;
+            }
         }
     }
 
@@ -208,7 +215,9 @@ public final class BitmapFont {
                 int bits = source[position++] & 0xFF;
                 int count = Math.min(8, cellW - xx);
                 for (int bit = 0; bit < count; bit++, output++) {
-                    if ((bits & (0x80 >> bit)) == 0) continue;
+                    if ((bits & (0x80 >> bit)) == 0) {
+                        continue;
+                    }
                     mask[output] = 1;
                     mask[output - width - 1] |= 2;
                     mask[output - width] |= 2;

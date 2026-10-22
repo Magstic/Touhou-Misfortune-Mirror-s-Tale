@@ -46,12 +46,20 @@ public final class AdditiveBackground {
         for (int y = 0; y < HEIGHT; y++) {
             int b = (8 + y) * base.width;
             int sy = (y - originY - scroll) % overlay.height;
-            if (sy < 0) sy += overlay.height;
+            if (sy < 0) {
+                sy += overlay.height;
+            }
             int s = sy * overlay.width + left - originX;
             int x = 0;
-            for (; x < left; x++) out[index++] = lookup[(bg[b++] & 255) * count];
-            for (; x < right; x++) out[index++] = lookup[(bg[b++] & 255) * count + (over[s++] & 255)];
-            for (; x < WIDTH; x++) out[index++] = lookup[(bg[b++] & 255) * count];
+            for (; x < left; x++) {
+                out[index++] = lookup[(bg[b++] & 255) * count];
+            }
+            for (; x < right; x++) {
+                out[index++] = lookup[(bg[b++] & 255) * count + (over[s++] & 255)];
+            }
+            for (; x < WIDTH; x++) {
+                out[index++] = lookup[(bg[b++] & 255) * count];
+            }
         }
         g.drawRGB(out, 0, WIDTH, 0, 8, WIDTH, HEIGHT, false);
     }
@@ -74,9 +82,13 @@ public final class AdditiveBackground {
                 image.getRGB(scratch, 0, width, 0, y, width, h);
                 for (int i = 0; i < width * h; i++) {
                     int argb = scratch[i];
-                    if ((argb >>> 24) == 0) continue;
+                    if ((argb >>> 24) == 0) {
+                        continue;
+                    }
                     int hash = (argb ^ (argb >>> 9)) & 511;
-                    while (entries[hash] != 0 && keys[hash] != argb) hash = (hash + 1) & 511;
+                    while (entries[hash] != 0 && keys[hash] != argb) {
+                        hash = (hash + 1) & 511;
+                    }
                     int color = entries[hash];
                     if (color == 0) {
                         color = count++;

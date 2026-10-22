@@ -17,8 +17,12 @@ public final class SoftkeyBar {
 
     public void render(Graphics g, int screenWidth, int screenHeight, int leftTextId, int rightTextId) {
         int y = screenHeight - background.getHeight();
-        if (leftTextId >= 0) draw(g, 0, y, leftTextId);
-        if (rightTextId >= 0) draw(g, screenWidth - background.getWidth(), y, rightTextId);
+        if (leftTextId >= 0) {
+            draw(g, 0, y, leftTextId);
+        }
+        if (rightTextId >= 0) {
+            draw(g, screenWidth - background.getWidth(), y, rightTextId);
+        }
     }
 
     private void draw(Graphics g, int x, int y, int textId) {

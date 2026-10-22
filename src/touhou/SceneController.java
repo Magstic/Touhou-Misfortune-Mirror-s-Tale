@@ -5,8 +5,8 @@ import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.battle.BattleScene;
 import touhou.ui.EndingScreen;
-import touhou.ui.StageClearResultPanel;
 import touhou.ui.StaffRollScreen;
+import touhou.ui.StageClearResultPanel;
 import touhou.ui.UiController;
 
 public final class SceneController {
@@ -27,8 +27,7 @@ public final class SceneController {
 
     public void update(GameCore core, int keys, int pressed) {
         if (core.sceneIsEndingActive()) {
-            EndingScreen.Result r = endingScreen.update(pressed);
-            if (r != null && r.kind == EndingScreen.Result.KIND_DONE) {
+            if (endingScreen.update(pressed)) {
                 core.sceneSetEndingActive(false);
                 endingScreen.leave();
                 staffRollScreen.enter(core.sceneImgs(), core.sceneSprites());
@@ -38,8 +37,7 @@ public final class SceneController {
         }
 
         if (core.sceneIsStaffRollActive()) {
-            StaffRollScreen.Result r = staffRollScreen.update(keys, pressed);
-            if (r != null && r.kind == StaffRollScreen.Result.KIND_DONE) {
+            if (staffRollScreen.update(keys, pressed)) {
                 core.sceneSetStaffRollActive(false);
                 staffRollScreen.leave();
                 core.sceneEnterFinalResultPanelAfterStaffRoll();
@@ -61,8 +59,7 @@ public final class SceneController {
                 audioSystem.playSeType(SoundEffectSystem.SE_SELECT);
             }
 
-            StageClearResultPanel.Result r = stageClearResultPanel.update(pressed);
-            if (r != null && r.kind == StageClearResultPanel.Result.KIND_BACK_TO_TITLE) {
+            if (stageClearResultPanel.update(pressed) == StageClearResultPanel.ACTION_BACK_TO_TITLE) {
                 core.battleFlowSetStageClearPanelActive(false);
                 core.battleFlowClearStageClearPhoto();
                 core.battleFlowClearReplayPending();
@@ -106,6 +103,6 @@ public final class SceneController {
             return;
         }
 
-        battleScene.render(core, g);
+        battleScene.render(g);
     }
 }

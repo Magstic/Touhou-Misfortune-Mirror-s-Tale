@@ -4,17 +4,17 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +55,7 @@ public final class CcDatCropViewer {
     private static final int TRIM_Y = 10;
     private static final int RENDER_MODE = 11;
     private static final int BOTTOM_GAP = 12;
-    
+
     private static final class Entry {
         final int spriteId;
         final int[] row;
@@ -96,7 +96,7 @@ public final class CcDatCropViewer {
     }
 
     private static final class EntryTableModel extends AbstractTableModel {
-        private final List<Entry> entries = new ArrayList<Entry>();
+        private final List<Entry> entries = new ArrayList<Entry> ();
 
         void setEntries(List<Entry> es) {
             entries.clear();
@@ -139,11 +139,16 @@ public final class CcDatCropViewer {
                     return "ay";
                 case 8:
                     return "logicalW";
-                case 9: return "logicalH";
-                case 10: return "trimX";
-                case 11: return "trimY";
-                case 12: return "mode";
-                case 13: return "bottomGap";
+                case 9:
+                    return "logicalH";
+                case 10:
+                    return "trimX";
+                case 11:
+                    return "trimY";
+                case 12:
+                    return "mode";
+                case 13:
+                    return "bottomGap";
                 default:
                     return "";
             }
@@ -170,11 +175,16 @@ public final class CcDatCropViewer {
                     return Integer.valueOf(e.ay());
                 case 8:
                     return Integer.valueOf(e.row[WIDTH]);
-                case 9: return Integer.valueOf(e.row[HEIGHT]);
-                case 10: return Integer.valueOf(e.row[TRIM_X]);
-                case 11: return Integer.valueOf(e.row[TRIM_Y]);
-                case 12: return Integer.valueOf(e.row[RENDER_MODE]);
-                case 13: return Integer.valueOf(e.row[BOTTOM_GAP]);
+                case 9:
+                    return Integer.valueOf(e.row[HEIGHT]);
+                case 10:
+                    return Integer.valueOf(e.row[TRIM_X]);
+                case 11:
+                    return Integer.valueOf(e.row[TRIM_Y]);
+                case 12:
+                    return Integer.valueOf(e.row[RENDER_MODE]);
+                case 13:
+                    return Integer.valueOf(e.row[BOTTOM_GAP]);
                 default:
                     return "";
             }
@@ -188,7 +198,7 @@ public final class CcDatCropViewer {
         private static final BasicStroke HIGHLIGHT_STROKE = new BasicStroke(2.5f);
 
         private BufferedImage atlas;
-        private List<Entry> entries = new ArrayList<Entry>();
+        private List<Entry> entries = new ArrayList<Entry> ();
         private int selectedSpriteId = -1;
         private int zoom = ZOOM;
 
@@ -198,7 +208,7 @@ public final class CcDatCropViewer {
 
         void setAtlas(BufferedImage atlas, List<Entry> entries, int zoom) {
             this.atlas = atlas;
-            this.entries = (entries != null) ? entries : new ArrayList<Entry>();
+            this.entries = (entries != null) ? entries : new ArrayList<Entry> ();
             this.selectedSpriteId = -1;
             this.zoom = zoom;
             updatePreferredSize();
@@ -377,25 +387,39 @@ public final class CcDatCropViewer {
         gbc.anchor = GridBagConstraints.WEST;
 
         gbc.gridy = 0;
-        gbc.gridx = 0; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0;
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
         top.add(new JLabel("cc.dat:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1;
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
         top.add(ccPath, gbc);
-        gbc.gridx = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0;
+        gbc.gridx = 2;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
         top.add(browseCc, gbc);
         gbc.gridx = 3;
         top.add(new JLabel("sp/:"), gbc);
-        gbc.gridx = 4; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1;
+        gbc.gridx = 4;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
         top.add(spDir, gbc);
-        gbc.gridx = 5; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0;
+        gbc.gridx = 5;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
         top.add(browseSp, gbc);
         gbc.gridx = 6;
         top.add(load, gbc);
 
         gbc.gridy = 1;
-        gbc.gridx = 0; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0;
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
         top.add(new JLabel("imgIndex:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0;
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
         top.add(imgIndexFilter, gbc);
         gbc.gridx = 2;
         top.add(apply, gbc);
@@ -445,7 +469,7 @@ public final class CcDatCropViewer {
                 cachedAtlas = null;
                 cachedAtlasImgIndex = -1;
             } catch (Exception ex) {
-                model.setEntries(new ArrayList<Entry>());
+                model.setEntries(new ArrayList<Entry> ());
                 atlasPreview.setAtlas(null, null, ZOOM);
                 JOptionPane.showMessageDialog(frame, ex.toString(), "Load Failed", JOptionPane.ERROR_MESSAGE);
                 return;
@@ -454,7 +478,7 @@ public final class CcDatCropViewer {
 
         Integer imgFilter = parseNullableInt(imgIndexFilter.getText().trim());
 
-        List<Entry> list = new ArrayList<Entry>();
+        List<Entry> list = new ArrayList<Entry> ();
         for (int i = 0; i < cc.length; i++) {
             int[] row = cc[i];
             if (row == null || row.length != 13) {
@@ -527,31 +551,47 @@ public final class CcDatCropViewer {
             return null;
         }
 
-        if (imageNames == null || imgIndex < 0 || imgIndex >= imageNames.length) return null;
+        if (imageNames == null || imgIndex < 0 || imgIndex >= imageNames.length) {
+            return null;
+        }
         String fileName = imageNames[imgIndex];
-        if (fileName.length() == 0) return null;
+        if (fileName.length() == 0) {
+            return null;
+        }
         return new File(spDir, fileName).isFile() ? fileName : null;
     }
 
     private int[][] loadCcDat(File file) throws IOException {
-        if (file == null || !file.isFile()) throw new IOException("Missing file: " + file);
-        try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
+        if (file == null || !file.isFile()) {
+            throw new IOException("Missing file: " + file);
+        }
+        try(DataInputStream in = new DataInputStream(new FileInputStream(file))) {
             if (in.readInt() != FORMAT_MAGIC || in.readUnsignedShort() != FORMAT_VERSION) {
                 throw new IOException("Invalid cc.dat header");
             }
             int imageCount = in.readUnsignedShort(), count = in.readUnsignedShort();
-            if (imageCount == 0 || count == 0) throw new IOException("Empty cc.dat");
+            if (imageCount == 0 || count == 0) {
+                throw new IOException("Empty cc.dat");
+            }
             String[] names = new String[imageCount];
             for (int i = 0; i < imageCount; i++) {
                 names[i] = in.readUTF();
-                for (int k = 0; k < IMAGE_FIELDS; k++) in.readShort();
+                for (int k = 0; k < IMAGE_FIELDS; k++) {
+                    in.readShort();
+                }
                 if (names[i].indexOf('/') >= 0 || names[i].indexOf('\\') >= 0 || names[i].indexOf("..") >= 0) {
                     throw new IOException("Invalid image filename");
                 }
             }
             int[][] rows = new int[count][SPRITE_FIELDS];
-            for (int[] row : rows) for (int k = 0; k < SPRITE_FIELDS; k++) row[k] = in.readShort();
-            if (in.read() != -1) throw new IOException("Trailing cc.dat data");
+            for (int[] row : rows) {
+                for (int k = 0; k < SPRITE_FIELDS; k++) {
+                    row[k] = in.readShort();
+                }
+            }
+            if (in.read() != -1) {
+                throw new IOException("Trailing cc.dat data");
+            }
             imageNames = names;
             return rows;
         }
@@ -597,7 +637,9 @@ public final class CcDatCropViewer {
             }
             // classDir might be build/tools-classes or tools/
             for (int i = 0; i < 3; i++) {
-                if (classDir == null) break;
+                if (classDir == null) {
+                    break;
+                }
                 if (new File(classDir, "res/cc.dat").isFile()) {
                     return classDir;
                 }

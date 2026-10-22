@@ -4,7 +4,6 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
-import touhou.GameCore;
 import touhou.ImageBank;
 import touhou.Player;
 import touhou.i18n.I18n;
@@ -12,16 +11,6 @@ import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 
 public final class EndingScreen {
-
-    public static final class Result {
-        public static final int KIND_DONE = 1;
-
-        public final int kind;
-
-        public Result(int kind) {
-            this.kind = kind;
-        }
-    }
 
     private static final String[] ENDING_TEXT_FILES = new String[] { "ending_reimu.txt", "ending_marisa.txt", "ending_alice.txt" };
 
@@ -43,92 +32,92 @@ public final class EndingScreen {
     // Extracted from DoJa a.ul (ending scripts).
     // Index 0..2 = Reimu/Marisa/Alice.
     private static final String[][] ENDING_SCRIPTS = new String[][] {
-            // Reimu
-            new String[] {
-                    "BG:WHITE",
-                    "BG:CHANGE",
-                    "IMG:REIMU_1",
-                    "BG:RESET",
-                    "ここは幻想郷の境にある博麗神社。",
-                    "IMG:REIMU_2",
-                    "BG:RESET",
-                    "魔理沙「で、どうしてみんなここに集ま|ってるんだ。」",
-                    "アリス「あんたが騒ぎを起こしたからで|しょ。」",
-                    "霊夢「で、さっきのアレは何だったの？|」",
-                    "魔理沙「あー、あれはだ。話すと長くな|るから後で…じゃあダメか？」",
-                    "霊夢「ダメよ、お茶を淹れてくるから長|くなっても全部話しなさい。」",
-                    "忘れ去られたものが辿り着く幻想郷|古くなり、使われなくなった道具は|いつしか意思を持つことがある。",
-                    "一連の騒動は、魔理沙が紅魔館に安置さ|れていたはずの不思議な力の宿った鏡を|無断で持ち出し、",
-                    "それを覗き込んでしまったことが原因だ|った。",
-                    "他者の姿を映すのみで自らの姿を持つこ|との無い鏡。",
-                    "鏡に宿った意思は鏡に秘められた願いを|叶えようとしたのかもしれない。",
-                    "魔理沙「無断で持ち出したというか借り|たんだけどな。」",
-                    "咲夜「それで、その鏡はどこにあるの？|」",
-                    "魔理沙「あれならまだうちにあると思う|が。」",
-                    "IMG:REIMU_3",
-                    "こうして鏡は紅魔館に戻され、騒動は|ひと段落すると思われたが…。",
+        // Reimu
+        new String[] {
+            "BG:WHITE",
+            "BG:CHANGE",
+            "IMG:REIMU_1",
+            "BG:RESET",
+            "ここは幻想郷の境にある博麗神社。",
+            "IMG:REIMU_2",
+            "BG:RESET",
+            "魔理沙「で、どうしてみんなここに集ま|ってるんだ。」",
+            "アリス「あんたが騒ぎを起こしたからで|しょ。」",
+            "霊夢「で、さっきのアレは何だったの？|」",
+            "魔理沙「あー、あれはだ。話すと長くな|るから後で…じゃあダメか？」",
+            "霊夢「ダメよ、お茶を淹れてくるから長|くなっても全部話しなさい。」",
+            "忘れ去られたものが辿り着く幻想郷|古くなり、使われなくなった道具は|いつしか意思を持つことがある。",
+            "一連の騒動は、魔理沙が紅魔館に安置さ|れていたはずの不思議な力の宿った鏡を|無断で持ち出し、",
+            "それを覗き込んでしまったことが原因だ|った。",
+            "他者の姿を映すのみで自らの姿を持つこ|との無い鏡。",
+            "鏡に宿った意思は鏡に秘められた願いを|叶えようとしたのかもしれない。",
+            "魔理沙「無断で持ち出したというか借り|たんだけどな。」",
+            "咲夜「それで、その鏡はどこにあるの？|」",
+            "魔理沙「あれならまだうちにあると思う|が。」",
+            "IMG:REIMU_3",
+            "こうして鏡は紅魔館に戻され、騒動は|ひと段落すると思われたが…。",
 
-                    "EDEND:1"
-            },
+            "EDEND:1"
+        },
 
-            // Marisa
-            new String[] {
-                    "BG:WHITE",
-                    "BG:CHANGE",
-                    "IMG:MARISA_1",
-                    "BG:RESET",
-                    "ここは魔法の森にある魔理沙の家。",
-                    "もう１人の魔理沙は消え去り、魔理沙に|かかっていた呪いは消えつつあった。",
-                    "IMG:MARISA_2",
-                    "BG:RESET",
-                    "魔理沙「何とかアイツにばれる前に何と|かなったな。」",
-                    "霊夢「アイツって誰のこと？」",
-                    "アリス「あ、魔理沙。戻ってきたのね。|」",
-                    "騒動のきっかけは魔理沙が紅魔館から持|ち出した鏡にあった。",
-                    "自身の姿を持たないまま年月を重ねた鏡|はいつしか自分の姿を持つことを願う。",
-                    "魔力の篭った物は魔法使いにとっては|強く好奇心が刺激される。",
-                    "それゆえに不思議な力の宿った鏡を覗い|てしまったことが始まりだった。",
-                    "アリス「で、あのもう１人の魔理沙は何|だったの？」",
-                    "魔理沙「紅魔館から",
-                    "きた鏡を覗|き込んだら出てきたんだ。」",
-                    "霊夢「どうせ勝手に持ち出したんでしょ。|何の鏡だか持ち主に相談したほうが良いわ|ね。」",
-                    "アリス「それで、その鏡はどこにあるの？|」",
-                    "魔理沙「その鏡ならそこにあるぜ。」",
-                    "IMG:MARISA_3",
-                    "BG:RESET",
-                    "霊夢「ってあんた達何やってんのよ！」",
-                    "鏡の騒動はもう少し続く。",
+        // Marisa
+        new String[] {
+            "BG:WHITE",
+            "BG:CHANGE",
+            "IMG:MARISA_1",
+            "BG:RESET",
+            "ここは魔法の森にある魔理沙の家。",
+            "もう１人の魔理沙は消え去り、魔理沙に|かかっていた呪いは消えつつあった。",
+            "IMG:MARISA_2",
+            "BG:RESET",
+            "魔理沙「何とかアイツにばれる前に何と|かなったな。」",
+            "霊夢「アイツって誰のこと？」",
+            "アリス「あ、魔理沙。戻ってきたのね。|」",
+            "騒動のきっかけは魔理沙が紅魔館から持|ち出した鏡にあった。",
+            "自身の姿を持たないまま年月を重ねた鏡|はいつしか自分の姿を持つことを願う。",
+            "魔力の篭った物は魔法使いにとっては|強く好奇心が刺激される。",
+            "それゆえに不思議な力の宿った鏡を覗い|てしまったことが始まりだった。",
+            "アリス「で、あのもう１人の魔理沙は何|だったの？」",
+            "魔理沙「紅魔館から",
+            "きた鏡を覗|き込んだら出てきたんだ。」",
+            "霊夢「どうせ勝手に持ち出したんでしょ。|何の鏡だか持ち主に相談したほうが良いわ|ね。」",
+            "アリス「それで、その鏡はどこにあるの？|」",
+            "魔理沙「その鏡ならそこにあるぜ。」",
+            "IMG:MARISA_3",
+            "BG:RESET",
+            "霊夢「ってあんた達何やってんのよ！」",
+            "鏡の騒動はもう少し続く。",
 
-                    "EDEND:2"
-            },
+            "EDEND:2"
+        },
 
-            // Alice
-            new String[] {
-                    "BG:WHITE",
-                    "BG:CHANGE",
-                    "IMG:ALICE_1",
-                    "BG:RESET",
-                    "アリス「魔理沙、今の魔理沙は何だった|の？」",
-                    "魔理沙「魔理沙魔理沙言われると変な感|じだな。」",
-                    "魔理沙「あれは紅魔館で見つけた鏡を調|べてたら出てきたんだ。」",
-                    "魔理沙「どういった原理なのかは調べて|みないとわからないが。」",
-                    "アリス「あの館で見つけた物が原因なら|詳しそうなのがいるわね。」",
-                    "アリス「というかメイドが探してたみた|いよ？」",
-                    "アリス「今回の件ももう知ってるんじゃ|ないかしら。」",
-                    "一連の騒動の原因は魔理沙が持ち出した|鏡にあった。",
-                    "本来なら同一の人物が同時に存在するこ|とは出来ない。",
-                    "その鏡によって姿を奪われたものは存在|が曖昧になり、",
-                    "放っておけば鏡の中の自分と入れ替わっ|てしまうことになる。",
-                    "IMG:ALICE_2",
-                    "BG:RESET",
-                    "アリス「実はさっきまで何だか魔理沙の|記憶が変だったのよね。」",
-                    "アリス「今は落ち着いたみたいだけど、|本当はすごく危険な状況だったんじゃな|いかしら？」",
-                    "魔理沙「そうだったのか。あの鏡を調べ|れば何かわかるかもしれないな。」",
-                    "IMG:ALICE_3",
-                    "こうして鏡を調べることにした二人だが|それが再び騒動を引き起こすことになる|ことをまだ知らない。",
+        // Alice
+        new String[] {
+            "BG:WHITE",
+            "BG:CHANGE",
+            "IMG:ALICE_1",
+            "BG:RESET",
+            "アリス「魔理沙、今の魔理沙は何だった|の？」",
+            "魔理沙「魔理沙魔理沙言われると変な感|じだな。」",
+            "魔理沙「あれは紅魔館で見つけた鏡を調|べてたら出てきたんだ。」",
+            "魔理沙「どういった原理なのかは調べて|みないとわからないが。」",
+            "アリス「あの館で見つけた物が原因なら|詳しそうなのがいるわね。」",
+            "アリス「というかメイドが探してたみた|いよ？」",
+            "アリス「今回の件ももう知ってるんじゃ|ないかしら。」",
+            "一連の騒動の原因は魔理沙が持ち出した|鏡にあった。",
+            "本来なら同一の人物が同時に存在するこ|とは出来ない。",
+            "その鏡によって姿を奪われたものは存在|が曖昧になり、",
+            "放っておけば鏡の中の自分と入れ替わっ|てしまうことになる。",
+            "IMG:ALICE_2",
+            "BG:RESET",
+            "アリス「実はさっきまで何だか魔理沙の|記憶が変だったのよね。」",
+            "アリス「今は落ち着いたみたいだけど、|本当はすごく危険な状況だったんじゃな|いかしら？」",
+            "魔理沙「そうだったのか。あの鏡を調べ|れば何かわかるかもしれないな。」",
+            "IMG:ALICE_3",
+            "こうして鏡を調べることにした二人だが|それが再び騒動を引き起こすことになる|ことをまだ知らない。",
 
-                    "EDEND:3"
-            }
+            "EDEND:3"
+        }
     };
 
     private int chara;
@@ -225,7 +214,7 @@ public final class EndingScreen {
     }
 
     // Update ending playback. FIRE advances.
-    public Result update(int pressed) {
+    public boolean update(int pressed) {
         consumeDirectives();
 
         if (imgFade > 0) {
@@ -245,7 +234,7 @@ public final class EndingScreen {
 
         String s = currentLine();
         if (s == null) {
-            return new Result(Result.KIND_DONE);
+            return true;
         }
 
         if (reveal < s.length()) {
@@ -256,7 +245,7 @@ public final class EndingScreen {
         } else {
             if (UiInput.confirm(pressed)) {
                 if (line >= ENDING_SCRIPTS[chara].length - 1) {
-                    return new Result(Result.KIND_DONE);
+                    return true;
                 }
                 line++;
                 reveal = 0;
@@ -266,10 +255,10 @@ public final class EndingScreen {
 
         // Allow quick exit with left softkey (GAME_A).
         if (UiInput.cancel(pressed)) {
-            return new Result(Result.KIND_DONE);
+            return true;
         }
 
-        return null;
+        return false;
     }
 
     public void render(Graphics g, ImageBank imgs) {
@@ -312,7 +301,9 @@ public final class EndingScreen {
             t = total;
         }
 
-        if (blendRgb == null) blendRgb = new int[w * h];
+        if (blendRgb == null) {
+            blendRgb = new int[w * h];
+        }
 
         int aNew = (t * 255) / total;
         int aOld = 255 - aNew;

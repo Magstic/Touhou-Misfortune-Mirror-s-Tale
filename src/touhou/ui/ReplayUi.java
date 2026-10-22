@@ -93,11 +93,6 @@ final class ReplayUi {
         UiDraw.drawString2(g, font, (cursor + 1) + "/" + slots.size(), 120, 222, 1, 0xB0B0B0, 0x404040);
     }
 
-    static void renderSlotListBelowPreview(Graphics g, Font font, int cursor,
-            ReplaySlotListModel slots, String slotPrefix, int animationTick) {
-        renderSlotList(g, font, cursor, slots, slotPrefix, animationTick, 118, 3, 72);
-    }
-
     private static void renderSlotList(Graphics g, Font font, int cursor,
             ReplaySlotListModel slots, String slotPrefix, int animationTick,
             int firstBoxY, int maximumVisible, int unitX) {
@@ -156,7 +151,9 @@ final class ReplayUi {
 
                 // Line 2 left: detail or spell card name.
                 int detailClipW = boxW - 12 - tagsW;
-                if (detailClipW < 20) { detailClipW = 20; }
+                if (detailClipW < 20) {
+                    detailClipW = 20;
+                }
 
                 if (h.getMode() == BattleSessionConfig.MODE_SPELL_PRACTICE) {
                     int spellId = h.getSpellId();
@@ -292,11 +289,15 @@ final class ReplayUi {
             tag = UiText.get(TextId.REPLAY_TAG_SP);
         }
         if (h.getFlag() == ReplayHeader.FLAG_IMPORTED) {
-            if (tag.length() > 0) { tag += " "; }
+            if (tag.length() > 0) {
+                tag += " ";
+            }
             tag += UiText.get(TextId.REPLAY_TAG_IMPORTED);
         }
         if (h.getMode() != BattleSessionConfig.MODE_SPELL_PRACTICE && hasBossOnly) {
-            if (tag.length() > 0) { tag += " "; }
+            if (tag.length() > 0) {
+                tag += " ";
+            }
             tag += UiText.get(TextId.REPLAY_TAG_ST);
         }
         return tag;

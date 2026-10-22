@@ -52,7 +52,9 @@ public final class SpriteCatalog {
             String name = in.readUTF();
             imageNames[id] = name;
             int i = id * IMAGE_STRIDE;
-            for (int k = 0; k < IMAGE_STRIDE; k++) images[i + k] = in.readShort();
+            for (int k = 0; k < IMAGE_STRIDE; k++) {
+                images[i + k] = in.readShort();
+            }
             int base = images[i + IMAGE_BASE], palette = images[i + IMAGE_PALETTE];
             if (images[i + IMAGE_W] <= 0 || images[i + IMAGE_H] <= 0) {
                 throw new IOException("Invalid image size: " + id);
@@ -68,8 +70,10 @@ public final class SpriteCatalog {
                         throw new IOException("Invalid image filename: " + id);
                     }
                 }
-                for (int k = 0; k < id; k++) if (name.equals(imageNames[k])) {
-                    throw new IOException("Duplicate image file: " + name);
+                for (int k = 0; k < id; k++) {
+                    if (name.equals(imageNames[k])) {
+                        throw new IOException("Duplicate image file: " + name);
+                    }
                 }
             } else if (base < 0 || base >= id || images[base * IMAGE_STRIDE + IMAGE_BASE] != -1
                     || palette < 0 || palette >= PALETTE_COUNT || name.length() != 0
@@ -78,8 +82,12 @@ public final class SpriteCatalog {
             }
         }
         data = new short[SpriteSheetCatalog.SPRITE_COUNT * STRIDE];
-        for (int i = 0; i < data.length; i++) data[i] = in.readShort();
-        if (in.read() != -1) throw new IOException("Trailing cc.dat data");
+        for (int i = 0; i < data.length; i++) {
+            data[i] = in.readShort();
+        }
+        if (in.read() != -1) {
+            throw new IOException("Trailing cc.dat data");
+        }
         for (int id = 0; id < size(); id++) {
             int i = id * STRIDE, image = data[i + IMAGE];
             int rw = data[i + RENDER_W], rh = data[i + RENDER_H], mode = data[i + RENDER_MODE], gap = data[i + BOTTOM_GAP];
@@ -109,26 +117,79 @@ public final class SpriteCatalog {
         return instance;
     }
 
-    public int imageCount() { return imageNames.length; }
-    String imagePath(int id) { return "/sp/" + imageNames[id]; }
-    int variantBase(int id) { return images[id * IMAGE_STRIDE + IMAGE_BASE]; }
-    int variantPalette(int id) { return images[id * IMAGE_STRIDE + IMAGE_PALETTE]; }
-    int imageWidth(int id) { return images[id * IMAGE_STRIDE + IMAGE_W]; }
-    int imageHeight(int id) { return images[id * IMAGE_STRIDE + IMAGE_H]; }
-    public int size() { return data.length / STRIDE; }
-    public boolean hasSpriteMeta(int id) { return id >= 0 && id < size(); }
-    public int getImgIndex(int id) { return hasSpriteMeta(id) ? data[id * STRIDE + IMAGE] : -1; }
-    public int getW(int id) { return hasSpriteMeta(id) ? data[id * STRIDE + WIDTH] : 0; }
-    public int getH(int id) { return hasSpriteMeta(id) ? data[id * STRIDE + HEIGHT] : 0; }
-    public int getAx(int id) { return hasSpriteMeta(id) ? data[id * STRIDE + ANCHOR_X] : 0; }
-    public int getAy(int id) { return hasSpriteMeta(id) ? data[id * STRIDE + ANCHOR_Y] : 0; }
+    public int imageCount() {
+        return imageNames.length;
+    }
 
-    int pixelX(int id) { return data[id * STRIDE + PIXEL_X]; }
-    int pixelY(int id) { return data[id * STRIDE + PIXEL_Y]; }
-    int renderW(int id) { return data[id * STRIDE + RENDER_W]; }
-    int renderH(int id) { return data[id * STRIDE + RENDER_H]; }
-    int trimX(int id) { return data[id * STRIDE + TRIM_X]; }
-    int trimY(int id) { return data[id * STRIDE + TRIM_Y]; }
-    int renderMode(int id) { return data[id * STRIDE + RENDER_MODE]; }
-    int bottomGap(int id) { return data[id * STRIDE + BOTTOM_GAP]; }
+    String imagePath(int id) {
+        return "/sp/" + imageNames[id];
+    }
+
+    int variantBase(int id) {
+        return images[id * IMAGE_STRIDE + IMAGE_BASE];
+    }
+
+    int variantPalette(int id) {
+        return images[id * IMAGE_STRIDE + IMAGE_PALETTE];
+    }
+
+    public int size() {
+        return data.length / STRIDE;
+    }
+
+    public boolean hasSpriteMeta(int id) {
+        return id >= 0 && id < size();
+    }
+
+    public int getImgIndex(int id) {
+        return hasSpriteMeta(id) ? data[id * STRIDE + IMAGE] : -1;
+    }
+
+    public int getW(int id) {
+        return hasSpriteMeta(id) ? data[id * STRIDE + WIDTH] : 0;
+    }
+
+    public int getH(int id) {
+        return hasSpriteMeta(id) ? data[id * STRIDE + HEIGHT] : 0;
+    }
+
+    public int getAx(int id) {
+        return hasSpriteMeta(id) ? data[id * STRIDE + ANCHOR_X] : 0;
+    }
+
+    public int getAy(int id) {
+        return hasSpriteMeta(id) ? data[id * STRIDE + ANCHOR_Y] : 0;
+    }
+
+    int pixelX(int id) {
+        return data[id * STRIDE + PIXEL_X];
+    }
+
+    int pixelY(int id) {
+        return data[id * STRIDE + PIXEL_Y];
+    }
+
+    int renderW(int id) {
+        return data[id * STRIDE + RENDER_W];
+    }
+
+    int renderH(int id) {
+        return data[id * STRIDE + RENDER_H];
+    }
+
+    int trimX(int id) {
+        return data[id * STRIDE + TRIM_X];
+    }
+
+    int trimY(int id) {
+        return data[id * STRIDE + TRIM_Y];
+    }
+
+    int renderMode(int id) {
+        return data[id * STRIDE + RENDER_MODE];
+    }
+
+    int bottomGap(int id) {
+        return data[id * STRIDE + BOTTOM_GAP];
+    }
 }

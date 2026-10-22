@@ -1,8 +1,5 @@
 package touhou.stage;
 
-import touhou.battle.BattleSessionConfig;
-
-
 /** Stage patterns operate on the Controller's sole state, including during Host callbacks. */
 abstract class AbstractBossStageLogic implements BossStageLogic {
     BossController core;
@@ -34,29 +31,31 @@ abstract class AbstractBossStageLogic implements BossStageLogic {
 
     abstract void tickMidbossImpl(int enemyIdx);
 
-    void vb(int enemyIdx, int state) {
+    void transitionEnemyState(int enemyIdx, int state) {
         host.setMGCnt(-1);
-        host.getEnemyList()[enemyIdx][7] = state;
+        host.getEnemyList()[enemyIdx][StageRuntime.ENEMY_MOVE_STATE] = state;
     }
 
-    void wb(int bossf) {
+    void transitionBossPhase(int bossf) {
         host.setMGCnt(-1);
         host.setBossF(bossf);
     }
 
-    void yb(int targetIndex, int nameIndex, int mode) {
-        if (host.getGameMode() != BattleSessionConfig.MODE_SPELL_PRACTICE || mode == 3) {
-            core.k = 1;
-            core.l = targetIndex;
-            core.m = mode;
-            core.n = nameIndex;
-            for (int i = 0; i < 3; ++i) {
-                core.o[i] = 0;
+    void clearBossMinions() {
+        int[][] enemylist = host.getEnemyList();
+        int[] bossWrk = host.getBossWrk();
+        for (int i = 0; i < 10; ++i) {
+            int si = bossWrk[8 + i];
+            if (si < 0 || si >= enemylist.length) {
+                continue;
             }
-            core.o[1] = core.j;
-            core.o[2] = core.j;
-            core.p[1] = 0;
-            core.p[2] = (mode == 1) ? 40 : 0;
+            if (enemylist[si][StageRuntime.ENEMY_ACTIVE] != 0) {
+                int mt = enemylist[si][StageRuntime.ENEMY_MOVE_PATTERN];
+                if (mt != BossController.MIDBOSS_PATTERN && mt != BossController.BOSS_PATTERN && mt != BossController.SECOND_BOSS_PATTERN && mt != BossController.THIRD_BOSS_PATTERN) {
+                    host.stageJb(si);
+                    bossWrk[8 + i] = 0;
+                }
+            }
         }
     }
 }

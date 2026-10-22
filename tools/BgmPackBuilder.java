@@ -29,7 +29,9 @@ public final class BgmPackBuilder {
         int entryCount = BgmCatalog.TRACK_COUNT * BgmCatalog.PART_COUNT;
         byte[][] entries = new byte[entryCount][];
         for (int track = 0; track < BgmCatalog.TRACK_COUNT; track++) {
-            if (lite && !BgmCatalog.isBattleTrack(track)) continue;
+            if (lite && !BgmCatalog.isBattleTrack(track)) {
+                continue;
+            }
             File split = new File(sourceDir, String.valueOf(track));
             File single = new File(sourceDir, track + ".mid");
             int base = track * BgmCatalog.PART_COUNT;

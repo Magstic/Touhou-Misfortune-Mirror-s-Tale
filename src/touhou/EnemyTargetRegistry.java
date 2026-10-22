@@ -1,7 +1,5 @@
 package touhou;
 
-import touhou.stage.StageRuntime;
-
 /** Targeting projection of the enemy state owned by StageRuntime. It does not allocate enemies. */
 public final class EnemyTargetRegistry {
     public static final int CAPACITY = 32;
@@ -35,10 +33,6 @@ public final class EnemyTargetRegistry {
         boolean removed = active[index];
         clearSlot(index);
         return removed;
-    }
-
-    public boolean isActive(int index) {
-        return index >= 0 && index < CAPACITY && active[index];
     }
 
     public boolean isTargetable(int index) {
@@ -87,14 +81,6 @@ public final class EnemyTargetRegistry {
         aabbRight[index] = xFixed + rightExtentFixed;
         aabbTop[index] = yFixed - topExtentFixed;
         aabbBottom[index] = yFixed + bottomExtentFixed;
-    }
-
-    public void setTargetable(int index, boolean canTarget) {
-        requireIndex(index);
-        if (!active[index]) {
-            throw new IllegalArgumentException("Inactive enemy target index: " + index);
-        }
-        targetable[index] = canTarget;
     }
 
     public int findNearestTargetByX(int xFixed) {

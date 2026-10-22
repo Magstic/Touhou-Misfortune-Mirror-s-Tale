@@ -12,45 +12,35 @@ import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 
 public final class StaffRollScreen {
-    public static final class Result {
-        public static final int KIND_DONE = 1;
-
-        public final int kind;
-
-        public Result(int kind) {
-            this.kind = kind;
-        }
-    }
-
     private static final Font FONT = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
 
     private static final int STAFF_MAX = 1125;
 
     private static final int[][] WIPE_EVENTS = new int[][] {
-            // { start, orient(0=h,1=v), side(0=l,1=r), pos, backIndex, srcX, srcY }
-            { 100, 0, 0, 140, 0, 50, 38 },
-            { 225, 1, 0, 20, 0, 130, 58 },
-            { 350, 0, 1, 20, 0, 50, 98 },
-            { 475, 1, 1, 140, 1, 100, 108 },
-            { 600, 0, 0, 10, 2, 100, 108 },
-            { 725, 0, 1, 140, 3, 100, 108 },
-            { 850, 0, 0, 20, 4, 100, 108 },
-            { 975, 0, 1, 140, 5, 100, 108 }
+        // { start, orient(0=h,1=v), side(0=l,1=r), pos, backIndex, srcX, srcY }
+        { 100, 0, 0, 140, 0, 50, 38 },
+        { 225, 1, 0, 20, 0, 130, 58 },
+        { 350, 0, 1, 20, 0, 50, 98 },
+        { 475, 1, 1, 140, 1, 100, 108 },
+        { 600, 0, 0, 10, 2, 100, 108 },
+        { 725, 0, 1, 140, 3, 100, 108 },
+        { 850, 0, 0, 20, 4, 100, 108 },
+        { 975, 0, 1, 140, 5, 100, 108 }
     };
 
     private static final int[][] STAFF_TEXT = new int[][] {
-            { 10, 120, 120, TextId.STAFF_TITLE },
-            { 125, 120, 60, TextId.STAFF_PLANNING_TITLE, TextId.STAFF_PLANNING_1 },
-            { 250, 180, 100, TextId.STAFF_PROGRAM_TITLE, TextId.STAFF_PROGRAM_1 },
-            { 375, 120, 130, TextId.STAFF_GRAPHIC_TITLE, TextId.STAFF_GRAPHIC_1, TextId.STAFF_GRAPHIC_2 },
-            { 500, 70, 100, TextId.STAFF_SOUND_TITLE, TextId.STAFF_SOUND_1 },
-            { 625, 120, 120, TextId.STAFF_SPECIAL_THANKS_TITLE, TextId.STAFF_SPECIAL_THANKS_1, TextId.STAFF_SPECIAL_THANKS_2,
-                    TextId.STAFF_SPECIAL_THANKS_3 },
-            { 750, 120, 40, TextId.STAFF_TEST_PLAY_TITLE, TextId.STAFF_TEST_PLAY_1, TextId.STAFF_TEST_PLAY_2, TextId.STAFF_TEST_PLAY_3,
-                    TextId.STAFF_TEST_PLAY_4 },
-            { 875, 120, 130, TextId.STAFF_ORIGINAL_TITLE, TextId.STAFF_ORIGINAL_1, TextId.STAFF_ORIGINAL_URL },
-            { 1000, 120, 40, TextId.STAFF_DEVELOPMENT_TITLE, TextId.STAFF_DEVELOPMENT_1, TextId.STAFF_DEVELOPMENT_URL_1,
-                    TextId.STAFF_DEVELOPMENT_2, TextId.STAFF_DEVELOPMENT_URL_2 }
+        { 10, 120, 120, TextId.STAFF_TITLE },
+        { 125, 120, 60, TextId.STAFF_PLANNING_TITLE, TextId.STAFF_PLANNING_1 },
+        { 250, 180, 100, TextId.STAFF_PROGRAM_TITLE, TextId.STAFF_PROGRAM_1 },
+        { 375, 120, 130, TextId.STAFF_GRAPHIC_TITLE, TextId.STAFF_GRAPHIC_1, TextId.STAFF_GRAPHIC_2 },
+        { 500, 70, 100, TextId.STAFF_SOUND_TITLE, TextId.STAFF_SOUND_1 },
+        { 625, 120, 120, TextId.STAFF_SPECIAL_THANKS_TITLE, TextId.STAFF_SPECIAL_THANKS_1, TextId.STAFF_SPECIAL_THANKS_2,
+            TextId.STAFF_SPECIAL_THANKS_3 },
+        { 750, 120, 40, TextId.STAFF_TEST_PLAY_TITLE, TextId.STAFF_TEST_PLAY_1, TextId.STAFF_TEST_PLAY_2, TextId.STAFF_TEST_PLAY_3,
+            TextId.STAFF_TEST_PLAY_4 },
+        { 875, 120, 130, TextId.STAFF_ORIGINAL_TITLE, TextId.STAFF_ORIGINAL_1, TextId.STAFF_ORIGINAL_URL },
+        { 1000, 120, 40, TextId.STAFF_DEVELOPMENT_TITLE, TextId.STAFF_DEVELOPMENT_1, TextId.STAFF_DEVELOPMENT_URL_1,
+            TextId.STAFF_DEVELOPMENT_2, TextId.STAFF_DEVELOPMENT_URL_2 }
     };
 
     private SpriteRenderer sprites;
@@ -83,7 +73,7 @@ public final class StaffRollScreen {
         return count < STAFF_MAX ? TextId.SOFTKEY_SKIP : TextId.SOFTKEY_NEXT;
     }
 
-    public Result update(int keys, int pressed) {
+    public boolean update(int keys, int pressed) {
         if (count < STAFF_MAX) {
             if ((keys & GameCore.FIRE_PRESSED) != 0) {
                 count += 3;
@@ -93,7 +83,7 @@ public final class StaffRollScreen {
             count++;
         } else {
             if (UiInput.confirm(pressed) || UiInput.cancel(pressed)) {
-                return new Result(Result.KIND_DONE);
+                return true;
             }
         }
         for (int i = 0; i < WIPE_EVENTS.length; i++) {
@@ -103,8 +93,10 @@ public final class StaffRollScreen {
             }
         }
         int[] lastWipe = WIPE_EVENTS[WIPE_EVENTS.length - 1];
-        if (count >= lastWipe[0] + 100) back = null;
-        return null;
+        if (count >= lastWipe[0] + 100) {
+            back = null;
+        }
+        return false;
     }
 
     public void render(Graphics g, ImageBank imgs) {
@@ -138,7 +130,6 @@ public final class StaffRollScreen {
             int orient = WIPE_EVENTS[i][1];
             int side = WIPE_EVENTS[i][2];
             int pos = WIPE_EVENTS[i][3];
-            int backIndex = WIPE_EVENTS[i][4];
             int srcCx = WIPE_EVENTS[i][5];
             int srcCy = WIPE_EVENTS[i][6];
 
@@ -149,14 +140,14 @@ public final class StaffRollScreen {
             int n = count - start;
 
             if (orient == 0) {
-                renderWipeHorizontal(g, n, side, pos, backIndex, srcCx, srcCy);
+                renderWipeHorizontal(g, n, side, pos, srcCx, srcCy);
             } else {
-                renderWipeVertical(g, n, side, pos, backIndex, srcCx, srcCy);
+                renderWipeVertical(g, n, side, pos, srcCx, srcCy);
             }
         }
     }
 
-    private void renderWipeHorizontal(Graphics g, int n, int side, int y, int backIndex, int srcCx, int srcCy) {
+    private void renderWipeHorizontal(Graphics g, int n, int side, int y, int srcCx, int srcCy) {
         final int x = 0;
         final int w = 240;
         final int h = 80;
@@ -194,7 +185,7 @@ public final class StaffRollScreen {
         UiDraw.fillRectAlpha(g, dstX, y + 10, 100, 60, 0x000000, 128);
     }
 
-    private void renderWipeVertical(Graphics g, int n, int side, int x, int backIndex, int srcCx, int srcCy) {
+    private void renderWipeVertical(Graphics g, int n, int side, int x, int srcCx, int srcCy) {
         final int y = 0;
         final int w = 80;
         final int h = 240;
@@ -275,12 +266,16 @@ public final class StaffRollScreen {
         back = null;
         Image image = Image.createImage(240, 240);
         Graphics g = image.getGraphics();
-        if (index <= 2) drawFull(g, 45);
-        else if (index == 3) drawFull(g, 92);
-        else if (index == 4) {
+        if (index <= 2) {
+            drawFull(g, 45);
+        } else if (index == 3) {
+            drawFull(g, 92);
+        } else if (index == 4) {
             drawFull(g, 96);
             drawFull(g, 97);
-        } else drawFull(g, 106);
+        } else {
+            drawFull(g, 106);
+        }
 
         switch (index) {
             case 0:
@@ -288,11 +283,21 @@ public final class StaffRollScreen {
                 sprites.draw(g, 174, 130, 58);
                 sprites.draw(g, 181, 50, 98);
                 break;
-            case 1: sprites.draw(g, 205, 100, 108); break;
-            case 2: sprites.draw(g, 227, 100, 108); break;
-            case 3: sprites.draw(g, 365, 100, 108); break;
-            case 4: sprites.draw(g, 516, 100, 108); break;
-            case 5: sprites.draw(g, 711, 100, 108); break;
+            case 1:
+                sprites.draw(g, 205, 100, 108);
+                break;
+            case 2:
+                sprites.draw(g, 227, 100, 108);
+                break;
+            case 3:
+                sprites.draw(g, 365, 100, 108);
+                break;
+            case 4:
+                sprites.draw(g, 516, 100, 108);
+                break;
+            case 5:
+                sprites.draw(g, 711, 100, 108);
+                break;
         }
         back = image;
         backIndex = index;

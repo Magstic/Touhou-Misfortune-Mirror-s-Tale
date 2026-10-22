@@ -22,7 +22,6 @@ public final class InputSystem {
     private int softKeyStates;
 
     private int dpadKeyStates;
-    private int heldDpadMask;
 
     private int fireActionKeyStates;
 
@@ -36,8 +35,6 @@ public final class InputSystem {
 
     public InputSystem(GameCanvas canvas) {
         this.canvas = canvas;
-        prevKeyStates = 0;
-        prevFireActionKeyStates = 0;
         // Options are loaded explicitly inside GameCore's initialization failure boundary.
     }
 
@@ -54,21 +51,20 @@ public final class InputSystem {
             boolean battlePaused,
             boolean stageClearPanelActive,
             boolean startSpellPractice,
-            boolean spellPracticeEndFlg,
             boolean spellPracticeEndActive) {
 
         if (inGame && !battlePaused && keyCode == 35) {
             extraKeyStates |= GameCore.KEY_POUND_PRESSED;
         }
 
-        if (inGame && !battlePaused && optTenkeyMove != 0 && isTenkeyMoveDirectionKeyCode(keyCode)) {
+        if (inGame && !battlePaused && optTenkeyMove != 0 && tenkeyMoveMask(keyCode) != 0) {
             applyTenkeyMoveDown(keyCode, inGame);
             return false; // Numeric movement is fully consumed here.
         }
 
-        applyOptionKeyDown(keyCode, inGame, battlePaused, stageClearPanelActive, startSpellPractice, spellPracticeEndFlg, spellPracticeEndActive);
+        applyOptionKeyDown(keyCode, inGame, battlePaused, stageClearPanelActive, startSpellPractice, spellPracticeEndActive);
         applyFireActionDown(keyCode);
-        applyDpadMoveDown(keyCode, inGame);
+        dpadKeyStates |= dpadMoveMask(keyCode, inGame);
         applyTenkeyMoveDown(keyCode, inGame);
 
         if (keyCode == -6 || keyCode == -21 || keyCode == -24) {
@@ -88,14 +84,14 @@ public final class InputSystem {
             boolean inGame,
             boolean battlePaused) {
 
-        if (inGame && !battlePaused && optTenkeyMove != 0 && isTenkeyMoveDirectionKeyCode(keyCode)) {
+        if (inGame && !battlePaused && optTenkeyMove != 0 && tenkeyMoveMask(keyCode) != 0) {
             applyTenkeyMoveUp(keyCode, inGame);
             return false; // Numeric movement is fully consumed here.
         }
 
         applyOptionKeyUp(keyCode, inGame, battlePaused);
         applyFireActionUp(keyCode);
-        applyDpadMoveUp(keyCode, inGame);
+        dpadKeyStates &= ~dpadMoveMask(keyCode, inGame);
         applyTenkeyMoveUp(keyCode, inGame);
 
         if (keyCode == -6 || keyCode == -21 || keyCode == -24) {
@@ -117,7 +113,6 @@ public final class InputSystem {
 
         if (!inGame) {
             dpadKeyStates = 0;
-            heldDpadMask = 0;
             softKeyStates &= ~GameCore.SOFTKEY_R_PRESSED;
             extraKeyStates &= ~GameCore.KEY_POUND_PRESSED;
         }
@@ -192,90 +187,22 @@ public final class InputSystem {
         return (keyCode >= 48 && keyCode <= 57) || keyCode == 42 || keyCode == 35;
     }
 
-    private static boolean isTenkeyMoveDirectionKeyCode(int keyCode) {
-        switch (keyCode) {
-            case 49:
-            case 50:
-            case 51:
-            case 52:
-            case 54:
-            case 55:
-            case 56:
-            case 57:
-                return true;
+    private int dpadMoveMask(int keyCode, boolean inGame) {
+        if (!inGame || isTenkeyNumericKeyCode(keyCode)) {
+            return 0;
+        }
+        switch (safeGameAction(keyCode)) {
+            case GameCanvas.UP:
+                return GameCanvas.UP_PRESSED;
+            case GameCanvas.DOWN:
+                return GameCanvas.DOWN_PRESSED;
+            case GameCanvas.LEFT:
+                return GameCanvas.LEFT_PRESSED;
+            case GameCanvas.RIGHT:
+                return GameCanvas.RIGHT_PRESSED;
             default:
-                return false;
+                return 0;
         }
-    }
-
-    private void applyDpadMoveDown(int keyCode, boolean inGame) {
-        if (!inGame) {
-            return;
-        }
-        if (isTenkeyNumericKeyCode(keyCode)) {
-            return;
-        }
-
-        int ga = safeGameAction(keyCode);
-        int bit = 0;
-        if (ga == GameCanvas.UP) {
-            bit = 1;
-        } else if (ga == GameCanvas.DOWN) {
-            bit = 2;
-        } else if (ga == GameCanvas.LEFT) {
-            bit = 4;
-        } else if (ga == GameCanvas.RIGHT) {
-            bit = 8;
-        } else {
-            return;
-        }
-
-        heldDpadMask |= bit;
-        recalcDpadKeyStates();
-    }
-
-    private void applyDpadMoveUp(int keyCode, boolean inGame) {
-        if (!inGame) {
-            return;
-        }
-        if (isTenkeyNumericKeyCode(keyCode)) {
-            return;
-        }
-
-        int ga = safeGameAction(keyCode);
-        int bit = 0;
-        if (ga == GameCanvas.UP) {
-            bit = 1;
-        } else if (ga == GameCanvas.DOWN) {
-            bit = 2;
-        } else if (ga == GameCanvas.LEFT) {
-            bit = 4;
-        } else if (ga == GameCanvas.RIGHT) {
-            bit = 8;
-        } else {
-            return;
-        }
-
-        heldDpadMask &= ~bit;
-        recalcDpadKeyStates();
-    }
-
-    private void recalcDpadKeyStates() {
-        int m = heldDpadMask;
-        int s = 0;
-        if ((m & 1) != 0) {
-            s |= GameCanvas.UP_PRESSED;
-        }
-        if ((m & 2) != 0) {
-            s |= GameCanvas.DOWN_PRESSED;
-        }
-        if ((m & 4) != 0) {
-            s |= GameCanvas.LEFT_PRESSED;
-        }
-        if ((m & 8) != 0) {
-            s |= GameCanvas.RIGHT_PRESSED;
-        }
-        dpadKeyStates = s;
     }
 
     private static int keyCodeForOptionKey(int idx) {
@@ -299,26 +226,11 @@ public final class InputSystem {
             boolean battlePaused,
             boolean stageClearPanelActive,
             boolean startSpellPractice,
-            boolean spellPracticeEndFlg,
             boolean spellPracticeEndActive) {
 
         if (!inGame || battlePaused || stageClearPanelActive || (startSpellPractice && spellPracticeEndActive)) {
             return;
         }
-        if (optTenkeyMove != 0) {
-            switch (keyCode) {
-                case 49:
-                case 50:
-                case 51:
-                case 52:
-                case 54:
-                case 55:
-                case 56:
-                case 57:
-                    return;
-            }
-        }
-
         int ga = Integer.MIN_VALUE;
         if (optShotKey == 0 || optSlowKey == 0 || optSpellKey == 0) {
             ga = safeGameAction(keyCode);
@@ -353,20 +265,6 @@ public final class InputSystem {
         if (!inGame || battlePaused) {
             return;
         }
-        if (optTenkeyMove != 0) {
-            switch (keyCode) {
-                case 49:
-                case 50:
-                case 51:
-                case 52:
-                case 54:
-                case 55:
-                case 56:
-                case 57:
-                    return;
-            }
-        }
-
         int ga = Integer.MIN_VALUE;
         if (optShotKey == 0 || optSlowKey == 0 || optSpellKey == 0) {
             ga = safeGameAction(keyCode);
@@ -401,19 +299,7 @@ public final class InputSystem {
         if (!inGame || optTenkeyMove == 0) {
             return;
         }
-        int bit = 0;
-        switch (keyCode) {
-            case 49: bit = 1; break;
-            case 50: bit = 2; break;
-            case 51: bit = 4; break;
-            case 52: bit = 8; break;
-            case 54: bit = 16; break;
-            case 55: bit = 32; break;
-            case 56: bit = 64; break;
-            case 57: bit = 128; break;
-            default: return;
-        }
-        heldTenkeyMask |= bit;
+        heldTenkeyMask |= tenkeyMoveMask(keyCode);
         recalcTenkeyKeyStates();
     }
 
@@ -421,20 +307,31 @@ public final class InputSystem {
         if (!inGame || optTenkeyMove == 0) {
             return;
         }
-        int bit = 0;
-        switch (keyCode) {
-            case 49: bit = 1; break;
-            case 50: bit = 2; break;
-            case 51: bit = 4; break;
-            case 52: bit = 8; break;
-            case 54: bit = 16; break;
-            case 55: bit = 32; break;
-            case 56: bit = 64; break;
-            case 57: bit = 128; break;
-            default: return;
-        }
-        heldTenkeyMask &= ~bit;
+        heldTenkeyMask &= ~tenkeyMoveMask(keyCode);
         recalcTenkeyKeyStates();
+    }
+
+    private static int tenkeyMoveMask(int keyCode) {
+        switch (keyCode) {
+            case 49:
+                return 1;
+            case 50:
+                return 2;
+            case 51:
+                return 4;
+            case 52:
+                return 8;
+            case 54:
+                return 16;
+            case 55:
+                return 32;
+            case 56:
+                return 64;
+            case 57:
+                return 128;
+            default:
+                return 0;
+        }
     }
 
     private void recalcTenkeyKeyStates() {

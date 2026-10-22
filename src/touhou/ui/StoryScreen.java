@@ -12,17 +12,6 @@ import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 
 public final class StoryScreen {
-    public static final class Result {
-        public static final int KIND_NONE = 0;
-        public static final int KIND_BACK_TO_TITLE = 1;
-
-        public final int kind;
-
-        public Result(int kind) {
-            this.kind = kind;
-        }
-    }
-
     private static final int TEXT_X = 24;
     private static final int TEXT_Y = 47;
     private static final int TEXT_W = 198;
@@ -32,7 +21,7 @@ public final class StoryScreen {
     private static final int FLAKE_COUNT = 6;
 
     private final int[] flakeYfp = new int[FLAKE_COUNT];
-    private final FontTextMeasurer textMeasurer = new FontTextMeasurer(null);
+    private final FontTextMeasurer textMeasurer = new FontTextMeasurer();
     private Font font;
     private String[] wrapped;
     private int lineH;
@@ -81,7 +70,7 @@ public final class StoryScreen {
         }
     }
 
-    public Result update(int keys, int pressed) {
+    public boolean update(int keys, int pressed) {
         updateSnow();
         if (UiInput.cancel(pressed)) {
             leaving = true;
@@ -89,13 +78,13 @@ public final class StoryScreen {
         if (leaving) {
             if (transitionFrame > 0) {
                 transitionFrame--;
-                return null;
+                return false;
             }
-            return new Result(Result.KIND_BACK_TO_TITLE);
+            return true;
         }
         if (transitionFrame < TRANSITION_FRAMES) {
             transitionFrame++;
-            return null;
+            return false;
         }
 
         if (UiInput.left(pressed)) {
@@ -147,7 +136,7 @@ public final class StoryScreen {
             scrollVelFp = 0;
             scrollTargetActive = false;
         }
-        return null;
+        return false;
     }
 
     private void requestScrollByLines(int delta) {

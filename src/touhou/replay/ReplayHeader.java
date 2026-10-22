@@ -60,19 +60,6 @@ public final class ReplayHeader {
         }
     }
 
-    public void store(byte[] dst) {
-        if (dst == null) {
-            return;
-        }
-        int n = dst.length;
-        if (n > SIZE) {
-            n = SIZE;
-        }
-        for (int i = 0; i < n; i++) {
-            dst[i] = data[i];
-        }
-    }
-
     public int getFlag() {
         return data[OFFSET_FLAG] & 0xFF;
     }

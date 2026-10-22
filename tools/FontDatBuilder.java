@@ -22,6 +22,8 @@ import java.util.TreeSet;
 public final class FontDatBuilder {
     private static final int FORMAT_VERSION = 2;
     private static final int BITS_PER_PIXEL = 1;
+    private static final int PUNCTUATION_LEFT_PAD = 1;
+    private static final int PUNCTUATION_RIGHT_PAD = 2;
 
     public static final class BuildConfig {
         public File ttfFile;
@@ -54,20 +56,20 @@ public final class FontDatBuilder {
             throw new IOException("outFile is null");
         }
 
-        TreeSet<Integer> cps = new TreeSet<Integer>();
+        TreeSet<Integer> cps = new TreeSet<Integer> ();
         addAsciiBasic(cps);
 
-        List<File> scannedFiles = new ArrayList<File>();
+        List<File> scannedFiles = new ArrayList<File> ();
 
         scanLanguageTexts(cps, cfg.scanDirectory, scannedFiles);
         if (cps.size() > 65535) {
             throw new IOException("glyphCount too large (u16): " + cps.size());
         }
 
-        Font font = loadTtf(cfg.ttfFile.getAbsolutePath()).deriveFont(Font.PLAIN, (float) cfg.fontSize);
+        Font font = loadTtf(cfg.ttfFile.getAbsolutePath()).deriveFont(Font.PLAIN, cfg.fontSize);
 
-        TreeSet<Integer> filtered = new TreeSet<Integer>();
-        List<Integer> missing = new ArrayList<Integer>();
+        TreeSet<Integer> filtered = new TreeSet<Integer> ();
+        List<Integer> missing = new ArrayList<Integer> ();
         for (Integer v : cps) {
             int cp = v.intValue();
             if (canDisplay(font, cp)) {
@@ -172,7 +174,7 @@ public final class FontDatBuilder {
             return "";
         }
 
-        TreeSet<Integer> missingSet = new TreeSet<Integer>();
+        TreeSet<Integer> missingSet = new TreeSet<Integer> ();
         for (int i = 0; i < missing.size(); i++) {
             missingSet.add(missing.get(i));
         }
@@ -211,7 +213,7 @@ public final class FontDatBuilder {
                     continue;
                 }
 
-                Integer key = Integer.valueOf((int) c);
+                Integer key = Integer.valueOf(c);
                 if (missingSet.contains(key)) {
                     out.append("- ");
                     out.append(f.getPath());
@@ -220,7 +222,7 @@ public final class FontDatBuilder {
                     out.append(":");
                     out.append(col);
                     out.append(" U+");
-                    out.append(toHex4((int) c));
+                    out.append(toHex4(c));
                     out.append("('");
                     if (c >= 0x20 && c != 0x7F) {
                         out.append(c);
@@ -276,7 +278,7 @@ public final class FontDatBuilder {
     }
 
     private static void scanLanguageTexts(TreeSet<Integer> cps, File directory, List<File> scannedFiles) throws IOException {
-        List<File> files = new ArrayList<File>();
+        List<File> files = new ArrayList<File> ();
         collectFiles(files, directory);
 
         for (int i = 0; i < files.size(); i++) {
@@ -302,7 +304,7 @@ public final class FontDatBuilder {
             if (c == '\r' || c == '\n' || c == '\t') {
                 continue;
             }
-            cps.add(Integer.valueOf((int) c));
+            cps.add(Integer.valueOf(c));
         }
     }
 
@@ -397,7 +399,7 @@ public final class FontDatBuilder {
             case '?':
             case '\'':
             case '"':
-            case '(': 
+            case '(':
             case ')':
             case '[':
             case ']':
@@ -416,35 +418,64 @@ public final class FontDatBuilder {
 
         // Common fullwidth/CJK punctuation.
         switch (cp) {
-            case 0x3001: // 、
-            case 0x3002: // 。
-            case 0x3008: // 〈
-            case 0x3009: // 〉
-            case 0x300A: // 《
-            case 0x300B: // 》
-            case 0x300C: // 「
-            case 0x300D: // 」
-            case 0x300E: // 『
-            case 0x300F: // 』
-            case 0x3010: // 【
-            case 0x3011: // 】
-            case 0x2018: // ‘
-            case 0x2019: // ’
-            case 0x201C: // “
-            case 0x201D: // ”
-            case 0x2026: // …
-            case 0xFF01: // ！
-            case 0xFF08: // （
-            case 0xFF09: // ）
-            case 0xFF0C: // ，
-            case 0xFF0E: // ．
-            case 0xFF1A: // ：
-            case 0xFF1B: // ；
-            case 0xFF1F: // ？
-            case 0xFF3B: // ［
-            case 0xFF3D: // ］
-            case 0xFF5B: // ｛
-            case 0xFF5D: // ｝
+            case 0x3001:
+                // 、
+            case 0x3002:
+                // 。
+            case 0x3008:
+                // 〈
+            case 0x3009:
+                // 〉
+            case 0x300A:
+                // 《
+            case 0x300B:
+                // 》
+            case 0x300C:
+                // 「
+            case 0x300D:
+                // 」
+            case 0x300E:
+                // 『
+            case 0x300F:
+                // 』
+            case 0x3010:
+                // 【
+            case 0x3011:
+                // 】
+            case 0x2018:
+                // ‘
+            case 0x2019:
+                // ’
+            case 0x201C:
+                // “
+            case 0x201D:
+                // ”
+            case 0x2026:
+                // …
+            case 0xFF01:
+                // ！
+            case 0xFF08:
+                // （
+            case 0xFF09:
+                // ）
+            case 0xFF0C:
+                // ，
+            case 0xFF0E:
+                // ．
+            case 0xFF1A:
+                // ：
+            case 0xFF1B:
+                // ；
+            case 0xFF1F:
+                // ？
+            case 0xFF3B:
+                // ［
+            case 0xFF3D:
+                // ］
+            case 0xFF5B:
+                // ｛
+            case 0xFF5D:
+                // ｝
                 return true;
             default:
                 return false;
@@ -460,23 +491,18 @@ public final class FontDatBuilder {
                 break;
         }
         switch (cp) {
-            case 0x3001: // 、
-            case 0x3002: // 。
-            case 0xFF0C: // ，
-            case 0xFF0E: // ．
+            case 0x3001:
+                // 、
+            case 0x3002:
+                // 。
+            case 0xFF0C:
+                // ，
+            case 0xFF0E:
+                // ．
                 return true;
             default:
                 return false;
         }
-    }
-
-    //cont
-    private static int punctLeftPad(int cp) {
-        return 1;
-    }
-
-    private static int punctRightPad(int cp) {
-        return 2;
     }
 
     private static byte[] buildDat(Font font, int baseline, int cellW, int cellH, TreeSet<Integer> cps) throws IOException {
@@ -592,10 +618,8 @@ public final class FontDatBuilder {
                         minX = 0;
                     }
                     if (isPunctuation(cpArr[gi])) {
-                        int lp = punctLeftPad(cpArr[gi]);
-                        int rp = punctRightPad(cpArr[gi]);
-                        int sx = minX - lp;
-                        int ww = (maxX - sx) + 1 + rp;
+                        int sx = minX - PUNCTUATION_LEFT_PAD;
+                        int ww = (maxX - sx) + 1 + PUNCTUATION_RIGHT_PAD;
                         if (sx < -127) {
                             sx = -127;
                         } else if (sx > 127) {

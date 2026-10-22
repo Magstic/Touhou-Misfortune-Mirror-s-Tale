@@ -268,10 +268,14 @@ public final class SoundEffectSystem {
 
     private static int minIntervalMs(int seId) {
         switch (seId) {
-            case SE_GRAZE: return 80;
-            case SE_NAV:   return 60;
-            case SE_SHOT:  return 40;
-            default:       return 0;
+            case SE_GRAZE:
+                return 80;
+            case SE_NAV:
+                return 60;
+            case SE_SHOT:
+                return 40;
+            default:
+                return 0;
         }
     }
 
@@ -279,21 +283,36 @@ public final class SoundEffectSystem {
 
     private static String resolvePath(int seId) {
         switch (seId) {
-            case SE_NAV:         return "/se/nav.wav";
-            case SE_SELECT:      return "/se/select.wav";
-            case SE_BACK:        return "/se/back.wav";
-            case SE_CD:          return "/se/cd.wav";
-            case SE_CRASH:       return "/se/crash.wav";
-            case SE_GRAZE:       return "/se/graze.wav";
-            case SE_PAUSE:       return "/se/pause.wav";
-            case SE_CRASH2:      return "/se/crash2.wav";
-            case SE_POWER:       return "/se/power.wav";
-            case SE_LIFE:        return "/se/life.wav";
-            case SE_SHOT:        return "/se/shot.wav";
-            case SE_ALICE_BOMB:  return "/se/alice.wav";
-            case SE_REIMU_BOMB:  return "/se/reimu.wav";
-            case SE_MARISA_BOMB: return "/se/marisa.wav";
-            default:             return null;
+            case SE_NAV:
+                return "/se/nav.wav";
+            case SE_SELECT:
+                return "/se/select.wav";
+            case SE_BACK:
+                return "/se/back.wav";
+            case SE_CD:
+                return "/se/cd.wav";
+            case SE_CRASH:
+                return "/se/crash.wav";
+            case SE_GRAZE:
+                return "/se/graze.wav";
+            case SE_PAUSE:
+                return "/se/pause.wav";
+            case SE_CRASH2:
+                return "/se/crash2.wav";
+            case SE_POWER:
+                return "/se/power.wav";
+            case SE_LIFE:
+                return "/se/life.wav";
+            case SE_SHOT:
+                return "/se/shot.wav";
+            case SE_ALICE_BOMB:
+                return "/se/alice.wav";
+            case SE_REIMU_BOMB:
+                return "/se/reimu.wav";
+            case SE_MARISA_BOMB:
+                return "/se/marisa.wav";
+            default:
+                return null;
         }
     }
 

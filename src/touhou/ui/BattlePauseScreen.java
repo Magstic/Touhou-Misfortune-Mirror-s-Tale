@@ -7,21 +7,13 @@ import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 
 public final class BattlePauseScreen {
-    public static final class Result {
-        public static final int KIND_NONE = 0;
-        public static final int KIND_RESUME = 1;
-        public static final int KIND_QUIT_TO_TITLE = 2;
-        public static final int KIND_RESTART = 3;
-        public static final int KIND_CONTINUE_YES = 4;
-        public static final int KIND_CONTINUE_NO = 5;
-        public static final int KIND_TOGGLE_BGM = 6;
-
-        public final int kind;
-
-        public Result(int kind) {
-            this.kind = kind;
-        }
-    }
+    public static final int ACTION_NONE = 0;
+    public static final int ACTION_RESUME = 1;
+    public static final int ACTION_QUIT_TO_TITLE = 2;
+    public static final int ACTION_RESTART = 3;
+    public static final int ACTION_CONTINUE_YES = 4;
+    public static final int ACTION_CONTINUE_NO = 5;
+    public static final int ACTION_TOGGLE_BGM = 6;
 
     public static final int MODE_PAUSE = 0;
     public static final int MODE_CONTINUE = 1;
@@ -44,7 +36,7 @@ public final class BattlePauseScreen {
         cursor = 0;
     }
 
-    public Result update(int pressed) {
+    public int update(int pressed) {
         if (mode == MODE_CONTINUE) {
             return updateContinue(pressed);
         }
@@ -59,54 +51,54 @@ public final class BattlePauseScreen {
         return mode == MODE_PAUSE ? TextId.SOFTKEY_BGM : -1;
     }
 
-    private Result updatePause(int pressed) {
+    private int updatePause(int pressed) {
         if (UiInput.cancel(pressed)) {
-            return new Result(Result.KIND_RESUME);
+            return ACTION_RESUME;
         }
         if (UiInput.secondary(pressed)) {
-            return new Result(Result.KIND_TOGGLE_BGM);
+            return ACTION_TOGGLE_BGM;
         }
 
         if (UiInput.down(pressed)) {
             cursor = MenuCursor.move(cursor, 1, 3);
-            return null;
+            return ACTION_NONE;
         }
         if (UiInput.up(pressed)) {
             cursor = MenuCursor.move(cursor, -1, 3);
-            return null;
+            return ACTION_NONE;
         }
 
         if (UiInput.confirm(pressed)) {
             if (cursor == 0) {
-                return new Result(Result.KIND_RESUME);
+                return ACTION_RESUME;
             }
             if (cursor == 1) {
-                return new Result(Result.KIND_QUIT_TO_TITLE);
+                return ACTION_QUIT_TO_TITLE;
             }
-            return new Result(Result.KIND_RESTART);
+            return ACTION_RESTART;
         }
 
-        return null;
+        return ACTION_NONE;
     }
 
-    private Result updateContinue(int pressed) {
+    private int updateContinue(int pressed) {
         if (UiInput.down(pressed)) {
             cursor = MenuCursor.move(cursor, 1, 2);
-            return null;
+            return ACTION_NONE;
         }
         if (UiInput.up(pressed)) {
             cursor = MenuCursor.move(cursor, -1, 2);
-            return null;
+            return ACTION_NONE;
         }
 
         if (UiInput.confirm(pressed)) {
             if (cursor == 0) {
-                return new Result(Result.KIND_CONTINUE_YES);
+                return ACTION_CONTINUE_YES;
             }
-            return new Result(Result.KIND_CONTINUE_NO);
+            return ACTION_CONTINUE_NO;
         }
 
-        return null;
+        return ACTION_NONE;
     }
 
     public void render(Graphics g) {

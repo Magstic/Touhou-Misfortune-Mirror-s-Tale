@@ -7,14 +7,9 @@ public final class ReplaySnapshotReader {
     private boolean valid;
 
     public ReplaySnapshotReader(byte[] data, int length) {
-        this.data = (data != null) ? data : new byte[0];
-        valid = data != null && length >= 0 && length <= this.data.length;
+        this.data = data;
+        valid = data != null && length >= 0 && length <= data.length;
         limit = valid ? length : 0;
-        this.pos = 0;
-    }
-
-    public boolean isValid() {
-        return valid;
     }
 
     public boolean isAtEnd() {
@@ -42,7 +37,6 @@ public final class ReplaySnapshotReader {
         int b1 = readU8();
         int b2 = readU8();
         int b3 = readU8();
-        return (b0 & 0xFF) | ((b1 & 0xFF) << 8) | ((b2 & 0xFF) << 16) | ((b3 & 0xFF) << 24);
+        return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
     }
-
 }

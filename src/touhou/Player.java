@@ -1,7 +1,6 @@
 package touhou;
 
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.battle.BattleMath;
@@ -411,8 +410,8 @@ public final class Player {
             int s0 = 0;
             int s1 = 0;
             if (bullets != null) {
-                s0 = bullets.getLaserStageFlag(103, 2, 0, true);
-                s1 = bullets.getLaserStageFlag(103, 2, 1, true);
+                s0 = bullets.getMarisaALaserStage(0);
+                s1 = bullets.getMarisaALaserStage(1);
             }
 
             int s = (s0 > s1) ? s0 : s1;
@@ -1319,8 +1318,8 @@ public final class Player {
                     }
                 }
 
-                yaSpawn(bullets, 9, 0, 1, opt1x, opt1y - Fixed.fromInt(10));
-                yaSpawn(bullets, 9, 1, 1, opt0x, opt0y - Fixed.fromInt(10));
+                bullets.spawnOrUpdateMarisaLaser(103, 2, 0, opt1x, opt1y - Fixed.fromInt(10), 1);
+                bullets.spawnOrUpdateMarisaLaser(103, 2, 1, opt0x, opt0y - Fixed.fromInt(10), 1);
                 return;
             }
 
@@ -1539,7 +1538,9 @@ public final class Player {
             short[] list = ANIMELIST[animeId];
             int idx = animeNo * 2;
             int frame = list[idx + 1];
-            if (slow) sprites.drawAlpha(g, SpriteSheetCatalog.PLAYER_AURA_BASE + (tick & 3), px, py, 128);
+            if (slow) {
+                sprites.drawAlpha(g, SpriteSheetCatalog.PLAYER_AURA_BASE + (tick & 3), px, py, 128);
+            }
             sprites.draw(g, SpriteSheetCatalog.PLAYER_FRAME_BASE + chara * SpriteSheetCatalog.PLAYER_FRAME_COUNT + frame, px, py);
         }
 
@@ -1637,15 +1638,6 @@ public final class Player {
         bullets.spawnPlayerEx(baseBulletId, frames, moveType, ang, n3, fx, fy, shotPower);
     }
 
-    // Player laser spawn helper.
-    private static void yaSpawn(BulletSystem bullets, int n, int laserSlot, int shotPower, int fx, int fy) {
-        if (n == 9) {
-            bullets.spawnOrUpdatePlayerLaser(103, 2, laserSlot, fx, fy, shotPower);
-        } else if (n == 10) {
-            bullets.spawnOrUpdatePlayerLaser(105, 3, laserSlot, fx, fy, shotPower);
-        }
-    }
-
     // Find the closest valid Alice target by X distance.
     private static int findAliceDollTargetByX(EnemyTargetRegistry enemies, int xFixed, boolean barrierActive) {
         if (enemies == null || barrierActive) {
@@ -1681,12 +1673,12 @@ public final class Player {
 
     // Animation frame table.
     private static final short[][] ANIMELIST = new short[][] {
-            { 1, 0, 1, 1, 1, 2, 1, 1 },
-            { 3, 3 },
-            { 3, 4 },
-            { 3, 5 },
-            { 3, 6 },
-            { 3, 7 },
-            { 3, 8 },
-    };
+        { 1, 0, 1, 1, 1, 2, 1, 1 },
+        { 3, 3 },
+        { 3, 4 },
+        { 3, 5 },
+        { 3, 6 },
+        { 3, 7 },
+        { 3, 8 },
+            };
 }

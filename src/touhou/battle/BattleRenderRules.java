@@ -40,10 +40,6 @@ public final class BattleRenderRules {
         return (character >= Player.REIMU && character <= Player.ALICE) ? SpriteSheetCatalog.BOMB_PORTRAIT_BASE + character : -1;
     }
 
-    public static int safeCharacterIndex(int character) {
-        return clamp(character, 0, 2);
-    }
-
     public static int bombOverlayX(int character, int bombAge) {
         if (character == Player.REIMU) {
             return 0;
@@ -105,8 +101,12 @@ public final class BattleRenderRules {
 
     /** Sprite ID, logical destination X/Y and text color. */
     public static boolean dialoguePortrait(SpriteCatalog catalog, int type, int talkCounter, int[] out) {
-        if (out == null || out.length < 4) throw new IllegalArgumentException("Portrait output size");
-        if (type < 0 || type > 12) return false;
+        if (out == null || out.length < 4) {
+            throw new IllegalArgumentException("Portrait output size");
+        }
+        if (type < 0 || type > 12) {
+            return false;
+        }
         int id = SpriteSheetCatalog.DIALOGUE_BASE + type;
         out[0] = id;
         out[1] = type <= 2 ? -talkCounter : PLAY_WIDTH - catalog.getW(id) + talkCounter;
@@ -122,14 +122,22 @@ public final class BattleRenderRules {
 
     public static int bossSpellCutInSprite(int stage, int gameMode, int spellStep) {
         switch (stage) {
-            case StageRuntime.STAGE_1: return SpriteSheetCatalog.SUNNY_CUTIN;
-            case StageRuntime.STAGE_2: return SpriteSheetCatalog.SINGLE_CUTIN_BASE;
-            case StageRuntime.STAGE_3: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 1;
-            case StageRuntime.STAGE_4: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + ((gameMode == BattleSessionConfig.MODE_SPELL_PRACTICE && spellStep == BossController.LAST_WORD_STEP) ? 3 : 2);
-            case StageRuntime.STAGE_5: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 4;
-            case StageRuntime.STAGE_6: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 5;
-            case StageRuntime.STAGE_EXTRA: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 6;
-            default: throw new IllegalArgumentException("stage");
+            case StageRuntime.STAGE_1:
+                return SpriteSheetCatalog.SUNNY_CUTIN;
+            case StageRuntime.STAGE_2:
+                return SpriteSheetCatalog.SINGLE_CUTIN_BASE;
+            case StageRuntime.STAGE_3:
+                return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 1;
+            case StageRuntime.STAGE_4:
+                return SpriteSheetCatalog.SINGLE_CUTIN_BASE + ((gameMode == BattleSessionConfig.MODE_SPELL_PRACTICE && spellStep == BossController.LAST_WORD_STEP) ? 3 : 2);
+            case StageRuntime.STAGE_5:
+                return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 4;
+            case StageRuntime.STAGE_6:
+                return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 5;
+            case StageRuntime.STAGE_EXTRA:
+                return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 6;
+            default:
+                throw new IllegalArgumentException("stage");
         }
     }
 

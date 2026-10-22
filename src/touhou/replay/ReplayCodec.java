@@ -54,9 +54,7 @@ public final class ReplayCodec {
                 out[outPos++] = v;
             }
             inPos += 2;
-        }
-
-        while (inPos < ENCODED_SIZE) {
+        } while (inPos < ENCODED_SIZE) {
             if (encoded[inPos++] != 0) {
                 return null;
             }

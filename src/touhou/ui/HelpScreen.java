@@ -9,17 +9,6 @@ import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 
 public final class HelpScreen {
-    public static final class Result {
-        public static final int KIND_NONE = 0;
-        public static final int KIND_BACK_TO_TITLE = 1;
-
-        public final int kind;
-
-        public Result(int kind) {
-            this.kind = kind;
-        }
-    }
-
     private int page;
     private int pageMax;
 
@@ -28,9 +17,9 @@ public final class HelpScreen {
         pageMax = 15;
     }
 
-    public Result update(int pressed) {
+    public boolean update(int pressed) {
         if (UiInput.cancel(pressed)) {
-            return new Result(Result.KIND_BACK_TO_TITLE);
+            return true;
         }
 
         if (UiInput.left(pressed)) {
@@ -43,7 +32,7 @@ public final class HelpScreen {
             }
         }
 
-        return null;
+        return false;
     }
 
     public void render(Graphics g, SpriteRenderer sprites) {
@@ -67,8 +56,12 @@ public final class HelpScreen {
 
         renderPage(g, font, sprites, page);
 
-        if (page != 0) sprites.draw(g, SpriteSheetCatalog.HELP_ARROW_BASE, 20, 25);
-        if (page != pageMax - 1) sprites.draw(g, SpriteSheetCatalog.HELP_ARROW_BASE + 1, 214, 25);
+        if (page != 0) {
+            sprites.draw(g, SpriteSheetCatalog.HELP_ARROW_BASE, 20, 25);
+        }
+        if (page != pageMax - 1) {
+            sprites.draw(g, SpriteSheetCatalog.HELP_ARROW_BASE + 1, 214, 25);
+        }
     }
 
     private static void drawPlain(Graphics g, Font font, String s, int x, int y, int rgb) {

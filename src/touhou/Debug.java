@@ -132,7 +132,7 @@ public final class Debug {
 
     public static void renderBattleDebugText(Graphics g,
             boolean fpsEnabled, boolean perfEnabled, boolean resourceEnabled,
-            int playX, int playY, int playW,
+            int playX, int playW,
             BulletSystem bullets, int[][] enemylist, int[][] effectlist,
             SpriteCatalog cc, int[][] effectTable, ImageBank imgs,
             String debugLine1, String debugLine2, String debugLine3, String debugLine4, String debugLine5) {

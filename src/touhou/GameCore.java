@@ -22,7 +22,8 @@ import touhou.replay.ReplayHeader;
 import touhou.replay.ReplayPlaybackController;
 import touhou.replay.ReplayRecordingController;
 import touhou.replay.ReplayRng;
-import touhou.replay.ReplayStageSnapshotService;
+import touhou.replay.ReplaySlotData;
+import touhou.replay.ReplayStageSnapshotCodec;
 import touhou.replay.ReplayTimeScaleController;
 import touhou.stage.BossController;
 import touhou.stage.StageAssets;
@@ -138,7 +139,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
                     spellId = 255;
                 }
 
-                replayRecording.armPendingForStageClear(null, ReplayHeader.FLAG_LOCAL, lvl, session.getCharacter(), mStage, score, session.getShotType(), mGamemode, spellId);
+                replayRecording.armPendingForStageClear(lvl, session.getCharacter(), mStage, score, session.getShotType(), mGamemode, spellId);
             }
         }
 
@@ -239,12 +240,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     private boolean spellPracticeEndActive;
     private boolean spellPracticeEndWon;
 
-    private int stageMissCount;
-    private int stageBombUsedCount;
-    private int stageSpellSeenCount;
-    private int stageSpellBonusCount;
     private int stageLastSpellId;
-    private int stageInitialContinueCount;
 
     // Run-wide result counters (used by final result panel after staff roll).
     private int runMissCount;
@@ -337,7 +333,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
     private int bgMoveSpd;
 
-    private BattleHudData hud;
+    private BattleHudModel hud;
 
     private volatile String failureMessage;
 
@@ -352,7 +348,9 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     private void bossSpellCutInTick() {
         int bspellstep = bossController.getBspellstep();
         if (bossSpellCutInActive) {
-            if (bspellstep != 1) bossSpellCutInActive = false;
+            if (bspellstep != 1) {
+                bossSpellCutInActive = false;
+            }
         } else if (bossSpellCutInPrevBspellstep == 0 && bspellstep == 1) {
             int mt = resolveBossMtForCutIn();
             bossSpellCutInActive = true;
@@ -489,14 +487,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
                 GameCore.this.stageJb(enemyIndex);
             }
 
-            public void playSound(int soundId, boolean loop) {
-                if (loop) {
-                    if (stageClearPanelActive) {
-                        return;
-                    }
-                    audioSystem.requestBgm(soundId, true);
-                    return;
-                }
+            public void playSe(int soundId) {
                 if (soundId == SoundEffectSystem.SE_CRASH) {
                     // Player hit: vibrate on death.
                     GameCore.this.vibration.requestFrames(5);
@@ -513,10 +504,10 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         dropItems = new DropItemSystem();
         dropItems.setListener(new DropItemSystem.Listener() {
             public void addPower(int amount) {
-                if (!(hud instanceof BattleHudModel)) {
+                if (hud == null) {
                     return;
                 }
-                BattleHudModel m = (BattleHudModel) hud;
+                BattleHudModel m = hud;
                 int old = m.getPower();
                 int p = old + amount;
                 if (p > 128) {
@@ -550,14 +541,14 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             }
 
             public void addBomb(int amount) {
-                if (!(hud instanceof BattleHudModel)) {
+                if (hud == null) {
                     return;
                 }
                 scoreSystem.post(ScoreSystem.EVT_ADD_BOMB, amount, 0, 0);
             }
 
             public void addPlayer(int amount) {
-                if (!(hud instanceof BattleHudModel)) {
+                if (hud == null) {
                     return;
                 }
                 scoreSystem.post(ScoreSystem.EVT_ADD_PLAYER, amount, 0, 0);
@@ -686,8 +677,8 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         // DoJa: disable progress writes during replay playback (!di guards).
         scoreSystem.setProgressWriteEnabled(false);
 
-        ReplayPlaybackController.StartParams sp = replayPlayback.startFromSlot(slot, bossOnly);
-        if (sp == null) {
+        ReplaySlotData replay = replayPlayback.startFromSlot(slot, bossOnly);
+        if (replay == null) {
             scoreSystem.setProgressWriteEnabled(true);
             if (ui != null) {
                 ui.returnToReplayKeepCursor();
@@ -695,16 +686,20 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             return;
         }
 
+        ReplayHeader header = replay.header;
         BattleSessionConfig replaySession;
         try {
-            if (sp.gamemode == BattleSessionConfig.MODE_SPELL_PRACTICE) {
-                replaySession = BattleSessionConfig.spellPractice(sp.chara, sp.type, sp.spellId);
-                if (replaySession.getStage() != sp.startStage) {
+            if (header.getMode() == BattleSessionConfig.MODE_SPELL_PRACTICE) {
+                replaySession = BattleSessionConfig.spellPractice(header.getChara(), header.getType(), header.getSpellId());
+                if (replaySession.getStage() != header.getStage()) {
                     returnReplayToMenu("Invalid replay session.");
                     return;
                 }
             } else {
-                replaySession = BattleSessionConfig.standard(sp.gamemode, sp.level, sp.chara, sp.type, sp.startStage, sp.practiceBoss);
+                // A stage-practice recording marked at frame zero starts directly at the boss.
+                boolean practiceBoss = header.getMode() == BattleSessionConfig.MODE_STAGE_PRACTICE && header.getBossStartFrame() == 0;
+                replaySession = BattleSessionConfig.standard(header.getMode(), header.getDifficulty(), header.getChara(),
+                        header.getType(), header.getStage(), practiceBoss);
             }
         } catch (IllegalArgumentException e) {
             returnReplayToMenu("Invalid replay session.");
@@ -712,13 +707,13 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         }
         startBattleSession(replaySession);
 
-        boolean ok = ReplayStageSnapshotService.loadAndApplyFromSlot(slot, random, continueSystem, hud, scoreSystem, player);
+        boolean ok = ReplayStageSnapshotCodec.decodeAndApply(replay.stageSnapshot, random, continueSystem, hud, scoreSystem, player);
         if (!ok) {
             returnReplayToMenu("Invalid stage snapshot.");
             return;
         }
         if (bossOnly) {
-            replayTimeScale.startAutoFastForwardToFrame(replayPlayback.getBossStartFrame());
+            replayTimeScale.startAutoFastForwardToFrame(header.getBossStartFrame());
         }
     }
 
@@ -773,8 +768,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         inGame = true;
         continueSystem.resetForNewRun(session.getContinueGameMode(), session.isSpellPractice());
         resetRunResultCounters();
-        stageInitialContinueCount = continueSystem.getRemainingContinues();
-        resetStageResultCounters();
+        stageLastSpellId = -1;
         stageClearPanelActive = false;
         stageClearPhoto = null;
         replayRecording.clearPending();
@@ -794,8 +788,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         introShatterImg = null;
         introShatterCnt = 0;
         resetSpellPracticeEndState();
-        stageInitialContinueCount = continueSystem.getRemainingContinues();
-        resetStageResultCounters();
+        stageLastSpellId = -1;
         stageClearPanelActive = false;
         stageClearPhoto = null;
         replayRecording.clearPending();
@@ -818,9 +811,9 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         }
     }
 
-    private BattleHudData createSessionHud() {
+    private BattleHudModel createSessionHud() {
         if (session.isSpellPractice()) {
-            return createHudForSpellPractice(session.getCharacter(), session.getShotType(), session.getSpellId());
+            return createHudForSpellPractice(session.getSpellId());
         }
         return createHudForStart(session.getGameMode(), session.getDifficulty(), session.getCharacter(),
                 session.getShotType(), session.getStage(), session.isPracticeBoss());
@@ -1004,15 +997,15 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             sBbaria = 1;
             mBossmodef = true;
         } else if (n4 >= 0) {
-            if (mStage == StageRuntime.STAGE_1 && hud instanceof BattleHudModel) {
-                ((BattleHudModel) hud).setPower(28);
+            if (mStage == StageRuntime.STAGE_1 && hud != null) {
+                hud.setPower(28);
             }
             enemylist[n4][StageRuntime.ENEMY_MOVE_STATE] = 1;
         }
     }
 
     // Build HUD data for spell practice.
-    private static BattleHudModel createHudForSpellPractice(int chara, int type, int spellId) {
+    private static BattleHudModel createHudForSpellPractice(int spellId) {
         int stage = SpellPracticeCatalog.getStage(spellId);
         int level = SpellPracticeCatalog.getDifficulty(spellId);
         int enemy = SpellPracticeCatalog.getEnemyId(spellId);
@@ -1382,7 +1375,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         }
 
         if (inGame && !battlePaused) {
-            if (endingFadeToWhite == 0 && !stageClearPanelActive && !replayPlayback.isActive() && !endingActive && !staffRollActive ) {
+            if (endingFadeToWhite == 0 && !stageClearPanelActive && !replayPlayback.isActive() && !endingActive && !staffRollActive) {
                 // Do not record the pause-trigger frame (left softkey / GAME_A).
                 // The game returns early and does not advance gameplay state on that frame.
                 if ((pressed & GAME_A_PRESSED) == 0) {
@@ -1547,7 +1540,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             scoreSystem.post(ScoreSystem.EVT_CONTINUE_RESET, 0, 0, 0);
             int[] opt = GameOptions.load();
             int playerCount = opt[GameOptions.IDX_LIVES];
-            BattleEngine.ContinueReviveResult rr = battleEngine.continueReviveInPlace(dropItems, (hud instanceof BattleHudModel) ? (BattleHudModel) hud : null,
+            BattleEngine.ContinueReviveResult rr = battleEngine.continueReviveInPlace(dropItems, hud,
                     player, PLAY_X, PLAY_Y, PLAY_W, PLAY_H, playerCount);
             bombCnt = rr.newBombCnt;
             sDeadcnt = rr.newDeadcnt;
@@ -1747,10 +1740,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         return session.getCharacter();
     }
 
-    public int bossHostGetType() {
-        return session.getShotType();
-    }
-
     public int bossHostGetLevel() {
         return (hud != null) ? hud.getLevel() : 0;
     }
@@ -1872,20 +1861,19 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         mResetf = 0;
     }
 
-    public void battleMainTickInput(int keys, int pressed, int fireActionPressed, boolean dialogueActive) {
+    public void battleMainTickInput(int pressed, int fireActionPressed, boolean dialogueActive) {
         if ((pressed & SOFTKEY_R_PRESSED) != 0) {
-            battleEngine.tickSlowToggle(player, true);
+            battleEngine.tickSlowToggle(player);
         }
 
         if ((pressed & GAME_B_PRESSED) != 0) {
-            battleEngine.tickSlowToggle(player, true);
+            battleEngine.tickSlowToggle(player);
         }
 
         if ((pressed & GAME_C_PRESSED) != 0) {
-            BattleEngine.BombActivateResult r = battleEngine.tickBombActivation(true, dialogueActive, hud instanceof BattleHudModel, bombCnt, sBossf, sBariacnt, fi,
+            BattleEngine.BombActivateResult r = battleEngine.tickBombActivation(dialogueActive, hud != null, bombCnt, sBossf, sBariacnt, fi,
                     mGcnt, mTacnt, ca, sDeadcnt);
             if (r.bombActivated) {
-                stageBombUsedCount++;
                 runBombUsedCount++;
                 if (session.getCharacter() == Player.REIMU) {
                     audioSystem.playSeType(SoundEffectSystem.SE_REIMU_BOMB);
@@ -1930,14 +1918,13 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         }
         if (sDeadcnt > 0) {
             boolean bossActive = sBossf != 0;
-            BattleEngine.DeathTickResult r = battleEngine.tickDeathCountdown(sDeadcnt, mStage, dropItems, (hud instanceof BattleHudModel) ? (BattleHudModel) hud : null,
-                    player, PLAY_X, PLAY_Y, PLAY_W, PLAY_H, session.isSpellPractice(), bossActive);
+            BattleEngine.DeathTickResult r = battleEngine.tickDeathCountdown(sDeadcnt, mStage, dropItems, hud,
+                    player, session.isSpellPractice(), bossActive);
             sDeadcnt = r.newDeadcnt;
             if (r.barrierTicks > 0) {
                 sBariacnt = r.barrierTicks;
             }
             if (r.deathProcessed) {
-                stageMissCount++;
                 runMissCount++;
             }
             if (r.deathProcessed && r.noPlayersLeft) {
@@ -2008,16 +1995,13 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
         // gb = stageGb (boss/enemy update+collision), ma = stageMa (script advance),
         // rst = bossController.tick time, o = player+effects+items+cutIn.
-        Debug.recordWorldBreakdown((int)(w2-w1), (int)(w4-w3), lastBossTickMs, (int)(w1-w0) + (int)(w3-w2));
+        Debug.recordWorldBreakdown((int) (w2 - w1), (int) (w4 - w3), lastBossTickMs, (int) (w1 - w0) + (int) (w3 - w2));
 
         return stageClearPanelActive;
     }
 
     public void battleMainTickBulletsAndCollisionAndHpBar() {
-        int enemyLevel = BattleSessionConfig.DIFFICULTY_EASY;
-        if (hud instanceof BattleHudData) {
-            enemyLevel = ((BattleHudData) hud).getLevel();
-        }
+        int enemyLevel = hud != null ? hud.getLevel() : BattleSessionConfig.DIFFICULTY_EASY;
 
         if (optDebugPerfEnabled) {
             Debug.perfBeginFrame();
@@ -2044,14 +2028,13 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         }
 
         if (player != null && sBariacnt == 0 && sDeadcnt == 0 && bombCnt == 0) {
-            boolean allowHit = true;
             if (optDebugPerfEnabled) {
                 long c0 = System.currentTimeMillis();
-                sDeadcnt = battleEngine.tickPlayerCollision(player, allowHit, enemylist, sBariacnt, sDeadcnt, bombCnt);
+                sDeadcnt = battleEngine.tickPlayerCollision(player, enemylist, sBariacnt, sDeadcnt, bombCnt);
                 long c1 = System.currentTimeMillis();
                 Debug.perfSetPlayerCollisionMs((int) (c1 - c0));
             } else {
-                sDeadcnt = battleEngine.tickPlayerCollision(player, allowHit, enemylist, sBariacnt, sDeadcnt, bombCnt);
+                sDeadcnt = battleEngine.tickPlayerCollision(player, enemylist, sBariacnt, sDeadcnt, bombCnt);
             }
         }
 
@@ -2072,7 +2055,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
                 battlePaused,
                 stageClearPanelActive,
                 session.isSpellPractice(),
-                spellPracticeEndFlg,
                 spellPracticeEndActive);
         if (callSuper) {
             super.keyPressed(keyCode);
@@ -2395,7 +2377,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         if (session.getCharacter() == Player.MARISA) {
             if (d0 < 45) {
                 int y = fy - Fixed.fromInt(10);
-                bullets.spawnOrUpdatePlayerLaser(105, 3, 2, fx, y, 12);
+                bullets.spawnOrUpdateMarisaLaser(105, 3, 2, fx, y, 12);
             }
 
             int d1;
@@ -2442,6 +2424,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     private void ensureTalkTableLoaded() {
         stageRuntime.ensureTalkTableLoaded(mStage, session.getCharacter());
     }
+
     // Map stage/boss state to script table index.
     private int stageNa() {
         int n = mStage * 5;
@@ -2641,22 +2624,19 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
     // StageJb helper: spawn a drop item if HUD supports drop context.
     private void stageJbSpawnDropIfAny(int dropType, int ex, int ey) {
-        if (dropType != 0 && hud instanceof BattleHudModel) {
-            BattleHudModel m = (BattleHudModel) hud;
+        if (dropType != 0 && hud != null) {
+            BattleHudModel m = hud;
             dropItems.spawn(dropType, 0, 0, ex, ey, mStage, m.getPower(), sBossf != 0);
         }
     }
 
     // StageJb helper: post spell finish event and update bonus counters.
-    private void stageJbPostSpellFinish(boolean countRunBonus) {
+    private void stageJbPostSpellFinish() {
         int lvl = (hud != null) ? hud.getLevel() : 0;
         boolean bonus = scoreSystem.isSpellBonusArmed();
         scoreSystem.post(ScoreSystem.EVT_SPELL_FINISH, bossController.getBspellcnt(), lvl, mStage);
         if (bonus) {
-            stageSpellBonusCount++;
-            if (countRunBonus) {
-                runSpellBonusCount++;
-            }
+            runSpellBonusCount++;
         }
         bossController.resetSpellCountersAfterJb();
     }
@@ -2666,7 +2646,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         if (stageRuntime.stageJbMt100PreProcess(n, ex, ey)) {
             return;
         }
-        stageJbPostSpellFinish(true);
+        stageJbPostSpellFinish();
 
         if (bossController.getHpBarAnimMode() == 1) {
             stageRuntime.stageJbMt100EnterHpBarAnimMode1Transition(n);
@@ -2697,11 +2677,11 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         stageRuntime.stageJbBossClearStateOnDeath(n);
         // Boss phase clear (mt 101..103) is the common spell finish path in DoJa.
         // Count run-wide spell bonus here so result panels show correct totals.
-        stageJbPostSpellFinish(true);
+        stageJbPostSpellFinish();
 
         if (sBstock != 0) {
-            if (hud instanceof BattleHudModel) {
-                BattleHudModel m = (BattleHudModel) hud;
+            if (hud != null) {
+                BattleHudModel m = hud;
                 int power = m.getPower();
                 boolean bossActive = sBossf != 0;
                 int gc = mGcnt;
@@ -2731,6 +2711,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             startSpellPracticeEnd(true, 30);
         }
     }
+
     private void stageJbHandleNormalEnemyDeath(final int n, final int mt, final int ex, final int ey, final int dropType) {
         stageJbSpawnDropIfAny(dropType, ex, ey);
 
@@ -2830,10 +2811,10 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     }
 
     private void syncScoreSystemForHud() {
-        if (hud == null || !(hud instanceof BattleHudModel)) {
+        if (hud == null) {
             return;
         }
-        BattleHudModel m = (BattleHudModel) hud;
+        BattleHudModel m = hud;
 
         // Preserve initial HUD hi-score (loaded from persistent score list).
         // attachHud() calls syncHud() and would otherwise overwrite it with ScoreSystem defaults.
@@ -3200,8 +3181,8 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         stageDochu.tickEnemyShootingStageG(n, enemylist, enemyType, ex, ey, px, py, level);
         stageDochu.tickEnemyShootingStageH(n, enemylist, enemyType, ex, ey, px, py, level);
         stageDochu.tickEnemyShootingStageI(n, enemylist, enemyType, ex, ey, px, py, level);
-        stageDochu.tickEnemyShootingStageJ(n, enemylist, enemyType, ex, ey, px, py, level);
-        stageDochu.tickEnemyShootingStageK(n, enemylist, enemyType, ex, ey, px, py, level);
+        stageDochu.tickEnemyShootingStageJ(n, enemylist, enemyType, ex, ey, px, py);
+        stageDochu.tickEnemyShootingStageK(n, enemylist, enemyType, ex, ey, px, py);
         stageDochu.tickEnemyShootingStageL(n, enemylist, enemyType, ex, ey, px, py, level);
 
         // Stage 1/2 fodder shooting patterns are handled by StageDochu.tickEnemyShootingStageA/B().
@@ -3305,7 +3286,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             if (spellId < 0) {
                 spellId = 255;
             }
-            replayRecording.armPendingForStageClear(null, ReplayHeader.FLAG_LOCAL, lvl, session.getCharacter(), mStage, score, session.getShotType(), mGamemode, spellId);
+            replayRecording.armPendingForStageClear(lvl, session.getCharacter(), mStage, score, session.getShotType(), mGamemode, spellId);
         }
 
         spellPracticeEndScreen.enter(spellPracticeEndWon);
@@ -3332,14 +3313,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         stageAssets.update(imgs, mBossmodef, battleRenderAccess.dialogueVisible(), effectlist, enemylist);
     }
 
-    private void resetStageResultCounters() {
-        stageMissCount = 0;
-        stageBombUsedCount = 0;
-        stageSpellSeenCount = 0;
-        stageSpellBonusCount = 0;
-        stageLastSpellId = -1;
-    }
-
     private void resetRunResultCounters() {
         runMissCount = 0;
         runBombUsedCount = 0;
@@ -3354,7 +3327,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         }
         stageLastSpellId = spellId;
         if (spellId >= 0) {
-            stageSpellSeenCount++;
             runSpellSeenCount++;
         }
     }
@@ -3398,7 +3370,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
                 if (spellId < 0) {
                     spellId = 255;
                 }
-                replayRecording.armPendingForStageClear(null, ReplayHeader.FLAG_LOCAL, lvl, session.getCharacter(), mStage, score, session.getShotType(), mGamemode, spellId);
+                replayRecording.armPendingForStageClear(lvl, session.getCharacter(), mStage, score, session.getShotType(), mGamemode, spellId);
             }
         }
 
@@ -3469,7 +3441,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             }
 
             allowReplaySave = replayRecording.armPendingForStageClear(
-                    null, ReplayHeader.FLAG_LOCAL, lvl, session.getCharacter(), mStage, score, session.getShotType(), mGamemode, spellId);
+                    lvl, session.getCharacter(), mStage, score, session.getShotType(), mGamemode, spellId);
         }
 
         // DoJa: stage-clear result shows run-wide totals (ba/ca/ea/da), not per-stage counters.
@@ -3505,7 +3477,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             if (spellId < 0) {
                 spellId = 255;
             }
-            replayRecording.armPendingForStageClear(null, ReplayHeader.FLAG_LOCAL, lvl, session.getCharacter(), mStage, score, session.getShotType(), mGamemode, spellId);
+            replayRecording.armPendingForStageClear(lvl, session.getCharacter(), mStage, score, session.getShotType(), mGamemode, spellId);
         }
 
         UnlockFlags.tryUnlockAliceOnExtraClear(mStage, mGamemode);
@@ -3546,8 +3518,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         bgMoveSpd = 0;
         loadStageAssets();
 
-        stageInitialContinueCount = continueSystem.getRemainingContinues();
-        resetStageResultCounters();
+        stageLastSpellId = -1;
         stageClearPanelActive = false;
         stageClearPhoto = null;
 
@@ -3693,10 +3664,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             return core.sBstock;
         }
 
-        public int bossBarrier() {
-            return core.sBbaria;
-        }
-
         public int gcnt() {
             return core.mGcnt;
         }
@@ -3735,14 +3702,6 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
         public boolean disableBossBombShieldCheat() {
             return core.disableBossBombShieldCheat;
-        }
-
-        public int[] bossX() {
-            return core.sBossx;
-        }
-
-        public int[] bossY() {
-            return core.sBossy;
         }
 
         public boolean startSpellPractice() {

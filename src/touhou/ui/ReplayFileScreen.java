@@ -46,11 +46,17 @@ public final class ReplayFileScreen {
 
     public boolean update(int pressed) {
         tick++;
-        if (scene == SCENE_BUSY) return false;
-        if (scene == SCENE_MESSAGE) return UiInput.dismiss(pressed);
+        if (scene == SCENE_BUSY) {
+            return false;
+        }
+        if (scene == SCENE_MESSAGE) {
+            return UiInput.dismiss(pressed);
+        }
 
         if (UiInput.cancel(pressed) || UiInput.left(pressed)) {
-            if (path.length() == 0) return true;
+            if (path.length() == 0) {
+                return true;
+            }
             int slash = path.lastIndexOf('/', path.length() - 2);
             listDirectory(path.substring(0, slash + 1));
         } else if (!importing && UiInput.secondary(pressed) && path.length() > 0) {
@@ -78,7 +84,9 @@ public final class ReplayFileScreen {
     }
 
     public int getRightSoftkeyTextId() {
-        if (scene != SCENE_BROWSE) return -1;
+        if (scene != SCENE_BROWSE) {
+            return -1;
+        }
         if (importing) {
             return entries.length > 0 && !entries[cursor].endsWith("/") ? TextId.REPLAY_IMPORT_SAVE : -1;
         }

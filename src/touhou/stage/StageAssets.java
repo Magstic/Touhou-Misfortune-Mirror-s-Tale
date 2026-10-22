@@ -12,31 +12,31 @@ public final class StageAssets {
     private static final int[] COMMON = { 9, 10, 38, 39, 40, 41, 42 };
     private static final int[] ROUTE = { 11 };
     private static final int[][] BACKGROUNDS = {
-            { 45, 46, 47 }, { 45, 59, 60, 61, 62, 63 },
-            { 45, 71, 72, 73, 74, 75, 76, 77 }, { 83, 92 },
-            { 96, 97, 98 }, { 106, 107 }, { 114, 115 }
+        { 45, 46, 47 }, { 45, 59, 60, 61, 62, 63 },
+        { 45, 71, 72, 73, 74, 75, 76, 77 }, { 83, 92 },
+        { 96, 97, 98 }, { 106, 107 }, { 114, 115 }
     };
     private static final int[] STAGE5_BOSS_BACKGROUNDS = { 97, 98 };
     private static final int[][] BOSSES = {
-            { 51, 52, 53 }, { 68 }, { 80, 81 }, { 86 }, { 101 }, { 102 }, { 112 }
+        { 51, 52, 53 }, { 68 }, { 80, 81 }, { 86 }, { 101 }, { 102 }, { 112 }
     };
     private static final int[][] MIDBOSSES = {
-            { 51 }, { 68 }, { 80, 81 }, EMPTY, EMPTY, EMPTY, EMPTY
+        { 51 }, { 68 }, { 80, 81 }, EMPTY, EMPTY, EMPTY, EMPTY
     };
     private static final int[] MIDBOSS_EFFECTS = { 6, 9, 10, -1, -1, -1, -1 };
     private static final int[] LAST_WORD = { 87 };
     private static final int[] SPELL_IMAGES = { 54, 55, 56, 64, 65, 67, 79, 84, 85, 88, 91, 99, 100, 103, 104, 105, 113 };
     private static final int[][] PLAYERS = {
-            { 13, 14, 15, 16, 29, 32, 33, 34 },
-            { 18, 19, 20, 21, 22, 30, 35, 36 },
-            { 24, 25, 26, 27, 31 }
+        { 13, 14, 15, 16, 29, 32, 33, 34 },
+        { 18, 19, 20, 21, 22, 30, 35, 36 },
+        { 24, 25, 26, 27, 31 }
     };
     private static final int[][] PLAYER_SHOT_ALPHA_IMAGES = {
-            { 15, 16, 32 }, { 19, 20, 21, 22, 35, 36 }, { 26 }
+        { 15, 16, 32 }, { 19, 20, 21, 22, 35, 36 }, { 26 }
     };
     private static final int[][] OPENINGS = {
-            { 43, 44 }, { 57, 58 }, { 69, 70 }, { 89, 90 },
-            { 94, 95 }, { 109, 110 }, { 116, 117 }
+        { 43, 44 }, { 57, 58 }, { 69, 70 }, { 89, 90 },
+        { 94, 95 }, { 109, 110 }, { 116, 117 }
     };
     private static final int[] PORTRAITS = { 12, 17, 23, 48, 49, 50, 66, 78, 82, 93, 108, 111 };
 
@@ -59,20 +59,28 @@ public final class StageAssets {
                 closeUpAlpha ? 128 : 255);
         int shotAlpha = GameOptions.isPlayerShotAlphaEnabled(options) ? 128 : 255;
         int[] shots = PLAYER_SHOT_ALPHA_IMAGES[character];
-        for (int i = 0; i < shots.length; i++) images.setOpacity(shots[i], shotAlpha);
+        for (int i = 0; i < shots.length; i++) {
+            images.setOpacity(shots[i], shotAlpha);
+        }
         this.bossStep = bossStep;
         bossPhase = bossOnly;
         midbossActive = false;
         openingActive = false;
         dialogueActive = false;
-        for (int i = 0; i < activeSpellImages.length; i++) activeSpellImages[i] = false;
+        for (int i = 0; i < activeSpellImages.length; i++) {
+            activeSpellImages[i] = false;
+        }
         int[][] groups = { COMMON, stage == StageRuntime.STAGE_5 && bossPhase ? STAGE5_BOSS_BACKGROUNDS : BACKGROUNDS[stage],
-                PLAYERS[character], bossPhase ? bossImages() : ROUTE,
-                bossOnly ? EMPTY : OPENINGS[stage] };
+            PLAYERS[character], bossPhase ? bossImages() : ROUTE,
+            bossOnly ? EMPTY : OPENINGS[stage] };
         images.retain(groups);
-        for (int i = 0; i < groups.length; i++) load(images, groups[i]);
+        for (int i = 0; i < groups.length; i++) {
+            load(images, groups[i]);
+        }
 
-        for (int i = 0; i < 4; i++) sprites.precacheAlphaRegion(SpriteSheetCatalog.PLAYER_AURA_BASE + i, 128);
+        for (int i = 0; i < 4; i++) {
+            sprites.precacheAlphaRegion(SpriteSheetCatalog.PLAYER_AURA_BASE + i, 128);
+        }
     }
 
     private int[] bossImages() {
@@ -85,24 +93,34 @@ public final class StageAssets {
 
     public static void setBackgroundDarkness(ImageBank images, int stage, int levels) {
         int[] backgrounds = BACKGROUNDS[stage];
-        for (int i = 0; i < backgrounds.length; i++) images.setDarkness(backgrounds[i], levels);
-        if (stage == StageRuntime.STAGE_5) images.setDarkness(100, levels);
+        for (int i = 0; i < backgrounds.length; i++) {
+            images.setDarkness(backgrounds[i], levels);
+        }
+        if (stage == StageRuntime.STAGE_5) {
+            images.setDarkness(100, levels);
+        }
     }
 
     public static void setBackgroundOpacity(ImageBank images, int stage, boolean heavy) {
         int alpha = heavy ? 128 : 255;
         switch (stage) {
-            case StageRuntime.STAGE_2: images.setOpacity(59, alpha); break;
+            case StageRuntime.STAGE_2:
+                images.setOpacity(59, alpha);
+                break;
             case StageRuntime.STAGE_3:
                 images.setOpacity(72, alpha);
                 images.setOpacity(73, alpha);
                 break;
-            case StageRuntime.STAGE_4: images.setOpacity(83, heavy ? 127 : 255); break;
+            case StageRuntime.STAGE_4:
+                images.setOpacity(83, heavy ? 127 : 255);
+                break;
             case StageRuntime.STAGE_5:
                 images.setOpacity(98, alpha);
                 images.setTint(100, 0x80BFBFBF);
                 break;
-            case StageRuntime.STAGE_6: images.setOpacity(107, alpha); break;
+            case StageRuntime.STAGE_6:
+                images.setOpacity(107, alpha);
+                break;
         }
     }
 
@@ -111,7 +129,9 @@ public final class StageAssets {
         if (bossMode && !bossPhase) {
             release(images, ROUTE);
             release(images, OPENINGS[stage]);
-            if (stage == StageRuntime.STAGE_5) images.release(96);
+            if (stage == StageRuntime.STAGE_5) {
+                images.release(96);
+            }
             load(images, bossImages());
             bossPhase = true;
             midbossActive = false;
@@ -127,11 +147,17 @@ public final class StageAssets {
             for (int i = 0; i < effects.length && !visible; i++) {
                 visible = effects[i][StageRuntime.EFFECT_ACTIVE] != 0 && effects[i][StageRuntime.EFFECT_ID] == MIDBOSS_EFFECTS[stage];
             }
-            if (visible && !midbossActive) load(images, MIDBOSSES[stage]);
-            if (!visible && midbossActive) release(images, MIDBOSSES[stage]);
+            if (visible && !midbossActive) {
+                load(images, MIDBOSSES[stage]);
+            }
+            if (!visible && midbossActive) {
+                release(images, MIDBOSSES[stage]);
+            }
             midbossActive = visible;
         }
-        if (dialogueActive && !dialogueVisible) release(images, PORTRAITS);
+        if (dialogueActive && !dialogueVisible) {
+            release(images, PORTRAITS);
+        }
         dialogueActive = dialogueVisible;
 
         boolean visible = false;
@@ -142,7 +168,9 @@ public final class StageAssets {
                 break;
             }
         }
-        if (openingActive && !visible) release(images, OPENINGS[stage]);
+        if (openingActive && !visible) {
+            release(images, OPENINGS[stage]);
+        }
         openingActive = visible;
     }
 
@@ -151,10 +179,16 @@ public final class StageAssets {
         boolean orbs = false;
         boolean spheres = false;
         for (int i = 0; i < enemies.length; i++) {
-            if (enemies[i][StageRuntime.ENEMY_ACTIVE] == 0) continue;
+            if (enemies[i][StageRuntime.ENEMY_ACTIVE] == 0) {
+                continue;
+            }
             int type = enemies[i][StageRuntime.ENEMY_APPEARANCE];
-            if (type == 20 || type == 21) orbs = true;
-            if (type == 22) spheres = true;
+            if (type == 20 || type == 21) {
+                orbs = true;
+            }
+            if (type == 22) {
+                spheres = true;
+            }
         }
         for (int i = 0; i < effects.length && !spheres; i++) {
             spheres = effects[i][StageRuntime.EFFECT_ACTIVE] != 0 && effects[i][StageRuntime.EFFECT_ID] == 22;
@@ -164,7 +198,9 @@ public final class StageAssets {
         int spellId = boss.getSpellId();
         int maskImage = visuals.getBlindAlpha() > 0 ? (visuals.getBlindSpellId() < 28 ? 65 : 64) : -1;
         int offset = stage <= StageRuntime.STAGE_4 ? stage - 1 : stage;
-        if (stage == StageRuntime.STAGE_4 && bossStep == BossController.LAST_WORD_STEP) offset = 3;
+        if (stage == StageRuntime.STAGE_4 && bossStep == BossController.LAST_WORD_STEP) {
+            offset = 3;
+        }
         int cutInSprite = SpriteSheetCatalog.SINGLE_CUTIN_BASE + offset;
         int cutInImage = stage == StageRuntime.STAGE_1 ? -1 : sprites.getImageIndex(cutInSprite);
         for (int i = 0; i < SPELL_IMAGES.length; i++) {
@@ -204,16 +240,22 @@ public final class StageAssets {
                 }
                 images.get(image);
             }
-            if (!needed && activeSpellImages[i]) images.release(image);
+            if (!needed && activeSpellImages[i]) {
+                images.release(image);
+            }
             activeSpellImages[i] = needed;
         }
     }
 
     private static void release(ImageBank images, int[] ids) {
-        for (int i = 0; i < ids.length; i++) images.release(ids[i]);
+        for (int i = 0; i < ids.length; i++) {
+            images.release(ids[i]);
+        }
     }
 
     private static void load(ImageBank images, int[] ids) {
-        for (int i = 0; i < ids.length; i++) images.get(ids[i]);
+        for (int i = 0; i < ids.length; i++) {
+            images.get(ids[i]);
+        }
     }
 }

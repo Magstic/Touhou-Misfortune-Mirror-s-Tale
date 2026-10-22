@@ -9,49 +9,82 @@ public final class BossController {
     public static final int SECOND_BOSS_PATTERN = 102;
     public static final int THIRD_BOSS_PATTERN = 103;
     public static final int LAST_WORD_STEP = 37;
-    public interface Host extends BossState, BossWorld, BossServices {}
+    public interface Host extends BossState, BossWorld, BossServices {
+    }
 
     public interface BossState {
         boolean isBossMode();
+
         int getStage();
+
         int getGameMode();
+
         int getChara();
+
         int getLevel();
+
         int getPower();
+
         int getFi();
+
         int getMGCnt();
+
         void setMGCnt(int v);
+
         int getBossF();
+
         void setBossF(int v);
+
         void setBbaria(int v);
+
         int getBstock();
+
         int getPlayerXFixed();
+
         int getPlayerYFixed();
+
         int getSpellPracticeBossStep();
+
         int getTimeStop();
+
         void setTimeStop(int v);
     }
 
     public interface BossWorld {
         void stageJb(int enemyIdx);
+
         int stageFb(int n, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9);
+
         int[] getBossX();
+
         int[] getBossY();
+
         int[] getBossWrk();
+
         int[][] getEnemyList();
     }
 
     public interface BossServices {
         void setResetFlag(int v);
+
         void setQ(boolean v);
-        void playSound(int id, boolean loop);
+
+        void playSe(int id);
+
         void aimEnemyBulletsToPlayer();
+
         void setEnemyBulletGlobalDir(int deg);
+
         void setEnemyBulletLock(int idx, int value);
+
         void spawnStageEffect(int effectId, int xFixed, int yFixed);
+
         int spawnEnemyBullet(int bulletId, int moveType, int angleDeg, int speedParam, int xFixed, int yFixed);
+
         void convertEnemyBulletsTo81Rain(int bossYFixed, int gc);
+
         void setEnemyBulletsDeltaForIdAndMoveType(int bulletId, int moveType, int newDelta);
+
         void setEnemyBulletsDeltaForIdIfDeltaZero(int bulletId, int baseDelta, int deltaStep);
     }
 
@@ -65,7 +98,6 @@ public final class BossController {
 
     final int[] bwave = new int[3];
     int bspellcnt = 255;
-    boolean batkf;
     int bspellstep;
 
     int k;
@@ -102,7 +134,6 @@ public final class BossController {
         bwave[1] = 0;
         bwave[2] = 0;
         bspellcnt = 255;
-        batkf = false;
         bspellstep = 0;
 
         k = 0;
@@ -191,7 +222,7 @@ public final class BossController {
 
     public void enterHpBarMode2ForStockTransition() {
         j = 65535;
-        yb(l, n, 2);
+        beginHpBarAnimation(l, n, 2);
     }
 
     public void tick(int enemyIdx) {
@@ -211,7 +242,7 @@ public final class BossController {
                     }
                 }
             }
-            ub(enemyIdx);
+            tickBossPattern(enemyIdx);
             if (bspellstep == 1) {
                 // Spell cut-in/chant phase: boss must be invincible.
                 host.setBbaria(2);
@@ -221,7 +252,7 @@ public final class BossController {
             }
             int afterBossf = host.getBossF();
             if (host.getGameMode() == BattleSessionConfig.MODE_SPELL_PRACTICE && beforeBossf == 2 && afterBossf != 2) {
-                // Spell practice: entering a spell step via wb(step) must be invincible immediately (same frame).
+                // Spell practice: entering a spell step via transitionBossPhase(step) must be invincible immediately (same frame).
                 host.setBbaria(2);
             }
             return;
@@ -247,7 +278,7 @@ public final class BossController {
             }
         }
 
-        ub(enemyIdx);
+        tickBossPattern(enemyIdx);
         if (bspellstep == 1) {
             // Spell cut-in/chant phase: boss must be invincible.
             host.setBbaria(2);
@@ -257,7 +288,7 @@ public final class BossController {
         }
         int afterBossf = host.getBossF();
         if (host.getGameMode() == BattleSessionConfig.MODE_SPELL_PRACTICE && beforeBossf == 2 && afterBossf != 2) {
-            // Spell practice: entering a spell step via wb(step) must be invincible immediately (same frame).
+            // Spell practice: entering a spell step via transitionBossPhase(step) must be invincible immediately (same frame).
             host.setBbaria(2);
         }
     }
@@ -312,27 +343,23 @@ public final class BossController {
         }
     }
 
-    void yb(int l, int n, int m) {
-        if (host.getGameMode() != BattleSessionConfig.MODE_SPELL_PRACTICE || m == 3) {
+    void beginHpBarAnimation(int targetIndex, int nameIndex, int mode) {
+        if (host.getGameMode() != BattleSessionConfig.MODE_SPELL_PRACTICE || mode == 3) {
             k = 1;
-            this.l = l;
-            this.m = m;
-            this.n = n;
+            l = targetIndex;
+            m = mode;
+            n = nameIndex;
             for (int i = 0; i < 3; ++i) {
                 o[i] = 0;
             }
             o[1] = j;
             o[2] = j;
             p[1] = 0;
-            if (this.m == 1) {
-                p[2] = 40;
-                return;
-            }
-            p[2] = 0;
+            p[2] = mode == 1 ? 40 : 0;
         }
     }
 
-    private void ub(int enemyIdx) {
+    private void tickBossPattern(int enemyIdx) {
         int[][] enemylist = host.getEnemyList();
         int[] bossx = host.getBossX();
         int[] bossy = host.getBossY();
@@ -368,7 +395,7 @@ public final class BossController {
         if (bspellcnt >= 0 && bspellcnt != 255 && (host.getFi() & 0xF) == 0 && idx == 0 && host.getTimeStop() == 0) {
             --bspellcnt;
             if (bspellcnt < 10) {
-                host.playSound(SoundEffectSystem.SE_CD, false);
+                host.playSe(SoundEffectSystem.SE_CD);
             }
         }
 

@@ -16,10 +16,6 @@ public final class ReplayKeyCodec {
     private ReplayKeyCodec() {
     }
 
-    public static byte encode(int keys, int pressed) {
-        return encode(keys, pressed, 0);
-    }
-
     public static byte encode(int keys, int pressed, int fireActionPressed) {
         int r = 0;
 

@@ -44,8 +44,7 @@ public final class BattleEngine {
         // Enemy death notification (lets the stage runtime award drops/advance script).
         void onEnemyKilled(int enemyIndex);
 
-        // Script sound routing entry. loop=true is used for BGM requests.
-        void playSound(int soundId, boolean loop);
+        void playSe(int soundId);
 
         // Per-frame bomb callback while bomb is active.
         void onBombTick(int d0, int bombCnt);
@@ -56,13 +55,6 @@ public final class BattleEngine {
         public int barrierTicks;
         public boolean deathProcessed;
         public boolean noPlayersLeft;
-
-        public DeathTickResult(int newDeadcnt, int barrierTicks) {
-            this.newDeadcnt = newDeadcnt;
-            this.barrierTicks = barrierTicks;
-            this.deathProcessed = false;
-            this.noPlayersLeft = false;
-        }
     }
 
     public static final class BombActivateResult {
@@ -70,23 +62,11 @@ public final class BattleEngine {
         public int newCa;
         public int newDeadcnt;
         public boolean bombActivated;
-
-        public BombActivateResult(int newBombCnt, int newCa, int newDeadcnt) {
-            this.newBombCnt = newBombCnt;
-            this.newCa = newCa;
-            this.newDeadcnt = newDeadcnt;
-            this.bombActivated = false;
-        }
     }
 
     public static final class FireInputResult {
         public int newTacnt;
         public boolean newShooting;
-
-        public FireInputResult(int newTacnt, boolean newShooting) {
-            this.newTacnt = newTacnt;
-            this.newShooting = newShooting;
-        }
     }
 
     public static final class ContinueReviveResult {
@@ -126,9 +106,9 @@ public final class BattleEngine {
         this.enemyBullets = enemyBullets;
         this.scoreSystem = scoreSystem;
         this.host = host;
-        this.tickResult = new DeathTickResult(0, 0);
-        this.bombActivateResult = new BombActivateResult(0, 0, 0);
-        this.fireInputResult = new FireInputResult(0, false);
+        this.tickResult = new DeathTickResult();
+        this.bombActivateResult = new BombActivateResult();
+        this.fireInputResult = new FireInputResult();
     }
 
     public void reset() {
@@ -218,11 +198,8 @@ public final class BattleEngine {
     }
 
     // Mirrors GameCanvas.update: slow toggle input.
-    public void tickSlowToggle(Player player, boolean togglePressed) {
+    public void tickSlowToggle(Player player) {
         // Slow mode affects hitbox display and movement precision.
-        if (!togglePressed) {
-            return;
-        }
         if (player == null) {
             return;
         }
@@ -263,7 +240,7 @@ public final class BattleEngine {
     }
 
     // Mirrors GameCanvas.update: bomb activation (GAME_C_PRESSED) conditions and side effects.
-    public BombActivateResult tickBombActivation(boolean bombPressed, boolean dialogueActive, boolean hudIsBattleHudModel, int bombCnt, int sBossf,
+    public BombActivateResult tickBombActivation(boolean dialogueActive, boolean hasHud, int bombCnt, int sBossf,
             int sBariacnt, int fi, int mGcnt, int mTacnt, int ca, int sDeadcnt) {
         // Enforces DoJa bomb activation rules and returns the updated counters.
         bombActivateResult.newBombCnt = bombCnt;
@@ -271,13 +248,10 @@ public final class BattleEngine {
         bombActivateResult.newDeadcnt = sDeadcnt;
         bombActivateResult.bombActivated = false;
 
-        if (!bombPressed) {
-            return bombActivateResult;
-        }
         if (dialogueActive) {
             return bombActivateResult;
         }
-        if (!hudIsBattleHudModel) {
+        if (!hasHud) {
             return bombActivateResult;
         }
         if (scoreSystem.getBomb() <= 0) {
@@ -420,11 +394,10 @@ public final class BattleEngine {
         if (sDeadcnt != 0) {
             return;
         }
-        if (!(hud instanceof BattleHudModel)) {
+        if (hud == null) {
             return;
         }
 
-        BattleHudModel m = (BattleHudModel) hud;
         int px;
         int py;
         boolean slow = false;
@@ -437,7 +410,7 @@ public final class BattleEngine {
             py = (playY + playH - 28) << 16;
         }
         int crisis = (scoreSystem != null) ? scoreSystem.getCrisis() : 0;
-        dropItems.update(px, py, slow, stage, m.getPower(), playerDeadFlag, disableItemCollectLimitCheat, currentChara, crisis);
+        dropItems.update(px, py, slow, stage, hud.getPower(), playerDeadFlag, disableItemCollectLimitCheat, currentChara, crisis);
     }
 
     // Mirrors DoJa : (s_deadflg && s_bariacnt == 27) respawn + invincibility blink.
@@ -637,7 +610,7 @@ public final class BattleEngine {
             }
 
             if (host != null) {
-                host.playSound(SoundEffectSystem.SE_SHOT, false);
+                host.playSe(SoundEffectSystem.SE_SHOT);
             }
 
             int dmg = bullets.getPower(i);
@@ -677,7 +650,7 @@ public final class BattleEngine {
     }
 
     // Mirrors GameCanvas.update: enemy bullet graze/hit collision + death queue.
-    public int tickPlayerCollision(Player player, boolean allowHit, int[][] enemylist, int sBariacnt, int sDeadcnt, int bombCnt) {
+    public int tickPlayerCollision(Player player, int[][] enemylist, int sBariacnt, int sDeadcnt, int bombCnt) {
         // Applies graze scoring and hit detection (enemy bullets + enemy bodies).
         if (player == null) {
             return sDeadcnt;
@@ -689,7 +662,7 @@ public final class BattleEngine {
         int playerRadiusFixed = player.getHitboxRadiusFixed();
 
         if (enemyBullets != null) {
-            enemyBullets.applyPlayerCollision(player.getXFixed(), player.getYFixed(), playerRadiusFixed, true, allowHit);
+            enemyBullets.applyPlayerCollision(player.getXFixed(), player.getYFixed(), playerRadiusFixed);
             int grazed = enemyBullets.getGrazeCount();
             if (grazed > 0) {
                 int gx = player.getXFixed();
@@ -697,7 +670,7 @@ public final class BattleEngine {
                 for (int i = 0; i < grazed; i++) {
                     if (host != null) {
                         host.spawnEffectEntry(2, gx, gy);
-                        host.playSound(SoundEffectSystem.SE_GRAZE, false);
+                        host.playSe(SoundEffectSystem.SE_GRAZE);
                     }
                 }
                 if (scoreSystem != null) {
@@ -706,21 +679,11 @@ public final class BattleEngine {
             }
         }
 
-        return checkAndQueueDeath(player, allowHit, enemylist, sDeadcnt);
+        return checkAndQueueDeath(player, enemylist, sDeadcnt);
     }
 
-    public int checkAndQueueDeath(Player player, boolean allowHit, int[][] enemylist, int sDeadcnt) {
+    private int checkAndQueueDeath(Player player, int[][] enemylist, int sDeadcnt) {
         // Converts a hit into a queued death event to be processed in tickDeathCountdown.
-        if (player == null) {
-            return sDeadcnt;
-        }
-        if (!allowHit) {
-            return sDeadcnt;
-        }
-        if (sDeadcnt != 0) {
-            return sDeadcnt;
-        }
-
         if (enemyBullets != null && enemyBullets.isPlayerHit()) {
             queueDeath(player.getXFixed(), player.getYFixed());
             enemyBullets.clearPlayerHit();
@@ -743,8 +706,8 @@ public final class BattleEngine {
         deathYFixed = yFixed;
     }
 
-    public DeathTickResult tickDeathCountdown(int sDeadcnt, int stage, DropItemSystem dropItems, BattleHudModel hud, Player player, int playX, int playY,
-            int playW, int playH, boolean spellPractice, boolean bossActive) {
+    public DeathTickResult tickDeathCountdown(int sDeadcnt, int stage, DropItemSystem dropItems, BattleHudModel hud, Player player,
+            boolean spellPractice, boolean bossActive) {
         // Processes a queued death on the last tick and returns barrier/invincibility duration.
         tickResult.newDeadcnt = sDeadcnt;
         tickResult.barrierTicks = 0;
@@ -760,7 +723,7 @@ public final class BattleEngine {
                 deathPending = false;
 
                 if (host != null) {
-                    host.playSound(SoundEffectSystem.SE_CRASH, false);
+                    host.playSe(SoundEffectSystem.SE_CRASH);
                     host.setFlash(1);
                     host.spawnStageEffect(1, deathXFixed, deathYFixed);
                 }

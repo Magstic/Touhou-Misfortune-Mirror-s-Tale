@@ -8,7 +8,6 @@ import touhou.Debug;
 import touhou.GameCore;
 import touhou.ImageBank;
 import touhou.Player;
-import touhou.SpriteCatalog;
 import touhou.SpriteRenderer;
 import touhou.SpriteSheetCatalog;
 import touhou.Trig;
@@ -49,16 +48,16 @@ public final class BattleRenderer {
 
     // Pre-built timer strings "00".."99" to avoid per-frame String concatenation.
     private static final String[] TIMER_STRINGS = {
-            "00","01","02","03","04","05","06","07","08","09",
-            "10","11","12","13","14","15","16","17","18","19",
-            "20","21","22","23","24","25","26","27","28","29",
-            "30","31","32","33","34","35","36","37","38","39",
-            "40","41","42","43","44","45","46","47","48","49",
-            "50","51","52","53","54","55","56","57","58","59",
-            "60","61","62","63","64","65","66","67","68","69",
-            "70","71","72","73","74","75","76","77","78","79",
-            "80","81","82","83","84","85","86","87","88","89",
-            "90","91","92","93","94","95","96","97","98","99"
+        "00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
+        "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
+        "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",
+        "30", "31", "32", "33", "34", "35", "36", "37", "38", "39",
+        "40", "41", "42", "43", "44", "45", "46", "47", "48", "49",
+        "50", "51", "52", "53", "54", "55", "56", "57", "58", "59",
+        "60", "61", "62", "63", "64", "65", "66", "67", "68", "69",
+        "70", "71", "72", "73", "74", "75", "76", "77", "78", "79",
+        "80", "81", "82", "83", "84", "85", "86", "87", "88", "89",
+        "90", "91", "92", "93", "94", "95", "96", "97", "98", "99"
     };
 
     // Boss display names used by the boss HUD.
@@ -272,21 +271,26 @@ public final class BattleRenderer {
             if ((type == 17 || type == 19) && !a.disableBossBombShieldCheat()
                     && a.bossVisualShieldActive() && a.bombCnt() > 0) {
                 shielding = true;
-                if (bossShield == null) bossShield = a.sprites().createAlphaSprite(spriteId);
-                else bossShield.setSprite(spriteId);
+                if (bossShield == null) {
+                    bossShield = a.sprites().createAlphaSprite(spriteId);
+                } else {
+                    bossShield.setSprite(spriteId);
+                }
                 bossShield.draw(g, x, y, BattleEnemyVisuals.bossShieldAlpha(a.bombCnt()));
             } else {
                 drawSprite(a, g, spriteId, x, y);
             }
         }
-        if (!shielding) bossShield = null;
+        if (!shielding) {
+            bossShield = null;
+        }
     }
 
     // Debug text overlay shown on top of the playfield.
     private void renderBattleDebugText(GameCore.BattleRenderAccess a, Graphics g) {
         Debug.renderBattleDebugText(g,
                 a.debugFpsEnabled(), a.debugPerfEnabled(), a.debugResourceEnabled(),
-                PLAY_X, PLAY_Y, PLAY_W,
+                PLAY_X, PLAY_W,
                 a.bullets(), a.enemylist(), a.effectlist(), a.cc(), a.effectTable(), a.imgs(),
                 a.debugLine(), a.debugLine2(), a.debugLine3(), a.debugLine4(), a.debugLine5());
     }
@@ -414,13 +418,17 @@ public final class BattleRenderer {
     }
 
     private int renderDialoguePortrait(Graphics g, GameCore.BattleRenderAccess a, int portraitType, int talkCounter) {
-        if (!BattleRenderRules.dialoguePortrait(a.cc(), portraitType, talkCounter, dialoguePortrait)) return 0xFFFFFF;
+        if (!BattleRenderRules.dialoguePortrait(a.cc(), portraitType, talkCounter, dialoguePortrait)) {
+            return 0xFFFFFF;
+        }
         int cx = g.getClipX(), cy = g.getClipY(), cw = g.getClipWidth(), ch = g.getClipHeight();
         try {
             g.clipRect(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
             a.sprites().draw(g, dialoguePortrait[0], dialoguePortrait[1], dialoguePortrait[2]);
-            if (portraitType == 6) a.sprites().draw(g, SpriteSheetCatalog.STAR_DIALOGUE_EXPRESSION,
-                    dialoguePortrait[1], dialoguePortrait[2] + 46);
+            if (portraitType == 6) {
+                a.sprites().draw(g, SpriteSheetCatalog.STAR_DIALOGUE_EXPRESSION,
+                        dialoguePortrait[1], dialoguePortrait[2] + 46);
+            }
         } finally {
             g.setClip(cx, cy, cw, ch);
         }
@@ -835,7 +843,9 @@ public final class BattleRenderer {
             int y0 = PLAY_Y + a.originY() + d0 - 240;
             g.drawImage(a1, x0, y0, Graphics.TOP | Graphics.LEFT);
             // Continue the boss texture below the viewport when bomb shake exposes its lower edge.
-            if (boss) g.drawImage(a1, x0, y0 + 240, Graphics.TOP | Graphics.LEFT);
+            if (boss) {
+                g.drawImage(a1, x0, y0 + 240, Graphics.TOP | Graphics.LEFT);
+            }
         }
         if (a0 == null && a1 == null) {
             g.setColor(ImageBank.darkenColor(0x303030, backgroundDarkness));
@@ -933,7 +943,9 @@ public final class BattleRenderer {
     // Keep only the current EX palette pair and its optional indexed compositor.
     private void ensureStage6Cache(ImageBank images, int phase, boolean heavy) {
         int darkness = heavy ? 0 : backgroundDarkness;
-        if (stage6CacheD4 == phase && stage6CacheHeavy == heavy && stage6CacheDarkness == darkness) return;
+        if (stage6CacheD4 == phase && stage6CacheHeavy == heavy && stage6CacheDarkness == darkness) {
+            return;
+        }
         int previousPhase = stage6CacheD4 < 0 ? 0 : stage6CacheD4;
         if (previousPhase != phase) {
             images.release(BattleRenderRules.backgroundBaseImage(6, previousPhase));
@@ -1327,7 +1339,6 @@ public final class BattleRenderer {
         }
         UiDraw.drawString2(g, null, bossName, 2, 26, 0, 0xFFFFFF, 0x000000);
 
-        ImageBank imgs = a.imgs();
         int stock = a.bossStock();
         if (stock < 0) {
             stock = 0;

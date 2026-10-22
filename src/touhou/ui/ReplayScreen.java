@@ -14,7 +14,6 @@ import touhou.replay.ReplaySlotStore;
 
 public final class ReplayScreen {
     public static final class Result {
-        public static final int KIND_NONE = 0;
         public static final int KIND_BACK_TO_TITLE = 1;
         public static final int KIND_START_REPLAY = 2;
         public static final int KIND_OPEN_BT_RECEIVE = 4;
@@ -303,27 +302,34 @@ public final class ReplayScreen {
         }
 
         if (act == ACTION_DELETE) {
-            if (!isActionEnabled(ACTION_DELETE)) return null;
+            if (!isActionEnabled(ACTION_DELETE)) {
+                return null;
+            }
             changeScene(SCENE_DELETE_CONFIRM);
             return null;
         }
 
         if (act == ACTION_NET) {
-            if (!isActionEnabled(act)) return null;
+            if (!isActionEnabled(act)) {
+                return null;
+            }
             showMessage(UiText.get(TextId.REPLAY_MSG_NOT_IMPLEMENTED));
             return null;
         }
 
         if (act == ACTION_BT) {
-            if (!isActionEnabled(act)) return null;
+            if (!isActionEnabled(act)) {
+                return null;
+            }
             return new Result(cachedHasData ? Result.KIND_OPEN_BT_SEND : Result.KIND_OPEN_BT_RECEIVE, cursor, false);
         }
         if (act == ACTION_FILE) {
-            if (!isActionEnabled(act)) return null;
+            if (!isActionEnabled(act)) {
+                return null;
+            }
             return new Result(cachedHasData ? Result.KIND_OPEN_EXPORT : Result.KIND_OPEN_IMPORT, cursor, false);
         }
 
-        ReplayHeader h = slots.header(cursor);
         boolean hasData = slots.hasData(cursor);
         if (!hasData) {
             showMessage(UiText.get(TextId.REPLAY_MSG_EMPTY_SLOT));
@@ -331,7 +337,9 @@ public final class ReplayScreen {
         }
 
         if (act == ACTION_PLAY_BOSS) {
-            if (!isActionEnabled(ACTION_PLAY_BOSS)) return null;
+            if (!isActionEnabled(ACTION_PLAY_BOSS)) {
+                return null;
+            }
             return new Result(Result.KIND_START_REPLAY, cursor, true);
         }
         if (act == ACTION_PLAY) {

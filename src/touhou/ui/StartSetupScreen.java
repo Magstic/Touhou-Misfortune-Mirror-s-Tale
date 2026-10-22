@@ -43,48 +43,48 @@ public final class StartSetupScreen {
     }
 
     private static final int[] DIFF_DESC = new int[] {
-            TextId.DIFFICULTY_DESC_EASY,
-            TextId.DIFFICULTY_DESC_NORMAL,
-            TextId.DIFFICULTY_DESC_HARD,
-            TextId.DIFFICULTY_DESC_LUNATIC };
+        TextId.DIFFICULTY_DESC_EASY,
+        TextId.DIFFICULTY_DESC_NORMAL,
+        TextId.DIFFICULTY_DESC_HARD,
+        TextId.DIFFICULTY_DESC_LUNATIC };
 
     private static final int[][] CHARA_INFO = new int[][] {
-            {
-                    TextId.CHARACTER_INFO_REIMU_TITLE,
-                    TextId.CHARACTER_INFO_REIMU_NAME,
-                    TextId.CHARACTER_INFO_REIMU_TYPE_A_TITLE,
-                    TextId.CHARACTER_INFO_REIMU_TYPE_A_DESC_1,
-                    TextId.CHARACTER_INFO_REIMU_TYPE_A_DESC_2,
-                    TextId.CHARACTER_INFO_REIMU_TYPE_B_TITLE,
-                    TextId.CHARACTER_INFO_REIMU_TYPE_B_DESC_1,
-                    TextId.CHARACTER_INFO_REIMU_TYPE_B_DESC_2,
-                    TextId.CHARACTER_INFO_REIMU_ABILITY_TITLE,
-                    TextId.CHARACTER_INFO_REIMU_ABILITY_DESC
-            },
-            {
-                    TextId.CHARACTER_INFO_MARISA_TITLE,
-                    TextId.CHARACTER_INFO_MARISA_NAME,
-                    TextId.CHARACTER_INFO_MARISA_TYPE_A_TITLE,
-                    TextId.CHARACTER_INFO_MARISA_TYPE_A_DESC_1,
-                    TextId.CHARACTER_INFO_MARISA_TYPE_A_DESC_2,
-                    TextId.CHARACTER_INFO_MARISA_TYPE_B_TITLE,
-                    TextId.CHARACTER_INFO_MARISA_TYPE_B_DESC_1,
-                    TextId.CHARACTER_INFO_MARISA_TYPE_B_DESC_2,
-                    TextId.CHARACTER_INFO_MARISA_ABILITY_TITLE,
-                    TextId.CHARACTER_INFO_MARISA_ABILITY_DESC
-            },
-            {
-                    TextId.CHARACTER_INFO_ALICE_TITLE,
-                    TextId.CHARACTER_INFO_ALICE_NAME,
-                    TextId.CHARACTER_INFO_ALICE_TYPE_A_TITLE,
-                    TextId.CHARACTER_INFO_ALICE_TYPE_A_DESC_1,
-                    TextId.CHARACTER_INFO_ALICE_TYPE_A_DESC_2,
-                    TextId.CHARACTER_INFO_ALICE_TYPE_B_TITLE,
-                    TextId.CHARACTER_INFO_ALICE_TYPE_B_DESC_1,
-                    TextId.CHARACTER_INFO_ALICE_TYPE_B_DESC_2,
-                    TextId.CHARACTER_INFO_ALICE_ABILITY_TITLE,
-                    TextId.CHARACTER_INFO_ALICE_ABILITY_DESC
-            } };
+        {
+            TextId.CHARACTER_INFO_REIMU_TITLE,
+            TextId.CHARACTER_INFO_REIMU_NAME,
+            TextId.CHARACTER_INFO_REIMU_TYPE_A_TITLE,
+            TextId.CHARACTER_INFO_REIMU_TYPE_A_DESC_1,
+            TextId.CHARACTER_INFO_REIMU_TYPE_A_DESC_2,
+            TextId.CHARACTER_INFO_REIMU_TYPE_B_TITLE,
+            TextId.CHARACTER_INFO_REIMU_TYPE_B_DESC_1,
+            TextId.CHARACTER_INFO_REIMU_TYPE_B_DESC_2,
+            TextId.CHARACTER_INFO_REIMU_ABILITY_TITLE,
+            TextId.CHARACTER_INFO_REIMU_ABILITY_DESC
+        },
+        {
+            TextId.CHARACTER_INFO_MARISA_TITLE,
+            TextId.CHARACTER_INFO_MARISA_NAME,
+            TextId.CHARACTER_INFO_MARISA_TYPE_A_TITLE,
+            TextId.CHARACTER_INFO_MARISA_TYPE_A_DESC_1,
+            TextId.CHARACTER_INFO_MARISA_TYPE_A_DESC_2,
+            TextId.CHARACTER_INFO_MARISA_TYPE_B_TITLE,
+            TextId.CHARACTER_INFO_MARISA_TYPE_B_DESC_1,
+            TextId.CHARACTER_INFO_MARISA_TYPE_B_DESC_2,
+            TextId.CHARACTER_INFO_MARISA_ABILITY_TITLE,
+            TextId.CHARACTER_INFO_MARISA_ABILITY_DESC
+        },
+        {
+            TextId.CHARACTER_INFO_ALICE_TITLE,
+            TextId.CHARACTER_INFO_ALICE_NAME,
+            TextId.CHARACTER_INFO_ALICE_TYPE_A_TITLE,
+            TextId.CHARACTER_INFO_ALICE_TYPE_A_DESC_1,
+            TextId.CHARACTER_INFO_ALICE_TYPE_A_DESC_2,
+            TextId.CHARACTER_INFO_ALICE_TYPE_B_TITLE,
+            TextId.CHARACTER_INFO_ALICE_TYPE_B_DESC_1,
+            TextId.CHARACTER_INFO_ALICE_TYPE_B_DESC_2,
+            TextId.CHARACTER_INFO_ALICE_ABILITY_TITLE,
+            TextId.CHARACTER_INFO_ALICE_ABILITY_DESC
+        } };
 
     private int gamemode;
 
@@ -331,7 +331,7 @@ public final class StartSetupScreen {
         UiDraw.drawString2(g, null, UiText.get(TextId.PRACTICE_MODE_LABEL), 140, 36, 0, 16777120, 3158064);
     }
 
-private void renderTopHints(Graphics g) {
+    private void renderTopHints(Graphics g) {
         int c = 0xFFFFAF;
         Font f = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
 
@@ -392,8 +392,11 @@ private void renderTopHints(Graphics g) {
             if (gamemode == BattleSessionConfig.MODE_EXTRA) {
                 id = SpriteSheetCatalog.EXTRA_DIFFICULTY;
             }
-            if (difficultyFade == null) difficultyFade = sprites.createAlphaSprite(id);
-            else difficultyFade.setSprite(id);
+            if (difficultyFade == null) {
+                difficultyFade = sprites.createAlphaSprite(id);
+            } else {
+                difficultyFade.setSprite(id);
+            }
             difficultyFade.draw(g, 120, y, UiDraw.spriteAlpha(effectD));
         } else {
             difficultyFade = null;

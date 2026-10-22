@@ -107,11 +107,25 @@ public final class BulletSystem {
 
     // Package-private direct array access for hot-path collision detection.
     // Callers must ensure index is in [0, max).
-    boolean[] activeArray() { return active; }
-    boolean[] fromPlayerArray() { return fromPlayer; }
-    int[] xArray() { return x; }
-    int[] yArray() { return y; }
-    int[] bulletIdArray() { return bulletId; }
+    boolean[] activeArray() {
+        return active;
+    }
+
+    boolean[] fromPlayerArray() {
+        return fromPlayer;
+    }
+
+    int[] xArray() {
+        return x;
+    }
+
+    int[] yArray() {
+        return y;
+    }
+
+    int[] bulletIdArray() {
+        return bulletId;
+    }
 
     public boolean isActive(int idx) {
         return idx >= 0 && idx < max && active[idx];
@@ -698,28 +712,16 @@ public final class BulletSystem {
         return idx;
     }
 
-    public int getLaserStageFlag(int baseBulletId, int mType, int tagValue, boolean isFromPlayer) {
+    public int getMarisaALaserStage(int laserSlot) {
         for (int i = 0; i < max; i++) {
-            if (!active[i]) {
+            if (!active[i] || !fromPlayer[i]) {
                 continue;
             }
-            if (fromPlayer[i] != isFromPlayer) {
+            int bid = bulletId[i];
+            if (bid != 103 && bid != 104) {
                 continue;
             }
-            if (mType == 2 && baseBulletId == 103 && isFromPlayer) {
-                int bid = bulletId[i];
-                if (bid != 103 && bid != 104) {
-                    continue;
-                }
-            } else {
-                if (bulletId[i] != baseBulletId) {
-                    continue;
-                }
-            }
-            if (moveType[i] != mType) {
-                continue;
-            }
-            if (tag[i] != tagValue) {
+            if (moveType[i] != 2 || tag[i] != laserSlot) {
                 continue;
             }
             return stageFlag[i];
@@ -727,28 +729,10 @@ public final class BulletSystem {
         return 0;
     }
 
-    public int spawnOrUpdatePlayerLaser(int baseBulletId, int mType, int tagValue, int spawnX, int spawnY, int shotPower) {
-        return spawnOrUpdateLaserOwner(baseBulletId, mType, tagValue, spawnX, spawnY, shotPower, true);
-    }
-
-    private int spawnOrUpdateLaserOwner(int baseBulletId, int mType, int tagValue, int spawnX, int spawnY, int shotPower, boolean isFromPlayer) {
-        int keep = isFromPlayer ? 32 : 2;
-        boolean isMarisaALaser = isFromPlayer && mType == 2 && baseBulletId == 103;
-        boolean isMarisaBombLaser = isFromPlayer && mType == 3 && baseBulletId == 105;
-        if (isMarisaALaser) {
-            keep = 10;
-        }
-        if (isMarisaBombLaser) {
-            keep = 10;
-        }
-
-        int yAdj = spawnY;
-        if (isMarisaALaser) {
-            yAdj = spawnY + Fixed.fromInt(6);
-        }
-        if (isMarisaBombLaser) {
-            yAdj = spawnY + Fixed.fromInt(6);
-        }
+    public int spawnOrUpdateMarisaLaser(int baseBulletId, int mType, int tagValue, int spawnX, int spawnY, int shotPower) {
+        boolean isMarisaALaser = mType == 2 && baseBulletId == 103;
+        int maxStage = 10;
+        int yAdj = spawnY + Fixed.fromInt(6);
         for (int i = 0; i < max; i++) {
             if (!active[i]) {
                 continue;
@@ -757,32 +741,21 @@ public final class BulletSystem {
             if (isMarisaALaser) {
                 int bid = bulletId[i];
                 idOk = (bid == 103 || bid == 104);
-            } else if (isMarisaBombLaser) {
+            } else {
                 int bid = bulletId[i];
                 idOk = (bid >= 105 && bid <= 110);
-            } else {
-                idOk = (bulletId[i] == baseBulletId);
             }
 
             if (idOk && moveType[i] == mType && tag[i] == tagValue) {
-                fromPlayer[i] = isFromPlayer;
+                fromPlayer[i] = true;
                 x0[i] = spawnX;
                 y0[i] = yAdj;
                 x[i] = spawnX;
                 y[i] = yAdj;
                 power[i] = shotPower;
-                if (isMarisaALaser) {
-                    stageFlag[i] += 2;
-                    if (stageFlag[i] > keep) {
-                        stageFlag[i] = keep;
-                    }
-                } else if (isMarisaBombLaser) {
-                    stageFlag[i] += 2;
-                    if (stageFlag[i] > keep) {
-                        stageFlag[i] = keep;
-                    }
-                } else {
-                    stageFlag[i] = keep;
+                stageFlag[i] += 2;
+                if (stageFlag[i] > maxStage) {
+                    stageFlag[i] = maxStage;
                 }
                 return i;
             }
@@ -794,7 +767,7 @@ public final class BulletSystem {
         }
 
         active[idx] = true;
-        fromPlayer[idx] = isFromPlayer;
+        fromPlayer[idx] = true;
         bulletId[idx] = baseBulletId;
         animFrames[idx] = 1;
         animTick[idx] = 0;
@@ -804,13 +777,7 @@ public final class BulletSystem {
         angleDeg[idx] = 270;
         delta[idx] = 0;
         savedDelta[idx] = 0;
-        if (isMarisaALaser) {
-            stageFlag[idx] = 0;
-        } else if (isMarisaBombLaser) {
-            stageFlag[idx] = 0;
-        } else {
-            stageFlag[idx] = keep;
-        }
+        stageFlag[idx] = 0;
         tag[idx] = tagValue;
 
         x0[idx] = spawnX;
@@ -1122,7 +1089,7 @@ public final class BulletSystem {
                 return;
             }
 
-            // Stage EXTRA fodder: accelerating burst bullets.
+                // Stage EXTRA fodder: accelerating burst bullets.
             case 40: {
                 int dist = delta[i];
                 int distFixed = dist << 13;
@@ -1139,7 +1106,7 @@ public final class BulletSystem {
                 return;
             }
 
-            // Stage EXTRA fodder: spiral split bullets that transition to moveType 1.
+                // Stage EXTRA fodder: spiral split bullets that transition to moveType 1.
             case 43:
             case 44: {
                 int dist = delta[i];
@@ -1673,7 +1640,7 @@ public final class BulletSystem {
                     }
 
                     int offAng1 = BattleMath.normalizeDeg(ang + 90);
-                    int se = (int) (((long) Trig.cos(offAng1) * 50L) >> 3);
+                    int se = (int) ((Trig.cos(offAng1) * 50L) >> 3);
                     int x1 = bx + se;
                     int y1 = by + se;
 
@@ -1685,7 +1652,7 @@ public final class BulletSystem {
                     }
 
                     int offAng2 = BattleMath.normalizeDeg(ang + 270);
-                    se = (int) (((long) Trig.cos(offAng2) * 50L) >> 3);
+                    se = (int) ((Trig.cos(offAng2) * 50L) >> 3);
                     int x2 = bx + se;
                     int y2 = by + se;
 
@@ -2395,8 +2362,8 @@ public final class BulletSystem {
                         int div = 8;
                         for (int a = 0; a < 360; a += 360 / div) {
                             int angOut = ang + a;
-                            int se = (int) (((long) Trig.cos(angOut) * 30L) >> 3);
-                            int te = (int) (((long) Trig.sin(angOut) * 30L) >> 3);
+                            int se = (int) ((Trig.cos(angOut) * 30L) >> 3);
+                            int te = (int) ((Trig.sin(angOut) * 30L) >> 3);
                             spawn(639, 12, angOut, 24, x[i] + se, y[i] + te);
                         }
                     }
@@ -2907,7 +2874,7 @@ public final class BulletSystem {
                 return;
             }
 
-            // Stage EXTRA fodder: spiral curve bullets (moveType 21/22).
+                // Stage EXTRA fodder: spiral curve bullets (moveType 21/22).
             case 21:
             case 22: {
                 int dist = delta[i];
@@ -3064,7 +3031,7 @@ public final class BulletSystem {
 
     private static int c(final int n, final int n2, final int n3, final int n4) {
         long term1 = (long) n2 * (long) n4;
-        long term2 = ((long) n3 * (long) n4 * (long) n4) / 10L;
+        long term2 = ((long) n3 * n4 * n4) / 10L;
         term2 >>= 1;
         return (int) (term1 + term2 + n);
     }
@@ -3218,7 +3185,9 @@ public final class BulletSystem {
             drawId = bulletId[i] + dirFrame;
         }
 
-        if (sprites == null) throw new ResourceException("Sprite renderer not initialized");
+        if (sprites == null) {
+            throw new ResourceException("Sprite renderer not initialized");
+        }
         sprites.drawFast(g, drawId, px, py,
                 clipX, clipY, clipW, clipH);
     }

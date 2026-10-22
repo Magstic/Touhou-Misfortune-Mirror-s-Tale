@@ -64,11 +64,6 @@ public final class ReplaySlotStore {
         return ReplayRmsStore.loadSlotHeaderAndName(slot, header, name);
     }
 
-    public static byte[] loadStageSnapshot(int slot) {
-        ReplaySlotData data = loadSlot(slot);
-        return (data != null) ? data.stageSnapshot : null;
-    }
-
     private static void clearPresence(boolean[] values) {
         if (values == null) {
             return;

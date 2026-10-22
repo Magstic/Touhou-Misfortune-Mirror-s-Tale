@@ -34,7 +34,7 @@ public final class BattleMath {
         long ab = (long) ay + (long) ah;
         long br = (long) bx + (long) bw;
         long bb = (long) by + (long) bh;
-        return (long) ax < br && (long) bx < ar && (long) ay < bb && (long) by < ab;
+        return ax < br && bx < ar && ay < bb && by < ab;
     }
 
     // Fixed-point multiply helper.

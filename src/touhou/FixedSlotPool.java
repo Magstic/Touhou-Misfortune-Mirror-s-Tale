@@ -22,10 +22,6 @@ public final class FixedSlotPool {
         return index >= 0 && index < active.length;
     }
 
-    public boolean isActive(int index) {
-        return isValidIndex(index) && active[index];
-    }
-
     public int allocate() {
         return allocateExcluding(null, 0);
     }

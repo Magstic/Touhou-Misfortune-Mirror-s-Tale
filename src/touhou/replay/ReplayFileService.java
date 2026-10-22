@@ -35,16 +35,22 @@ public final class ReplayFileService {
     private static void collectEntries(Enumeration entries, Vector names, boolean includeReplayFiles) {
         while (entries.hasMoreElements()) {
             String name = (String) entries.nextElement();
-            if (!name.endsWith("/") && !(includeReplayFiles && name.toLowerCase().endsWith(".rep"))) continue;
+            if (!name.endsWith("/") && !(includeReplayFiles && name.toLowerCase().endsWith(".rep"))) {
+                continue;
+            }
             int i = 0;
-            while (i < names.size() && compareNames(name, (String) names.elementAt(i)) > 0) i++;
+            while (i < names.size() && compareNames(name, (String) names.elementAt(i)) > 0) {
+                i++;
+            }
             names.insertElementAt(name, i);
         }
     }
 
     private static int compareNames(String a, String b) {
         boolean aDirectory = a.endsWith("/");
-        if (aDirectory != b.endsWith("/")) return aDirectory ? -1 : 1;
+        if (aDirectory != b.endsWith("/")) {
+            return aDirectory ? -1 : 1;
+        }
         return a.compareTo(b);
     }
 
@@ -52,7 +58,9 @@ public final class ReplayFileService {
         FileConnection file = (FileConnection) Connector.open("file:///" + path, Connector.READ);
         try {
             long size = file.fileSize();
-            if (size <= 0 || size > ReplayShareCodec.MAX_PACKET_SIZE) return null;
+            if (size <= 0 || size > ReplayShareCodec.MAX_PACKET_SIZE) {
+                return null;
+            }
             byte[] packet = new byte[(int) size];
             DataInputStream stream = file.openDataInputStream();
             try {
@@ -68,16 +76,20 @@ public final class ReplayFileService {
 
     public static String exportSlot(int slot, String directory) throws IOException {
         byte[] packet = ReplayShareService.exportSlotPacket(slot);
-        if (packet == null) throw new IOException("Replay unavailable");
+        if (packet == null) {
+            throw new IOException("Replay unavailable");
+        }
 
         String base = "THMMT_" + (slot + 1);
-        for (int copy = 0; ; copy++) {
+        for (int copy = 0;; copy++) {
             String name = base + (copy == 0 ? "" : "_" + copy) + ".rep";
             FileConnection file = (FileConnection) Connector.open("file:///" + directory + name, Connector.READ_WRITE);
             boolean created = false;
             boolean complete = false;
             try {
-                if (file.exists()) continue;
+                if (file.exists()) {
+                    continue;
+                }
                 file.create();
                 created = true;
                 OutputStream stream = file.openOutputStream();
@@ -91,7 +103,9 @@ public final class ReplayFileService {
                 return directory + name;
             } finally {
                 try {
-                    if (created && !complete) file.delete();
+                    if (created && !complete) {
+                        file.delete();
+                    }
                 } finally {
                     file.close();
                 }

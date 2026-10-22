@@ -6,10 +6,6 @@ import javax.microedition.lcdui.Font;
 public final class FontTextMeasurer implements UiTextLayout.Measurer {
     private Font font;
 
-    public FontTextMeasurer(Font font) {
-        this.font = font;
-    }
-
     void setFont(Font font) {
         this.font = font;
     }

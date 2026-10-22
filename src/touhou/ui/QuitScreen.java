@@ -7,17 +7,9 @@ import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 
 public final class QuitScreen {
-    public static final class Result {
-        public static final int KIND_NONE = 0;
-        public static final int KIND_BACK_TO_TITLE = 1;
-        public static final int KIND_QUIT = 2;
-
-        public final int kind;
-
-        public Result(int kind) {
-            this.kind = kind;
-        }
-    }
+    public static final int ACTION_NONE = 0;
+    public static final int ACTION_BACK_TO_TITLE = 1;
+    public static final int ACTION_QUIT = 2;
 
     private int cursor;
 
@@ -25,29 +17,29 @@ public final class QuitScreen {
         cursor = 0;
     }
 
-    public Result update(int pressed) {
+    public int update(int pressed) {
         if (UiInput.cancel(pressed)) {
-            return new Result(Result.KIND_BACK_TO_TITLE);
+            return ACTION_BACK_TO_TITLE;
         }
 
         if (UiInput.down(pressed)) {
             cursor = MenuCursor.move(cursor, 1, 2);
-            return null;
+            return ACTION_NONE;
         }
 
         if (UiInput.up(pressed)) {
             cursor = MenuCursor.move(cursor, -1, 2);
-            return null;
+            return ACTION_NONE;
         }
 
         if (UiInput.confirm(pressed)) {
             if (cursor == 0) {
-                return new Result(Result.KIND_BACK_TO_TITLE);
+                return ACTION_BACK_TO_TITLE;
             }
-            return new Result(Result.KIND_QUIT);
+            return ACTION_QUIT;
         }
 
-        return null;
+        return ACTION_NONE;
     }
 
     public void render(Graphics g) {

@@ -73,17 +73,6 @@ public final class OptionScreen {
         g.drawLine(30, 54 + cursorUD * 20, 210, 54 + cursorUD * 20);
     }
 
-    public static final class Result {
-        public static final int KIND_NONE = 0;
-        public static final int KIND_BACK_TO_TITLE = 1;
-
-        public final int kind;
-
-        public Result(int kind) {
-            this.kind = kind;
-        }
-    }
-
     private static final int SCENE_OPTION = 0;
     private static final int SCENE_GAME_CONFIG = 1;
     private static final int SCENE_SE_MENU = 2;
@@ -103,23 +92,23 @@ public final class OptionScreen {
     private static final String[] MENU_RENDERING = new String[] { "HeavyBG", "HeavyBGM", "Mystia Fade", "Hit Spark", "Alpha: Close-UP", "Alpha: Player Bullets", "Back" };
 
     private static final int[] RENDER_MENU_TEXT_IDS = new int[] {
-            TextId.OPTION_RENDER_MENU_1,
-            TextId.OPTION_HEAVY_BGM_MENU,
-            TextId.OPTION_RENDER_MENU_2,
-            TextId.OPTION_RENDER_HIT_SPARK_MENU,
-            TextId.OPTION_RENDER_MENU_3,
-            TextId.OPTION_RENDER_MENU_4,
-            TextId.OPTION_RENDER_MENU_5
+        TextId.OPTION_RENDER_MENU_1,
+        TextId.OPTION_HEAVY_BGM_MENU,
+        TextId.OPTION_RENDER_MENU_2,
+        TextId.OPTION_RENDER_HIT_SPARK_MENU,
+        TextId.OPTION_RENDER_MENU_3,
+        TextId.OPTION_RENDER_MENU_4,
+        TextId.OPTION_RENDER_MENU_5
     };
 
     private static final int[] RENDER_DESC_TEXT_IDS = new int[] {
-            TextId.OPTION_RENDER_DESC_1,
-            TextId.OPTION_HEAVY_BGM_DESC,
-            TextId.OPTION_RENDER_DESC_2,
-            TextId.OPTION_RENDER_HIT_SPARK_DESC,
-            TextId.OPTION_RENDER_DESC_3,
-            TextId.OPTION_RENDER_DESC_4,
-            TextId.OPTION_RENDER_DESC_5
+        TextId.OPTION_RENDER_DESC_1,
+        TextId.OPTION_HEAVY_BGM_DESC,
+        TextId.OPTION_RENDER_DESC_2,
+        TextId.OPTION_RENDER_HIT_SPARK_DESC,
+        TextId.OPTION_RENDER_DESC_3,
+        TextId.OPTION_RENDER_DESC_4,
+        TextId.OPTION_RENDER_DESC_5
     };
 
     private static final String[] MENU_DEBUG = new String[] { "FPS", "Profiler", "Resource", "Back" };
@@ -164,47 +153,47 @@ public final class OptionScreen {
         listener.onHeavyBgmChanged(GameOptions.isHeavyBgmEnabled(opt));
     }
 
-    public Result update(int pressed) {
+    public boolean update(int pressed) {
         count = (count + 8) & 0xFF;
 
         if (scene == SCENE_CHEATING && cheatWarnActive) {
             if (pressed != 0) {
                 cheatWarnActive = false;
             }
-            return null;
+            return false;
         }
 
         if (UiInput.cancel(pressed)) {
             if (scene == SCENE_OPTION) {
                 GameOptions.save(opt);
-                return new Result(Result.KIND_BACK_TO_TITLE);
+                return true;
             }
             if (scene == SCENE_SE_MENU) {
                 GameOptions.save(opt);
                 scene = SCENE_OPTION;
                 cursorUD = 2;
-                return null;
+                return false;
             }
             if (scene == SCENE_CHEATING) {
                 scene = SCENE_GAME_CONFIG;
                 cursorUD = 6;
-                return null;
+                return false;
             }
             if (scene == SCENE_DEBUG) {
                 GameOptions.save(opt);
                 scene = SCENE_OPTION;
                 cursorUD = 5;
-                return null;
+                return false;
             }
             if (scene == SCENE_RENDERING) {
                 GameOptions.save(opt);
                 scene = SCENE_GAME_CONFIG;
                 cursorUD = 5;
-                return null;
+                return false;
             }
             scene = SCENE_OPTION;
             cursorUD = 4;
-            return null;
+            return false;
         }
 
         if (scene == SCENE_OPTION) {
@@ -225,7 +214,7 @@ public final class OptionScreen {
         if (scene == SCENE_RENDERING) {
             return updateRendering(pressed);
         }
-        return null;
+        return false;
     }
 
     public void render(Graphics g) {
@@ -254,63 +243,63 @@ public final class OptionScreen {
         }
     }
 
-    private Result updateOption(int pressed) {
+    private boolean updateOption(int pressed) {
         if (UiInput.down(pressed)) {
             cursorUD = MenuCursor.move(cursorUD, 1, MENU_OPTION_COUNT);
-            return null;
+            return false;
         }
         if (UiInput.up(pressed)) {
             cursorUD = MenuCursor.move(cursorUD, -1, MENU_OPTION_COUNT);
-            return null;
+            return false;
         }
 
         if (UiInput.left(pressed)) {
             adjustOptionValue(-1);
-            return null;
+            return false;
         }
         if (UiInput.right(pressed)) {
             adjustOptionValue(1);
-            return null;
+            return false;
         }
 
         if (UiInput.confirm(pressed)) {
             if (cursorUD == 2) {
                 scene = SCENE_SE_MENU;
                 cursorUD = 0;
-                return null;
+                return false;
             }
             if (cursorUD == 4) {
                 scene = SCENE_GAME_CONFIG;
                 cursorUD = 0;
-                return null;
+                return false;
             }
             if (cursorUD == 5) {
                 scene = SCENE_DEBUG;
                 cursorUD = 0;
-                return null;
+                return false;
             }
             if (cursorUD == 6) {
                 opt = GameOptions.defaults();
                 GameOptions.save(opt);
                 notifyAudioOptionsChanged();
-                return null;
+                return false;
             }
             if (cursorUD == 7) {
                 GameOptions.save(opt);
-                return new Result(Result.KIND_BACK_TO_TITLE);
+                return true;
             }
         }
-        return null;
+        return false;
     }
 
-    private Result updateRendering(int pressed) {
+    private boolean updateRendering(int pressed) {
         if (UiInput.up(pressed)) {
             cursorUD = MenuCursor.move(cursorUD, -1, MENU_RENDERING.length);
-            return null;
+            return false;
         }
         if (UiInput.down(pressed)) {
             cursorUD = MenuCursor.move(cursorUD, 1, MENU_RENDERING.length);
-            return null;
+            return false;
         }
 
         if (UiInput.left(pressed) || UiInput.right(pressed) || UiInput.confirm(pressed)) {
@@ -318,7 +307,7 @@ public final class OptionScreen {
                 GameOptions.save(opt);
                 scene = SCENE_GAME_CONFIG;
                 cursorUD = 5;
-                return null;
+                return false;
             }
 
             if (cursorUD == 0) {
@@ -338,10 +327,10 @@ public final class OptionScreen {
             if (cursorUD == 1 && listener != null) {
                 listener.onHeavyBgmChanged(GameOptions.isHeavyBgmEnabled(opt));
             }
-            return null;
+            return false;
         }
 
-        return null;
+        return false;
     }
 
     private String seValueText(int idx) {
@@ -352,23 +341,23 @@ public final class OptionScreen {
         return ((mask & seOptionMask(idx)) == 0) ? UiText.get(TextId.COMMON_OFF) : UiText.get(TextId.COMMON_ON);
     }
 
-    private Result updateGameConfig(int pressed) {
+    private boolean updateGameConfig(int pressed) {
         if (UiInput.up(pressed)) {
             cursorUD = MenuCursor.move(cursorUD, -1, MENU_GAME.length);
-            return null;
+            return false;
         }
         if (UiInput.down(pressed)) {
             cursorUD = MenuCursor.move(cursorUD, 1, MENU_GAME.length);
-            return null;
+            return false;
         }
 
         if (UiInput.left(pressed)) {
             adjustGameValue(-1);
-            return null;
+            return false;
         }
         if (UiInput.right(pressed)) {
             adjustGameValue(1);
-            return null;
+            return false;
         }
 
         if (UiInput.confirm(pressed)) {
@@ -376,30 +365,30 @@ public final class OptionScreen {
                 scene = SCENE_OPTION;
                 cursorUD = 4;
                 GameOptions.save(opt);
-                return null;
+                return false;
             }
             if (cursorUD == 0 || cursorUD == 1) {
                 adjustGameValue(1);
-                return null;
+                return false;
             }
             if (cursorUD == 2 || cursorUD == 3 || cursorUD == 4) {
                 adjustGameValue(1);
-                return null;
+                return false;
             }
             if (cursorUD == 5) {
                 scene = SCENE_RENDERING;
                 cursorUD = 0;
-                return null;
+                return false;
             }
             if (cursorUD == 6) {
                 scene = SCENE_CHEATING;
                 cursorUD = 0;
                 cheatWarnActive = true;
-                return null;
+                return false;
             }
         }
 
-        return null;
+        return false;
     }
 
     private void adjustOptionValue(int dir) {
@@ -423,37 +412,37 @@ public final class OptionScreen {
         }
     }
 
-    private Result updateCheating(int pressed) {
+    private boolean updateCheating(int pressed) {
         if (UiInput.up(pressed)) {
             cursorUD = MenuCursor.move(cursorUD, -1, MENU_CHEAT.length);
-            return null;
+            return false;
         }
         if (UiInput.down(pressed)) {
             cursorUD = MenuCursor.move(cursorUD, 1, MENU_CHEAT.length);
-            return null;
+            return false;
         }
 
         if (UiInput.left(pressed)) {
             toggleSelectedCheat();
-            return null;
+            return false;
         }
         if (UiInput.right(pressed)) {
             toggleSelectedCheat();
-            return null;
+            return false;
         }
 
         if (UiInput.confirm(pressed)) {
             if (cursorUD == 0) {
                 toggleSelectedCheat();
-                return null;
+                return false;
             }
             if (cursorUD == MENU_CHEAT.length - 1) {
                 scene = SCENE_GAME_CONFIG;
                 cursorUD = 6;
-                return null;
+                return false;
             }
         }
-        return null;
+        return false;
     }
 
     private void toggleSelectedCheat() {
@@ -468,10 +457,10 @@ public final class OptionScreen {
         }
     }
 
-    private Result updateSeMenu(int pressed) {
+    private boolean updateSeMenu(int pressed) {
         if (UiInput.down(pressed)) {
             if (cursorUD == MENU_SE.length - 1) {
-                return null;
+                return false;
             }
             int row = cursorUD % SE_MENU_ROWS;
             int col = cursorUD / SE_MENU_ROWS;
@@ -481,36 +470,36 @@ public final class OptionScreen {
                 row = row + 1;
                 cursorUD = row + col * SE_MENU_ROWS;
             }
-            return null;
+            return false;
         }
         if (UiInput.up(pressed)) {
             if (cursorUD == MENU_SE.length - 1) {
                 cursorUD = SE_MENU_ROWS - 1;
-                return null;
+                return false;
             }
             int row = cursorUD % SE_MENU_ROWS;
             int col = cursorUD / SE_MENU_ROWS;
             row = MenuCursor.move(row, -1, SE_MENU_ROWS);
             cursorUD = row + col * SE_MENU_ROWS;
-            return null;
+            return false;
         }
         if (UiInput.left(pressed)) {
             if (cursorUD == MENU_SE.length - 1) {
-                return null;
+                return false;
             }
             if (cursorUD >= SE_MENU_ROWS) {
                 cursorUD -= SE_MENU_ROWS;
             }
-            return null;
+            return false;
         }
         if (UiInput.right(pressed)) {
             if (cursorUD == MENU_SE.length - 1) {
-                return null;
+                return false;
             }
             if (cursorUD < SE_MENU_ROWS) {
                 cursorUD += SE_MENU_ROWS;
             }
-            return null;
+            return false;
         }
 
         if (UiInput.confirm(pressed)) {
@@ -518,14 +507,14 @@ public final class OptionScreen {
                 GameOptions.save(opt);
                 scene = SCENE_OPTION;
                 cursorUD = 2;
-                return null;
+                return false;
             }
             toggleSeBit(cursorUD);
             GameOptions.save(opt);
-            return null;
+            return false;
         }
 
-        return null;
+        return false;
     }
 
     private static int seOptionMask(int idx) {
@@ -561,14 +550,14 @@ public final class OptionScreen {
         }
     }
 
-    private Result updateDebug(int pressed) {
+    private boolean updateDebug(int pressed) {
         if (UiInput.up(pressed)) {
             cursorUD = MenuCursor.move(cursorUD, -1, MENU_DEBUG.length);
-            return null;
+            return false;
         }
         if (UiInput.down(pressed)) {
             cursorUD = MenuCursor.move(cursorUD, 1, MENU_DEBUG.length);
-            return null;
+            return false;
         }
 
         if (UiInput.left(pressed) || UiInput.right(pressed) || UiInput.confirm(pressed)) {
@@ -576,7 +565,7 @@ public final class OptionScreen {
                 GameOptions.save(opt);
                 scene = SCENE_OPTION;
                 cursorUD = 5;
-                return null;
+                return false;
             }
 
             if (cursorUD == 0) {
@@ -587,10 +576,10 @@ public final class OptionScreen {
                 GameOptions.toggleDebugResource(opt);
             }
             GameOptions.save(opt);
-            return null;
+            return false;
         }
 
-        return null;
+        return false;
     }
 
     private void renderOption(Graphics g, Font font) {
