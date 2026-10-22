@@ -4,7 +4,6 @@ import java.util.Vector;
 
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.Image;
 
 import touhou.ImageBank;
 import touhou.i18n.I18n;
@@ -23,414 +22,215 @@ public final class StoryScreen {
         }
     }
 
-    private static String[] loadStoryLines() {
-        return I18n.splitLines(I18n.loadText("story.txt"));
-    }
+    private static final int TEXT_X = 24;
+    private static final int TEXT_Y = 47;
+    private static final int TEXT_W = 198;
+    private static final int TEXT_H = 178;
+    private static final int TRANSITION_FRAMES = 10;
+    private static final int HOLD_DELAY = 6;
+    private static final int FLAKE_COUNT = 6;
 
-    private static final int BG_IMG_INDEX = 83;
-
-    private static final int W = 240;
-    private static final int H = 240;
-
-    private static final int TEXT_X = 12;
-    private static final int TEXT_Y = 32;
-    private static final int TEXT_W = 216;
-    private static final int TEXT_H = 196;
-
-    private static final int FLAKE_COUNT = 18;
-
-    private final int[] flakeXfp = new int[FLAKE_COUNT];
     private final int[] flakeYfp = new int[FLAKE_COUNT];
-    private final int[] flakeVYfp = new int[FLAKE_COUNT];
-    private final int[] flakeVXfp = new int[FLAKE_COUNT];
-    private final byte[] flakeSize = new byte[FLAKE_COUNT];
-    private final byte[] flakeAlphaLevel = new byte[FLAKE_COUNT];
-    private final int[] flakeSeed = new int[FLAKE_COUNT];
-    private int flakeTick;
-
-    private Font font;
-    private int lineH;
-
-    private String[] wrapped;
     private final FontTextMeasurer textMeasurer = new FontTextMeasurer(null);
-    private int maxTopLine;
+    private Font font;
+    private String[] wrapped;
+    private int lineH;
+    private int maxScrollFp;
 
-    // Smooth scroll state (line fixed-point, 8 bits fraction).
+    // Pixel fixed-point, with eight fractional bits.
     private int scrollPosFp;
     private int scrollVelFp;
     private int scrollTargetFp;
     private boolean scrollTargetActive;
-
-    // Hold-to-scroll (UP/DOWN) state.
-    private int holdUpTicks;
-    private int holdDownTicks;
-
-    // Edge detection for non-repeat actions.
-    private int prevPressed;
+    private int holdDirection;
+    private int holdTicks;
+    private int transitionFrame;
+    private boolean leaving;
+    private int flakeTick;
 
     public void enter() {
         font = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
         textMeasurer.setFont(font);
-        lineH = UiDraw.fontHeight(font) + 1;
+        lineH = UiDraw.fontHeight(font) + 5;
 
         Vector wrappedLines = new Vector();
-        String[] lines = loadStoryLines();
-        if (lines != null) {
-            for (int i = 0; i < lines.length; i++) {
-                String[] lineParts = UiTextLayout.wrap(lines[i], TEXT_W, textMeasurer);
-                for (int j = 0; j < lineParts.length; j++) {
-                    wrappedLines.addElement(lineParts[j]);
-                }
+        String[] lines = I18n.splitLines(I18n.loadText("story.txt"));
+        for (int i = 0; i < lines.length; i++) {
+            String[] parts = UiTextLayout.wrap(lines[i], TEXT_W, textMeasurer);
+            for (int j = 0; j < parts.length; j++) {
+                wrappedLines.addElement(parts[j]);
             }
         }
         wrapped = new String[wrappedLines.size()];
         wrappedLines.copyInto(wrapped);
-
-        maxTopLine = 0;
-        int visible = TEXT_H / lineH;
-        if (visible < 1) {
-            visible = 1;
-        }
-        int total = wrapped.length;
-        int max = total - visible;
-        if (max > 0) {
-            maxTopLine = max;
-        }
+        int contentH = (wrapped.length - 1) * lineH + UiDraw.fontHeight(font);
+        maxScrollFp = Math.max(0, contentH - TEXT_H) << 8;
 
         scrollPosFp = 0;
         scrollVelFp = 0;
         scrollTargetFp = 0;
         scrollTargetActive = false;
-        holdUpTicks = 0;
-        holdDownTicks = 0;
-        prevPressed = 0;
-
+        holdDirection = 0;
+        holdTicks = 0;
+        transitionFrame = 0;
+        leaving = false;
         flakeTick = 0;
         for (int i = 0; i < FLAKE_COUNT; i++) {
-            flakeSeed[i] = 0x1F123BB5 ^ (i * 0x9E3779B9);
-            initFlake(i, false);
+            flakeYfp[i] = ((i * 43 + 29) % 240) << 8;
         }
     }
 
-    public Result update(int pressed) {
-        flakeTick++;
-
-        if (UiInput.cancel(pressed) || UiInput.secondary(pressed)) {
+    public Result update(int keys, int pressed) {
+        updateSnow();
+        if (UiInput.cancel(pressed)) {
+            leaving = true;
+        }
+        if (leaving) {
+            if (transitionFrame > 0) {
+                transitionFrame--;
+                return null;
+            }
             return new Result(Result.KIND_BACK_TO_TITLE);
         }
+        if (transitionFrame < TRANSITION_FRAMES) {
+            transitionFrame++;
+            return null;
+        }
 
-        boolean up = UiInput.up(pressed);
-        boolean down = UiInput.down(pressed);
-        boolean left = UiInput.left(pressed);
-        boolean right = UiInput.right(pressed);
-
-        boolean edgeUp = up && !UiInput.up(prevPressed);
-        boolean edgeDown = down && !UiInput.down(prevPressed);
-        boolean edgeLeft = left && !UiInput.left(prevPressed);
-        boolean edgeRight = right && !UiInput.right(prevPressed);
-
-        if (edgeUp) {
+        if (UiInput.left(pressed)) {
+            requestScrollByLines(-6);
+        } else if (UiInput.right(pressed) || UiInput.secondary(pressed) || UiInput.confirm(pressed)) {
+            requestScrollByLines(6);
+        } else if (UiInput.up(pressed)) {
             requestScrollByLines(-1);
-        } else if (edgeDown) {
+        } else if (UiInput.down(pressed)) {
             requestScrollByLines(1);
         }
-        if (edgeLeft) {
-            requestScrollByLines(-6);
-        } else if (edgeRight) {
-            requestScrollByLines(6);
+
+        int direction = 0;
+        if (UiInput.up(keys) != UiInput.down(keys)) {
+            direction = UiInput.up(keys) ? -1 : 1;
+        }
+        if (direction != holdDirection) {
+            holdDirection = direction;
+            holdTicks = 0;
+        }
+        if (direction != 0) {
+            holdTicks = Math.min(holdTicks + 1, 70);
         }
 
-        int targetVel = 0;
-        boolean holdActive = false;
-        if (up && !down) {
-            holdUpTicks++;
-            holdDownTicks = 0;
-            targetVel = -calcHoldScrollVelFp(holdUpTicks);
-            holdActive = true;
-        } else if (down && !up) {
-            holdDownTicks++;
-            holdUpTicks = 0;
-            targetVel = calcHoldScrollVelFp(holdDownTicks);
-            holdActive = true;
-        } else {
-            holdUpTicks = 0;
-            holdDownTicks = 0;
-        }
-
-        if (holdActive) {
+        if (direction != 0 && holdTicks > HOLD_DELAY) {
             scrollTargetActive = false;
-            scrollVelFp = targetVel;
+            int speed = 256 + Math.min((holdTicks - HOLD_DELAY) * 20, 1280);
+            scrollVelFp += (direction * speed - scrollVelFp) / 4;
+            scrollPosFp += scrollVelFp;
         } else if (scrollTargetActive) {
-            int err = scrollTargetFp - scrollPosFp;
-            scrollVelFp += err >> 3;
-            scrollVelFp -= scrollVelFp >> 1;
-
-            if (err < 32 && err > -32 && scrollVelFp < 16 && scrollVelFp > -16) {
+            int remaining = scrollTargetFp - scrollPosFp;
+            int step = remaining / 4;
+            if (step == 0) {
                 scrollPosFp = scrollTargetFp;
-                scrollVelFp = 0;
                 scrollTargetActive = false;
+            } else {
+                scrollPosFp += step;
             }
         } else {
-            scrollVelFp -= scrollVelFp >> 1;
+            scrollVelFp = scrollVelFp * 3 / 4;
+            if (scrollVelFp > -16 && scrollVelFp < 16) {
+                scrollVelFp = 0;
+            }
+            scrollPosFp += scrollVelFp;
         }
 
-        scrollPosFp += scrollVelFp;
-        int minFp = 0;
-        int maxFp = maxTopLine << 8;
-        if (scrollPosFp < minFp) {
-            scrollPosFp = minFp;
-            scrollVelFp = 0;
-            scrollTargetActive = false;
-        } else if (scrollPosFp > maxFp) {
-            scrollPosFp = maxFp;
+        if (scrollPosFp <= 0 || scrollPosFp >= maxScrollFp) {
+            scrollPosFp = Math.max(0, Math.min(scrollPosFp, maxScrollFp));
             scrollVelFp = 0;
             scrollTargetActive = false;
         }
-
-        prevPressed = pressed;
-
         return null;
     }
 
-    private void requestScrollByLines(int deltaLines) {
-        if (maxTopLine <= 0) {
-            return;
-        }
-
-        int maxFp = maxTopLine << 8;
+    private void requestScrollByLines(int delta) {
         int start = scrollTargetActive ? scrollTargetFp : scrollPosFp;
-        int dst = start + (deltaLines << 8);
-        if (dst < 0) {
-            dst = 0;
-        } else if (dst > maxFp) {
-            dst = maxFp;
-        }
-
-        scrollTargetFp = dst;
+        scrollTargetFp = Math.max(0, Math.min(start + ((delta * lineH) << 8), maxScrollFp));
         scrollTargetActive = true;
-    }
-
-    private static int calcHoldScrollVelFp(int holdTicks) {
-        if (holdTicks <= 0) {
-            return 0;
-        }
-        if (holdTicks < 4) {
-            return 256;
-        }
-        if (holdTicks < 10) {
-            return 384;
-        }
-        if (holdTicks < 20) {
-            return 640;
-        }
-        if (holdTicks < 35) {
-            return 1024;
-        }
-        if (holdTicks < 55) {
-            return 1536;
-        }
-        return 2048;
+        scrollVelFp = 0;
+        holdTicks = 0;
     }
 
     public void render(Graphics g, ImageBank imgs) {
-        if (g == null) {
-            return;
-        }
+        UiDraw.drawRegion(g, imgs.get(83), 0, 0, 0, 0, 240, 240);
+        UiDraw.fillRectAlpha(g, 0, 0, 240, 240, 0x081629, 194);
 
-        Image bg = (imgs != null) ? imgs.get(BG_IMG_INDEX) : null;
-        if (bg != null) {
-            UiDraw.drawRegion(g, bg, 0, 0, 0, 0, W, H);
-        } else {
-            g.setColor(0x000000);
-            g.fillRect(0, 0, W, H);
-        }
-
-        UiDraw.drawGradationAlpha(g, 0, 0, W, H, 0x203060, 0x000000, 32, 120);
-
-        UiDraw.fillRectAlpha(g, 8, 22, 224, 210, 0x000000, 120);
-        g.setColor(0xAFCFFF);
-        g.drawRect(8, 22, 224, 210);
-
-        UiDraw.drawString2(g, font, UiText.get(TextId.STORY_TITLE), 120, 18, 1, 0xFFFFFF, 0x334455);
-
+        int remaining = TRANSITION_FRAMES - transitionFrame;
+        int hiddenH = 240 * remaining * remaining * remaining
+                / (TRANSITION_FRAMES * TRANSITION_FRAMES * TRANSITION_FRAMES);
+        int oldX = g.getClipX();
+        int oldY = g.getClipY();
+        int oldW = g.getClipWidth();
+        int oldH = g.getClipHeight();
+        g.clipRect(0, hiddenH / 2, 240, 240 - hiddenH);
         drawSnow(g);
+        UiDraw.fillRectAlpha(g, 0, 10, 240, 26, 0x030912, 174);
+        UiDraw.drawStringPlain(g, font, UiText.get(TextId.STORY_TITLE), 120,
+                17 + UiDraw.fontBaseline(font), 1, 0xD8E5FF);
         drawText(g);
         drawScrollBar(g);
+        g.setClip(oldX, oldY, oldW, oldH);
     }
 
     private void drawText(Graphics g) {
-        if (wrapped == null || font == null) {
-            return;
+        int oldX = g.getClipX();
+        int oldY = g.getClipY();
+        int oldW = g.getClipWidth();
+        int oldH = g.getClipHeight();
+        g.clipRect(TEXT_X, TEXT_Y, TEXT_W, TEXT_H);
+
+        int scrollY = scrollPosFp >> 8;
+        int index = scrollY / lineH;
+        int baseline = UiDraw.fontBaseline(font);
+        int y = TEXT_Y - scrollY % lineH;
+        while (index < wrapped.length && y < TEXT_Y + TEXT_H) {
+            int color = y < TEXT_Y || y + UiDraw.fontHeight(font) > TEXT_Y + TEXT_H
+                    ? 0x7E91B1 : 0xE6EDFC;
+            UiDraw.drawStringPlain(g, font, wrapped[index], TEXT_X, y + baseline, 0, color);
+            y += lineH;
+            index++;
         }
-
-        int oldClipX = g.getClipX();
-        int oldClipY = g.getClipY();
-        int oldClipW = g.getClipWidth();
-        int oldClipH = g.getClipHeight();
-
-        try {
-            g.setClip(TEXT_X, TEXT_Y, TEXT_W, TEXT_H);
-            g.setFont(font);
-
-            int idx = scrollPosFp >> 8;
-            int sub = scrollPosFp & 0xFF;
-            int y = (TEXT_Y + lineH) - ((sub * lineH) >> 8);
-            int maxLines = (TEXT_H / lineH) + 3;
-
-            for (int i = 0; i < maxLines; i++) {
-                if (idx >= wrapped.length) {
-                    break;
-                }
-                String s = wrapped[idx];
-                if (s == null) {
-                    s = "";
-                }
-                UiDraw.drawStringPlain(g, font, s, TEXT_X + 1, y + 1, 0, 0x001820);
-                UiDraw.drawStringPlain(g, font, s, TEXT_X, y, 0, 0xFFFFFF);
-
-                y += lineH;
-                idx++;
-            }
-        } catch (Throwable t) {
-        } finally {
-            try {
-                g.setClip(oldClipX, oldClipY, oldClipW, oldClipH);
-            } catch (Throwable ignore) {
-            }
-        }
+        g.setClip(oldX, oldY, oldW, oldH);
     }
 
     private void drawScrollBar(Graphics g) {
-        if (wrapped == null || font == null) {
+        if (maxScrollFp == 0) {
             return;
         }
+        int contentH = TEXT_H + (maxScrollFp >> 8);
+        int knobH = Math.max(8, TEXT_H * TEXT_H / contentH);
+        int knobY = TEXT_Y + (int) ((long) (TEXT_H - knobH) * scrollPosFp / maxScrollFp);
+        g.setColor(0x36485E);
+        g.fillRect(12, TEXT_Y, 1, TEXT_H);
+        g.setColor(0xBEDBFF);
+        g.fillRect(11, knobY, 3, knobH);
+    }
 
-        int total = wrapped.length;
-        if (total <= 0) {
-            return;
+    private void updateSnow() {
+        flakeTick++;
+        for (int i = 0; i < FLAKE_COUNT; i++) {
+            flakeYfp[i] += 64 + (i % 3) * 32;
+            if (flakeYfp[i] > (243 << 8)) {
+                flakeYfp[i] = -3 << 8;
+            }
         }
-
-        int visible = TEXT_H / lineH;
-        if (visible < 1) {
-            visible = 1;
-        }
-        if (total <= visible) {
-            return;
-        }
-
-        int barX = TEXT_X + TEXT_W + 2;
-        int barY = TEXT_Y;
-        int barW = 4;
-        int barH = TEXT_H;
-
-        UiDraw.fillRectAlpha(g, barX, barY, barW, barH, 0x000000, 100);
-
-        int knobH = (barH * visible) / total;
-        if (knobH < 8) {
-            knobH = 8;
-        }
-        int denom = maxTopLine << 8;
-        int knobY;
-        if (denom <= 0) {
-            knobY = barY;
-        } else {
-            long num = (long) (barH - knobH) * (long) scrollPosFp;
-            knobY = barY + (int) (num / denom);
-        }
-        UiDraw.fillRectAlpha(g, barX, knobY, barW, knobH, 0xAFCFFF, 180);
     }
 
     private void drawSnow(Graphics g) {
         for (int i = 0; i < FLAKE_COUNT; i++) {
-            int seed = flakeSeed[i];
-
-            if ((flakeTick & 15) == (i & 15)) {
-                seed = nextRand(seed);
-                int n = (seed >> 28) & 7;
-                int dvx = (n - 3) << 3;
-
-                int vx = flakeVXfp[i];
-                vx += dvx;
-                vx -= (vx >> 5);
-                if (vx < -128) {
-                    vx = -128;
-                } else if (vx > 128) {
-                    vx = 128;
-                }
-                flakeVXfp[i] = vx;
-            }
-
-            int xfp = flakeXfp[i] + flakeVXfp[i];
-            int yfp = flakeYfp[i] + flakeVYfp[i];
-
-            if (xfp < (-4 << 8)) {
-                xfp = (W + 3) << 8;
-            } else if (xfp > ((W + 3) << 8)) {
-                xfp = (-3) << 8;
-            }
-
-            if (yfp > ((H + 6) << 8)) {
-                flakeSeed[i] = nextRand(seed);
-                initFlake(i, true);
-                continue;
-            }
-
-            flakeSeed[i] = seed;
-            flakeXfp[i] = xfp;
-            flakeYfp[i] = yfp;
-
-            int x = xfp >> 8;
-            int y = yfp >> 8;
-
-            int size = flakeSize[i] & 0xFF;
-            int alpha = 96 + (flakeAlphaLevel[i] & 3) * 32;
-            if (size <= 1) {
-                UiDraw.fillRectAlpha(g, x, y, 1, 1, 0xFFFFFF, alpha);
-            } else if (size == 2) {
-                UiDraw.fillRectAlpha(g, x, y, 2, 2, 0xFFFFFF, alpha);
-            } else {
-                UiDraw.fillRectAlpha(g, x, y, 3, 1, 0xFFFFFF, alpha);
-                UiDraw.fillRectAlpha(g, x + 1, y - 1, 1, 3, 0xFFFFFF, alpha);
-            }
+            int phase = (flakeTick + i * 7) & 31;
+            int drift = (phase < 16 ? phase : 31 - phase) / 8;
+            int x = (i & 1) == 0 ? 5 + drift : 232 - drift;
+            int y = flakeYfp[i] >> 8;
+            g.setColor((i & 1) == 0 ? 0x687E9E : 0x859CBD);
+            g.fillRect(x - 2, y, 5, 1);
+            g.fillRect(x, y - 2, 1, 5);
         }
     }
-
-    private void initFlake(int i, boolean respawn) {
-        int seed = flakeSeed[i];
-        seed = nextRand(seed);
-        int x = (seed >>> 16) % W;
-
-        seed = nextRand(seed);
-        int y;
-        if (respawn) {
-            y = -((seed >>> 16) % 32) - 2;
-        } else {
-            y = (seed >>> 16) % H;
-        }
-
-        seed = nextRand(seed);
-        int vy = 40 + ((seed >>> 16) % 96);
-
-        seed = nextRand(seed);
-        int vx = ((seed >>> 16) % 81) - 40;
-
-        seed = nextRand(seed);
-        int size = 1 + ((seed >>> 16) % 3);
-
-        seed = nextRand(seed);
-        int a = (seed >>> 16) & 3;
-
-        flakeXfp[i] = x << 8;
-        flakeYfp[i] = y << 8;
-        flakeVYfp[i] = vy;
-        flakeVXfp[i] = vx;
-        flakeSize[i] = (byte) size;
-        flakeAlphaLevel[i] = (byte) a;
-        flakeSeed[i] = seed;
-    }
-
-    private static int nextRand(int s) {
-        return s * 1103515245 + 12345;
-    }
-
 }

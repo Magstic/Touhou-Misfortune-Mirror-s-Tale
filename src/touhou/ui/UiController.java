@@ -154,7 +154,7 @@ public final class UiController {
         transitionTo(STATE_REPLAY);
     }
 
-    public void update(int pressed) {
+    public void update(int keys, int pressed) {
         // Play UI S.E. after the screen update so Options volume changes take effect immediately.
         int stateBefore = state;
         if (state == STATE_LOADING) {
@@ -162,7 +162,7 @@ public final class UiController {
             return;
         }
 
-        if (updateCurrentScreen(pressed)) {
+        if (updateCurrentScreen(keys, pressed)) {
             playUiSe(stateBefore, pressed);
         }
     }
@@ -175,7 +175,7 @@ public final class UiController {
         }
     }
 
-    private boolean updateCurrentScreen(int pressed) {
+    private boolean updateCurrentScreen(int keys, int pressed) {
         switch (state) {
             case STATE_STARTUP_LANGUAGE:
                 updateStartupLanguage(pressed);
@@ -189,7 +189,7 @@ public final class UiController {
                 updateHelp(pressed);
                 return true;
             case STATE_STORY:
-                updateStory(pressed);
+                updateStory(keys, pressed);
                 return true;
             case STATE_SPELL_PRACTICE:
                 return updateSpellPractice(pressed);
@@ -292,8 +292,8 @@ public final class UiController {
         }
     }
 
-    private void updateStory(int pressed) {
-        StoryScreen.Result r = story.update(pressed);
+    private void updateStory(int keys, int pressed) {
+        StoryScreen.Result r = story.update(keys, pressed);
         if (r != null && r.kind == StoryScreen.Result.KIND_BACK_TO_TITLE) {
             returnToTitleKeepCursor();
         }
@@ -531,6 +531,8 @@ public final class UiController {
         switch (state) {
             case STATE_TITLE:
                 return TextId.SOFTKEY_STORY;
+            case STATE_STORY:
+                return TextId.SOFTKEY_NEXT;
             case STATE_SPELL_PRACTICE:
                 return TextId.SOFTKEY_TYPE;
             case STATE_REPLAY:

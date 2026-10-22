@@ -78,7 +78,7 @@ public final class SceneController {
 
         UiController ui = core.sceneUi();
         if (ui != null) {
-            ui.update(pressed);
+            ui.update(keys, pressed);
         }
     }
 
