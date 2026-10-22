@@ -231,15 +231,12 @@ public final class I18nPackBuilder {
         File generated = new File(new File(new File(root, "build"), "i18n-font"), language + "-font.dat");
         FontDatBuilder.BuildConfig config = new FontDatBuilder.BuildConfig();
         config.ttfFile = fontFile;
-        config.lang = language;
         config.cellW = 12;
         config.cellH = 12;
         config.baseline = Integer.valueOf(10);
         config.fontSize = 12;
-        config.scanTextDat = true;
         config.outFile = generated;
-        config.scanDirs = new ArrayList<File>();
-        config.scanDirs.add(scanDirectory);
+        config.scanDirectory = scanDirectory;
         FontDatBuilder.BuildResult result = FontDatBuilder.buildToFile(config);
         if (result.missingGlyphCount != 0) {
             throw new IOException("Font is missing localized glyphs for " + language + "\n" + result.missingGlyphReport);

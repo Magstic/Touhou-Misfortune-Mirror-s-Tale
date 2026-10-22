@@ -185,12 +185,13 @@ Touhou_Misfortune_MirrorS_Tale/
 ├── .deps/                           # ---- Downloaded dependencies (gitignored) ----
 │   ├── ivy/                         #   Apache Ivy 2.5.3 bootstrap JAR
 │   ├── cache/                       #   Ivy resolution and artifact cache
-│   └── lib/                         #   CLDC 1.1, MIDP 2.0, JSR-82 APIs and ProGuard 6.0.3
+│   └── lib/                         #   CLDC 1.1, MIDP 2.0, JSR-82 APIs, ECJ 3.26.0 and ProGuard 6.0.3
 │
-├── tools/                           # ---- Build tools (used by ant) ----
+├── tools/                           # ---- Build and resource tools ----
 │   ├── CcDatCropViewer.java         #   cc.dat crop viewer (debug / resource inspection)
 │   ├── I18nPackBuilder.java         #   Packs res/i18n/<lang>/ into <lang>.dat; generates font.dat
-│   ├── BgmPackBuilder.java          #   Packs res/bgm into the current 18-track BGMP
+│   ├── BgmPackBuilder.java          #   Packs res/bgm and res/bgm-lite into separate BGMP bundles
+│   ├── BgmLiteBuilder.java          #   Manual lite MIDI generation; not run by ant
 │   ├── FontDatBuilder.java          #   Scans text files for used characters, rasterizes from TTF, outputs font.dat
 │   └── dev/                         #   (gitignored) Dev-only helper tools
 │
@@ -435,7 +436,14 @@ flowchart LR
 |------|------|
 | `I18nPackBuilder` | Scans `res/i18n/<lang>/` and packs resources into `<lang>.dat`; generates font.dat |
 | `FontDatBuilder` | Scans text files for used characters, rasterizes from TTF, outputs font.dat |
-| `BgmPackBuilder` | Validates `res/bgm` tracks 0–17 and builds the deterministic BGMP |
+| `BgmPackBuilder` | Packs `res/bgm` and battle-only `res/bgm-lite` into separate BGMP bundles |
+
+### Helper Tools
+
+| File | Role |
+|------|------|
+| `CcDatCropViewer` | Displays cc.dat crop rectangles on sprite sheets |
+| `BgmLiteBuilder` | Generates lite battle MIDIs from the original channel layout; run manually, overwrites its output files |
 
 ### Resource Files
 
@@ -446,7 +454,9 @@ flowchart LR
 | `res/sp/*.png` | Indexed 8-bit PNGs, packaged unchanged | 128 sprite sheets, 000.png ~ 127.png; each filename matches its image index. Indices 128–133 are runtime-generated StageEX variants. |
 | `res/se/*.wav` | WAV | Sound effects |
 | `res/bgm/` | MIDI | Source tracks 0–17; each is either `id.mid` or `id/intro.mid + loop.mid` |
+| `res/bgm-lite/` | MIDI | Lite battle tracks 1–14 and 17; edited source files are packaged unchanged |
 | `build/generated-res/snd/bgm.dat` | Custom | Generated current 18-track MIDI bundle embedded as `/snd/bgm.dat` |
+| `build/generated-res/snd/bgm-lite.dat` | Custom | Generated lite battle MIDI bundle embedded as `/snd/bgm-lite.dat` |
 | `build/generated-res/i18n/<lang>.dat` | Binary | Generated deterministic I18N pack; contains validated text and `/i18n/<lang>/font/font.dat` |
 | `res/i18n/<lang>/ui.txt` | Text | UI string lines, indexed by `TextId` constants |
 | `res/i18n/<lang>/dialog/` | Text | In-game dialog scripts per stage |

@@ -17,42 +17,27 @@ import java.util.List;
 import java.util.TreeSet;
 
 /**
- * Desktop tool: scan project texts and build res/i18n/<lang>/font/font.dat.
+ * Rasterize a language's source texts into font.dat for I18nPackBuilder.
  */
 public final class FontDatBuilder {
 
     public static final class BuildConfig {
         public File ttfFile;
-        public List<File> scanDirs;
-        public String lang;
+        public File scanDirectory;
         public int cellW = 12;
         public int cellH = 12;
         public Integer baseline = null;
         public int fontSize = 12;
-        public boolean scanTextDat = true;
         public File outFile;
     }
 
     public static final class BuildResult {
-        public final int glyphCount;
         public final int missingGlyphCount;
         public final String missingGlyphReport;
-        public final int cellW;
-        public final int cellH;
-        public final int baseline;
-        public final File outFile;
-        public final long outBytes;
 
-        public BuildResult(int glyphCount, int missingGlyphCount, String missingGlyphReport, int cellW, int cellH, int baseline, File outFile,
-                long outBytes) {
-            this.glyphCount = glyphCount;
+        public BuildResult(int missingGlyphCount, String missingGlyphReport) {
             this.missingGlyphCount = missingGlyphCount;
             this.missingGlyphReport = missingGlyphReport;
-            this.cellW = cellW;
-            this.cellH = cellH;
-            this.baseline = baseline;
-            this.outFile = outFile;
-            this.outBytes = outBytes;
         }
     }
 
@@ -63,9 +48,6 @@ public final class FontDatBuilder {
         if (cfg.ttfFile == null || !cfg.ttfFile.isFile()) {
             throw new IOException("ttf not found: " + (cfg.ttfFile == null ? "" : cfg.ttfFile.getAbsolutePath()));
         }
-        if (cfg.scanDirs == null || cfg.scanDirs.size() == 0) {
-            throw new IOException("scanDirs is empty");
-        }
         if (cfg.outFile == null) {
             throw new IOException("outFile is null");
         }
@@ -75,12 +57,7 @@ public final class FontDatBuilder {
 
         List<File> scannedFiles = new ArrayList<File>();
 
-        if (cfg.scanTextDat) {
-            scanTextDatInDirs(cps, cfg.scanDirs, cfg.lang, scannedFiles);
-        }
-        if (cps.size() <= 0) {
-            throw new IOException("No glyphs collected");
-        }
+        scanLanguageTexts(cps, cfg.scanDirectory, scannedFiles);
         if (cps.size() > 65535) {
             throw new IOException("glyphCount too large (u16): " + cps.size());
         }
@@ -127,7 +104,7 @@ public final class FontDatBuilder {
         byte[] dat = buildDat(font, baseline, cfg.cellW, cfg.cellH, cps);
         ensureParentDir(cfg.outFile);
         writeFile(cfg.outFile, dat);
-        return new BuildResult(cps.size(), missing.size(), missingReport, cfg.cellW, cfg.cellH, baseline, cfg.outFile, dat.length);
+        return new BuildResult(missing.size(), missingReport);
     }
 
     private static boolean canDisplay(Font font, int cp) {
@@ -296,15 +273,9 @@ public final class FontDatBuilder {
         }
     }
 
-    private static void scanResTexts(TreeSet<Integer> cps, File resDir, String lang, List<File> scannedFiles) throws IOException {
-        if (resDir == null || !resDir.isDirectory()) {
-            return;
-        }
+    private static void scanLanguageTexts(TreeSet<Integer> cps, File directory, List<File> scannedFiles) throws IOException {
         List<File> files = new ArrayList<File>();
-        collectFiles(files, resDir);
-
-        String resRoot = normalizePath(resDir.getAbsolutePath());
-        String expectedLangRoot = resRoot + "/i18n/" + lang + "/";
+        collectFiles(files, directory);
 
         for (int i = 0; i < files.size(); i++) {
             File f = files.get(i);
@@ -313,93 +284,9 @@ public final class FontDatBuilder {
                 continue;
             }
 
-            String p = normalizePath(f.getAbsolutePath());
-            if (p.indexOf("/font/") >= 0) {
-                continue;
-            }
-            int i18nIdx = p.indexOf(resRoot + "/i18n/");
-            if (i18nIdx >= 0) {
-                // Only scan the selected language under res/i18n/<lang>/
-                if (!p.startsWith(expectedLangRoot)) {
-                    continue;
-                }
-                // For i18n resources, scan .txt and text-based .dat.
-                // (spcard.dat/sprac.dat are plain UTF-8 text)
-            } else {
-                // Outside i18n, treat .dat as binary and skip.
-                if (name.endsWith(".dat")) {
-                    continue;
-                }
-            }
-
-            if (scannedFiles != null) {
-                scannedFiles.add(f);
-            }
+            scannedFiles.add(f);
             String s = readTextFileUtf8(f);
             addStringCodepoints(cps, s);
-        }
-    }
-
-    private static void scanTextDatInDirs(TreeSet<Integer> cps, List<File> scanDirs, String lang, List<File> scannedFiles)
-            throws IOException {
-        for (int i = 0; i < scanDirs.size(); i++) {
-            File dir = scanDirs.get(i);
-            if (dir == null) {
-                continue;
-            }
-            if (dir.isDirectory() && "res".equalsIgnoreCase(dir.getName())) {
-                scanResTexts(cps, dir, lang, scannedFiles);
-                continue;
-            }
-
-            // Generic scan.
-            List<File> files = new ArrayList<File>();
-            if (dir.isDirectory()) {
-                collectFiles(files, dir);
-            } else {
-                files.add(dir);
-            }
-
-            for (int k = 0; k < files.size(); k++) {
-                File f = files.get(k);
-                if (f == null || !f.isFile()) {
-                    continue;
-                }
-                String name = f.getName().toLowerCase();
-                if (!(name.endsWith(".txt") || name.endsWith(".dat"))) {
-                    continue;
-                }
-                String p = normalizePath(f.getAbsolutePath());
-                if (p.indexOf("/font/") >= 0) {
-                    continue;
-                }
-                if (lang != null && lang.length() > 0) {
-                    int i18nIdx = p.indexOf("/i18n/");
-                    if (i18nIdx >= 0) {
-                        String want = "/i18n/" + lang + "/";
-                        if (p.indexOf(want) < 0) {
-                            continue;
-                        }
-                    } else {
-                        // Outside i18n, treat .dat as binary and skip.
-                        if (name.endsWith(".dat")) {
-                            continue;
-                        }
-                    }
-                } else {
-                    // No lang filter: still avoid scanning binary .dat outside i18n.
-                    int i18nIdx = p.indexOf("/i18n/");
-                    if (i18nIdx < 0 && name.endsWith(".dat")) {
-                        continue;
-                    }
-                }
-
-                if (scannedFiles != null) {
-                    scannedFiles.add(f);
-                }
-                String s = readTextFileUtf8(f);
-                addStringCodepoints(cps, s);
-            }
         }
     }
 
@@ -426,11 +313,6 @@ public final class FontDatBuilder {
         for (int i = 0; i < children.length; i++) {
             File f = children[i];
             if (f.isDirectory()) {
-                // Skip build artifacts.
-                String name = f.getName();
-                if (".git".equals(name) || "build".equals(name) || "dist".equals(name)) {
-                    continue;
-                }
                 collectFiles(out, f);
             } else {
                 out.add(f);
@@ -471,13 +353,6 @@ public final class FontDatBuilder {
                 }
             }
         }
-    }
-
-    private static String normalizePath(String s) {
-        if (s == null) {
-            return "";
-        }
-        return s.replace('\\', '/');
     }
 
     private static Font loadTtf(String path) throws IOException, FontFormatException {
