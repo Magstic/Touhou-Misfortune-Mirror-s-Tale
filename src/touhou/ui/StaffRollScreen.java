@@ -156,12 +156,10 @@ public final class StaffRollScreen {
         final int w = 240;
         final int h = 80;
 
-        g.setColor(0x7F0000);
-
         if (n < 10) {
             for (int j = 0; j < h; j++) {
                 if (((10 - j) & n) == 0) {
-                    g.drawLine(x, y + j, x + w, y + j);
+                    UiDraw.fillRectAlpha(g, x, y + j, w, 1, 0x7F0000, 128);
                 }
             }
             return;
@@ -172,7 +170,7 @@ public final class StaffRollScreen {
             for (int k = 0; k < h; k++) {
                 int n7 = (h - k) << n6;
                 if (n7 < 240) {
-                    g.drawLine(x + n7, y + k, x + w, y + k);
+                    UiDraw.fillRectAlpha(g, x + n7, y + k, w - n7, 1, 0x7F0000, 128);
                 }
             }
             return;
@@ -196,12 +194,10 @@ public final class StaffRollScreen {
         final int w = 80;
         final int h = 240;
 
-        g.setColor(0x7F0000);
-
         if (n < 10) {
             for (int j = 0; j < w; j++) {
                 if (((10 - j) & n) == 0) {
-                    g.drawLine(x + j, y, x + j, y + h);
+                    UiDraw.fillRectAlpha(g, x + j, y, 1, h, 0x7F0000, 128);
                 }
             }
             return;
@@ -212,7 +208,7 @@ public final class StaffRollScreen {
             for (int k = 0; k < w; k++) {
                 int n16 = (w - k) << n14;
                 if (n16 < 240) {
-                    g.drawLine(x + k, y + n16, x + k, y + h);
+                    UiDraw.fillRectAlpha(g, x + k, y + n16, 1, h - n16, 0x7F0000, 128);
                 }
             }
             return;
