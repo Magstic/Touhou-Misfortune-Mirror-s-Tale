@@ -17,6 +17,8 @@ public final class ReplayScreen {
         public static final int KIND_START_REPLAY = 2;
         public static final int KIND_OPEN_BT_RECEIVE = 4;
         public static final int KIND_OPEN_BT_SEND = 5;
+        public static final int KIND_OPEN_EXPORT = 6;
+        public static final int KIND_OPEN_IMPORT = 7;
 
         public final int kind;
         public final int slot;
@@ -44,6 +46,8 @@ public final class ReplayScreen {
     private static final int SCENE_DELETE_CONFIRM = 2;
     private static final int SCENE_MESSAGE = 3;
     private static final int TRANSITION_FRAMES = 6;
+    private static final int ACTION_COUNT = 7;
+    private static final int ACTION_LINE_H = 14;
 
     public void enter() {
         cursor = 0;
@@ -104,13 +108,6 @@ public final class ReplayScreen {
             return null;
         }
 
-        if (scene == SCENE_LIST) {
-            if (UiInput.secondary(pressed)) {
-                leave(new Result(Result.KIND_OPEN_BT_RECEIVE));
-                return null;
-            }
-        }
-
         if (scene == SCENE_MESSAGE) {
             if (UiInput.dismiss(pressed)) {
                 updateActionCache();
@@ -133,10 +130,10 @@ public final class ReplayScreen {
             boolean moved = false;
             int moveDir = 1;
             if (UiInput.down(pressed)) {
-                actionCursor = MenuCursor.move(actionCursor, 1, 6);
+                actionCursor = MenuCursor.move(actionCursor, 1, ACTION_COUNT);
                 moved = true;
             } else if (UiInput.up(pressed)) {
-                actionCursor = MenuCursor.move(actionCursor, -1, 6);
+                actionCursor = MenuCursor.move(actionCursor, -1, ACTION_COUNT);
                 moved = true;
                 moveDir = -1;
             } else if (UiInput.confirm(pressed)) {
@@ -165,11 +162,6 @@ public final class ReplayScreen {
             changeScene(SCENE_ACTION);
         }
         return null;
-    }
-
-    public int getRightSoftkeyTextId() {
-        return scene == SCENE_LIST && !leaving && contentFrame == TRANSITION_FRAMES
-                ? TextId.SOFTKEY_RECEIVE : -1;
     }
 
     public void render(Graphics g, ImageBank imgs, SpriteRenderer sprites) {
@@ -212,8 +204,9 @@ public final class ReplayScreen {
     private static final int ACTION_PLAY_BOSS = 1;
     private static final int ACTION_NET = 2;
     private static final int ACTION_BT = 3;
-    private static final int ACTION_DELETE = 4;
-    private static final int ACTION_BACK = 5;
+    private static final int ACTION_FILE = 4;
+    private static final int ACTION_DELETE = 5;
+    private static final int ACTION_BACK = 6;
 
     private int scene;
     private int cursor;
@@ -321,7 +314,11 @@ public final class ReplayScreen {
 
         if (act == ACTION_BT) {
             if (!isActionEnabled(act)) return null;
-            return new Result(Result.KIND_OPEN_BT_SEND, cursor, false);
+            return new Result(cachedHasData ? Result.KIND_OPEN_BT_SEND : Result.KIND_OPEN_BT_RECEIVE, cursor, false);
+        }
+        if (act == ACTION_FILE) {
+            if (!isActionEnabled(act)) return null;
+            return new Result(cachedHasData ? Result.KIND_OPEN_EXPORT : Result.KIND_OPEN_IMPORT, cursor, false);
         }
 
         ReplayHeader h = slots.header(cursor);
@@ -359,7 +356,7 @@ public final class ReplayScreen {
                 228, 52, 2, 0xB0B0B0, 0x404040);
         UiDraw.drawStringMarquee2(g, FONT_M, cachedTitle, 14, 65, 212, 1,
                 0xFFFFFF, 0x303040, decoTick);
-        ReplayUi.renderSelection(g, 129 + actionCursor * 16, 20);
+        ReplayUi.renderSelection(g, 129 + actionCursor * ACTION_LINE_H, 18);
         if (cachedHasData) {
             ReplayHeader h = slots.header(cursor);
             if (cachedImported) {
@@ -378,12 +375,12 @@ public final class ReplayScreen {
                     231 - tmpSpriteMetrics[1] + tmpSpriteMetrics[3]);
         }
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < ACTION_COUNT; i++) {
             boolean enabled = isActionEnabled(i);
             boolean selected = (i == actionCursor);
             int main = enabled ? (selected ? 0xFF4F4F : 0xFFFFFF) : 0x666676;
             int shadow = selected ? 0x771F1F : 0x303040;
-            int y = 142 + i * 16;
+            int y = 142 + i * ACTION_LINE_H;
             if (selected) {
                 UiDraw.drawString2(g, font, ">", 92, y, 0, main, shadow);
             }
@@ -395,8 +392,8 @@ public final class ReplayScreen {
         if (act == ACTION_BACK) {
             return true;
         }
-        if (act == ACTION_BT) {
-            return cachedHasData;
+        if (act == ACTION_NET || act == ACTION_BT || act == ACTION_FILE) {
+            return !cachedHasData || !cachedImported;
         }
         if (!cachedHasData) {
             return false;
@@ -412,7 +409,7 @@ public final class ReplayScreen {
 
     private void ensureActionCursorEnabled(int dir) {
         while (!isActionEnabled(actionCursor)) {
-            actionCursor = MenuCursor.move(actionCursor, dir, 6);
+            actionCursor = MenuCursor.move(actionCursor, dir, ACTION_COUNT);
         }
     }
 
@@ -427,10 +424,13 @@ public final class ReplayScreen {
             return UiText.get(TextId.REPLAY_ACTION_DELETE);
         }
         if (act == ACTION_NET) {
-            return UiText.get(TextId.REPLAY_ACTION_NET_SHARE);
+            return UiText.get(cachedHasData ? TextId.REPLAY_ACTION_NET_SHARE : TextId.REPLAY_ACTION_NET_RECEIVE);
         }
         if (act == ACTION_BT) {
-            return UiText.get(TextId.REPLAY_ACTION_BT_SHARE);
+            return UiText.get(cachedHasData ? TextId.REPLAY_ACTION_BT_SHARE : TextId.REPLAY_ACTION_BT_RECEIVE);
+        }
+        if (act == ACTION_FILE) {
+            return UiText.get(cachedHasData ? TextId.REPLAY_ACTION_EXPORT : TextId.REPLAY_ACTION_IMPORT);
         }
         return UiText.get(TextId.REPLAY_ACTION_BACK);
     }

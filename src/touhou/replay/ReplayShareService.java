@@ -6,7 +6,8 @@ public final class ReplayShareService {
 
     public static byte[] exportSlotPacket(int slot) {
         ReplaySlotData data = ReplaySlotStore.loadSlot(slot);
-        return (data != null) ? ReplayShareCodec.encode(data) : null;
+        return (data != null && data.header.getFlag() == ReplayHeader.FLAG_LOCAL)
+                ? ReplayShareCodec.encode(data) : null;
     }
 
     public static boolean importToSlotFromPacket(int slot, byte[] packet) {
@@ -17,6 +18,10 @@ public final class ReplayShareService {
         if (data == null) {
             return false;
         }
+        return importToSlot(slot, data);
+    }
+
+    public static boolean importToSlot(int slot, ReplaySlotData data) {
         data.header.setFlag(ReplayHeader.FLAG_IMPORTED);
         return ReplaySlotStore.saveSlot(slot, data);
     }

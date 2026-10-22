@@ -8,6 +8,7 @@
         <dependency org="org.microemu" name="cldcapi11" rev="${api.version}" conf="j2me->default" transitive="false"/>
         <dependency org="org.microemu" name="midpapi20" rev="${api.version}" conf="j2me->default" transitive="false"/>
         <dependency org="org.microemu" name="microemu-jsr-82" rev="${api.version}" conf="j2me->default" transitive="false"/>
+        <dependency org="org.microemu" name="microemu-jsr-75" rev="${api.version}" conf="j2me->default" transitive="false"/>
         <dependency org="net.sf.proguard" name="proguard-base" rev="${proguard.version}" conf="build->default" transitive="false"/>
         <dependency org="org.eclipse.jdt" name="ecj" rev="${ecj.version}" conf="build->default" transitive="false"/>
     </dependencies>

@@ -25,6 +25,7 @@ public final class UiController {
     public static final int STATE_STORY = 10;
     // Shown right after LoadingScreen ("少女祈祷中") to apply i18n before entering title.
     public static final int STATE_STARTUP_LANGUAGE = 13;
+    public static final int STATE_REPLAY_FILES = 14;
 
     public interface Listener {
         void onStartGameRequested(int gamemode, int level, int chara, int type, int startStage, boolean pracBoss);
@@ -63,6 +64,7 @@ public final class UiController {
     private ReplayScreen replay;
     private ReplayReceiveScreen replayReceive;
     private ReplaySendScreen replaySend;
+    private ReplayFileScreen replayFiles;
     private ResultScreen result;
     private MusicRoomScreen musicRoom;
     private OptionScreen option;
@@ -202,6 +204,12 @@ public final class UiController {
             case STATE_REPLAY_SEND:
                 updateReplaySend(pressed);
                 return true;
+            case STATE_REPLAY_FILES:
+                if (replayFiles.update(pressed)) {
+                    replayFiles = null;
+                    returnToReplayKeepCursor();
+                }
+                return true;
             case STATE_RESULT:
                 updateResult(pressed);
                 return true;
@@ -330,11 +338,15 @@ public final class UiController {
                 listener.onStartReplayRequested(r.slot, r.bossOnly);
             }
         } else if (r.kind == ReplayScreen.Result.KIND_OPEN_BT_RECEIVE) {
-            replayReceive.enter();
+            replayReceive.enter(r.slot);
             transitionTo(STATE_REPLAY_RECEIVE);
         } else if (r.kind == ReplayScreen.Result.KIND_OPEN_BT_SEND) {
             replaySend.enter(r.slot);
             transitionTo(STATE_REPLAY_SEND);
+        } else if (r.kind == ReplayScreen.Result.KIND_OPEN_EXPORT || r.kind == ReplayScreen.Result.KIND_OPEN_IMPORT) {
+            replayFiles = new ReplayFileScreen();
+            replayFiles.enter(r.slot, r.kind == ReplayScreen.Result.KIND_OPEN_IMPORT);
+            transitionTo(STATE_REPLAY_FILES);
         }
     }
 
@@ -425,6 +437,7 @@ public final class UiController {
                 break;
             case STATE_REPLAY_RECEIVE:
             case STATE_REPLAY_SEND:
+            case STATE_REPLAY_FILES:
                 sheets = new int[] { 37 };
                 break;
             default:
@@ -490,6 +503,9 @@ public final class UiController {
             case STATE_REPLAY_SEND:
                 replaySend.render(g, images, sprites);
                 break;
+            case STATE_REPLAY_FILES:
+                replayFiles.render(g, images);
+                break;
             case STATE_RESULT:
                 result.render(g);
                 break;
@@ -522,6 +538,8 @@ public final class UiController {
                 return replayReceive.getLeftSoftkeyTextId();
             case STATE_REPLAY_SEND:
                 return replaySend.getLeftSoftkeyTextId();
+            case STATE_REPLAY_FILES:
+                return replayFiles.getLeftSoftkeyTextId();
             default:
                 return TextId.SOFTKEY_BACK;
         }
@@ -535,8 +553,8 @@ public final class UiController {
                 return TextId.SOFTKEY_NEXT;
             case STATE_SPELL_PRACTICE:
                 return TextId.SOFTKEY_TYPE;
-            case STATE_REPLAY:
-                return replay.getRightSoftkeyTextId();
+            case STATE_REPLAY_FILES:
+                return replayFiles.getRightSoftkeyTextId();
             default:
                 return -1;
         }

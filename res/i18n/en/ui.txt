@@ -112,6 +112,26 @@ Stage
 Recv
 SpellNo.
 
+Export REP
+Storage
+Reading...
+Exporting...
+Exported.
+File access not supported.
+File access denied.
+Export failed.
+Export
+
+Net Receive
+BT Receive
+Import REP
+Importing...
+Imported.
+Import failed.
+Import
+Invalid Replay file.
+Cannot read this folder.
+
 - BT Receive -
 - BT Send -
 Waiting...

@@ -31,6 +31,8 @@
     <property name="cldc.jar"         value="${deps.lib}/cldcapi11-${api.version}.jar"/>
     <property name="midp.jar"         value="${deps.lib}/midpapi20-${api.version}.jar"/>
     <property name="jsr082.jar"       value="${deps.lib}/microemu-jsr-82-${api.version}.jar"/>
+    <property name="jsr075.jar"       value="${deps.lib}/microemu-jsr-75-${api.version}.jar"/>
+    <property name="file.permissions" value="javax.microedition.io.Connector.file.read,javax.microedition.io.Connector.file.write"/>
     <property name="proguard.jar"     value="${deps.lib}/proguard-base-${proguard.version}.jar"/>
     <property name="ecj.jar"          value="${deps.lib}/ecj-${ecj.version}.jar"/>
 
@@ -38,6 +40,7 @@
         <pathelement location="${cldc.jar}"/>
         <pathelement location="${midp.jar}"/>
         <pathelement location="${jsr082.jar}"/>
+        <pathelement location="${jsr075.jar}"/>
     </path>
 
     <target name="check-ivy">
@@ -130,6 +133,7 @@
                 <attribute name="MIDlet-1" value="${midlet.name}, /icon.png, touhou.MainMidlet"/>
                 <attribute name="MicroEdition-Profile" value="MIDP-2.0"/>
                 <attribute name="MicroEdition-Configuration" value="CLDC-1.1"/>
+                <attribute name="MIDlet-Permissions-Opt" value="${file.permissions}"/>
             </manifest>
             <fileset dir="${classes.dir}" includes="**/*.class"/>
             <zipfileset dir="${res.dir}" includes="**/*">
@@ -158,6 +162,7 @@
             <arg value="-libraryjars"/> <arg value="${cldc.jar}"/>
             <arg value="-libraryjars"/> <arg value="${midp.jar}"/>
             <arg value="-libraryjars"/> <arg value="${jsr082.jar}"/>
+            <arg value="-libraryjars"/> <arg value="${jsr075.jar}"/>
             <arg value="-microedition"/>
             <arg value="-target"/> <arg value="1.1"/>
             <arg value="-dontusemixedcaseclassnames"/>
@@ -179,6 +184,7 @@ MIDlet-Icon: /icon.png
 MIDlet-1: ${midlet.name}, /icon.png, ${midlet.class}
 MicroEdition-Profile: MIDP-2.0
 MicroEdition-Configuration: CLDC-1.1
+MIDlet-Permissions-Opt: ${file.permissions}
 MIDlet-Jar-URL: ${dist.name}.jar
 MIDlet-Jar-Size: ${jar.size}
 </echo>

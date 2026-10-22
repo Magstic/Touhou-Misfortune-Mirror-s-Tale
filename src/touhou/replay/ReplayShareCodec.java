@@ -6,6 +6,8 @@ public final class ReplayShareCodec {
 
     private static final int FIXED_SIZE = 4 + 2 + 4 * 4 + 4;
     private static final int CHECKSUM_OFFSET = FIXED_SIZE - 4;
+    public static final int MAX_PACKET_SIZE = FIXED_SIZE + ReplayHeader.SIZE + ReplayFormat.NAME_SIZE
+            + ReplayCodec.ENCODED_SIZE + ReplayFormat.SNAPSHOT_MAX_SIZE;
 
     private ReplayShareCodec() {
     }

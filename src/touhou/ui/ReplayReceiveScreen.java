@@ -55,6 +55,7 @@ public final class ReplayReceiveScreen {
 
     private int scene;
     private int cursor;
+    private int targetSlot;
 
     private int decoTick;
 
@@ -70,10 +71,11 @@ public final class ReplayReceiveScreen {
 
     private BtSppLink.CancelRef cancelRef;
 
-    public void enter() {
+    public void enter(int slot) {
         sessionId++;
         scene = SCENE_RECEIVING;
-        cursor = 0;
+        targetSlot = slot;
+        cursor = slot >= 0 ? slot : 0;
         msg = null;
         receivedPacket = null;
 
@@ -121,9 +123,12 @@ public final class ReplayReceiveScreen {
 
         if (scene == SCENE_RECV_CONFIRM) {
             if (UiInput.confirm(pressed)) {
-                // Accept: proceed to slot selection
-                reloadSlots();
-                scene = SCENE_SLOT_SELECT;
+                if (targetSlot >= 0) {
+                    doSaveToSlot(targetSlot);
+                } else {
+                    reloadSlots();
+                    scene = SCENE_SLOT_SELECT;
+                }
             }
             return null;
         }
