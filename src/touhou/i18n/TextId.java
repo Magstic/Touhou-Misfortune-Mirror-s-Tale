@@ -3,653 +3,654 @@ package touhou.i18n;
 public final class TextId {
     public static final int COUNT = I18nSchema.UI_LINE_COUNT;
 
-    public static final int OPTION_TITLE = 0;
+    // Zero-based ui.txt line numbers, including blank separators.
 
-    public static final int OPTION_MENU_BGM_VOL = 1;
-    public static final int OPTION_MENU_SE_VOL = 2;
-    public static final int OPTION_MENU_SE_CONFIG = 3;
-    public static final int OPTION_MENU_VIBRATION = 4;
-    public static final int OPTION_MENU_GAME_CONFIG = 5;
-    public static final int OPTION_MENU_DEBUG = 6;
-    public static final int OPTION_MENU_DEFAULT = 7;
-    public static final int OPTION_MENU_BACK = 8;
+    // Common
+    public static final int UNLOCK = 0;
+    public static final int COMMON_SLOT_PREFIX = 1;
+    public static final int COMMON_ON = 2;
+    public static final int COMMON_OFF = 3;
+    public static final int COMMON_NEXT = 4;
 
-    public static final int OPTION_DESC_BGM_VOL = 9;
-    public static final int OPTION_DESC_SE_VOL = 10;
-    public static final int OPTION_DESC_SE_CONFIG = 11;
-    public static final int OPTION_DESC_VIBRATION = 12;
-    public static final int OPTION_DESC_GAME_CONFIG = 13;
-    public static final int OPTION_DESC_DEBUG = 14;
-    public static final int OPTION_DESC_DEFAULT = 15;
-    public static final int OPTION_DESC_BACK = 16;
+    // Loading
+    public static final int LOADING_TITLE = 6;
 
-    public static final int LOADING_TITLE = 17;
+    // Title menu
+    public static final int TITLE_DESC_0 = 8;
+    public static final int TITLE_DESC_1 = 9;
+    public static final int TITLE_DESC_2 = 10;
+    public static final int TITLE_DESC_3 = 11;
+    public static final int TITLE_DESC_4 = 12;
+    public static final int TITLE_DESC_5 = 13;
+    public static final int TITLE_DESC_6 = 14;
+    public static final int TITLE_DESC_7 = 15;
+    public static final int TITLE_DESC_8 = 16;
 
-    public static final int TITLE_DESC_0 = 18;
-    public static final int TITLE_DESC_1 = 19;
-    public static final int TITLE_DESC_2 = 20;
-    public static final int TITLE_DESC_3 = 21;
-    public static final int TITLE_DESC_4 = 22;
-    public static final int TITLE_DESC_5 = 23;
-    public static final int TITLE_DESC_6 = 24;
-    public static final int TITLE_DESC_7 = 25;
-    public static final int TITLE_DESC_8 = 26;
+    // Game setup
+    public static final int DIFFICULTY_DESC_EASY = 18;
+    public static final int DIFFICULTY_DESC_NORMAL = 19;
+    public static final int DIFFICULTY_DESC_HARD = 20;
+    public static final int DIFFICULTY_DESC_LUNATIC = 21;
+    public static final int DIFFICULTY_DESC_EXTRA = 22;
+    public static final int PRACTICE_MODE_LABEL = 23;
+    public static final int TOP_HINT_SELECT_DIFFICULTY = 24;
+    public static final int TOP_HINT_SELECT_CHARACTER = 25;
+    public static final int TOP_HINT_SELECT_STAGE = 26;
 
-    public static final int HELP_TITLE_PREFIX = 27;
-    public static final int HELP_PAGE_SUFFIX = 28;
-    public static final int HELP_PAGE_HEADER_0 = 29;
-    public static final int HELP_PAGE_HEADER_1 = 30;
-    public static final int HELP_PAGE_HEADER_2 = 31;
-    public static final int HELP_PAGE_HEADER_3 = 32;
-    public static final int HELP_PAGE_HEADER_4 = 33;
-    public static final int HELP_PAGE_HEADER_5 = 34;
-    public static final int HELP_PAGE_HEADER_6 = 35;
-    public static final int HELP_PAGE_HEADER_7 = 36;
-    public static final int HELP_PAGE_HEADER_8 = 37;
-    public static final int HELP_PAGE_HEADER_9 = 38;
-    public static final int HELP_PAGE_HEADER_10 = 39;
-    public static final int HELP_PAGE_HEADER_11 = 40;
-    public static final int HELP_PAGE_HEADER_12 = 41;
-    public static final int HELP_PAGE_HEADER_13 = 42;
-    public static final int HELP_PAGE_HEADER_14 = 43;
-    public static final int UNLOCK = 44;
-    public static final int REPLAY_TITLE = 45;
-    public static final int REPLAY_MSG_DELETED = 46;
-    public static final int REPLAY_MSG_NOT_IMPLEMENTED = 47;
-    public static final int REPLAY_MSG_EMPTY_SLOT = 48;
-    public static final int REPLAY_MSG_UNKNOWN_ACTION = 49;
-    public static final int REPLAY_ACTION_PLAY = 50;
-    public static final int REPLAY_ACTION_PLAY_BOSS = 51;
-    public static final int REPLAY_ACTION_DELETE = 52;
-    public static final int REPLAY_ACTION_NET_SHARE = 53;
-    public static final int REPLAY_ACTION_BT_SHARE = 54;
-    public static final int REPLAY_ACTION_BACK = 55;
-    public static final int REPLAY_LABEL_SCORE = 56;
-    public static final int REPLAY_LABEL_EMPTY = 58;
-    public static final int REPLAY_DELETE_CONFIRM_PREFIX = 59;
-    public static final int REPLAY_DELETE_CONFIRM_SUFFIX = 60;
+    // Character names
+    public static final int CHARACTER_NAME_REIMU = 28;
+    public static final int CHARACTER_NAME_MARISA = 29;
+    public static final int CHARACTER_NAME_ALICE = 30;
 
-    public static final int RESULT_TITLE = 62;
-    public static final int RESULT_MENU_0 = 63;
-    public static final int RESULT_MENU_1 = 64;
-    public static final int RESULT_MENU_2 = 65;
-    public static final int RESULT_MENU_3 = 66;
-    public static final int RESULT_MENU_4 = 67;
-    public static final int RESULT_PREVIEW_NET_NOT_IMPLEMENTED = 68;
-    public static final int RESULT_SPELLCARD_TITLE_PREFIX = 69;
-    public static final int RESULT_SCORE_TITLE_PREFIX = 70;
-    public static final int RESULT_OTHER_TITLE = 71;
-    public static final int RESULT_SPELLCARD_CAPTURED_PREFIX = 72;
-    public static final int RESULT_SCORE_EASY = 73;
-    public static final int RESULT_SCORE_NORMAL = 74;
-    public static final int RESULT_SCORE_HARD = 75;
-    public static final int RESULT_SCORE_LUNATIC = 76;
-    public static final int RESULT_SCORE_EXTRA = 77;
-    public static final int RESULT_SCORE_UPLOAD_NOT_IMPLEMENTED = 78;
-    public static final int RESULT_OTHER_BOOT_TIME = 79;
-    public static final int RESULT_OTHER_PLAY_TIME = 80;
-    public static final int RESULT_OTHER_TOTAL_CLEAR = 81;
-    public static final int RESULT_OTHER_CONTINUE_COUNT = 82;
-    public static final int RESULT_OTHER_RETRY_COUNT = 83;
-    public static final int RESULT_OTHER_PLAY_COUNT = 84;
-    public static final int RESULT_OTHER_NORMAL = 85;
-    public static final int RESULT_OTHER_PRACTICE = 86;
-    public static final int RESULT_OTHER_EXTRA = 87;
+    // Reimu
+    public static final int CHARACTER_INFO_REIMU_TITLE = 32;
+    public static final int CHARACTER_INFO_REIMU_NAME = 33;
+    public static final int CHARACTER_INFO_REIMU_TYPE_A_TITLE = 34;
+    public static final int CHARACTER_INFO_REIMU_TYPE_A_DESC_1 = 35;
+    public static final int CHARACTER_INFO_REIMU_TYPE_A_DESC_2 = 36;
+    public static final int CHARACTER_INFO_REIMU_TYPE_B_TITLE = 37;
+    public static final int CHARACTER_INFO_REIMU_TYPE_B_DESC_1 = 38;
+    public static final int CHARACTER_INFO_REIMU_TYPE_B_DESC_2 = 39;
+    public static final int CHARACTER_INFO_REIMU_ABILITY_TITLE = 40;
+    public static final int CHARACTER_INFO_REIMU_ABILITY_DESC = 41;
 
-    public static final int STAGECLEAR_TITLE = 88;
-    public static final int STAGECLEAR_HISCORE = 89;
-    public static final int STAGECLEAR_SCORE = 90;
-    public static final int STAGECLEAR_CONTINUES = 91;
-    public static final int STAGECLEAR_MISS = 92;
-    public static final int STAGECLEAR_BOMB = 93;
-    public static final int STAGECLEAR_SPELL_BONUS = 94;
-    public static final int STAGECLEAR_PUSH_ENTER = 95;
-    public static final int STAGECLEAR_REPLAY_SAVE_HINT = 96;
+    // Marisa
+    public static final int CHARACTER_INFO_MARISA_TITLE = 43;
+    public static final int CHARACTER_INFO_MARISA_NAME = 44;
+    public static final int CHARACTER_INFO_MARISA_TYPE_A_TITLE = 45;
+    public static final int CHARACTER_INFO_MARISA_TYPE_A_DESC_1 = 46;
+    public static final int CHARACTER_INFO_MARISA_TYPE_A_DESC_2 = 47;
+    public static final int CHARACTER_INFO_MARISA_TYPE_B_TITLE = 48;
+    public static final int CHARACTER_INFO_MARISA_TYPE_B_DESC_1 = 49;
+    public static final int CHARACTER_INFO_MARISA_TYPE_B_DESC_2 = 50;
+    public static final int CHARACTER_INFO_MARISA_ABILITY_TITLE = 51;
+    public static final int CHARACTER_INFO_MARISA_ABILITY_DESC = 52;
 
-    public static final int RESULT_SPELLCARD_TITLE_SUFFIX = 97;
-    public static final int RESULT_SCORE_TITLE_SUFFIX = 98;
+    // Alice
+    public static final int CHARACTER_INFO_ALICE_TITLE = 54;
+    public static final int CHARACTER_INFO_ALICE_NAME = 55;
+    public static final int CHARACTER_INFO_ALICE_TYPE_A_TITLE = 56;
+    public static final int CHARACTER_INFO_ALICE_TYPE_A_DESC_1 = 57;
+    public static final int CHARACTER_INFO_ALICE_TYPE_A_DESC_2 = 58;
+    public static final int CHARACTER_INFO_ALICE_TYPE_B_TITLE = 59;
+    public static final int CHARACTER_INFO_ALICE_TYPE_B_DESC_1 = 60;
+    public static final int CHARACTER_INFO_ALICE_TYPE_B_DESC_2 = 61;
+    public static final int CHARACTER_INFO_ALICE_ABILITY_TITLE = 62;
+    public static final int CHARACTER_INFO_ALICE_ABILITY_DESC = 63;
 
-    public static final int RESULT_CHARA_0 = 99;
-    public static final int RESULT_CHARA_1 = 100;
-    public static final int RESULT_CHARA_2 = 101;
-    public static final int RESULT_CHARA_3 = 102;
-    public static final int RESULT_CHARA_4 = 103;
-    public static final int RESULT_CHARA_5 = 104;
-    public static final int RESULT_CHARA_6 = 105;
+    // Story
+    public static final int STORY_TITLE = 65;
 
-    public static final int STAGECLEAR_ASK_SAVE_REPLAY = 106;
-    public static final int STAGECLEAR_SAVE_NO = 107;
-    public static final int STAGECLEAR_SAVE_YES = 108;
+    // Spell practice
+    public static final int SPELL_PRACTICE_TITLE = 67;
+    public static final int SPELL_PRACTICE_HINT = 68;
+    public static final int SPELL_PRACTICE_STAR = 69;
+    public static final int SPELL_PRACTICE_ALL = 70;
+    public static final int SPELL_PRACTICE_CHOOSE_CARD = 71;
+    public static final int SPELL_PRACTICE_RETRY_ASK = 72;
+    public static final int SPELL_PRACTICE_RETRY_YES = 73;
+    public static final int SPELL_PRACTICE_RETRY_NO = 74;
 
-    public static final int COMMON_SLOT_PREFIX = 109;
-    public static final int REPLAY_SLOTLIST_TITLE = 110;
-    public static final int REPLAY_SAVE_OK = 111;
-    public static final int REPLAY_SAVE_FAIL = 112;
+    // Replay
+    public static final int REPLAY_TITLE = 76;
+    public static final int REPLAY_MSG_DELETED = 77;
+    public static final int REPLAY_MSG_NOT_IMPLEMENTED = 78;
+    public static final int REPLAY_MSG_EMPTY_SLOT = 79;
+    public static final int REPLAY_MSG_UNKNOWN_ACTION = 80;
+    public static final int REPLAY_ACTION_PLAY = 81;
+    public static final int REPLAY_ACTION_PLAY_BOSS = 82;
+    public static final int REPLAY_ACTION_DELETE = 83;
+    public static final int REPLAY_ACTION_NET_SHARE = 84;
+    public static final int REPLAY_ACTION_BT_SHARE = 85;
+    public static final int REPLAY_ACTION_BACK = 86;
+    public static final int REPLAY_LABEL_SCORE = 87;
+    public static final int REPLAY_LABEL_EMPTY = 88;
+    public static final int REPLAY_DELETE_CONFIRM_PREFIX = 89;
+    public static final int REPLAY_DELETE_CONFIRM_SUFFIX = 90;
+    public static final int REPLAY_SLOTLIST_TITLE = 91;
+    public static final int REPLAY_SAVE_OK = 92;
+    public static final int REPLAY_SAVE_FAIL = 93;
+    public static final int REPLAY_DIFFICULTY_EASY = 94;
+    public static final int REPLAY_DIFFICULTY_NORMAL = 95;
+    public static final int REPLAY_DIFFICULTY_HARD = 96;
+    public static final int REPLAY_DIFFICULTY_LUNATIC = 97;
+    public static final int REPLAY_DIFFICULTY_EXTRA = 98;
+    public static final int REPLAY_STAGE_1 = 99;
+    public static final int REPLAY_STAGE_2 = 100;
+    public static final int REPLAY_STAGE_3 = 101;
+    public static final int REPLAY_STAGE_4 = 102;
+    public static final int REPLAY_STAGE_5 = 103;
+    public static final int REPLAY_STAGE_6 = 104;
+    public static final int REPLAY_STAGE_EX = 105;
+    public static final int REPLAY_CHARA_REIMU = 106;
+    public static final int REPLAY_CHARA_MARISA = 107;
+    public static final int REPLAY_CHARA_ALICE = 108;
+    public static final int REPLAY_TAG_SP = 109;
+    public static final int REPLAY_TAG_ST = 110;
+    public static final int REPLAY_TAG_IMPORTED = 111;
+    public static final int REPLAY_SPELLNO_PREFIX = 112;
 
-    public static final int REPLAY_DIFFICULTY_EASY = 113;
-    public static final int REPLAY_DIFFICULTY_NORMAL = 114;
-    public static final int REPLAY_DIFFICULTY_HARD = 115;
-    public static final int REPLAY_DIFFICULTY_LUNATIC = 116;
-    public static final int REPLAY_DIFFICULTY_EXTRA = 117;
+    // Bluetooth replay sharing
+    public static final int BT_RECEIVE_TITLE = 114;
+    public static final int BT_SEND_TITLE = 115;
+    public static final int BT_STATUS_WAITING = 116;
+    public static final int BT_STATUS_SELECT_SERVICE = 117;
+    public static final int BT_STATUS_CONNECTING = 118;
+    public static final int BT_STATUS_CONNECTED = 119;
+    public static final int BT_STATUS_RECEIVING = 120;
+    public static final int BT_STATUS_SENDING = 121;
+    public static final int BT_STATUS_DONE = 122;
+    public static final int BT_STATUS_CANCELED = 123;
+    public static final int BT_LABEL_DEVICE = 124;
+    public static final int BT_LABEL_BYTES = 125;
+    public static final int BT_LABEL_SPEED = 126;
+    public static final int BT_HINT_BACK = 127;
+    public static final int BT_HINT_CANCEL = 128;
+    public static final int BT_HINT_SAVE = 129;
+    public static final int BT_HINT_OK = 130;
+    public static final int BT_MSG_NOT_SUPPORTED = 131;
+    public static final int BT_MSG_CANCELING = 132;
+    public static final int BT_MSG_CANCELED = 133;
+    public static final int BT_MSG_INVALID_DATA = 134;
+    public static final int BT_MSG_ERROR = 135;
+    public static final int BT_MSG_NO_DATA = 136;
+    public static final int BT_MSG_SAVE_FAILED = 137;
+    public static final int BT_MSG_SAVED_PREFIX = 138;
+    public static final int BT_MSG_SAVED_SUFFIX = 139;
+    public static final int BT_CONFIRM_OVERWRITE_PREFIX = 140;
+    public static final int BT_CONFIRM_OVERWRITE_SUFFIX = 141;
+    public static final int BT_MSG_SENT = 142;
+    public static final int BT_RECV_FROM_PREFIX = 143;
+    public static final int BT_RECV_FROM_SUFFIX = 144;
+    public static final int BT_RECV_CONFIRM = 145;
+    public static final int BT_HINT_ACCEPT = 146;
+    public static final int BT_HINT_REJECT = 147;
 
-    public static final int REPLAY_STAGE_1 = 118;
-    public static final int REPLAY_STAGE_2 = 119;
-    public static final int REPLAY_STAGE_3 = 120;
-    public static final int REPLAY_STAGE_4 = 121;
-    public static final int REPLAY_STAGE_5 = 122;
-    public static final int REPLAY_STAGE_6 = 123;
-    public static final int REPLAY_STAGE_EX = 124;
+    // Results
+    public static final int RESULT_TITLE = 149;
+    public static final int RESULT_MENU_0 = 150;
+    public static final int RESULT_MENU_1 = 151;
+    public static final int RESULT_MENU_2 = 152;
+    public static final int RESULT_MENU_3 = 153;
+    public static final int RESULT_MENU_4 = 154;
+    public static final int RESULT_PREVIEW_NET_NOT_IMPLEMENTED = 155;
+    public static final int RESULT_SPELLCARD_TITLE_PREFIX = 156;
+    public static final int RESULT_SCORE_TITLE_PREFIX = 157;
+    public static final int RESULT_OTHER_TITLE = 158;
+    public static final int RESULT_SPELLCARD_CAPTURED_PREFIX = 159;
+    public static final int RESULT_SCORE_EASY = 160;
+    public static final int RESULT_SCORE_NORMAL = 161;
+    public static final int RESULT_SCORE_HARD = 162;
+    public static final int RESULT_SCORE_LUNATIC = 163;
+    public static final int RESULT_SCORE_EXTRA = 164;
+    public static final int RESULT_SCORE_UPLOAD_NOT_IMPLEMENTED = 165;
+    public static final int RESULT_OTHER_BOOT_TIME = 166;
+    public static final int RESULT_OTHER_PLAY_TIME = 167;
+    public static final int RESULT_OTHER_TOTAL_CLEAR = 168;
+    public static final int RESULT_OTHER_CONTINUE_COUNT = 169;
+    public static final int RESULT_OTHER_RETRY_COUNT = 170;
+    public static final int RESULT_OTHER_PLAY_COUNT = 171;
+    public static final int RESULT_OTHER_NORMAL = 172;
+    public static final int RESULT_OTHER_PRACTICE = 173;
+    public static final int RESULT_OTHER_EXTRA = 174;
+    public static final int RESULT_SPELLCARD_TITLE_SUFFIX = 175;
+    public static final int RESULT_SCORE_TITLE_SUFFIX = 176;
+    public static final int RESULT_CHARA_0 = 177;
+    public static final int RESULT_CHARA_1 = 178;
+    public static final int RESULT_CHARA_2 = 179;
+    public static final int RESULT_CHARA_3 = 180;
+    public static final int RESULT_CHARA_4 = 181;
+    public static final int RESULT_CHARA_5 = 182;
+    public static final int RESULT_CHARA_6 = 183;
 
-    public static final int REPLAY_CHARA_REIMU = 125;
-    public static final int REPLAY_CHARA_MARISA = 126;
-    public static final int REPLAY_CHARA_ALICE = 127;
+    // Stage clear
+    public static final int STAGECLEAR_TITLE = 185;
+    public static final int STAGECLEAR_HISCORE = 186;
+    public static final int STAGECLEAR_SCORE = 187;
+    public static final int STAGECLEAR_CONTINUES = 188;
+    public static final int STAGECLEAR_MISS = 189;
+    public static final int STAGECLEAR_BOMB = 190;
+    public static final int STAGECLEAR_SPELL_BONUS = 191;
+    public static final int STAGECLEAR_PUSH_ENTER = 192;
+    public static final int STAGECLEAR_REPLAY_SAVE_HINT = 193;
+    public static final int STAGECLEAR_ASK_SAVE_REPLAY = 194;
+    public static final int STAGECLEAR_SAVE_NO = 195;
+    public static final int STAGECLEAR_SAVE_YES = 196;
 
-    public static final int REPLAY_TAG_SP = 128;
-    public static final int REPLAY_TAG_ST = 129;
-    public static final int REPLAY_TAG_IMPORTED = 130;
+    // Battle score
+    public static final int SCORE_SPELLCARD_BONUS = 198;
 
-    public static final int REPLAY_SPELLNO_PREFIX = 133;
+    // Battle pause
+    public static final int BATTLE_PAUSE_TITLE = 200;
+    public static final int BATTLE_PAUSE_RESUME = 201;
+    public static final int BATTLE_PAUSE_BACK_TO_MENU = 202;
+    public static final int BATTLE_PAUSE_BACK_TO_TITLE = 203;
+    public static final int BATTLE_PAUSE_RESTART = 204;
 
-    public static final int COMMON_ON = 134;
-    public static final int COMMON_OFF = 135;
-    public static final int COMMON_NEXT = 136;
+    // Continue
+    public static final int BATTLE_CONTINUE_TITLE = 206;
+    public static final int BATTLE_CONTINUE_YES = 207;
+    public static final int BATTLE_CONTINUE_NO = 208;
+    public static final int BATTLE_CONTINUE_REMAINING_PREFIX = 209;
+    public static final int BATTLE_CONTINUE_REMAINING_SUFFIX = 210;
 
-    public static final int OPTION_SE_TITLE = 137;
-    public static final int OPTION_SE_MENU_0 = 138;
-    public static final int OPTION_SE_MENU_1 = 139;
-    public static final int OPTION_SE_MENU_2 = 140;
-    public static final int OPTION_SE_MENU_3 = 141;
-    public static final int OPTION_SE_MENU_4 = 142;
-    public static final int OPTION_SE_MENU_5 = 143;
-    public static final int OPTION_SE_MENU_6 = 144;
-    public static final int OPTION_SE_MENU_7 = 145;
-    public static final int OPTION_SE_MENU_8 = 146;
-    public static final int OPTION_SE_MENU_9 = 147;
-    public static final int OPTION_SE_MENU_10 = 148;
-    public static final int OPTION_SE_MENU_11 = 149;
-    public static final int OPTION_SE_MENU_12 = 150;
+    // Player spell names
+    public static final int BOMB_REIMU = 212;
+    public static final int BOMB_MARISA = 213;
+    public static final int BOMB_ALICE = 214;
 
-    public static final int OPTION_SE_DESC_0 = 151;
-    public static final int OPTION_SE_DESC_1 = 152;
-    public static final int OPTION_SE_DESC_2 = 153;
-    public static final int OPTION_SE_DESC_3 = 154;
-    public static final int OPTION_SE_DESC_4 = 155;
-    public static final int OPTION_SE_DESC_5 = 156;
-    public static final int OPTION_SE_DESC_6 = 157;
-    public static final int OPTION_SE_DESC_7 = 158;
-    public static final int OPTION_SE_DESC_8 = 159;
-    public static final int OPTION_SE_DESC_9 = 160;
-    public static final int OPTION_SE_DESC_10 = 161;
-    public static final int OPTION_SE_DESC_11 = 162;
-    public static final int OPTION_SE_DESC_12 = 163;
+    // Ending
+    public static final int ENDING_LINE_1 = 216;
+    public static final int ENDING_LINE_2 = 217;
+    public static final int ENDING_NUMBER = 218;
+    public static final int ENDING_EXTRA_UNLOCK = 219;
 
-    public static final int OPTION_GAME_TITLE = 164;
-    public static final int OPTION_GAME_MENU_0 = 165;
-    public static final int OPTION_GAME_MENU_1 = 166;
-    public static final int OPTION_GAME_MENU_2 = 167;
-    public static final int OPTION_GAME_MENU_3 = 168;
-    public static final int OPTION_GAME_MENU_4 = 169;
-    public static final int OPTION_GAME_MENU_5 = 170;
-    public static final int OPTION_GAME_MENU_6 = 171;
-    public static final int OPTION_GAME_MENU_7 = 172;
+    // Staff roll
+    public static final int STAFF_TITLE = 221;
+    public static final int STAFF_PLANNING_TITLE = 222;
+    public static final int STAFF_PLANNING_1 = 223;
+    public static final int STAFF_PROGRAM_TITLE = 224;
+    public static final int STAFF_PROGRAM_1 = 225;
+    public static final int STAFF_GRAPHIC_TITLE = 226;
+    public static final int STAFF_GRAPHIC_1 = 227;
+    public static final int STAFF_GRAPHIC_2 = 228;
+    public static final int STAFF_SOUND_TITLE = 229;
+    public static final int STAFF_SOUND_1 = 230;
+    public static final int STAFF_SPECIAL_THANKS_TITLE = 231;
+    public static final int STAFF_SPECIAL_THANKS_1 = 232;
+    public static final int STAFF_SPECIAL_THANKS_2 = 233;
+    public static final int STAFF_SPECIAL_THANKS_3 = 234;
+    public static final int STAFF_TEST_PLAY_TITLE = 235;
+    public static final int STAFF_TEST_PLAY_1 = 236;
+    public static final int STAFF_TEST_PLAY_2 = 237;
+    public static final int STAFF_TEST_PLAY_3 = 238;
+    public static final int STAFF_TEST_PLAY_4 = 239;
+    public static final int STAFF_ORIGINAL_TITLE = 240;
+    public static final int STAFF_ORIGINAL_1 = 241;
+    public static final int STAFF_ORIGINAL_URL = 242;
+    public static final int STAFF_DEVELOPMENT_TITLE = 243;
+    public static final int STAFF_DEVELOPMENT_1 = 244;
+    public static final int STAFF_DEVELOPMENT_URL_1 = 245;
+    public static final int STAFF_DEVELOPMENT_2 = 246;
+    public static final int STAFF_DEVELOPMENT_URL_2 = 247;
 
-    public static final int OPTION_GAME_DESC_0 = 173;
-    public static final int OPTION_GAME_DESC_1 = 174;
-    public static final int OPTION_GAME_DESC_2 = 175;
-    public static final int OPTION_GAME_DESC_3 = 176;
-    public static final int OPTION_GAME_DESC_4 = 177;
-    public static final int OPTION_GAME_DESC_5 = 178;
-    public static final int OPTION_GAME_DESC_6 = 179;
-    public static final int OPTION_GAME_DESC_7 = 180;
+    // Music room
+    public static final int MUSICROOM_TITLE = 249;
+    public static final int MUSICROOM_FROM_PREFIX = 250;
+    public static final int MUSIC_PERCENRAGE = 251;
+    public static final int MUSIC_VOLUME = 252;
 
-    public static final int OPTION_CHEAT_TITLE = 181;
-    public static final int OPTION_CHEAT_MENU_0 = 182;
-    public static final int OPTION_CHEAT_MENU_1 = 183;
-    public static final int OPTION_CHEAT_MENU_2 = 184;
-    public static final int OPTION_CHEAT_DESC_0 = 185;
-    public static final int OPTION_CHEAT_DESC_1 = 186;
-    public static final int OPTION_CHEAT_DESC_2 = 187;
+    // Music track titles
+    public static final int MUSIC_TITLE_TITLE = 254;
+    public static final int MUSIC_TITLE_ST1_MID = 255;
+    public static final int MUSIC_TITLE_ST1_BOSS = 256;
+    public static final int MUSIC_TITLE_ST2_MID = 257;
+    public static final int MUSIC_TITLE_ST2_BOSS = 258;
+    public static final int MUSIC_TITLE_ST3_MID = 259;
+    public static final int MUSIC_TITLE_ST3_BOSS = 260;
+    public static final int MUSIC_TITLE_ST4_MID = 261;
+    public static final int MUSIC_TITLE_ST4_BOSS = 262;
+    public static final int MUSIC_TITLE_ST5_MID = 263;
+    public static final int MUSIC_TITLE_ST5_BOSS = 264;
+    public static final int MUSIC_TITLE_ST6_MID = 265;
+    public static final int MUSIC_TITLE_ST6_BOSS = 266;
+    public static final int MUSIC_TITLE_EXTRA_MID = 267;
+    public static final int MUSIC_TITLE_EXTRA_BOSS = 268;
+    public static final int MUSIC_TITLE_EPILOGUE = 269;
+    public static final int MUSIC_TITLE_ENDING = 270;
+    public static final int MUSIC_TITLE_LASTWORD = 271;
 
-    public static final int OPTION_RENDER_TITLE = 188;
-    public static final int OPTION_RENDER_MENU_1 = 189;
-    public static final int OPTION_RENDER_MENU_2 = 190;
-    public static final int OPTION_RENDER_MENU_3 = 191;
-    public static final int OPTION_RENDER_MENU_4 = 192;
-    public static final int OPTION_RENDER_MENU_5 = 193;
-    public static final int OPTION_RENDER_DESC_1 = 194;
-    public static final int OPTION_RENDER_DESC_2 = 195;
-    public static final int OPTION_RENDER_DESC_3 = 196;
-    public static final int OPTION_RENDER_DESC_4 = 197;
-    public static final int OPTION_RENDER_DESC_5 = 198;
+    // Original song titles
+    public static final int MUSIC_ORIG_01 = 273;
+    public static final int MUSIC_ORIG_02 = 274;
+    public static final int MUSIC_ORIG_03 = 275;
+    public static final int MUSIC_ORIG_04 = 276;
+    public static final int MUSIC_ORIG_05 = 277;
+    public static final int MUSIC_ORIG_06 = 278;
+    public static final int MUSIC_ORIG_07 = 279;
+    public static final int MUSIC_ORIG_08 = 280;
+    public static final int MUSIC_ORIG_09 = 281;
+    public static final int MUSIC_ORIG_10 = 282;
+    public static final int MUSIC_ORIG_11 = 283;
+    public static final int MUSIC_ORIG_12 = 284;
+    public static final int MUSIC_ORIG_13 = 285;
+    public static final int MUSIC_ORIG_14 = 286;
+    public static final int MUSIC_ORIG_15 = 287;
+    public static final int MUSIC_ORIG_16 = 288;
+    public static final int MUSIC_ORIG_17 = 289;
+    public static final int MUSIC_ORIG_18 = 290;
 
-    public static final int OPTION_DEBUG_TITLE = 199;
-    public static final int OPTION_DEBUG_MENU_0 = 200;
-    public static final int OPTION_DEBUG_MENU_1 = 201;
-    public static final int OPTION_DEBUG_MENU_2 = 202;
-    public static final int OPTION_DEBUG_MENU_3 = 203;
-    public static final int OPTION_DEBUG_DESC_0 = 204;
-    public static final int OPTION_DEBUG_DESC_1 = 205;
-    public static final int OPTION_DEBUG_DESC_2 = 206;
-    public static final int OPTION_DEBUG_DESC_3 = 207;
+    // Source games
+    public static final int MUSIC_FROM_01 = 292;
+    public static final int MUSIC_FROM_02 = 293;
+    public static final int MUSIC_FROM_03 = 294;
+    public static final int MUSIC_FROM_04 = 295;
+    public static final int MUSIC_FROM_05 = 296;
+    public static final int MUSIC_FROM_06 = 297;
+    public static final int MUSIC_FROM_07 = 298;
+    public static final int MUSIC_FROM_08 = 299;
+    public static final int MUSIC_FROM_09 = 300;
+    public static final int MUSIC_FROM_10 = 301;
+    public static final int MUSIC_FROM_11 = 302;
+    public static final int MUSIC_FROM_12 = 303;
+    public static final int MUSIC_FROM_13 = 304;
+    public static final int MUSIC_FROM_14 = 305;
+    public static final int MUSIC_FROM_15 = 306;
+    public static final int MUSIC_FROM_16 = 307;
+    public static final int MUSIC_FROM_17 = 308;
+    public static final int MUSIC_FROM_18 = 309;
 
-    public static final int OPTION_CHEAT_WARN_TITLE = 208;
-    public static final int OPTION_CHEAT_WARN_LINE1 = 209;
-    public static final int OPTION_CHEAT_WARN_LINE2 = 210;
+    // Locked tracks
+    public static final int MUSIC_LOCK_TITLE = 311;
+    public static final int MUSIC_LOCK_LINE1 = 312;
+    public static final int MUSIC_LOCK_LINE2 = 313;
 
-    public static final int MUSICROOM_TITLE = 211;
-    public static final int MUSICROOM_FROM_PREFIX = 212;
+    // Options
+    public static final int OPTION_TITLE = 315;
+    public static final int OPTION_MENU_BGM_VOL = 316;
+    public static final int OPTION_MENU_SE_VOL = 317;
+    public static final int OPTION_MENU_SE_CONFIG = 318;
+    public static final int OPTION_MENU_VIBRATION = 319;
+    public static final int OPTION_MENU_GAME_CONFIG = 320;
+    public static final int OPTION_MENU_DEBUG = 321;
+    public static final int OPTION_MENU_DEFAULT = 322;
+    public static final int OPTION_MENU_BACK = 323;
+    public static final int OPTION_DESC_BGM_VOL = 324;
+    public static final int OPTION_DESC_SE_VOL = 325;
+    public static final int OPTION_DESC_SE_CONFIG = 326;
+    public static final int OPTION_DESC_VIBRATION = 327;
+    public static final int OPTION_DESC_GAME_CONFIG = 328;
+    public static final int OPTION_DESC_DEBUG = 329;
+    public static final int OPTION_DESC_DEFAULT = 330;
+    public static final int OPTION_DESC_BACK = 331;
 
+    // Sound configuration
+    public static final int OPTION_SE_TITLE = 333;
+    public static final int OPTION_SE_MENU_0 = 334;
+    public static final int OPTION_SE_MENU_1 = 335;
+    public static final int OPTION_SE_MENU_2 = 336;
+    public static final int OPTION_SE_MENU_3 = 337;
+    public static final int OPTION_SE_MENU_4 = 338;
+    public static final int OPTION_SE_MENU_5 = 339;
+    public static final int OPTION_SE_MENU_6 = 340;
+    public static final int OPTION_SE_MENU_7 = 341;
+    public static final int OPTION_SE_MENU_8 = 342;
+    public static final int OPTION_SE_MENU_9 = 343;
+    public static final int OPTION_SE_MENU_10 = 344;
+    public static final int OPTION_SE_MENU_11 = 345;
+    public static final int OPTION_SE_MENU_12 = 346;
+    public static final int OPTION_SE_DESC_0 = 347;
+    public static final int OPTION_SE_DESC_1 = 348;
+    public static final int OPTION_SE_DESC_2 = 349;
+    public static final int OPTION_SE_DESC_3 = 350;
+    public static final int OPTION_SE_DESC_4 = 351;
+    public static final int OPTION_SE_DESC_5 = 352;
+    public static final int OPTION_SE_DESC_6 = 353;
+    public static final int OPTION_SE_DESC_7 = 354;
+    public static final int OPTION_SE_DESC_8 = 355;
+    public static final int OPTION_SE_DESC_9 = 356;
+    public static final int OPTION_SE_DESC_10 = 357;
+    public static final int OPTION_SE_DESC_11 = 358;
+    public static final int OPTION_SE_DESC_12 = 359;
 
-    // Help content (keep in one block; values are appended at the end of ui.txt).
-    public static final int HELP_CONTENT_P0_LABEL_START = 213;
-    public static final int HELP_CONTENT_P0_DESC_START = 214;
-    public static final int HELP_CONTENT_P0_LABEL_EXTRA_START = 215;
-    public static final int HELP_CONTENT_P0_DESC_EXTRA_START = 216;
-    public static final int HELP_CONTENT_P0_LABEL_SPELL_PRACTICE = 217;
-    public static final int HELP_CONTENT_P0_DESC_SPELL_PRACTICE = 218;
-    public static final int HELP_CONTENT_P0_LABEL_PRACTICE_START = 219;
-    public static final int HELP_CONTENT_P0_DESC_PRACTICE_START = 220;
-    public static final int HELP_CONTENT_P0_LABEL_REPLAY = 221;
-    public static final int HELP_CONTENT_P0_DESC_REPLAY = 222;
-    public static final int HELP_CONTENT_P0_LABEL_RESULT = 223;
-    public static final int HELP_CONTENT_P0_DESC_RESULT = 224;
+    // Game configuration
+    public static final int OPTION_GAME_TITLE = 361;
+    public static final int OPTION_GAME_MENU_0 = 362;
+    public static final int OPTION_GAME_MENU_1 = 363;
+    public static final int OPTION_GAME_MENU_2 = 364;
+    public static final int OPTION_GAME_MENU_3 = 365;
+    public static final int OPTION_GAME_MENU_4 = 366;
+    public static final int OPTION_GAME_MENU_5 = 367;
+    public static final int OPTION_GAME_MENU_6 = 368;
+    public static final int OPTION_GAME_MENU_7 = 369;
+    public static final int OPTION_GAME_DESC_0 = 370;
+    public static final int OPTION_GAME_DESC_1 = 371;
+    public static final int OPTION_GAME_DESC_2 = 372;
+    public static final int OPTION_GAME_DESC_3 = 373;
+    public static final int OPTION_GAME_DESC_4 = 374;
+    public static final int OPTION_GAME_DESC_5 = 375;
+    public static final int OPTION_GAME_DESC_6 = 376;
+    public static final int OPTION_GAME_DESC_7 = 377;
 
-    public static final int HELP_CONTENT_P1_LABEL_MUSIC_ROOM = 225;
-    public static final int HELP_CONTENT_P1_DESC_MUSIC_ROOM = 226;
-    public static final int HELP_CONTENT_P1_LABEL_OPTION = 227;
-    public static final int HELP_CONTENT_P1_DESC_OPTION = 228;
-    public static final int HELP_CONTENT_P1_LABEL_QUIT = 229;
-    public static final int HELP_CONTENT_P1_DESC_QUIT = 230;
+    // Cheats
+    public static final int OPTION_CHEAT_TITLE = 379;
+    public static final int OPTION_CHEAT_MENU_0 = 380;
+    public static final int OPTION_CHEAT_MENU_1 = 381;
+    public static final int OPTION_CHEAT_MENU_2 = 382;
+    public static final int OPTION_CHEAT_DESC_0 = 383;
+    public static final int OPTION_CHEAT_DESC_1 = 384;
+    public static final int OPTION_CHEAT_DESC_2 = 385;
+    public static final int OPTION_CHEAT_WARN_TITLE = 386;
+    public static final int OPTION_CHEAT_WARN_LINE1 = 387;
+    public static final int OPTION_CHEAT_WARN_LINE2 = 388;
 
-    public static final int HELP_CONTENT_P2_TITLE_NORMAL = 231;
-    public static final int HELP_CONTENT_P2_MOVE = 232;
-    public static final int HELP_CONTENT_P2_KEY_1_9_UNUSED = 233;
-    public static final int HELP_CONTENT_P2_KEY_OK_UNUSED = 234;
-    public static final int HELP_CONTENT_P2_KEY_STAR_SHOT = 235;
-    public static final int HELP_CONTENT_P2_KEY_0_SPEED = 236;
-    public static final int HELP_CONTENT_P2_KEY_HASH_BOMB = 237;
-    public static final int HELP_CONTENT_P2_NOTE_OPTIONS = 238;
-    public static final int HELP_CONTENT_P2_TITLE_TALK = 239;
-    public static final int HELP_CONTENT_P2_KEY_OK_MESSAGE = 240;
+    // Rendering
+    public static final int OPTION_RENDER_TITLE = 390;
+    public static final int OPTION_RENDER_MENU_1 = 391;
+    public static final int OPTION_RENDER_MENU_2 = 392;
+    public static final int OPTION_RENDER_HIT_SPARK_MENU = 393;
+    public static final int OPTION_RENDER_MENU_3 = 394;
+    public static final int OPTION_RENDER_MENU_4 = 395;
+    public static final int OPTION_RENDER_MENU_5 = 396;
+    public static final int OPTION_RENDER_DESC_1 = 397;
+    public static final int OPTION_RENDER_DESC_2 = 398;
+    public static final int OPTION_RENDER_HIT_SPARK_DESC = 399;
+    public static final int OPTION_RENDER_DESC_3 = 400;
+    public static final int OPTION_RENDER_DESC_4 = 401;
+    public static final int OPTION_RENDER_DESC_5 = 402;
 
-    // Help page 3 (HUD info)
-    public static final int HELP_CONTENT_P3_LABEL_HISCORE = 241;
-    public static final int HELP_CONTENT_P3_DESC_HISCORE = 242;
-    public static final int HELP_CONTENT_P3_LABEL_SCORE = 243;
-    public static final int HELP_CONTENT_P3_DESC_SCORE = 244;
-    public static final int HELP_CONTENT_P3_LABEL_PLAYER = 245;
-    public static final int HELP_CONTENT_P3_DESC_PLAYER = 246;
-    public static final int HELP_CONTENT_P3_LABEL_SPELL = 247;
-    public static final int HELP_CONTENT_P3_DESC_SPELL = 248;
-    public static final int HELP_CONTENT_P3_LABEL_POWER = 249;
-    public static final int HELP_CONTENT_P3_DESC_POWER = 250;
-    public static final int HELP_CONTENT_P3_LABEL_GRAZE = 251;
-    public static final int HELP_CONTENT_P3_DESC_GRAZE = 252;
+    // Debug
+    public static final int OPTION_DEBUG_TITLE = 404;
+    public static final int OPTION_DEBUG_MENU_0 = 405;
+    public static final int OPTION_DEBUG_MENU_1 = 406;
+    public static final int OPTION_DEBUG_MENU_2 = 407;
+    public static final int OPTION_DEBUG_MENU_3 = 408;
+    public static final int OPTION_DEBUG_DESC_0 = 409;
+    public static final int OPTION_DEBUG_DESC_1 = 410;
+    public static final int OPTION_DEBUG_DESC_2 = 411;
+    public static final int OPTION_DEBUG_DESC_3 = 412;
 
-    // Help page 4 (items - point items)
-    public static final int HELP_CONTENT_P4_LABEL_P_SMALL = 253;
-    public static final int HELP_CONTENT_P4_DESC_P_SMALL_1 = 254;
-    public static final int HELP_CONTENT_P4_DESC_P_SMALL_2 = 255;
-    public static final int HELP_CONTENT_P4_LABEL_POINT = 256;
-    public static final int HELP_CONTENT_P4_DESC_POINT_1 = 257;
-    public static final int HELP_CONTENT_P4_DESC_POINT_2 = 258;
-    public static final int HELP_CONTENT_P4_LABEL_P_BIG = 259;
-    public static final int HELP_CONTENT_P4_DESC_P_BIG = 260;
-    public static final int HELP_CONTENT_P4_LABEL_F = 261;
-    public static final int HELP_CONTENT_P4_DESC_F = 262;
+    // Help headings
+    public static final int HELP_TITLE_PREFIX = 414;
+    public static final int HELP_PAGE_SUFFIX = 415;
+    public static final int HELP_PAGE_HEADER_0 = 416;
+    public static final int HELP_PAGE_HEADER_1 = 417;
+    public static final int HELP_PAGE_HEADER_2 = 418;
+    public static final int HELP_PAGE_HEADER_3 = 419;
+    public static final int HELP_PAGE_HEADER_4 = 420;
+    public static final int HELP_PAGE_HEADER_5 = 421;
+    public static final int HELP_PAGE_HEADER_6 = 422;
+    public static final int HELP_PAGE_HEADER_7 = 423;
+    public static final int HELP_PAGE_HEADER_8 = 424;
+    public static final int HELP_PAGE_HEADER_9 = 425;
+    public static final int HELP_PAGE_HEADER_10 = 426;
+    public static final int HELP_PAGE_HEADER_11 = 427;
+    public static final int HELP_PAGE_HEADER_12 = 428;
+    public static final int HELP_PAGE_HEADER_13 = 429;
+    public static final int HELP_PAGE_HEADER_14 = 430;
 
-    // Help page 5 (items - power items)
-    public static final int HELP_CONTENT_P5_LABEL_B = 263;
-    public static final int HELP_CONTENT_P5_DESC_B = 264;
-    public static final int HELP_CONTENT_P5_LABEL_1UP = 265;
-    public static final int HELP_CONTENT_P5_DESC_1UP = 266;
-    public static final int HELP_CONTENT_P5_LABEL_STAR = 267;
-    public static final int HELP_CONTENT_P5_DESC_STAR_1 = 268;
-    public static final int HELP_CONTENT_P5_DESC_STAR_2 = 269;
+    // Help page 0
+    public static final int HELP_CONTENT_P0_LABEL_START = 432;
+    public static final int HELP_CONTENT_P0_DESC_START = 433;
+    public static final int HELP_CONTENT_P0_LABEL_EXTRA_START = 434;
+    public static final int HELP_CONTENT_P0_DESC_EXTRA_START = 435;
+    public static final int HELP_CONTENT_P0_LABEL_SPELL_PRACTICE = 436;
+    public static final int HELP_CONTENT_P0_DESC_SPELL_PRACTICE = 437;
+    public static final int HELP_CONTENT_P0_LABEL_PRACTICE_START = 438;
+    public static final int HELP_CONTENT_P0_DESC_PRACTICE_START = 439;
+    public static final int HELP_CONTENT_P0_LABEL_REPLAY = 440;
+    public static final int HELP_CONTENT_P0_DESC_REPLAY = 441;
+    public static final int HELP_CONTENT_P0_LABEL_RESULT = 442;
+    public static final int HELP_CONTENT_P0_DESC_RESULT = 443;
 
-    // Help page 6 (spell card system)
-    public static final int HELP_CONTENT_P6_TITLE_SPELL_CARD = 270;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_CARD_1 = 271;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_CARD_2 = 272;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_CARD_3 = 273;
-    public static final int HELP_CONTENT_P6_NOTE_SPELL_CARD = 274;
-    public static final int HELP_CONTENT_P6_TITLE_SPELL_BONUS = 275;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_1 = 276;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_2 = 277;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_3 = 278;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_4 = 279;
-    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_5 = 280;
+    // Help page 1
+    public static final int HELP_CONTENT_P1_LABEL_MUSIC_ROOM = 445;
+    public static final int HELP_CONTENT_P1_DESC_MUSIC_ROOM = 446;
+    public static final int HELP_CONTENT_P1_LABEL_OPTION = 447;
+    public static final int HELP_CONTENT_P1_DESC_OPTION = 448;
+    public static final int HELP_CONTENT_P1_LABEL_QUIT = 449;
+    public static final int HELP_CONTENT_P1_DESC_QUIT = 450;
 
-// Help page 7 (other)
-    public static final int HELP_CONTENT_P7_TITLE_EXTEND = 281;
-    public static final int HELP_CONTENT_P7_DESC_EXTEND_1 = 282;
-    public static final int HELP_CONTENT_P7_DESC_EXTEND_2 = 283;
-    public static final int HELP_CONTENT_P7_DESC_EXTEND_3 = 284;
-    public static final int HELP_CONTENT_P7_TITLE_DEATH_BOMB = 285;
-    public static final int HELP_CONTENT_P7_DESC_DEATH_BOMB_1 = 286;
-    public static final int HELP_CONTENT_P7_DESC_DEATH_BOMB_2 = 287;
-    public static final int HELP_CONTENT_P7_DESC_DEATH_BOMB_3 = 288;
-    public static final int HELP_CONTENT_P7_TITLE_AUTO_COLLECT = 289;
-    public static final int HELP_CONTENT_P7_DESC_AUTO_COLLECT_1 = 290;
-    public static final int HELP_CONTENT_P7_DESC_AUTO_COLLECT_2 = 291;
-    public static final int HELP_CONTENT_P7_DESC_AUTO_COLLECT_3 = 292;
+    // Help page 2
+    public static final int HELP_CONTENT_P2_TITLE_NORMAL = 452;
+    public static final int HELP_CONTENT_P2_MOVE = 453;
+    public static final int HELP_CONTENT_P2_KEY_1_9_UNUSED = 454;
+    public static final int HELP_CONTENT_P2_KEY_OK_UNUSED = 455;
+    public static final int HELP_CONTENT_P2_KEY_STAR_SHOT = 456;
+    public static final int HELP_CONTENT_P2_KEY_0_SPEED = 457;
+    public static final int HELP_CONTENT_P2_KEY_HASH_BOMB = 458;
+    public static final int HELP_CONTENT_P2_NOTE_OPTIONS = 459;
+    public static final int HELP_CONTENT_P2_TITLE_TALK = 460;
+    public static final int HELP_CONTENT_P2_KEY_OK_MESSAGE = 461;
 
-// Help page 8 (save method, special controls)
-    public static final int HELP_CONTENT_P8_TITLE_SAVE_METHOD = 293;
-    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_1 = 294;
-    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_2 = 295;
-    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_3 = 296;
-    public static final int HELP_CONTENT_P8_NOTE_SAVE_METHOD = 297;
-    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_4 = 298;
-    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_5 = 299;
-    public static final int HELP_CONTENT_P8_TITLE_SPECIAL_CONTROLS = 300;
-    public static final int HELP_CONTENT_P8_DESC_SPECIAL_CONTROLS_1 = 301;
-    public static final int HELP_CONTENT_P8_DESC_SPECIAL_CONTROLS_2 = 302;
+    // Help page 3
+    public static final int HELP_CONTENT_P3_LABEL_HISCORE = 463;
+    public static final int HELP_CONTENT_P3_DESC_HISCORE = 464;
+    public static final int HELP_CONTENT_P3_LABEL_SCORE = 465;
+    public static final int HELP_CONTENT_P3_DESC_SCORE = 466;
+    public static final int HELP_CONTENT_P3_LABEL_PLAYER = 467;
+    public static final int HELP_CONTENT_P3_DESC_PLAYER = 468;
+    public static final int HELP_CONTENT_P3_LABEL_SPELL = 469;
+    public static final int HELP_CONTENT_P3_DESC_SPELL = 470;
+    public static final int HELP_CONTENT_P3_LABEL_POWER = 471;
+    public static final int HELP_CONTENT_P3_DESC_POWER = 472;
+    public static final int HELP_CONTENT_P3_LABEL_GRAZE = 473;
+    public static final int HELP_CONTENT_P3_DESC_GRAZE = 474;
 
-// Help page 9 (homepage download/upload)
-    public static final int HELP_CONTENT_P9_TITLE_HOMEPAGE_DOWNLOAD = 303;
-    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_DOWNLOAD_1 = 304;
-    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_DOWNLOAD_2 = 305;
-    public static final int HELP_CONTENT_P9_NOTE_HOMEPAGE_DOWNLOAD = 306;
-    public static final int HELP_CONTENT_P9_TITLE_HOMEPAGE_UPLOAD = 307;
-    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_UPLOAD_1 = 308;
-    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_UPLOAD_2 = 309;
-    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_UPLOAD_3 = 310;
-    public static final int HELP_CONTENT_P9_NOTE_HOMEPAGE_UPLOAD_1 = 311;
-    public static final int HELP_CONTENT_P9_NOTE_HOMEPAGE_UPLOAD_2 = 312;
+    // Help page 4
+    public static final int HELP_CONTENT_P4_LABEL_P_SMALL = 476;
+    public static final int HELP_CONTENT_P4_DESC_P_SMALL_1 = 477;
+    public static final int HELP_CONTENT_P4_DESC_P_SMALL_2 = 478;
+    public static final int HELP_CONTENT_P4_LABEL_POINT = 479;
+    public static final int HELP_CONTENT_P4_DESC_POINT_1 = 480;
+    public static final int HELP_CONTENT_P4_DESC_POINT_2 = 481;
+    public static final int HELP_CONTENT_P4_LABEL_P_BIG = 482;
+    public static final int HELP_CONTENT_P4_DESC_P_BIG = 483;
+    public static final int HELP_CONTENT_P4_LABEL_F = 484;
+    public static final int HELP_CONTENT_P4_DESC_F = 485;
 
-// Help page 10 (SD card save)
-    public static final int HELP_CONTENT_P10_TITLE_SD_CARD_SAVE = 313;
-    public static final int HELP_CONTENT_P10_DESC_SD_CARD_SAVE_1 = 314;
-    public static final int HELP_CONTENT_P10_DESC_SD_CARD_SAVE_2 = 315;
-    public static final int HELP_CONTENT_P10_DESC_SD_CARD_SAVE_3 = 316;
-    public static final int HELP_CONTENT_P10_NOTE_SD_CARD_SAVE_1 = 317;
-    public static final int HELP_CONTENT_P10_NOTE_SD_CARD_SAVE_2 = 318;
+    // Help page 5
+    public static final int HELP_CONTENT_P5_LABEL_B = 487;
+    public static final int HELP_CONTENT_P5_DESC_B = 488;
+    public static final int HELP_CONTENT_P5_LABEL_1UP = 489;
+    public static final int HELP_CONTENT_P5_DESC_1UP = 490;
+    public static final int HELP_CONTENT_P5_LABEL_STAR = 491;
+    public static final int HELP_CONTENT_P5_DESC_STAR_1 = 492;
+    public static final int HELP_CONTENT_P5_DESC_STAR_2 = 493;
 
-// Help page 11 (ranking participation)
-    public static final int HELP_CONTENT_P11_TITLE_RANKING_JOIN = 319;
-    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_1 = 320;
-    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_2 = 321;
-    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_3 = 322;
-    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_4 = 323;
-    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_5 = 324;
-    public static final int HELP_CONTENT_P11_TITLE_REGISTRATION_NOTES = 325;
-    public static final int HELP_CONTENT_P11_DESC_REGISTRATION_NOTES_1 = 326;
-    public static final int HELP_CONTENT_P11_DESC_REGISTRATION_NOTES_2 = 327;
-    public static final int HELP_CONTENT_P11_DESC_REGISTRATION_NOTES_3 = 328;
+    // Help page 6
+    public static final int HELP_CONTENT_P6_TITLE_SPELL_CARD = 495;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_CARD_1 = 496;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_CARD_2 = 497;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_CARD_3 = 498;
+    public static final int HELP_CONTENT_P6_NOTE_SPELL_CARD = 499;
+    public static final int HELP_CONTENT_P6_TITLE_SPELL_BONUS = 500;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_1 = 501;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_2 = 502;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_3 = 503;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_4 = 504;
+    public static final int HELP_CONTENT_P6_DESC_SPELL_BONUS_5 = 505;
 
-// Help page 12 (ghost mode)
-    public static final int HELP_CONTENT_P12_TITLE_GHOST_MODE = 329;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_1 = 330;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_2 = 331;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_3 = 332;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_4 = 333;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_5 = 334;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_6 = 335;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_7 = 336;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_8 = 337;
-    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_9 = 338;
+    // Help page 7
+    public static final int HELP_CONTENT_P7_TITLE_EXTEND = 507;
+    public static final int HELP_CONTENT_P7_DESC_EXTEND_1 = 508;
+    public static final int HELP_CONTENT_P7_DESC_EXTEND_2 = 509;
+    public static final int HELP_CONTENT_P7_DESC_EXTEND_3 = 510;
+    public static final int HELP_CONTENT_P7_TITLE_DEATH_BOMB = 511;
+    public static final int HELP_CONTENT_P7_DESC_DEATH_BOMB_1 = 512;
+    public static final int HELP_CONTENT_P7_DESC_DEATH_BOMB_2 = 513;
+    public static final int HELP_CONTENT_P7_DESC_DEATH_BOMB_3 = 514;
+    public static final int HELP_CONTENT_P7_TITLE_AUTO_COLLECT = 515;
+    public static final int HELP_CONTENT_P7_DESC_AUTO_COLLECT_1 = 516;
+    public static final int HELP_CONTENT_P7_DESC_AUTO_COLLECT_2 = 517;
+    public static final int HELP_CONTENT_P7_DESC_AUTO_COLLECT_3 = 518;
 
-// Credits page 1 (staff)
-    public static final int CREDITS_CATEGORY_PROGRAM = 339;
-    public static final int CREDITS_CATEGORY_GRAPHIC = 340;
-    public static final int CREDITS_CATEGORY_SOUND = 341;
-    public static final int CREDITS_CATEGORY_SUPPORT = 342;
-    public static final int CREDITS_PERSON_SHIINA = 343;
-    public static final int CREDITS_PERSON_FU = 344;
-    public static final int CREDITS_PERSON_RADRAM = 345;
-    public static final int CREDITS_PERSON_SCIROCCO = 346;
-    public static final int CREDITS_PERSON_MEGRA = 347;
-    public static final int CREDITS_PERSON_KAJI = 348;
-    public static final int CREDITS_PERSON_HONAMI = 349;
-    public static final int CREDITS_PERSON_KINMACHI = 350;
+    // Help page 8
+    public static final int HELP_CONTENT_P8_TITLE_SAVE_METHOD = 520;
+    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_1 = 521;
+    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_2 = 522;
+    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_3 = 523;
+    public static final int HELP_CONTENT_P8_NOTE_SAVE_METHOD = 524;
+    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_4 = 525;
+    public static final int HELP_CONTENT_P8_DESC_SAVE_METHOD_5 = 526;
+    public static final int HELP_CONTENT_P8_TITLE_SPECIAL_CONTROLS = 527;
+    public static final int HELP_CONTENT_P8_DESC_SPECIAL_CONTROLS_1 = 528;
+    public static final int HELP_CONTENT_P8_DESC_SPECIAL_CONTROLS_2 = 529;
 
-// Credits page 2 (organizations)
-    public static final int CREDITS_TITLE_TOUHOU_PROJECT = 351;
-    public static final int CREDITS_TITLE_HYOUIBANA_DEV = 352;
-    public static final int CREDITS_TOUHOU_TEAM_SHANGHAI = 353;
-    public static final int CREDITS_TOUHOU_URL = 354;
-    public static final int CREDITS_HYOUIBANA_L_GARDEN = 355;
-    public static final int CREDITS_HYOUIBANA_L_GARDEN_URL = 356;
-    public static final int CREDITS_HYOUIBANA_TOPPATU = 357;
-    public static final int CREDITS_HYOUIBANA_TOPPATU_URL = 358;
-    public static final int CREDITS_NOTE_DERIVATIVE_1 = 359;
-    public static final int CREDITS_NOTE_DERIVATIVE_2 = 360;
+    // Help page 9
+    public static final int HELP_CONTENT_P9_TITLE_HOMEPAGE_DOWNLOAD = 531;
+    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_DOWNLOAD_1 = 532;
+    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_DOWNLOAD_2 = 533;
+    public static final int HELP_CONTENT_P9_NOTE_HOMEPAGE_DOWNLOAD = 534;
+    public static final int HELP_CONTENT_P9_TITLE_HOMEPAGE_UPLOAD = 535;
+    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_UPLOAD_1 = 536;
+    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_UPLOAD_2 = 537;
+    public static final int HELP_CONTENT_P9_DESC_HOMEPAGE_UPLOAD_3 = 538;
+    public static final int HELP_CONTENT_P9_NOTE_HOMEPAGE_UPLOAD_1 = 539;
+    public static final int HELP_CONTENT_P9_NOTE_HOMEPAGE_UPLOAD_2 = 540;
 
-// Difficulty descriptions
-    public static final int DIFFICULTY_DESC_EASY = 362;
-    public static final int DIFFICULTY_DESC_NORMAL = 363;
-    public static final int DIFFICULTY_DESC_HARD = 364;
-    public static final int DIFFICULTY_DESC_LUNATIC = 365;
-// Extra stage description
-    public static final int DIFFICULTY_DESC_EXTRA = 366;
+    // Help page 10
+    public static final int HELP_CONTENT_P10_TITLE_SD_CARD_SAVE = 542;
+    public static final int HELP_CONTENT_P10_DESC_SD_CARD_SAVE_1 = 543;
+    public static final int HELP_CONTENT_P10_DESC_SD_CARD_SAVE_2 = 544;
+    public static final int HELP_CONTENT_P10_DESC_SD_CARD_SAVE_3 = 545;
+    public static final int HELP_CONTENT_P10_NOTE_SD_CARD_SAVE_1 = 546;
+    public static final int HELP_CONTENT_P10_NOTE_SD_CARD_SAVE_2 = 547;
 
-// Character names
-    public static final int CHARACTER_NAME_REIMU = 367;
-    public static final int CHARACTER_NAME_MARISA = 368;
-    public static final int CHARACTER_NAME_ALICE = 369;
+    // Help page 11
+    public static final int HELP_CONTENT_P11_TITLE_RANKING_JOIN = 549;
+    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_1 = 550;
+    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_2 = 551;
+    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_3 = 552;
+    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_4 = 553;
+    public static final int HELP_CONTENT_P11_DESC_RANKING_JOIN_5 = 554;
+    public static final int HELP_CONTENT_P11_TITLE_REGISTRATION_NOTES = 555;
+    public static final int HELP_CONTENT_P11_DESC_REGISTRATION_NOTES_1 = 556;
+    public static final int HELP_CONTENT_P11_DESC_REGISTRATION_NOTES_2 = 557;
+    public static final int HELP_CONTENT_P11_DESC_REGISTRATION_NOTES_3 = 558;
 
-// Character info - Reimu
-    public static final int CHARACTER_INFO_REIMU_TITLE = 370;
-    public static final int CHARACTER_INFO_REIMU_NAME = 371;
-    public static final int CHARACTER_INFO_REIMU_TYPE_A_TITLE = 372;
-    public static final int CHARACTER_INFO_REIMU_TYPE_A_DESC_1 = 373;
-    public static final int CHARACTER_INFO_REIMU_TYPE_A_DESC_2 = 374;
-    public static final int CHARACTER_INFO_REIMU_TYPE_B_TITLE = 375;
-    public static final int CHARACTER_INFO_REIMU_TYPE_B_DESC_1 = 376;
-    public static final int CHARACTER_INFO_REIMU_TYPE_B_DESC_2 = 377;
-    public static final int CHARACTER_INFO_REIMU_ABILITY_TITLE = 378;
-    public static final int CHARACTER_INFO_REIMU_ABILITY_DESC = 379;
+    // Help page 12
+    public static final int HELP_CONTENT_P12_TITLE_GHOST_MODE = 560;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_1 = 561;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_2 = 562;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_3 = 563;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_4 = 564;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_5 = 565;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_6 = 566;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_7 = 567;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_8 = 568;
+    public static final int HELP_CONTENT_P12_DESC_GHOST_MODE_9 = 569;
 
-// Character info - Marisa
-    public static final int CHARACTER_INFO_MARISA_TITLE = 380;
-    public static final int CHARACTER_INFO_MARISA_NAME = 381;
-    public static final int CHARACTER_INFO_MARISA_TYPE_A_TITLE = 382;
-    public static final int CHARACTER_INFO_MARISA_TYPE_A_DESC_1 = 383;
-    public static final int CHARACTER_INFO_MARISA_TYPE_A_DESC_2 = 384;
-    public static final int CHARACTER_INFO_MARISA_TYPE_B_TITLE = 385;
-    public static final int CHARACTER_INFO_MARISA_TYPE_B_DESC_1 = 386;
-    public static final int CHARACTER_INFO_MARISA_TYPE_B_DESC_2 = 387;
-    public static final int CHARACTER_INFO_MARISA_ABILITY_TITLE = 388;
-    public static final int CHARACTER_INFO_MARISA_ABILITY_DESC = 389;
+    // Credits: staff
+    public static final int CREDITS_CATEGORY_PROGRAM = 571;
+    public static final int CREDITS_CATEGORY_GRAPHIC = 572;
+    public static final int CREDITS_CATEGORY_SOUND = 573;
+    public static final int CREDITS_CATEGORY_SUPPORT = 574;
+    public static final int CREDITS_PERSON_SHIINA = 575;
+    public static final int CREDITS_PERSON_FU = 576;
+    public static final int CREDITS_PERSON_RADRAM = 577;
+    public static final int CREDITS_PERSON_SCIROCCO = 578;
+    public static final int CREDITS_PERSON_MEGRA = 579;
+    public static final int CREDITS_PERSON_KAJI = 580;
+    public static final int CREDITS_PERSON_HONAMI = 581;
+    public static final int CREDITS_PERSON_KINMACHI = 582;
 
-// Character info - Alice
-    public static final int CHARACTER_INFO_ALICE_TITLE = 390;
-    public static final int CHARACTER_INFO_ALICE_NAME = 391;
-    public static final int CHARACTER_INFO_ALICE_TYPE_A_TITLE = 392;
-    public static final int CHARACTER_INFO_ALICE_TYPE_A_DESC_1 = 393;
-    public static final int CHARACTER_INFO_ALICE_TYPE_A_DESC_2 = 394;
-    public static final int CHARACTER_INFO_ALICE_TYPE_B_TITLE = 395;
-    public static final int CHARACTER_INFO_ALICE_TYPE_B_DESC_1 = 396;
-    public static final int CHARACTER_INFO_ALICE_TYPE_B_DESC_2 = 397;
-    public static final int CHARACTER_INFO_ALICE_ABILITY_TITLE = 398;
-    public static final int CHARACTER_INFO_ALICE_ABILITY_DESC = 399;
+    // Credits: organizations
+    public static final int CREDITS_TITLE_TOUHOU_PROJECT = 584;
+    public static final int CREDITS_TITLE_HYOUIBANA_DEV = 585;
+    public static final int CREDITS_TOUHOU_TEAM_SHANGHAI = 586;
+    public static final int CREDITS_TOUHOU_URL = 587;
+    public static final int CREDITS_HYOUIBANA_L_GARDEN = 588;
+    public static final int CREDITS_HYOUIBANA_L_GARDEN_URL = 589;
+    public static final int CREDITS_HYOUIBANA_TOPPATU = 590;
+    public static final int CREDITS_HYOUIBANA_TOPPATU_URL = 591;
+    public static final int CREDITS_NOTE_DERIVATIVE_1 = 592;
+    public static final int CREDITS_NOTE_DERIVATIVE_2 = 593;
 
-// Practice mode label
-    public static final int PRACTICE_MODE_LABEL = 401;
-
-// Top hints
-    public static final int TOP_HINT_SELECT_DIFFICULTY = 402;
-    public static final int TOP_HINT_SELECT_CHARACTER = 403;
-    public static final int TOP_HINT_SELECT_STAGE = 404;
-    public static final int STORY_TITLE = 406;
-
-    public static final int SPELL_PRACTICE_TITLE = 408;
-    public static final int SPELL_PRACTICE_HINT = 409;
-    public static final int SPELL_PRACTICE_STAR = 410;
-    public static final int SPELL_PRACTICE_ALL = 411;
-    public static final int SPELL_PRACTICE_CHOOSE_CARD = 412;
-
-// Staff credits
-    public static final int STAFF_TITLE = 414;
-    public static final int STAFF_PLANNING_TITLE = 415;
-    public static final int STAFF_PLANNING_1 = 416;
-    public static final int STAFF_PROGRAM_TITLE = 417;
-    public static final int STAFF_PROGRAM_1 = 418;
-    public static final int STAFF_GRAPHIC_TITLE = 419;
-    public static final int STAFF_GRAPHIC_1 = 420;
-    public static final int STAFF_GRAPHIC_2 = 421;
-    public static final int STAFF_SOUND_TITLE = 422;
-    public static final int STAFF_SOUND_1 = 423;
-    public static final int STAFF_SPECIAL_THANKS_TITLE = 424;
-    public static final int STAFF_SPECIAL_THANKS_1 = 425;
-    public static final int STAFF_SPECIAL_THANKS_2 = 426;
-    public static final int STAFF_SPECIAL_THANKS_3 = 427;
-    public static final int STAFF_TEST_PLAY_TITLE = 428;
-    public static final int STAFF_TEST_PLAY_1 = 429;
-    public static final int STAFF_TEST_PLAY_2 = 430;
-    public static final int STAFF_TEST_PLAY_3 = 431;
-    public static final int STAFF_TEST_PLAY_4 = 432;
-    public static final int STAFF_ORIGINAL_TITLE = 433;
-    public static final int STAFF_ORIGINAL_1 = 434;
-    public static final int STAFF_ORIGINAL_URL = 435;
-    public static final int STAFF_DEVELOPMENT_TITLE = 436;
-    public static final int STAFF_DEVELOPMENT_1 = 437;
-    public static final int STAFF_DEVELOPMENT_URL_1 = 438;
-    public static final int STAFF_DEVELOPMENT_2 = 439;
-    public static final int STAFF_DEVELOPMENT_URL_2 = 440;
-
-// Battle pause / continue
-    public static final int BATTLE_PAUSE_TITLE = 441;
-    public static final int BATTLE_PAUSE_RESUME = 442;
-    public static final int BATTLE_PAUSE_BACK_TO_MENU = 443;
-    public static final int BATTLE_PAUSE_BACK_TO_TITLE = 444;
-    public static final int BATTLE_PAUSE_RESTART = 445;
-    public static final int BATTLE_CONTINUE_TITLE = 446;
-    public static final int BATTLE_CONTINUE_YES = 447;
-    public static final int BATTLE_CONTINUE_NO = 448;
-    public static final int BATTLE_CONTINUE_REMAINING_PREFIX = 449;
-    public static final int BATTLE_CONTINUE_REMAINING_SUFFIX = 450;
-
-// Music room - stage titles
-    public static final int MUSIC_TITLE_TITLE = 452;
-    public static final int MUSIC_TITLE_ST1_MID = 453;
-    public static final int MUSIC_TITLE_ST1_BOSS = 454;
-    public static final int MUSIC_TITLE_ST2_MID = 455;
-    public static final int MUSIC_TITLE_ST2_BOSS = 456;
-    public static final int MUSIC_TITLE_ST3_MID = 457;
-    public static final int MUSIC_TITLE_ST3_BOSS = 458;
-    public static final int MUSIC_TITLE_ST4_MID = 459;
-    public static final int MUSIC_TITLE_ST4_BOSS = 460;
-    public static final int MUSIC_TITLE_ST5_MID = 461;
-    public static final int MUSIC_TITLE_ST5_BOSS = 462;
-    public static final int MUSIC_TITLE_ST6_MID = 463;
-    public static final int MUSIC_TITLE_ST6_BOSS = 464;
-    public static final int MUSIC_TITLE_EXTRA_MID = 465;
-    public static final int MUSIC_TITLE_EXTRA_BOSS = 466;
-    public static final int MUSIC_TITLE_EPILOGUE = 467;
-    public static final int MUSIC_TITLE_ENDING = 468;
-    public static final int MUSIC_TITLE_LASTWORD = 469;
-// Music room - original song titles
-    public static final int MUSIC_ORIG_01 = 470;
-    public static final int MUSIC_ORIG_02 = 471;
-    public static final int MUSIC_ORIG_03 = 472;
-    public static final int MUSIC_ORIG_04 = 473;
-    public static final int MUSIC_ORIG_05 = 474;
-    public static final int MUSIC_ORIG_06 = 475;
-    public static final int MUSIC_ORIG_07 = 476;
-    public static final int MUSIC_ORIG_08 = 477;
-    public static final int MUSIC_ORIG_09 = 478;
-    public static final int MUSIC_ORIG_10 = 479;
-    public static final int MUSIC_ORIG_11 = 480;
-    public static final int MUSIC_ORIG_12 = 481;
-    public static final int MUSIC_ORIG_13 = 482;
-    public static final int MUSIC_ORIG_14 = 483;
-    public static final int MUSIC_ORIG_15 = 484;
-    public static final int MUSIC_ORIG_16 = 485;
-    public static final int MUSIC_ORIG_17 = 486;
-    public static final int MUSIC_ORIG_18 = 487;
-// Music room - source game names
-    public static final int MUSIC_FROM_01 = 488;
-    public static final int MUSIC_FROM_02 = 489;
-    public static final int MUSIC_FROM_03 = 490;
-    public static final int MUSIC_FROM_04 = 491;
-    public static final int MUSIC_FROM_05 = 492;
-    public static final int MUSIC_FROM_06 = 493;
-    public static final int MUSIC_FROM_07 = 494;
-    public static final int MUSIC_FROM_08 = 495;
-    public static final int MUSIC_FROM_09 = 496;
-    public static final int MUSIC_FROM_10 = 497;
-    public static final int MUSIC_FROM_11 = 498;
-    public static final int MUSIC_FROM_12 = 499;
-    public static final int MUSIC_FROM_13 = 500;
-    public static final int MUSIC_FROM_14 = 501;
-    public static final int MUSIC_FROM_15 = 502;
-    public static final int MUSIC_FROM_16 = 503;
-    public static final int MUSIC_FROM_17 = 504;
-    public static final int MUSIC_FROM_18 = 505;
-
-// Music room - locked track
-    public static final int MUSIC_LOCK_TITLE = 506;
-    public static final int MUSIC_LOCK_LINE1 = 507;
-    public static final int MUSIC_LOCK_LINE2 = 508;
-
-// Music room - other
-    public static final int MUSIC_PERCENRAGE = 509;
-    public static final int MUSIC_VOLUME = 510;
-
-// Quit screen
-    public static final int QUIT_TITLE = 511;
-    public static final int QUIT_OPTION_CONTINUE = 512;
-    public static final int QUIT_OPTION_QUIT = 513;
-
-// Spell practice - retry ask
-    public static final int SPELL_PRACTICE_RETRY_ASK = 514;
-    public static final int SPELL_PRACTICE_RETRY_YES = 515;
-    public static final int SPELL_PRACTICE_RETRY_NO = 516;
-
-// Score - overlay
-    public static final int SCORE_SPELLCARD_BONUS = 517;
-
-// BT replay share
-    public static final int BT_RECEIVE_TITLE = 518;
-    public static final int BT_SEND_TITLE = 519;
-    public static final int BT_STATUS_WAITING = 520;
-    public static final int BT_STATUS_SELECT_SERVICE = 521;
-    public static final int BT_STATUS_CONNECTING = 522;
-    public static final int BT_STATUS_CONNECTED = 523;
-    public static final int BT_STATUS_RECEIVING = 524;
-    public static final int BT_STATUS_SENDING = 525;
-    public static final int BT_STATUS_DONE = 526;
-    public static final int BT_STATUS_CANCELED = 527;
-    public static final int BT_LABEL_DEVICE = 528;
-    public static final int BT_LABEL_BYTES = 529;
-    public static final int BT_LABEL_SPEED = 530;
-    public static final int BT_HINT_BACK = 531;
-    public static final int BT_HINT_CANCEL = 532;
-    public static final int BT_HINT_SAVE = 533;
-    public static final int BT_HINT_OK = 534;
-    public static final int BT_MSG_NOT_SUPPORTED = 535;
-    public static final int BT_MSG_CANCELING = 536;
-    public static final int BT_MSG_CANCELED = 537;
-    public static final int BT_MSG_INVALID_DATA = 538;
-    public static final int BT_MSG_ERROR = 539;
-    public static final int BT_MSG_NO_DATA = 540;
-    public static final int BT_MSG_SAVE_FAILED = 541;
-    public static final int BT_MSG_SAVED_PREFIX = 542;
-    public static final int BT_MSG_SAVED_SUFFIX = 543;
-    public static final int BT_CONFIRM_OVERWRITE_PREFIX = 544;
-    public static final int BT_CONFIRM_OVERWRITE_SUFFIX = 545;
-    public static final int BT_MSG_SENT = 546;
-
-    public static final int ENDING_LINE_1 = 548;
-    public static final int ENDING_LINE_2 = 549;
-    public static final int ENDING_NUMBER = 550;
-    public static final int ENDING_EXTRA_UNLOCK = 551;
-
-    public static final int OPTION_RENDER_HIT_SPARK_MENU = 553;
-    public static final int OPTION_RENDER_HIT_SPARK_DESC = 554;
-
-// BT replay share - receive confirmation
-    public static final int BT_RECV_FROM_PREFIX = 566;
-    public static final int BT_RECV_FROM_SUFFIX = 567;
-    public static final int BT_RECV_CONFIRM = 568;
-    public static final int BT_HINT_ACCEPT = 569;
-    public static final int BT_HINT_REJECT = 570;
-
-    public static final int BOMB_REIMU = 562;
-    public static final int BOMB_MARISA = 563;
-    public static final int BOMB_ALICE = 564;
+    // Quit
+    public static final int QUIT_TITLE = 595;
+    public static final int QUIT_OPTION_CONTINUE = 596;
+    public static final int QUIT_OPTION_QUIT = 597;
 
     private TextId() {
     }
