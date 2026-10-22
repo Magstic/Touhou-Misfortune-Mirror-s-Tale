@@ -77,7 +77,7 @@ public final class StoryScreen {
         String[] lines = loadStoryLines();
         if (lines != null) {
             for (int i = 0; i < lines.length; i++) {
-                String[] lineParts = UiTextLayout.wrapCharacters(lines[i], TEXT_W, textMeasurer);
+                String[] lineParts = UiTextLayout.wrap(lines[i], TEXT_W, textMeasurer);
                 for (int j = 0; j < lineParts.length; j++) {
                     wrappedLines.addElement(lineParts[j]);
                 }

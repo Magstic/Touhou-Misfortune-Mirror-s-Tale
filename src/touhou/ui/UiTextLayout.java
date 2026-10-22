@@ -4,16 +4,17 @@ import java.util.Vector;
 
 /** Text layout rules that do not depend on MIDP rendering classes. */
 public final class UiTextLayout {
+    private static final String OPENING = "([{（［｛〈《「『【〔〖〘〚“‘";
+    private static final String CLOSING = ")]}）］｝〉》」』】〕〗〙〛”’、。，．！？；：,.!?;:%％‰…—–ー々ゝゞヽヾぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ";
+
     public interface Measurer {
         int charWidth(char c);
-
-        int stringWidth(String text);
     }
 
     private UiTextLayout() {
     }
 
-    public static String[] wrapCharacters(String text, int maxWidth, Measurer measurer) {
+    public static String[] wrap(String text, int maxWidth, Measurer measurer) {
         requireMeasurer(measurer);
         if (text == null || text.length() == 0 || maxWidth <= 0) {
             return new String[] { "" };
@@ -22,87 +23,59 @@ public final class UiTextLayout {
         Vector lines = new Vector();
         int lineStart = 0;
         int width = 0;
-        for (int i = 0; i < text.length(); i++) {
-            int charWidth = measurer.charWidth(text.charAt(i));
-            if (width + charWidth > maxWidth && i > lineStart) {
-                lines.addElement(text.substring(lineStart, i));
-                lineStart = i;
-                width = 0;
-            }
-            width += charWidth;
-        }
-        if (lineStart < text.length()) {
-            lines.addElement(text.substring(lineStart));
-        }
-        return toArray(lines);
-    }
-
-    public static String[] wrapWords(String text, int maxWidth, Measurer measurer) {
-        requireMeasurer(measurer);
-        if (text == null || text.length() == 0 || maxWidth <= 0) {
-            return new String[] { "" };
-        }
-
-        Vector lines = new Vector();
-        StringBuffer line = new StringBuffer();
-        int lineWidth = 0;
+        int breakEnd = -1;
+        int breakNext = 0;
+        int breakWidth = 0;
         int i = 0;
         while (i < text.length()) {
-            int end = i;
-            boolean whitespace = isWhitespace(text.charAt(i));
-            while (end < text.length() && isWhitespace(text.charAt(end)) == whitespace) {
-                end++;
+            char c = text.charAt(i);
+            if (c == '\r' || c == '\n') {
+                addLine(lines, text, lineStart, i);
+                i++;
+                if (c == '\r' && i < text.length() && text.charAt(i) == '\n') i++;
+                lineStart = i;
+                width = 0;
+                breakEnd = -1;
+                continue;
             }
-
-            String token = text.substring(i, end);
-            if (whitespace) {
-                if (lineWidth == 0) {
-                    i = end;
-                    continue;
-                }
-                int tokenWidth = measurer.stringWidth(token);
-                if (lineWidth + tokenWidth > maxWidth) {
-                    addLine(lines, line);
-                    lineWidth = 0;
+            boolean whitespace = isWhitespace(c);
+            if (whitespace && i == lineStart) {
+                lineStart = ++i;
+                continue;
+            }
+            int charWidth = measurer.charWidth(c);
+            if (!whitespace && width + charWidth > maxWidth && i > lineStart) {
+                if (breakEnd > lineStart) {
+                    addLine(lines, text, lineStart, breakEnd);
+                    lineStart = breakNext;
+                    // Carry the measured word prefix onto the next line without rescanning it.
+                    width -= breakWidth;
                 } else {
-                    line.append(token);
-                    lineWidth += tokenWidth;
+                    addLine(lines, text, lineStart, i);
+                    lineStart = i;
+                    width = 0;
                 }
-                i = end;
-                continue;
-            }
-
-            int tokenWidth = measurer.stringWidth(token);
-            if (lineWidth > 0 && lineWidth + tokenWidth > maxWidth) {
-                addLine(lines, line);
-                lineWidth = 0;
-            }
-            if (tokenWidth <= maxWidth) {
-                line.append(token);
-                lineWidth += tokenWidth;
-                i = end;
-                continue;
-            }
-
-            for (int j = 0; j < token.length(); j++) {
-                char c = token.charAt(j);
-                int charWidth = measurer.charWidth(c);
-                if (lineWidth > 0 && lineWidth + charWidth > maxWidth) {
-                    addLine(lines, line);
-                    lineWidth = 0;
+                breakEnd = -1;
+                if (width + charWidth > maxWidth && i > lineStart) {
+                    addLine(lines, text, lineStart, i);
+                    lineStart = i;
+                    width = 0;
                 }
-                line.append(c);
-                lineWidth += charWidth;
             }
-            i = end;
+            width += charWidth;
+            i++;
+            if (whitespace) {
+                if (breakEnd > lineStart && breakNext == i - 1) {
+                    breakNext = i;
+                    breakWidth = width;
+                }
+            } else if (i < text.length() && canBreak(text, i)) {
+                breakEnd = i;
+                breakNext = i;
+                breakWidth = width;
+            }
         }
-
-        if (line.length() > 0) {
-            addLine(lines, line);
-        }
-        if (lines.size() == 0) {
-            return new String[] { "" };
-        }
+        addLine(lines, text, lineStart, text.length());
         return toArray(lines);
     }
 
@@ -146,9 +119,46 @@ public final class UiTextLayout {
         return c == ' ' || c == '\t';
     }
 
-    private static void addLine(Vector lines, StringBuffer line) {
-        lines.addElement(line.toString());
-        line.setLength(0);
+    private static boolean canBreak(String text, int index) {
+        if (isOpening(text, index - 1)) {
+            return false;
+        }
+        int next = index;
+        while (next < text.length() && isWhitespace(text.charAt(next))) next++;
+        if (next < text.length() && isClosing(text, next)) return false;
+        if (next != index) return true;
+        return !isWordPart(text, index - 1) || !isWordPart(text, index);
+    }
+
+    private static boolean isOpening(String text, int index) {
+        char c = text.charAt(index);
+        if (OPENING.indexOf(c) >= 0) return true;
+        if (c != '\'' && c != '"') return false;
+        return index == 0 || isWhitespace(text.charAt(index - 1))
+                || text.charAt(index - 1) == '\r' || text.charAt(index - 1) == '\n'
+                || OPENING.indexOf(text.charAt(index - 1)) >= 0;
+    }
+
+    private static boolean isClosing(String text, int index) {
+        char c = text.charAt(index);
+        return CLOSING.indexOf(c) >= 0 || ((c == '\'' || c == '"') && !isOpening(text, index));
+    }
+
+    private static boolean isWordPart(String text, int index) {
+        char c = text.charAt(index);
+        if (isWordChar(c)) return true;
+        return (c == '\'' || c == '’') && index > 0 && index + 1 < text.length()
+                && isWordChar(text.charAt(index - 1)) && isWordChar(text.charAt(index + 1));
+    }
+
+    private static boolean isWordChar(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+                || (c >= 'ａ' && c <= 'ｚ') || (c >= 'Ａ' && c <= 'Ｚ') || (c >= '０' && c <= '９');
+    }
+
+    private static void addLine(Vector lines, String text, int start, int end) {
+        while (end > start && isWhitespace(text.charAt(end - 1))) end--;
+        lines.addElement(text.substring(start, end));
     }
 
     private static String[] toArray(Vector lines) {

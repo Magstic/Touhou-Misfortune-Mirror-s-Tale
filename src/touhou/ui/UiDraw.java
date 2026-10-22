@@ -164,6 +164,17 @@ public final class UiDraw {
         if (s == null) {
             s = "";
         }
+        BitmapFont bf = BitmapFont.get();
+        if (bf != null) {
+            int drawX = x;
+            if (align == 1) {
+                drawX -= bf.stringWidth(s) >> 1;
+            } else if (align == 2) {
+                drawX -= bf.stringWidth(s);
+            }
+            bf.drawStringOutline(g, s, drawX, y, colorMain, colorOutline);
+            return;
+        }
         for (int oy = -1; oy <= 1; oy++) {
             for (int ox = -1; ox <= 1; ox++) {
                 if (ox == 0 && oy == 0) {

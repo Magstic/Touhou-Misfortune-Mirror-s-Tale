@@ -14,9 +14,10 @@ public final class BitmapFont {
     private final int[] codepoints;
     private final byte[] glyphBits;
     private final byte[] glyphAdvance;
-    private final int glyphStrideBytes;
     private final int glyphSizeBytes;
     private final int[] glyphScratch;
+    // Bit 0 is foreground, bit 1 is outline; reused across a whole text run.
+    private final byte[] outlineMask;
 
     private BitmapFont(int cellW, int cellH, int baseline, int[] codepoints, byte[] glyphBits, byte[] glyphAdvance) {
         this.cellW = cellW;
@@ -25,9 +26,10 @@ public final class BitmapFont {
         this.codepoints = codepoints;
         this.glyphBits = glyphBits;
         this.glyphAdvance = glyphAdvance;
-        this.glyphStrideBytes = (cellW + 7) >> 3;
-        this.glyphSizeBytes = glyphStrideBytes * cellH;
-        this.glyphScratch = new int[cellW * cellH];
+        this.glyphSizeBytes = ((cellW + 7) >> 3) * cellH;
+        int scratchSize = (cellW + 2) * (cellH + 2);
+        this.glyphScratch = new int[scratchSize];
+        this.outlineMask = new byte[scratchSize];
     }
 
     public static BitmapFont get() {
@@ -96,6 +98,30 @@ public final class BitmapFont {
         drawString(graphics, text, x, baselineY, rgbMain);
     }
 
+    public void drawStringOutline(Graphics graphics, String text, int x, int baselineY, int rgbMain, int rgbOutline) {
+        if (graphics == null || text == null) {
+            return;
+        }
+        byte[] mask = outlineMask;
+        for (int i = 0; i < mask.length; i++) mask[i] = 0;
+        int drawX = x;
+        int previousX = x;
+        int drawY = baselineY - baseline - 1;
+        int main = 0xFF000000 | rgbMain;
+        int outline = 0xFF000000 | rgbOutline;
+        for (int i = 0; i < text.length(); i++) {
+            char value = text.charAt(i);
+            if (value == '\n' || value == '\r') continue;
+            int glyph = findGlyph(value);
+            if (value != ' ' && glyph >= 0) {
+                shiftOutlineMask(drawX - previousX);
+                drawOutlinedGlyph(graphics, glyph, drawX - 1, drawY, main, outline);
+                previousX = drawX;
+            }
+            drawX += advanceFor(glyph);
+        }
+    }
+
     private int advanceFor(int glyph) {
         if (glyphAdvance != null && glyph >= 0) {
             int advance = glyphAdvance[glyph] & 0xFF;
@@ -126,17 +152,79 @@ public final class BitmapFont {
     }
 
     private void drawGlyph(Graphics graphics, int glyphIndex, int x, int y, int rgb) {
-        int base = glyphIndex * glyphSizeBytes;
+        byte[] source = glyphBits;
+        int[] pixels = glyphScratch;
+        int color = 0xFF000000 | rgb;
+        int position = glyphIndex * glyphSizeBytes;
         int output = 0;
+        int fullBytes = cellW >> 3;
+        int remaining = cellW & 7;
         for (int yy = 0; yy < cellH; yy++) {
-            int row = base + yy * glyphStrideBytes;
-            for (int xx = 0; xx < cellW; xx++) {
-                int bits = glyphBits[row + (xx >> 3)] & 0xFF;
-                boolean on = ((bits >> (7 - (xx & 7))) & 1) != 0;
-                glyphScratch[output++] = on ? (0xFF000000 | rgb) : 0;
+            for (int b = 0; b < fullBytes; b++) {
+                int bits = source[position++] & 0xFF;
+                pixels[output++] = (bits & 0x80) != 0 ? color : 0;
+                pixels[output++] = (bits & 0x40) != 0 ? color : 0;
+                pixels[output++] = (bits & 0x20) != 0 ? color : 0;
+                pixels[output++] = (bits & 0x10) != 0 ? color : 0;
+                pixels[output++] = (bits & 0x08) != 0 ? color : 0;
+                pixels[output++] = (bits & 0x04) != 0 ? color : 0;
+                pixels[output++] = (bits & 0x02) != 0 ? color : 0;
+                pixels[output++] = (bits & 0x01) != 0 ? color : 0;
+            }
+            if (remaining != 0) {
+                int bits = source[position++] & 0xFF;
+                for (int bit = 0; bit < remaining; bit++) {
+                    pixels[output++] = (bits & (0x80 >> bit)) != 0 ? color : 0;
+                }
             }
         }
-        graphics.drawRGB(glyphScratch, 0, cellW, x, y, cellW, cellH, true);
+        graphics.drawRGB(pixels, 0, cellW, x, y, cellW, cellH, true);
+    }
+
+    private void shiftOutlineMask(int distance) {
+        byte[] mask = outlineMask;
+        int width = cellW + 2;
+        for (int row = 0; row < mask.length; row += width) {
+            int output = row;
+            int end = row + width;
+            int source = row + distance;
+            // Keep overlapping foreground strokes; new outlines must not cover them.
+            while (source < end) mask[output++] = (byte) (mask[source++] & 1);
+            while (output < end) mask[output++] = 0;
+        }
+    }
+
+    private void drawOutlinedGlyph(Graphics graphics, int glyphIndex, int x, int y, int main, int outline) {
+        byte[] source = glyphBits;
+        byte[] mask = outlineMask;
+        int width = cellW + 2;
+        int position = glyphIndex * glyphSizeBytes;
+        for (int yy = 0; yy < cellH; yy++) {
+            int output = (yy + 1) * width + 1;
+            for (int xx = 0; xx < cellW;) {
+                int bits = source[position++] & 0xFF;
+                int count = Math.min(8, cellW - xx);
+                for (int bit = 0; bit < count; bit++, output++) {
+                    if ((bits & (0x80 >> bit)) == 0) continue;
+                    mask[output] = 1;
+                    mask[output - width - 1] |= 2;
+                    mask[output - width] |= 2;
+                    mask[output - width + 1] |= 2;
+                    mask[output - 1] |= 2;
+                    mask[output + 1] |= 2;
+                    mask[output + width - 1] |= 2;
+                    mask[output + width] |= 2;
+                    mask[output + width + 1] |= 2;
+                }
+                xx += count;
+            }
+        }
+        int[] pixels = glyphScratch;
+        for (int i = 0; i < mask.length; i++) {
+            int value = mask[i];
+            pixels[i] = (value & 1) != 0 ? main : value != 0 ? outline : 0;
+        }
+        graphics.drawRGB(pixels, 0, width, x, y, width, cellH + 2, true);
     }
 
     private static BitmapFont parse(byte[] bytes) {

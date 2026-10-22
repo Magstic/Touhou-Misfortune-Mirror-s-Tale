@@ -10,9 +10,11 @@ import touhou.GameProgress;
 import touhou.UnlockFlags;
 import touhou.battle.BattleMath;
 import touhou.i18n.I18n;
-import touhou.ui.UiDraw;
+import touhou.ui.FontTextMeasurer;
+import touhou.ui.UiTextLayout;
 
 public final class StageRuntime {
+    private static final UiTextLayout.Measurer DIALOGUE_MEASURER = new FontTextMeasurer(null);
 
     private static void fillPlayRect(Graphics g, int x, int y, int w, int h, int playX, int playY, int playW, int playH) {
         if (w <= 0 || h <= 0) {
@@ -522,7 +524,7 @@ public final class StageRuntime {
         String[] lines = I18n.splitLines(text);
         for (int i = 0; i < lines.length; i++) {
             String line = replaceBrTag(lines[i]);
-            lines[i] = wrapDialogueLineWordAware(line);
+            lines[i] = wrapDialogueLine(line);
         }
         talkTable = lines;
 
@@ -1250,100 +1252,14 @@ public final class StageRuntime {
         return out.toString();
     }
 
-    private static String wrapDialogueLineWordAware(String s) {
-        if (s == null) {
-            return "";
-        }
-        if (s.length() == 0) {
-            return s;
-        }
-
-        // Match BattleRenderer dialogue box: fillRectAlpha width=174, text starts at +13 (3px padding).
-        final int maxPx = 168;
-
+    private static String wrapDialogueLine(String text) {
+        // Dialogue text has 168 pixels within the 174-pixel panel.
+        String[] lines = UiTextLayout.wrap(text.replace('|', '\n'), 168, DIALOGUE_MEASURER);
         StringBuffer out = new StringBuffer();
-        int linePx = 0;
-        int i = 0;
-
-        while (i < s.length()) {
-            char c = s.charAt(i);
-            if (c == '|') {
-                out.append('|');
-                linePx = 0;
-                i++;
-                continue;
-            }
-
-            boolean isWs = (c == ' ' || c == '\t');
-            int j = i;
-
-            if (isWs) {
-                while (j < s.length()) {
-                    char wc = s.charAt(j);
-                    if (wc != ' ' && wc != '\t') {
-                        break;
-                    }
-                    j++;
-                }
-
-                if (linePx == 0) {
-                    i = j;
-                    continue;
-                }
-
-                String token = s.substring(i, j);
-                int tokenPx = UiDraw.stringWidth(null, token);
-                if (linePx + tokenPx > maxPx) {
-                    out.append('|');
-                    linePx = 0;
-                    i = j;
-                    continue;
-                }
-
-                out.append(token);
-                linePx += tokenPx;
-                i = j;
-                continue;
-            }
-
-            while (j < s.length()) {
-                char wc = s.charAt(j);
-                if (wc == ' ' || wc == '\t' || wc == '|') {
-                    break;
-                }
-                j++;
-            }
-
-            String word = s.substring(i, j);
-            int wordPx = UiDraw.stringWidth(null, word);
-
-            if (linePx > 0 && linePx + wordPx > maxPx) {
-                out.append('|');
-                linePx = 0;
-            }
-
-            if (wordPx <= maxPx) {
-                out.append(word);
-                linePx += wordPx;
-                i = j;
-                continue;
-            }
-
-            // Hard wrap long tokens (no spaces).
-            for (int k = 0; k < word.length(); k++) {
-                char ch = word.charAt(k);
-                int chPx = UiDraw.charWidth(null, ch);
-                if (linePx > 0 && linePx + chPx > maxPx) {
-                    out.append('|');
-                    linePx = 0;
-                }
-                out.append(ch);
-                linePx += chPx;
-            }
-
-            i = j;
+        for (int i = 0; i < lines.length; i++) {
+            if (i > 0) out.append('|');
+            out.append(lines[i]);
         }
-
         return out.toString();
     }
 }
