@@ -412,6 +412,8 @@ public final class UiController {
                 sheets = new int[] { 83 };
                 break;
             case STATE_REPLAY:
+                sheets = new int[] { 6, 37 };
+                break;
             case STATE_REPLAY_RECEIVE:
             case STATE_REPLAY_SEND:
                 sheets = new int[] { 37 };

@@ -43,6 +43,7 @@ public final class ReplayScreen {
     private static final int SCENE_ACTION = 1;
     private static final int SCENE_DELETE_CONFIRM = 2;
     private static final int SCENE_MESSAGE = 3;
+    private static final int TRANSITION_FRAMES = 6;
 
     public void enter() {
         cursor = 0;
@@ -56,30 +57,64 @@ public final class ReplayScreen {
         msg = null;
         reloadSlots();
         cursor = slots.clampCursor(cursor);
+        titleFrame = 0;
+        contentFrame = 0;
+        leaving = false;
+        pendingResult = null;
     }
 
     public Result update(int pressed) {
         decoTick++;
+        if (leaving) {
+            if (pendingResult != null && titleFrame > 0) {
+                titleFrame--;
+            }
+            if (contentFrame > 0) {
+                contentFrame--;
+            }
+            if (contentFrame == 0 && (pendingResult == null || titleFrame == 0)) {
+                leaving = false;
+                if (pendingResult != null) {
+                    Result result = pendingResult;
+                    pendingResult = null;
+                    return result;
+                }
+                scene = nextScene;
+                if (scene != SCENE_MESSAGE) {
+                    msg = null;
+                }
+            }
+            return null;
+        }
+        if (titleFrame < TRANSITION_FRAMES || contentFrame < TRANSITION_FRAMES) {
+            if (titleFrame < TRANSITION_FRAMES) {
+                titleFrame++;
+            }
+            if (contentFrame < TRANSITION_FRAMES) {
+                contentFrame++;
+            }
+            return null;
+        }
         if (UiInput.cancel(pressed)) {
             if (scene == SCENE_LIST) {
-                return new Result(Result.KIND_BACK_TO_TITLE);
+                leave(new Result(Result.KIND_BACK_TO_TITLE));
+                return null;
             }
-            scene = SCENE_LIST;
-            msg = null;
+            changeScene(SCENE_LIST);
             return null;
         }
 
         if (scene == SCENE_LIST) {
             if (UiInput.secondary(pressed)) {
-                return new Result(Result.KIND_OPEN_BT_RECEIVE);
+                leave(new Result(Result.KIND_OPEN_BT_RECEIVE));
+                return null;
             }
         }
 
         if (scene == SCENE_MESSAGE) {
             if (UiInput.dismiss(pressed)) {
-                scene = SCENE_ACTION;
-                msg = null;
                 updateActionCache();
+                changeScene(SCENE_ACTION);
             }
             return null;
         }
@@ -98,30 +133,16 @@ public final class ReplayScreen {
             boolean moved = false;
             int moveDir = 1;
             if (UiInput.down(pressed)) {
-                // Grid navigation: Down (wrap within column 0-2 or 3-5)
-                int col = actionCursor / 3;
-                int row = actionCursor % 3;
-                row = MenuCursor.move(row, 1, 3);
-                actionCursor = col * 3 + row;
+                actionCursor = MenuCursor.move(actionCursor, 1, 6);
                 moved = true;
-                moveDir = 1;
             } else if (UiInput.up(pressed)) {
-                // Grid navigation: Up
-                int col = actionCursor / 3;
-                int row = actionCursor % 3;
-                row = MenuCursor.move(row, -1, 3);
-                actionCursor = col * 3 + row;
+                actionCursor = MenuCursor.move(actionCursor, -1, 6);
                 moved = true;
                 moveDir = -1;
-            } else if (UiInput.left(pressed) || UiInput.right(pressed)) {
-                // Switch column
-                actionCursor = MenuCursor.move(actionCursor, 3, 6);
-                moved = true;
-                moveDir = 1;
             } else if (UiInput.confirm(pressed)) {
                 Result r = handleAction();
                 if (r != null) {
-                    return r;
+                    leave(r);
                 }
             }
 
@@ -137,11 +158,11 @@ public final class ReplayScreen {
         } else if (UiInput.up(pressed)) {
             cursor = MenuCursor.move(cursor, -1, slots.size());
         } else if (UiInput.confirm(pressed)) {
-            scene = SCENE_ACTION;
             actionCursor = 0;
             updateActionCache();
             // Place cursor on the first enabled action.
             ensureActionCursorEnabled(1);
+            changeScene(SCENE_ACTION);
         }
         return null;
     }
@@ -160,10 +181,16 @@ public final class ReplayScreen {
 
         ReplayUi.renderBackground(g, this.imgs);
 
-        if (scene != SCENE_ACTION) {
-            UiDraw.drawString2(g, FONT, UiText.get(TextId.REPLAY_TITLE), 120, 25, 1, 0xFFFFFF, 0x777777);
-        }
+        int titleOffset = slideOffset(titleFrame, 44);
+        g.translate(0, -titleOffset);
+        ReplayUi.renderTitle(g, FONT, UiText.get(TextId.REPLAY_TITLE));
+        g.translate(0, titleOffset);
 
+        int contentOffset = slideOffset(contentFrame, 240);
+        if (scene != SCENE_LIST) {
+            contentOffset = -contentOffset;
+        }
+        g.translate(contentOffset, 0);
         if (scene == SCENE_LIST) {
             renderList(g, FONT);
         } else if (scene == SCENE_ACTION) {
@@ -173,20 +200,26 @@ public final class ReplayScreen {
         } else {
             renderMessage(g, FONT);
         }
+        g.translate(-contentOffset, 0);
     }
 
     private static final int ACTION_PLAY = 0;
     private static final int ACTION_PLAY_BOSS = 1;
-    private static final int ACTION_DELETE = 2;
-    private static final int ACTION_NET = 3;
-    private static final int ACTION_BT = 4;
+    private static final int ACTION_NET = 2;
+    private static final int ACTION_BT = 3;
+    private static final int ACTION_DELETE = 4;
     private static final int ACTION_BACK = 5;
 
     private int scene;
     private int cursor;
     private int actionCursor;
+    private int titleFrame;
+    private int contentFrame;
+    private int nextScene;
+    private boolean leaving;
+    private Result pendingResult;
 
-    // UI effect counter for lightweight decorations.
+    // Marquee tick for replay names.
     private int decoTick;
 
     private ImageBank imgs;
@@ -195,9 +228,9 @@ public final class ReplayScreen {
     // Cache derived strings for the selected slot to avoid per-frame allocations.
     private int cachedSlot;
     private boolean cachedHasData;
-    private String cachedName;
+    private String cachedTitle;
     private String cachedUnit;
-    private String cachedDetail;
+    private String cachedDifficulty;
     private String cachedScore;
     private boolean cachedSpellPractice;
     private boolean cachedHasBoss;
@@ -208,6 +241,21 @@ public final class ReplayScreen {
     private String msg;
 
     private final int[] tmpSpriteMetrics = new int[4];
+
+    private void changeScene(int target) {
+        nextScene = target;
+        leaving = true;
+    }
+
+    private void leave(Result result) {
+        pendingResult = result;
+        leaving = true;
+    }
+
+    private static int slideOffset(int frame, int distance) {
+        int remaining = TRANSITION_FRAMES - frame;
+        return distance * remaining * remaining / (TRANSITION_FRAMES * TRANSITION_FRAMES);
+    }
 
     private void reloadSlots() {
         slots.reload();
@@ -223,20 +271,24 @@ public final class ReplayScreen {
         ReplayHeader h = slots.header(cursor);
         cachedHasData = slots.hasData(cursor);
 
-        cachedName = ReplayUi.decodeSlotName(slots.nameBytes(cursor));
         cachedSpellPractice = (h != null && h.getMode() == 3);
 
         if (!cachedHasData || h == null) {
+            cachedTitle = UiText.get(TextId.REPLAY_LABEL_EMPTY);
             cachedUnit = "";
-            cachedDetail = "";
+            cachedDifficulty = "";
             cachedScore = "";
             cachedHasBoss = false;
             cachedImported = false;
             return;
         }
 
+        cachedTitle = ReplayUi.decodeSlotName(slots.nameBytes(cursor));
+        if (cachedTitle.length() == 0) {
+            cachedTitle = cachedSpellPractice ? ReplayUi.formatDetail(h) : ReplayUi.stageName(h.getStage());
+        }
         cachedUnit = ReplayUi.formatUnit(h);
-        cachedDetail = ReplayUi.formatDetail(h);
+        cachedDifficulty = cachedSpellPractice ? UiText.get(TextId.REPLAY_TAG_SP) : ReplayUi.difficultyName(h.getDifficulty());
         cachedScore = String.valueOf(h.getScore());
         cachedHasBoss = !cachedSpellPractice && slots.hasBossOnly(cursor);
         cachedImported = (h.getFlag() == ReplayHeader.FLAG_IMPORTED);
@@ -246,13 +298,13 @@ public final class ReplayScreen {
         int act = actionCursor;
 
         if (act == ACTION_BACK) {
-            scene = SCENE_LIST;
+            changeScene(SCENE_LIST);
             return null;
         }
 
         if (act == ACTION_DELETE) {
             if (!isActionEnabled(ACTION_DELETE)) return null;
-            scene = SCENE_DELETE_CONFIRM;
+            changeScene(SCENE_DELETE_CONFIRM);
             return null;
         }
 
@@ -288,7 +340,7 @@ public final class ReplayScreen {
 
     void showMessage(String s) {
         msg = s;
-        scene = SCENE_MESSAGE;
+        changeScene(SCENE_MESSAGE);
     }
 
     private void renderList(Graphics g, Font font) {
@@ -298,107 +350,39 @@ public final class ReplayScreen {
 
     private void renderAction(Graphics g, Font font) {
         updateActionCache();
-
-        int cardX = 16;
-        int cardY = 28;
-        int cardW = 208;
-        int cardH = 120;
-
-        UiDraw.fillRectAlpha(g, cardX, cardY, cardW, cardH, 0x000000, 160);
-        g.setColor(0x005500);
-        g.drawRect(cardX, cardY, cardW - 1, cardH - 1);
-        g.setColor(0x00FF00);
-        g.drawRect(cardX + 1, cardY + 1, cardW - 3, cardH - 3);
-
-        UiDraw.fillRectAlpha(g, cardX + 2, cardY + 2, 4, cardH - 4, 0x00AA00, 128);
-
-        // Decorative snowflakes (use sprite frames to avoid per-frame allocations).
-        drawSnow(g, cardX + cardW - 16, cardY + 18, 96);
-        drawSnow(g, cardX + 18, cardY + cardH - 10, 72);
-
-        int leftX = cardX + 12;
-        int rightX = cardX + cardW - 12;
-
-        int y0 = cardY + 16;
-
-        // Draw individual tag badges at top-right (no redundant "ST" mode label).
-        int badgeX = rightX;
-        if (cachedSpellPractice) {
-            badgeX -= drawModeBadge(g, font, UiText.get(TextId.REPLAY_TAG_SP), badgeX, y0) + 4;
-        }
-        if (cachedHasBoss) {
-            badgeX -= drawModeBadge(g, font, UiText.get(TextId.REPLAY_TAG_ST), badgeX, y0) + 4;
-        }
-        if (cachedImported) {
-            badgeX -= drawModeBadge(g, font, UiText.get(TextId.REPLAY_TAG_IMPORTED), badgeX, y0) + 4;
-        }
-
+        UiDraw.drawString2(g, font, UiText.get(TextId.COMMON_SLOT_PREFIX) + (cursor + 1),
+                228, 52, 2, 0xB0B0B0, 0x404040);
+        UiDraw.drawStringMarquee2(g, FONT_M, cachedTitle, 14, 65, 212, 1,
+                0xFFFFFF, 0x303040, decoTick);
+        ReplayUi.renderSelection(g, 129 + actionCursor * 16, 20);
         if (cachedHasData) {
             ReplayHeader h = slots.header(cursor);
-            if (!cachedSpellPractice) {
-                // Draw difficulty icon at top-left, clamp inside card bounds.
-                drawIconInCard(g, difficultyToBulletId(h.getDifficulty()), 0, cardX, cardY, cardW, cardH);
-            } else {
-                // Spell practice replay: draw replay kind icon (LastWord vs normal).
-                int cropR = isLastWordSpell(h.getSpellId()) ? 0 : 10;
-                drawIconInCard(g, 190, cropR, cardX, cardY, cardW, cardH);
+            if (cachedImported) {
+                UiDraw.drawString2(g, font, UiText.get(TextId.REPLAY_TAG_IMPORTED), 18, 52, 0, 0xB0B0B0, 0x404040);
             }
+            UiDraw.drawString2(g, font, cachedDifficulty, 18, 89, 0, 0xB0B0B0, 0x404040);
+            UiDraw.drawString2(g, font, cachedUnit, 226, 89, 2, 0xFFFFFF, 0x303040);
+            g.setColor(0x7F394D);
+            g.drawLine(12, 99, 228, 99);
+            UiDraw.drawString2(g, font, UiText.get(TextId.REPLAY_LABEL_SCORE), 18, 118, 0, 0xB0B0B0, 0x404040);
+            UiDraw.drawString2(g, font, cachedScore, 226, 118, 2, 0xFFFFFF, 0x303040);
 
-            // Name / Detail line
-            String nameLine = cachedName;
-            if (nameLine == null || nameLine.length() == 0) {
-                if (!cachedSpellPractice && h != null) {
-                    nameLine = ReplayUi.stageName(h.getStage());
-                } else {
-                    nameLine = cachedDetail;
-                }
-            }
-            int titleClipX = cardX + 16;
-            int titleClipW = cardW - 32;
-            if (!cachedSpellPractice) {
-                titleClipX = cardX + 34;
-                titleClipW = cardW - 52;
-            }
-            UiDraw.drawStringMarquee2(g, FONT_M, nameLine, titleClipX, y0 + 24, titleClipW, 1, 0xFFFFFF, 0x222222, decoTick);
-
-            // Unit line (removed duplicate cachedDetail)
-            UiDraw.drawString2(g, font, cachedUnit, leftX, y0 + 46, 0, 0xDDDDDD, 0x333333);
-
-            g.setColor(0x005500);
-            g.drawLine(cardX + 8, cardY + 84, cardX + cardW - 8, cardY + 84);
-
-            UiDraw.drawString2(g, font, UiText.get(TextId.REPLAY_LABEL_SCORE), leftX, y0 + 80, 0, 0xAAAAAA, 0x333333);
-            UiDraw.drawString2(g, FONT_M, cachedScore, rightX, y0 + 80, 2, 0xFFFFFF, 0x222222);
-        } else {
-            UiDraw.drawString2(g, FONT_M, UiText.get(TextId.REPLAY_LABEL_EMPTY), cardX + (cardW >> 1), y0 + 34, 1, 0xBBBBBB, 0x333333);
+            int sprite = 480 + h.getChara();
+            sprites.getSizeAndAnchor(sprite, tmpSpriteMetrics);
+            sprites.draw(g, sprite, 43 - (tmpSpriteMetrics[0] >> 1) + tmpSpriteMetrics[2],
+                    231 - tmpSpriteMetrics[1] + tmpSpriteMetrics[3]);
         }
 
-        // Action buttons (3x2 Grid).
-        int btnW = 96;
-        int btnH = 20;
-        int btnYBase = 168;
-        int btnGapY = 22;
-        int col1X = 22;
-        int col2X = 124;
-
         for (int i = 0; i < 6; i++) {
-            boolean sel = (i == actionCursor);
-            int col = (i >= 3) ? 1 : 0;
-            int row = i % 3;
-            int bx = (col == 0) ? col1X : col2X;
-            int by = btnYBase + row * btnGapY;
-
             boolean enabled = isActionEnabled(i);
-            int mainColor = enabled ? (sel ? 0xFFFFFF : 0xCCCCCC) : 0x555555;
-            int shadowColor = enabled ? (sel ? 0x224422 : 0x222222) : 0x111111;
-            int borderColor = enabled ? (sel ? 0x00FF00 : 0x005500) : 0x333333;
-
-            UiDraw.fillRectAlpha(g, bx, by - 12, btnW, btnH, sel ? 0x001A00 : 0x000000, sel ? 224 : 128);
-            g.setColor(borderColor);
-            g.drawRect(bx, by - 12, btnW - 1, btnH - 1);
-
-            String label = actionLabel(i);
-            UiDraw.drawString2(g, font, label, bx + (btnW >> 1), by, 1, mainColor, shadowColor);
+            boolean selected = (i == actionCursor);
+            int main = enabled ? (selected ? 0xFF4F4F : 0xFFFFFF) : 0x666676;
+            int shadow = selected ? 0x771F1F : 0x303040;
+            int y = 142 + i * 16;
+            if (selected) {
+                UiDraw.drawString2(g, font, ">", 92, y, 0, main, shadow);
+            }
+            UiDraw.drawStringMarquee2(g, font, actionLabel(i), 101, y, 129, 0, main, shadow, decoTick);
         }
     }
 
@@ -416,28 +400,15 @@ public final class ReplayScreen {
             if (cachedSpellPractice) {
                 return false;
             }
-            return slots.hasBossOnly(cursor);
+            return cachedHasBoss;
         }
         return true;
     }
 
     private void ensureActionCursorEnabled(int dir) {
-        if (isActionEnabled(actionCursor)) {
-            return;
+        while (!isActionEnabled(actionCursor)) {
+            actionCursor = MenuCursor.move(actionCursor, dir, 6);
         }
-
-        int step = (dir >= 0) ? 1 : -1;
-        int start = actionCursor;
-        for (int i = 0; i < 6; i++) {
-            actionCursor = MenuCursor.move(actionCursor, step, 6);
-            if (isActionEnabled(actionCursor)) {
-                return;
-            }
-            if (actionCursor == start) {
-                break;
-            }
-        }
-        actionCursor = ACTION_BACK;
     }
 
     private String actionLabel(int act) {
@@ -459,84 +430,15 @@ public final class ReplayScreen {
         return UiText.get(TextId.REPLAY_ACTION_BACK);
     }
 
-    private static int difficultyToBulletId(int d) {
-        if (d >= 0 && d <= 3) return 185 + d;
-        if (d == 4) return 189;
-        return -1;
-    }
-
-    private static boolean isLastWordSpell(int spellId) {
-        return spellId >= 107 && spellId <= 115;
-    }
-
-    // Draw a sprite icon inside the replay detail card, clamped within card bounds.
-    private void drawIconInCard(Graphics g, int bulletId, int cropRight, int cardX, int cardY, int cardW, int cardH) {
-        if (sprites == null || g == null || bulletId < 0) return;
-
-        int[] m = tmpSpriteMetrics;
-        if (!sprites.getSizeAndAnchor(bulletId, m)) {
-            sprites.drawAlphaCropRight(g, bulletId, cardX + 10, cardY + 10, 208, cropRight);
-            return;
-        }
-
-        int w = m[0] - (cropRight > 0 ? cropRight : 0);
-        int hh = m[1];
-        int ax = m[2];
-        int ay = m[3];
-        if (w <= 0 || hh <= 0) return;
-
-        int dx = cardX + 10;
-        int dy = cardY + 10;
-        if (dx < cardX + 2) dx = cardX + 2;
-        if (dy < cardY + 2) dy = cardY + 2;
-        if (dx > cardX + cardW - 2 - w) dx = cardX + cardW - 2 - w;
-        if (dy > cardY + cardH - 2 - hh) dy = cardY + cardH - 2 - hh;
-
-        sprites.drawAlphaCropRight(g, bulletId, dx + ax, dy + ay, 208, cropRight);
-    }
-
-    // Returns the badge width so callers can stack badges right-to-left.
-    private int drawModeBadge(Graphics g, Font font, String s, int xRight, int y) {
-        if (font == null || s == null) {
-            return 0;
-        }
-        int w = UiDraw.stringWidth(font, s) + 10;
-        int h = UiDraw.fontHeight(font) + 2;
-        int x = xRight - w;
-        int yTop = y - UiDraw.fontBaseline(font);
-
-        UiDraw.fillRectAlpha(g, x, yTop, w, h, 0x001A00, 200);
-        g.setColor(0x00FF00);
-        g.drawRect(x, yTop, w - 1, h - 1);
-        UiDraw.drawString2(g, font, s, x + (w >> 1), y, 1, 0xFFFFFF, 0x224422);
-        return w;
-    }
-
-    private void drawSnow(Graphics g, int x, int y, int alpha) {
-        if (sprites == null) {
-            return;
-        }
-        int frame = (decoTick >> 2) % 9;
-        sprites.drawAlpha(g, 445 + frame, x, y, UiDraw.spriteAlpha(alpha));
-    }
-
     private void renderDeleteConfirm(Graphics g, Font font) {
-        g.setColor(0x000000);
-        g.fillRect(24, 94, 192, 52);
-        g.setColor(0x00FF00);
-        g.drawRect(25, 95, 190, 50);
-
-        int boxY = 94;
-        int boxH = 52;
-        int baseY = boxY + ((boxH - UiDraw.fontHeight(font)) >> 1) + UiDraw.fontBaseline(font);
+        UiDraw.fillRectAlpha(g, 0, 88, 240, 68, 0x000000, 208);
         UiDraw.drawString2(g, font,
                 UiText.get(TextId.REPLAY_DELETE_CONFIRM_PREFIX) + (cursor + 1) + UiText.get(TextId.REPLAY_DELETE_CONFIRM_SUFFIX),
-                120, baseY, 1, 0xFFFFFF, 0x444444);
+                120, 115, 1, 0xFF4F4F, 0x771F1F);
+        UiDraw.drawStringMarquee2(g, font, cachedTitle, 14, 137, 212, 1, 0xFFFFFF, 0x303040, decoTick);
     }
 
     private void renderMessage(Graphics g, Font font) {
         ReplayUi.renderMessageBox(g, font, FONT_M, msg, 94, decoTick);
     }
-
-    // Use ReplayUi for list rendering and header formatting.
 }
