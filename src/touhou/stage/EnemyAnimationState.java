@@ -5,8 +5,8 @@ import touhou.battle.BattleEnemyVisuals;
 /** Stage-owned animation progression; motion is also an input to Stage6 simulation. */
 final class EnemyAnimationState {
     private static final int NO_SPRITE = BattleEnemyVisuals.NO_SPRITE;
-    private final int[] spriteIds = new int[32];
-    private final int[] auraSpriteIds = new int[32];
+    private final int[] spriteIds = new int[StageRuntime.ENEMY_CAPACITY];
+    private final int[] auraSpriteIds = new int[StageRuntime.ENEMY_CAPACITY];
 
     EnemyAnimationState() {
         reset();
@@ -30,28 +30,28 @@ final class EnemyAnimationState {
     }
 
     private static void requireIndex(int index) {
-        if (index < 0 || index >= 32) {
+        if (index < 0 || index >= StageRuntime.ENEMY_CAPACITY) {
             throw new IllegalArgumentException("Invalid enemy animation index: " + index);
         }
     }
 
     void advance(int[][] enemies, int[] bossX, int[] bossWork) {
         // StageRuntime owns fixed-size, fully allocated tables; invalid tables are programming errors.
-        for (int i = 0; i < 32; i++) {
+        for (int i = 0; i < StageRuntime.ENEMY_CAPACITY; i++) {
             spriteIds[i] = NO_SPRITE;
             auraSpriteIds[i] = NO_SPRITE;
             int[] enemy = enemies[i];
-            if (enemy[0] == 0) {
+            if (enemy[StageRuntime.ENEMY_ACTIVE] == 0) {
                 continue;
             }
-            int type = enemy[1];
-            int age = enemy[2];
-            int attackState = enemy[3];
+            int type = enemy[StageRuntime.ENEMY_APPEARANCE];
+            int age = enemy[StageRuntime.ENEMY_AGE];
+            int attackState = enemy[StageRuntime.ENEMY_ATTACK_STATE];
             if (type == 14) {
-                spriteIds[i] = advanceType14AndResolve(age, attackState, enemy[5], bossX[0], bossWork);
+                spriteIds[i] = advanceType14AndResolve(age, attackState, enemy[StageRuntime.ENEMY_X], bossX[0], bossWork);
             } else {
-                advance(type, enemy[5], attackState, bossX[0], bossWork);
-                spriteIds[i] = BattleEnemyVisuals.resolveSprite(type, age, attackState, i, enemy[5], bossX, bossWork[0], bossWork[24]);
+                advance(type, enemy[StageRuntime.ENEMY_X], attackState, bossX[0], bossWork);
+                spriteIds[i] = BattleEnemyVisuals.resolveSprite(type, age, attackState, i, enemy[StageRuntime.ENEMY_X], bossX, bossWork[0], bossWork[24]);
             }
             auraSpriteIds[i] = BattleEnemyVisuals.resolveAuraSprite(type, age);
         }

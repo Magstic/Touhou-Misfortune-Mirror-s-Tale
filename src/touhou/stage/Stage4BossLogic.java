@@ -1,7 +1,8 @@
 package touhou.stage;
 
-import touhou.battle.BattleMath;
 import touhou.Trig;
+import touhou.battle.BattleMath;
+import touhou.battle.BattleSessionConfig;
 
 final class Stage4BossLogic extends AbstractBossStageLogic {
     private final int[] work = new int[16];
@@ -21,11 +22,11 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
         int[] bossWrk = host.getBossWrk();
         int bossf = host.getBossF();
 
-        int mt = enemylist[enemyIdx][11];
+        int mt = enemylist[enemyIdx][StageRuntime.ENEMY_MOVE_PATTERN];
         int idx = 0;
-        if (mt == 102) {
+        if (mt == BossController.SECOND_BOSS_PATTERN) {
             idx = 1;
-        } else if (mt == 103) {
+        } else if (mt == BossController.THIRD_BOSS_PATTERN) {
             idx = 2;
         }
 
@@ -37,14 +38,14 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                 core.bspellcnt = 255;
                 core.batkf = false;
                 host.setResetFlag(4);
-                enemylist[enemyIdx][16] = 1;
+                enemylist[enemyIdx][StageRuntime.ENEMY_TARGETABLE] = 1;
                 return;
 
             case 2:
                 if (gc == 0) {
                     host.setBbaria(1);
                 }
-                if (host.getGameMode() != 3) {
+                if (host.getGameMode() != BattleSessionConfig.MODE_SPELL_PRACTICE) {
                     bossx[idx] = 97;
                     bossy[idx] = 44;
                 }
@@ -55,7 +56,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     return;
                 }
 
-                if (host.getGameMode() == 3) {
+                if (host.getGameMode() == BattleSessionConfig.MODE_SPELL_PRACTICE) {
                     core.bspellcnt = 120;
                     int step = host.getSpellPracticeBossStep();
                     wb(step);
@@ -124,22 +125,22 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     if (gc == 0) {
                         int d5_3 = 2;
                         switch (host.getLevel()) {
-                            case 0:
+                            case BattleSessionConfig.DIFFICULTY_EASY:
                                 d5_3 = 2;
                                 break;
-                            case 1:
+                            case BattleSessionConfig.DIFFICULTY_NORMAL:
                                 d5_3 = 4;
                                 break;
-                            case 2:
+                            case BattleSessionConfig.DIFFICULTY_HARD:
                                 d5_3 = 6;
                                 break;
-                            case 3:
+                            case BattleSessionConfig.DIFFICULTY_LUNATIC:
                                 d5_3 = 8;
                                 break;
                         }
                         for (int i = 0; i < 8; ++i) {
                             if (i < d5_3) {
-                                bossWrk[8 + i] = host.stageFb(20 + (i & 0x1), 0, 500, 0, 0, 0, 0, enemylist[enemyIdx][5], enemylist[enemyIdx][6]);
+                                bossWrk[8 + i] = host.stageFb(20 + (i & 0x1), 0, 500, 0, 0, 0, 0, enemylist[enemyIdx][StageRuntime.ENEMY_X], enemylist[enemyIdx][StageRuntime.ENEMY_Y]);
                             } else {
                                 bossWrk[8 + i] = 0;
                             }
@@ -159,17 +160,17 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                         work[i] = -1;
                     }
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             work[0] = 90;
                             work[1] = 270;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             work[0] = 45;
                             work[1] = 135;
                             work[2] = 225;
                             work[3] = 315;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             work[0] = 0;
                             work[1] = 60;
                             work[2] = 120;
@@ -177,7 +178,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                             work[4] = 240;
                             work[5] = 300;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                             work[0] = 0;
                             work[1] = 45;
                             work[2] = 90;
@@ -194,7 +195,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                             continue;
                         }
                         int si = bossWrk[8 + i];
-                        if (si < 0 || si >= enemylist.length || enemylist[si][0] == 0) {
+                        if (si < 0 || si >= enemylist.length || enemylist[si][StageRuntime.ENEMY_ACTIVE] == 0) {
                             continue;
                         }
 
@@ -206,8 +207,8 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                         }
                         int se = (int) ((((long) Trig.cos(dir)) * (long) d1_3) >> 3);
                         int te = (int) ((((long) Trig.sin(dir)) * (long) d1_3) >> 3);
-                        enemylist[si][5] = enemylist[enemyIdx][5] + se;
-                        enemylist[si][6] = enemylist[enemyIdx][6] + te;
+                        enemylist[si][StageRuntime.ENEMY_X] = enemylist[enemyIdx][StageRuntime.ENEMY_X] + se;
+                        enemylist[si][StageRuntime.ENEMY_Y] = enemylist[enemyIdx][StageRuntime.ENEMY_Y] + te;
                     }
 
                     if (gc > 15 && (((gc + 1) & 0x3) == 0)) {
@@ -217,11 +218,11 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                                 continue;
                             }
                             int si = bossWrk[8 + i];
-                            if (si < 0 || si >= enemylist.length || enemylist[si][0] == 0) {
+                            if (si < 0 || si >= enemylist.length || enemylist[si][StageRuntime.ENEMY_ACTIVE] == 0) {
                                 continue;
                             }
-                            int sx = enemylist[si][5];
-                            int sy = enemylist[si][6];
+                            int sx = enemylist[si][StageRuntime.ENEMY_X];
+                            int sy = enemylist[si][StageRuntime.ENEMY_Y];
                             int a0 = (d0b << 3) % 360;
                             if ((i & 0x1) != 0) {
                                 a0 = 360 - ((d0b << 3) % 360);
@@ -236,7 +237,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                 int d0 = (gc + 1) % 320;
                 if (d0 == 0 || d0 == 80 || d0 == 160) {
                     int d8;
-                    if (host.getPlayerXFixed() > enemylist[enemyIdx][5]) {
+                    if (host.getPlayerXFixed() > enemylist[enemyIdx][StageRuntime.ENEMY_X]) {
                         bossx[idx] += 30;
                         d8 = -1;
                     } else {
@@ -264,27 +265,27 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     int d5;
                     int d6;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             d5 = 4;
                             d6 = 8;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             d5 = 6;
                             d6 = 10;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             d5 = 8;
                             d6 = 12;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             d5 = 8;
                             d6 = 14;
                             break;
                     }
 
-                    int bx = enemylist[enemyIdx][5];
-                    int by = enemylist[enemyIdx][6];
+                    int bx = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                    int by = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
                     int d0b = gc + 1;
                     for (int a = 0; a < 360; a += 360 / d5) {
                         for (int n8 = 0; n8 < d6; ++n8) {
@@ -298,9 +299,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     }
                 }
 
-                if (host.getLevel() >= 2) {
-                    int bx = enemylist[enemyIdx][5];
-                    int by = enemylist[enemyIdx][6];
+                if (host.getLevel() >= BattleSessionConfig.DIFFICULTY_HARD) {
+                    int bx = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                    int by = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
                     if (d0 == 40 || d0 == 120 || d0 == 200 || d0 == 260) {
                         host.spawnEnemyBullet(89, 31, 390, 32, bx, by);
                         host.spawnEnemyBullet(89, 31, 510, 32, bx, by);
@@ -332,22 +333,22 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     if (gc == 0) {
                         int d5_4 = 4;
                         switch (host.getLevel()) {
-                            case 0:
+                            case BattleSessionConfig.DIFFICULTY_EASY:
                                 d5_4 = 4;
                                 break;
-                            case 1:
+                            case BattleSessionConfig.DIFFICULTY_NORMAL:
                                 d5_4 = 6;
                                 break;
-                            case 2:
+                            case BattleSessionConfig.DIFFICULTY_HARD:
                                 d5_4 = 6;
                                 break;
-                            case 3:
+                            case BattleSessionConfig.DIFFICULTY_LUNATIC:
                                 d5_4 = 8;
                                 break;
                         }
                         for (int i = 0; i < 8; ++i) {
                             if (i < d5_4) {
-                                bossWrk[8 + i] = host.stageFb(20 + (i & 0x1), 0, 500, 0, 0, 0, 0, enemylist[enemyIdx][5], enemylist[enemyIdx][6]);
+                                bossWrk[8 + i] = host.stageFb(20 + (i & 0x1), 0, 500, 0, 0, 0, 0, enemylist[enemyIdx][StageRuntime.ENEMY_X], enemylist[enemyIdx][StageRuntime.ENEMY_Y]);
                             } else {
                                 bossWrk[8 + i] = 0;
                             }
@@ -366,7 +367,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     int d3_4 = 0;
                     int d4_4 = 0;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             work[0] = 45;
                             work[1] = 30;
                             work[2] = 315;
@@ -378,7 +379,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                             d3_4 = 0;
                             d4_4 = 3276800;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             work[0] = 30;
                             work[1] = 30;
                             work[2] = 330;
@@ -394,7 +395,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                             d3_4 = 0;
                             d4_4 = 3932160;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             work[0] = 270;
                             work[1] = 0;
                             work[2] = 90;
@@ -410,7 +411,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                             d3_4 = 3932160;
                             d4_4 = 0;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                             work[0] = 45;
                             work[1] = 30;
                             work[2] = 315;
@@ -437,7 +438,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                             continue;
                         }
                         int si = bossWrk[8 + i];
-                        if (si < 0 || si >= enemylist.length || enemylist[si][0] == 0) {
+                        if (si < 0 || si >= enemylist.length || enemylist[si][StageRuntime.ENEMY_ACTIVE] == 0) {
                             continue;
                         }
 
@@ -446,17 +447,17 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                         int se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                         int te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
                         if (work[(i << 1) + 0] > 180) {
-                            enemylist[si][5] = enemylist[enemyIdx][5] + d3_4 + se;
+                            enemylist[si][StageRuntime.ENEMY_X] = enemylist[enemyIdx][StageRuntime.ENEMY_X] + d3_4 + se;
                         } else {
-                            enemylist[si][5] = enemylist[enemyIdx][5] - d3_4 + se;
+                            enemylist[si][StageRuntime.ENEMY_X] = enemylist[enemyIdx][StageRuntime.ENEMY_X] - d3_4 + se;
                         }
-                        enemylist[si][6] = enemylist[enemyIdx][6] + d4_4 + te;
+                        enemylist[si][StageRuntime.ENEMY_Y] = enemylist[enemyIdx][StageRuntime.ENEMY_Y] + d4_4 + te;
                     }
                 }
 
                 if (gc > 15) {
                     int stepAng = 120;
-                    if (host.getLevel() <= 1) {
+                    if (host.getLevel() <= BattleSessionConfig.DIFFICULTY_NORMAL) {
                         stepAng = 180;
                     }
                     int d0b = gc + 1;
@@ -465,12 +466,12 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                             continue;
                         }
                         int si = bossWrk[8 + i];
-                        if (si < 0 || si >= enemylist.length || enemylist[si][0] == 0) {
+                        if (si < 0 || si >= enemylist.length || enemylist[si][StageRuntime.ENEMY_ACTIVE] == 0) {
                             continue;
                         }
 
-                        int sx = enemylist[si][5];
-                        int sy = enemylist[si][6];
+                        int sx = enemylist[si][StageRuntime.ENEMY_X];
+                        int sy = enemylist[si][StageRuntime.ENEMY_Y];
                         int a0 = (d0b << 3) % 360;
                         if ((i & 0x1) != 0) {
                             a0 = 360 - ((d0b << 3) % 360);
@@ -493,7 +494,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
 
                 d0 = (gc + 1) % 320;
                 if (d0 == 0 || d0 == 80 || d0 == 160) {
-                    if (host.getPlayerXFixed() > enemylist[enemyIdx][5]) {
+                    if (host.getPlayerXFixed() > enemylist[enemyIdx][StageRuntime.ENEMY_X]) {
                         bossx[idx] -= 40;
                     } else {
                         bossx[idx] += 40;
@@ -521,8 +522,8 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
             case 10:
                 bossx[idx] = 97;
                 bossy[idx] = 68;
-                enemylist[enemyIdx][14] = 458752;
-                enemylist[enemyIdx][15] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
                 core.batkf = false;
                 host.setBbaria(2);
                 if (gc > 30) {
@@ -538,24 +539,24 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                 switch (gc) {
                     case 1:
                     case 29:
-                        enemylist[enemyIdx][3] = 1;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 1;
                         break;
                     case 4:
                     case 26:
-                        enemylist[enemyIdx][3] = 2;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 2;
                         break;
                     case 7:
                     case 23:
-                        enemylist[enemyIdx][3] = 3;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 3;
                         break;
                     case 10:
-                        enemylist[enemyIdx][3] = 4;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 4;
                         break;
                 }
                 if (gc > 30) {
                     bossWrk[3] = 0;
                     bossWrk[4] = 0;
-                    enemylist[enemyIdx][3] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
                     core.batkf = true;
                     host.setBbaria(0);
@@ -574,15 +575,15 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                 }
                 if (gc == 5) {
                     for (int i = 0; i < 4; i++) {
-                        bossWrk[8 + i] = host.stageFb(20 + (i & 0x1), 0, 65535, 0, 0, 0, 0, enemylist[enemyIdx][5], enemylist[enemyIdx][6]);
+                        bossWrk[8 + i] = host.stageFb(20 + (i & 0x1), 0, 65535, 0, 0, 0, 0, enemylist[enemyIdx][StageRuntime.ENEMY_X], enemylist[enemyIdx][StageRuntime.ENEMY_Y]);
                     }
                 }
 
                 if (gc > 23) {
                     int d0_12 = gc;
                     if ((d0_12 % 24) == 0) {
-                        int bx = enemylist[enemyIdx][5];
-                        int by = enemylist[enemyIdx][6];
+                        int bx = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                        int by = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
 
                         int aim = BattleMath.arcTan2Deg(host.getPlayerYFixed() - by, host.getPlayerXFixed() - bx);
                         int phase = bossWrk[4] & 0x3;
@@ -597,16 +598,16 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
 
                         int step;
                         switch (host.getLevel()) {
-                            case 0:
+                            case BattleSessionConfig.DIFFICULTY_EASY:
                                 step = 24;
                                 break;
-                            case 1:
+                            case BattleSessionConfig.DIFFICULTY_NORMAL:
                                 step = 16;
                                 break;
-                            case 2:
+                            case BattleSessionConfig.DIFFICULTY_HARD:
                                 step = 14;
                                 break;
-                            case 3:
+                            case BattleSessionConfig.DIFFICULTY_LUNATIC:
                             default:
                                 step = 12;
                                 break;
@@ -627,25 +628,25 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     if ((d0_12 & 0x3) == 0) {
                         for (int i = 0; i < 4; ++i) {
                             int si = bossWrk[8 + i];
-                            if (si < 0 || si >= enemylist.length || enemylist[si][0] == 0) {
+                            if (si < 0 || si >= enemylist.length || enemylist[si][StageRuntime.ENEMY_ACTIVE] == 0) {
                                 continue;
                             }
-                            int sx = enemylist[si][5];
-                            int sy = enemylist[si][6];
+                            int sx = enemylist[si][StageRuntime.ENEMY_X];
+                            int sy = enemylist[si][StageRuntime.ENEMY_Y];
                             for (int a = 0; a < 360; a += 90) {
                                 host.spawnEnemyBullet(271, 0, a, 40, sx, sy);
                             }
                         }
                     }
 
-                    if (host.getLevel() >= 2 && (d0_12 & 0x3) == 0) {
+                    if (host.getLevel() >= BattleSessionConfig.DIFFICULTY_HARD && (d0_12 & 0x3) == 0) {
                         for (int i = 0; i < 4; ++i) {
                             int si = bossWrk[8 + i];
-                            if (si < 0 || si >= enemylist.length || enemylist[si][0] == 0) {
+                            if (si < 0 || si >= enemylist.length || enemylist[si][StageRuntime.ENEMY_ACTIVE] == 0) {
                                 continue;
                             }
-                            int sx = enemylist[si][5];
-                            int sy = enemylist[si][6];
+                            int sx = enemylist[si][StageRuntime.ENEMY_X];
+                            int sy = enemylist[si][StageRuntime.ENEMY_Y];
 
                             int ang = (d0_12 << 3) % 360;
                             if ((i & 0x1) == 0) {
@@ -653,7 +654,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                             }
                             for (int a = 0; a < 360; a += 180) {
                                 host.spawnEnemyBullet(675, 0, ang + a, 30, sx, sy);
-                                if (host.getLevel() == 3) {
+                                if (host.getLevel() == BattleSessionConfig.DIFFICULTY_LUNATIC) {
                                     host.spawnEnemyBullet(675, 0, ang + a + 8, 30, sx, sy);
                                     host.spawnEnemyBullet(675, 0, ang + a - 8, 30, sx, sy);
                                 }
@@ -667,43 +668,43 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     int d1 = (gc - 5) << 2;
                     int sp = d1 << 3;
 
-                    int baseX = enemylist[enemyIdx][5];
-                    int baseY = enemylist[enemyIdx][6];
+                    int baseX = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                    int baseY = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
 
                     int si8 = bossWrk[8];
-                    if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][0] != 0) {
+                    if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][StageRuntime.ENEMY_ACTIVE] != 0) {
                         int dir = 565;
                         int se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                         int te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
-                        enemylist[si8][5] = baseX + se;
-                        enemylist[si8][6] = baseY + te;
+                        enemylist[si8][StageRuntime.ENEMY_X] = baseX + se;
+                        enemylist[si8][StageRuntime.ENEMY_Y] = baseY + te;
                     }
 
                     int si9 = bossWrk[9];
-                    if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][0] != 0) {
+                    if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][StageRuntime.ENEMY_ACTIVE] != 0) {
                         int dir = 335;
                         int se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                         int te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
-                        enemylist[si9][5] = baseX + se;
-                        enemylist[si9][6] = baseY + te;
+                        enemylist[si9][StageRuntime.ENEMY_X] = baseX + se;
+                        enemylist[si9][StageRuntime.ENEMY_Y] = baseY + te;
                     }
 
                     int si10 = bossWrk[10];
-                    if (si10 >= 0 && si10 < enemylist.length && enemylist[si10][0] != 0) {
+                    if (si10 >= 0 && si10 < enemylist.length && enemylist[si10][StageRuntime.ENEMY_ACTIVE] != 0) {
                         int dir = 515;
                         int se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                         int te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
-                        enemylist[si10][5] = baseX + se;
-                        enemylist[si10][6] = baseY + te;
+                        enemylist[si10][StageRuntime.ENEMY_X] = baseX + se;
+                        enemylist[si10][StageRuntime.ENEMY_Y] = baseY + te;
                     }
 
                     int si11 = bossWrk[11];
-                    if (si11 >= 0 && si11 < enemylist.length && enemylist[si11][0] != 0) {
+                    if (si11 >= 0 && si11 < enemylist.length && enemylist[si11][StageRuntime.ENEMY_ACTIVE] != 0) {
                         int dir = 385;
                         int se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                         int te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
-                        enemylist[si11][5] = baseX + se;
-                        enemylist[si11][6] = baseY + te;
+                        enemylist[si11][StageRuntime.ENEMY_X] = baseX + se;
+                        enemylist[si11][StageRuntime.ENEMY_Y] = baseY + te;
                     }
                 }
                 return;
@@ -711,8 +712,8 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
             case 13:
                 bossx[idx] = 97;
                 bossy[idx] = 78;
-                enemylist[enemyIdx][14] = 458752;
-                enemylist[enemyIdx][15] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
                 core.batkf = false;
                 host.setBbaria(2);
                 if (gc > 30) {
@@ -728,22 +729,22 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                 switch (gc) {
                     case 1:
                     case 29:
-                        enemylist[enemyIdx][3] = 1;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 1;
                         break;
                     case 4:
                     case 26:
-                        enemylist[enemyIdx][3] = 2;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 2;
                         break;
                     case 7:
                     case 23:
-                        enemylist[enemyIdx][3] = 3;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 3;
                         break;
                     case 10:
-                        enemylist[enemyIdx][3] = 4;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 4;
                         break;
                 }
                 if (gc > 30) {
-                    enemylist[enemyIdx][3] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
                     core.batkf = true;
                     host.setBbaria(0);
@@ -765,41 +766,41 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                 }
                 if (gc == 5) {
                     int cnt = 6;
-                    if (host.getLevel() == 0) {
+                    if (host.getLevel() == BattleSessionConfig.DIFFICULTY_EASY) {
                         cnt = 4;
                     }
                     for (int i = 0; i < cnt; i++) {
-                        bossWrk[8 + i] = host.stageFb(20 + (i & 0x1), 0, 65535, 0, 0, 0, 0, enemylist[enemyIdx][5], enemylist[enemyIdx][6]);
+                        bossWrk[8 + i] = host.stageFb(20 + (i & 0x1), 0, 65535, 0, 0, 0, 0, enemylist[enemyIdx][StageRuntime.ENEMY_X], enemylist[enemyIdx][StageRuntime.ENEMY_Y]);
                     }
                 }
 
                 if (gc > 23) {
                     int d0_15 = gc;
                     if ((d0_15 % 24) == 0) {
-                        int bx = enemylist[enemyIdx][5];
-                        int by = enemylist[enemyIdx][6];
+                        int bx = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                        int by = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
 
                         int aim = BattleMath.arcTan2Deg(host.getPlayerYFixed() - by, host.getPlayerXFixed() - bx);
 
                         int div;
                         switch (host.getLevel()) {
-                            case 0:
+                            case BattleSessionConfig.DIFFICULTY_EASY:
                                 div = 8;
                                 break;
-                            case 1:
+                            case BattleSessionConfig.DIFFICULTY_NORMAL:
                                 div = 12;
                                 break;
-                            case 2:
+                            case BattleSessionConfig.DIFFICULTY_HARD:
                                 div = 18;
                                 break;
-                            case 3:
+                            case BattleSessionConfig.DIFFICULTY_LUNATIC:
                             default:
                                 div = 24;
                                 break;
                         }
                         int step = 360 / div;
 
-                        if (host.getLevel() <= 1) {
+                        if (host.getLevel() <= BattleSessionConfig.DIFFICULTY_NORMAL) {
                             for (int a = 0; a < 360; a += step) {
                                 host.spawnEnemyBullet(87, 0, aim + a, 16, bx, by);
                             }
@@ -818,19 +819,19 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
 
                     if ((d0_15 & 0x1F) == 0) {
                         int idxSel;
-                        if (host.getLevel() == 0) {
+                        if (host.getLevel() == BattleSessionConfig.DIFFICULTY_EASY) {
                             idxSel = (d0_15 % 128) / 32;
                         } else {
                             idxSel = (d0_15 % 192) / 32;
                         }
 
                         int si = bossWrk[8 + idxSel];
-                        if (si >= 0 && si < enemylist.length && enemylist[si][0] != 0) {
-                            int sx = enemylist[si][5];
-                            int sy = enemylist[si][6];
+                        if (si >= 0 && si < enemylist.length && enemylist[si][StageRuntime.ENEMY_ACTIVE] != 0) {
+                            int sx = enemylist[si][StageRuntime.ENEMY_X];
+                            int sy = enemylist[si][StageRuntime.ENEMY_Y];
 
                             int aim = BattleMath.arcTan2Deg(host.getPlayerYFixed() - sy, host.getPlayerXFixed() - sx);
-                            if (host.getLevel() <= 1) {
+                            if (host.getLevel() <= BattleSessionConfig.DIFFICULTY_NORMAL) {
                                 aim = 450;
                             }
                             host.spawnEnemyBullet(239, 35, aim, 16, sx, sy);
@@ -841,48 +842,48 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                 }
                 if (gc >= 5 && gc <= 23) {
                     int d1 = (gc - 5) << 2;
-                    int baseX = enemylist[enemyIdx][5];
-                    int baseY = enemylist[enemyIdx][6];
+                    int baseX = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                    int baseY = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
 
                     int sp0 = d1 << 3;
 
                     int si8 = bossWrk[8];
-                    if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][0] != 0) {
+                    if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][StageRuntime.ENEMY_ACTIVE] != 0) {
                         int dir = 540;
                         int se = (int) ((((long) Trig.cos(dir)) * (long) sp0) >> 3);
                         int te = (int) ((((long) Trig.sin(dir)) * (long) sp0) >> 3);
-                        enemylist[si8][5] = baseX + se;
-                        enemylist[si8][6] = baseY + te;
+                        enemylist[si8][StageRuntime.ENEMY_X] = baseX + se;
+                        enemylist[si8][StageRuntime.ENEMY_Y] = baseY + te;
                     }
 
                     int si9 = bossWrk[9];
-                    if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][0] != 0) {
+                    if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][StageRuntime.ENEMY_ACTIVE] != 0) {
                         int dir = 360;
                         int se = (int) ((((long) Trig.cos(dir)) * (long) sp0) >> 3);
                         int te = (int) ((((long) Trig.sin(dir)) * (long) sp0) >> 3);
-                        enemylist[si9][5] = baseX + se;
-                        enemylist[si9][6] = baseY + te;
+                        enemylist[si9][StageRuntime.ENEMY_X] = baseX + se;
+                        enemylist[si9][StageRuntime.ENEMY_Y] = baseY + te;
                     }
 
-                    if (host.getLevel() == 0) {
+                    if (host.getLevel() == BattleSessionConfig.DIFFICULTY_EASY) {
                         int sp1 = d1 << 2;
 
                         int si10 = bossWrk[10];
-                        if (si10 >= 0 && si10 < enemylist.length && enemylist[si10][0] != 0) {
+                        if (si10 >= 0 && si10 < enemylist.length && enemylist[si10][StageRuntime.ENEMY_ACTIVE] != 0) {
                             int dir = 570;
                             int se = (int) ((((long) Trig.cos(dir)) * (long) sp1) >> 3);
                             int te = (int) ((((long) Trig.sin(dir)) * (long) sp1) >> 3);
-                            enemylist[si10][5] = baseX + se;
-                            enemylist[si10][6] = baseY + te;
+                            enemylist[si10][StageRuntime.ENEMY_X] = baseX + se;
+                            enemylist[si10][StageRuntime.ENEMY_Y] = baseY + te;
                         }
 
                         int si11 = bossWrk[11];
-                        if (si11 >= 0 && si11 < enemylist.length && enemylist[si11][0] != 0) {
+                        if (si11 >= 0 && si11 < enemylist.length && enemylist[si11][StageRuntime.ENEMY_ACTIVE] != 0) {
                             int dir = 330;
                             int se = (int) ((((long) Trig.cos(dir)) * (long) sp1) >> 3);
                             int te = (int) ((((long) Trig.sin(dir)) * (long) sp1) >> 3);
-                            enemylist[si11][5] = baseX + se;
-                            enemylist[si11][6] = baseY + te;
+                            enemylist[si11][StageRuntime.ENEMY_X] = baseX + se;
+                            enemylist[si11][StageRuntime.ENEMY_Y] = baseY + te;
                         }
 
                         return;
@@ -892,39 +893,39 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     int sp2 = d1 << 2;
 
                     int si10 = bossWrk[10];
-                    if (si10 >= 0 && si10 < enemylist.length && enemylist[si10][0] != 0) {
+                    if (si10 >= 0 && si10 < enemylist.length && enemylist[si10][StageRuntime.ENEMY_ACTIVE] != 0) {
                         int dir = 570;
                         int se = (int) ((((long) Trig.cos(dir)) * (long) sp1) >> 3);
                         int te = (int) ((((long) Trig.sin(dir)) * (long) sp1) >> 3);
-                        enemylist[si10][5] = baseX + se;
-                        enemylist[si10][6] = baseY + te;
+                        enemylist[si10][StageRuntime.ENEMY_X] = baseX + se;
+                        enemylist[si10][StageRuntime.ENEMY_Y] = baseY + te;
                     }
 
                     int si11 = bossWrk[11];
-                    if (si11 >= 0 && si11 < enemylist.length && enemylist[si11][0] != 0) {
+                    if (si11 >= 0 && si11 < enemylist.length && enemylist[si11][StageRuntime.ENEMY_ACTIVE] != 0) {
                         int dir = 330;
                         int se = (int) ((((long) Trig.cos(dir)) * (long) sp1) >> 3);
                         int te = (int) ((((long) Trig.sin(dir)) * (long) sp1) >> 3);
-                        enemylist[si11][5] = baseX + se;
-                        enemylist[si11][6] = baseY + te;
+                        enemylist[si11][StageRuntime.ENEMY_X] = baseX + se;
+                        enemylist[si11][StageRuntime.ENEMY_Y] = baseY + te;
                     }
 
                     int si12 = bossWrk[12];
-                    if (si12 >= 0 && si12 < enemylist.length && enemylist[si12][0] != 0) {
+                    if (si12 >= 0 && si12 < enemylist.length && enemylist[si12][StageRuntime.ENEMY_ACTIVE] != 0) {
                         int dir = 600;
                         int se = (int) ((((long) Trig.cos(dir)) * (long) sp2) >> 3);
                         int te = (int) ((((long) Trig.sin(dir)) * (long) sp2) >> 3);
-                        enemylist[si12][5] = baseX + se;
-                        enemylist[si12][6] = baseY + te;
+                        enemylist[si12][StageRuntime.ENEMY_X] = baseX + se;
+                        enemylist[si12][StageRuntime.ENEMY_Y] = baseY + te;
                     }
 
                     int si13 = bossWrk[13];
-                    if (si13 >= 0 && si13 < enemylist.length && enemylist[si13][0] != 0) {
+                    if (si13 >= 0 && si13 < enemylist.length && enemylist[si13][StageRuntime.ENEMY_ACTIVE] != 0) {
                         int dir = 300;
                         int se = (int) ((((long) Trig.cos(dir)) * (long) sp2) >> 3);
                         int te = (int) ((((long) Trig.sin(dir)) * (long) sp2) >> 3);
-                        enemylist[si13][5] = baseX + se;
-                        enemylist[si13][6] = baseY + te;
+                        enemylist[si13][StageRuntime.ENEMY_X] = baseX + se;
+                        enemylist[si13][StageRuntime.ENEMY_Y] = baseY + te;
                     }
 
                     return;
@@ -934,8 +935,8 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
             case 16:
                 bossx[idx] = 97;
                 bossy[idx] = 48;
-                enemylist[enemyIdx][14] = 393216;
-                enemylist[enemyIdx][15] = 393216;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 393216;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 393216;
                 core.batkf = false;
                 host.setBbaria(2);
                 if (gc > 30) {
@@ -951,22 +952,22 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                 switch (gc) {
                     case 1:
                     case 29:
-                        enemylist[enemyIdx][3] = 1;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 1;
                         break;
                     case 4:
                     case 26:
-                        enemylist[enemyIdx][3] = 2;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 2;
                         break;
                     case 7:
                     case 23:
-                        enemylist[enemyIdx][3] = 3;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 3;
                         break;
                     case 10:
-                        enemylist[enemyIdx][3] = 4;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 4;
                         break;
                 }
                 if (gc > 30) {
-                    enemylist[enemyIdx][3] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
                     core.batkf = true;
                     host.setBbaria(0);
@@ -984,7 +985,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                 {
                     int d0_18 = gc % 140;
                     if (d0_18 == 130) {
-                        if (host.getPlayerXFixed() > enemylist[enemyIdx][5]) {
+                        if (host.getPlayerXFixed() > enemylist[enemyIdx][StageRuntime.ENEMY_X]) {
                             bossx[idx] -= 30;
                             if (bossx[idx] < 20) {
                                 bossx[idx] = 20;
@@ -997,18 +998,18 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                         }
                     }
 
-                    int bx = enemylist[enemyIdx][5];
-                    int by = enemylist[enemyIdx][6];
+                    int bx = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                    int by = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
 
                     if (d0_18 == 0) {
                         int dx = host.getPlayerXFixed() - bx;
                         int dy = host.getPlayerYFixed() - by;
-                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(dy, dx);
+                        enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(dy, dx);
                     }
 
                     if (d0_18 >= 0 && d0_18 <= 46) {
                         int d5 = ((d0_18 * 5) - 100) << 1;
-                        int d6 = enemylist[enemyIdx][10];
+                        int d6 = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
 
                         int dist0 = d5 << 3;
                         int se0 = (int) ((((long) Trig.cos(d6)) * (long) dist0) >> 3);
@@ -1026,25 +1027,25 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     }
 
                     if (d0_18 == 50) {
-                        int d6 = enemylist[enemyIdx][10];
+                        int d6 = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
 
                         int se0 = (int) ((((long) Trig.cos(d6)) * -800L) >> 3);
                         int te0 = (int) ((((long) Trig.sin(d6)) * -800L) >> 3);
                         int x0 = bx + se0;
                         int y0 = by + te0;
 
-                        host.spawnEnemyBullet(94, 39, enemylist[enemyIdx][10], 20, x0, y0);
+                        host.spawnEnemyBullet(94, 39, enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1], 20, x0, y0);
 
                         int div;
                         switch (host.getLevel()) {
-                            case 0:
-                            case 1:
+                            case BattleSessionConfig.DIFFICULTY_EASY:
+                            case BattleSessionConfig.DIFFICULTY_NORMAL:
                                 div = 8;
                                 break;
-                            case 2:
+                            case BattleSessionConfig.DIFFICULTY_HARD:
                                 div = 10;
                                 break;
-                            case 3:
+                            case BattleSessionConfig.DIFFICULTY_LUNATIC:
                             default:
                                 div = 12;
                                 break;
@@ -1053,7 +1054,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                         for (int a = 0; a < 360; a += step) {
                             int se = (int) ((((long) Trig.cos(a)) * 320L) >> 3);
                             int te = (int) ((((long) Trig.sin(a)) * 320L) >> 3);
-                            host.spawnEnemyBullet(88, 39, enemylist[enemyIdx][10], 20, x0 + se, y0 + te);
+                            host.spawnEnemyBullet(88, 39, enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1], 20, x0 + se, y0 + te);
                         }
                     }
 
@@ -1061,19 +1062,19 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                         int div;
                         int period;
                         switch (host.getLevel()) {
-                            case 0:
+                            case BattleSessionConfig.DIFFICULTY_EASY:
                                 div = 3;
                                 period = 4;
                                 break;
-                            case 1:
+                            case BattleSessionConfig.DIFFICULTY_NORMAL:
                                 div = 5;
                                 period = 3;
                                 break;
-                            case 2:
+                            case BattleSessionConfig.DIFFICULTY_HARD:
                                 div = 8;
                                 period = 3;
                                 break;
-                            case 3:
+                            case BattleSessionConfig.DIFFICULTY_LUNATIC:
                             default:
                                 div = 8;
                                 period = 2;
@@ -1093,14 +1094,14 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
             case 19:
                 bossx[idx] = 97;
                 bossy[idx] = 64;
-                enemylist[enemyIdx][14] = 458752;
-                enemylist[enemyIdx][15] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
                 core.batkf = false;
                 host.setBbaria(2);
                 if (gc > 30) {
                     host.setQ(true);
-                    enemylist[enemyIdx][14] = 65536;
-                    enemylist[enemyIdx][15] = 65536;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 65536;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 65536;
                     core.bspellstep = 1;
                     core.spellId = 58 + host.getLevel();
                     wb(20);
@@ -1112,24 +1113,24 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                 switch (gc) {
                     case 1:
                     case 29:
-                        enemylist[enemyIdx][3] = 1;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 1;
                         break;
                     case 4:
                     case 26:
-                        enemylist[enemyIdx][3] = 2;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 2;
                         break;
                     case 7:
                     case 23:
-                        enemylist[enemyIdx][3] = 3;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 3;
                         break;
                     case 10:
-                        enemylist[enemyIdx][3] = 4;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 4;
                         break;
                 }
                 if (gc > 30) {
-                    enemylist[enemyIdx][14] = 32768;
-                    enemylist[enemyIdx][15] = 32768;
-                    enemylist[enemyIdx][3] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 32768;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 32768;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
                     core.batkf = true;
                     host.setBbaria(0);
@@ -1145,44 +1146,44 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     return;
                 }
                 if (gc == 5) {
-                    bossWrk[8] = host.stageFb(20, 0, 65535, 0, 0, 0, 0, enemylist[enemyIdx][5], enemylist[enemyIdx][6]);
-                    bossWrk[9] = host.stageFb(21, 0, 65535, 0, 0, 0, 0, enemylist[enemyIdx][5], enemylist[enemyIdx][6]);
+                    bossWrk[8] = host.stageFb(20, 0, 65535, 0, 0, 0, 0, enemylist[enemyIdx][StageRuntime.ENEMY_X], enemylist[enemyIdx][StageRuntime.ENEMY_Y]);
+                    bossWrk[9] = host.stageFb(21, 0, 65535, 0, 0, 0, 0, enemylist[enemyIdx][StageRuntime.ENEMY_X], enemylist[enemyIdx][StageRuntime.ENEMY_Y]);
                 }
                 if (gc > 15) {
-                    int bx = enemylist[enemyIdx][5] >> 16;
+                    int bx = enemylist[enemyIdx][StageRuntime.ENEMY_X] >> 16;
 
                     int si8 = bossWrk[8];
-                    if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][0] != 0) {
-                        enemylist[si8][5] = (bx - 48) << 16;
-                        if (enemylist[si8][5] < 655360) {
-                            enemylist[si8][5] = 655360;
+                    if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][StageRuntime.ENEMY_ACTIVE] != 0) {
+                        enemylist[si8][StageRuntime.ENEMY_X] = (bx - 48) << 16;
+                        if (enemylist[si8][StageRuntime.ENEMY_X] < 655360) {
+                            enemylist[si8][StageRuntime.ENEMY_X] = 655360;
                         }
                     }
 
                     int si9 = bossWrk[9];
-                    if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][0] != 0) {
-                        enemylist[si9][5] = (bx + 48) << 16;
-                        if (enemylist[si9][5] > 12058624) {
-                            enemylist[si9][5] = 12058624;
+                    if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][StageRuntime.ENEMY_ACTIVE] != 0) {
+                        enemylist[si9][StageRuntime.ENEMY_X] = (bx + 48) << 16;
+                        if (enemylist[si9][StageRuntime.ENEMY_X] > 12058624) {
+                            enemylist[si9][StageRuntime.ENEMY_X] = 12058624;
                         }
                     }
 
                     int d0_21 = gc;
-                    int bossXFixed = enemylist[enemyIdx][5];
-                    int bossYFixed = enemylist[enemyIdx][6];
+                    int bossXFixed = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                    int bossYFixed = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
 
                     int mod36 = d0_21 % 36;
                     if (mod36 == 0 || mod36 == 18) {
                         host.spawnEnemyBullet(-1, 29, 450, 32, bossXFixed, bossYFixed);
                     }
                     if (mod36 == 9) {
-                        if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][0] != 0) {
-                            host.spawnEnemyBullet(-1, 29, 450, 32, enemylist[si8][5], bossYFixed);
+                        if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][StageRuntime.ENEMY_ACTIVE] != 0) {
+                            host.spawnEnemyBullet(-1, 29, 450, 32, enemylist[si8][StageRuntime.ENEMY_X], bossYFixed);
                         }
                     }
                     if (mod36 == 27) {
-                        if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][0] != 0) {
-                            host.spawnEnemyBullet(-1, 29, 450, 32, enemylist[si9][5], bossYFixed);
+                        if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][StageRuntime.ENEMY_ACTIVE] != 0) {
+                            host.spawnEnemyBullet(-1, 29, 450, 32, enemylist[si9][StageRuntime.ENEMY_X], bossYFixed);
                         }
                     }
 
@@ -1190,9 +1191,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                         int px = host.getPlayerXFixed();
                         int py = host.getPlayerYFixed();
 
-                        if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][0] != 0) {
-                            int sx = enemylist[si8][5];
-                            int sy = enemylist[si8][6];
+                        if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][StageRuntime.ENEMY_ACTIVE] != 0) {
+                            int sx = enemylist[si8][StageRuntime.ENEMY_X];
+                            int sy = enemylist[si8][StageRuntime.ENEMY_Y];
                             int aim = 470;
                             if (py < 7929856) {
                                 aim = BattleMath.arcTan2Deg(py - sy, px - sx);
@@ -1205,9 +1206,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                             }
                         }
 
-                        if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][0] != 0) {
-                            int sx = enemylist[si9][5];
-                            int sy = enemylist[si9][6];
+                        if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][StageRuntime.ENEMY_ACTIVE] != 0) {
+                            int sx = enemylist[si9][StageRuntime.ENEMY_X];
+                            int sy = enemylist[si9][StageRuntime.ENEMY_Y];
                             int aim = 430;
                             if (py < 7929856) {
                                 aim = BattleMath.arcTan2Deg(py - sy, px - sx);
@@ -1222,9 +1223,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     }
 
                     if ((d0_21 & 1) == 0) {
-                        if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][0] != 0) {
-                            int sx = enemylist[si8][5];
-                            int sy = enemylist[si8][6];
+                        if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][StageRuntime.ENEMY_ACTIVE] != 0) {
+                            int sx = enemylist[si8][StageRuntime.ENEMY_X];
+                            int sy = enemylist[si8][StageRuntime.ENEMY_Y];
                             int aim = BattleMath.arcTan2Deg(bossYFixed - sy, bossXFixed - sx);
 
                             host.spawnEnemyBullet(239, 0, aim + 30, 40, sx, sy);
@@ -1235,9 +1236,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                             host.spawnEnemyBullet(239, 0, aim + 180 - 30, 40, sx, sy);
                         }
 
-                        if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][0] != 0) {
-                            int sx = enemylist[si9][5];
-                            int sy = enemylist[si9][6];
+                        if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][StageRuntime.ENEMY_ACTIVE] != 0) {
+                            int sx = enemylist[si9][StageRuntime.ENEMY_X];
+                            int sy = enemylist[si9][StageRuntime.ENEMY_Y];
                             int aim = BattleMath.arcTan2Deg(bossYFixed - sy, bossXFixed - sx);
 
                             host.spawnEnemyBullet(239, 0, aim + 30, 40, sx, sy);
@@ -1259,15 +1260,15 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     int t = gc - 5;
 
                     int si8 = bossWrk[8];
-                    if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][0] != 0) {
-                        enemylist[si8][5] = (97 - (48 * t / 10)) << 16;
-                        enemylist[si8][6] += 196608;
+                    if (si8 >= 0 && si8 < enemylist.length && enemylist[si8][StageRuntime.ENEMY_ACTIVE] != 0) {
+                        enemylist[si8][StageRuntime.ENEMY_X] = (97 - (48 * t / 10)) << 16;
+                        enemylist[si8][StageRuntime.ENEMY_Y] += 196608;
                     }
 
                     int si9 = bossWrk[9];
-                    if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][0] != 0) {
-                        enemylist[si9][5] = (97 + (48 * t / 10)) << 16;
-                        enemylist[si9][6] += 196608;
+                    if (si9 >= 0 && si9 < enemylist.length && enemylist[si9][StageRuntime.ENEMY_ACTIVE] != 0) {
+                        enemylist[si9][StageRuntime.ENEMY_X] = (97 + (48 * t / 10)) << 16;
+                        enemylist[si9][StageRuntime.ENEMY_Y] += 196608;
                     }
                     return;
                 }
@@ -1276,25 +1277,25 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
             case 37:
                 bossx[idx] = 97;
                 bossy[idx] = 68;
-                enemylist[enemyIdx][14] = 458752;
-                enemylist[enemyIdx][15] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
                 core.batkf = false;
                 host.setBbaria(2);
                 switch (gc) {
                     case 5:
-                        enemylist[enemyIdx][3] = 5;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 5;
                         break;
                     case 10:
-                        enemylist[enemyIdx][3] = 6;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 6;
                         break;
                     case 15:
-                        enemylist[enemyIdx][3] = 7;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 7;
                         break;
                     case 20:
-                        enemylist[enemyIdx][3] = 8;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 8;
                         break;
                     case 25:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
                 if (gc > 30) {
@@ -1310,18 +1311,18 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                 switch (gc) {
                     case 1:
                     case 28:
-                        enemylist[enemyIdx][3] = 1;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 1;
                         break;
                     case 5:
                     case 25:
-                        enemylist[enemyIdx][3] = 2;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 2;
                         break;
                     case 10:
-                        enemylist[enemyIdx][3] = 3;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 3;
                         break;
                 }
                 if (gc > 30) {
-                    enemylist[enemyIdx][3] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
                     core.batkf = true;
                     host.setBbaria(0);
@@ -1338,8 +1339,8 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     return;
                 }
 
-                int bossXFixed_39 = enemylist[enemyIdx][5];
-                int bossYFixed_39 = enemylist[enemyIdx][6];
+                int bossXFixed_39 = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                int bossYFixed_39 = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
 
                 if (gc == 5) {
                     for (int i = 0; i < 8; ++i) {
@@ -1375,7 +1376,7 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                             int dx = host.getPlayerXFixed() - bossXFixed_39;
                             int dy = host.getPlayerYFixed() - bossYFixed_39;
                             int aim = BattleMath.arcTan2Deg(dy, dx);
-                            enemylist[enemyIdx][10] = aim;
+                            enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = aim;
 
                             int d6_39 = 24;
                             int step_39 = 180 / d6_39;
@@ -1402,12 +1403,12 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
 
                         for (int i = 0; i < 8; ++i) {
                             int si = bossWrk[8 + i];
-                            if (si < 0 || si >= enemylist.length || enemylist[si][0] == 0) {
+                            if (si < 0 || si >= enemylist.length || enemylist[si][StageRuntime.ENEMY_ACTIVE] == 0) {
                                 continue;
                             }
 
-                            int sx = enemylist[si][5];
-                            int sy = enemylist[si][6];
+                            int sx = enemylist[si][StageRuntime.ENEMY_X];
+                            int sy = enemylist[si][StageRuntime.ENEMY_Y];
                             int a = d5_39;
                             if ((i & 0x1) == 0) {
                                 a = 360 - d5_39;
@@ -1435,9 +1436,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                     te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
                     si = bossWrk[8];
-                    if (si >= 0 && si < enemylist.length && enemylist[si][0] != 0) {
-                        enemylist[si][5] = bossXFixed_39 + se;
-                        enemylist[si][6] = bossYFixed_39 + te;
+                    if (si >= 0 && si < enemylist.length && enemylist[si][StageRuntime.ENEMY_ACTIVE] != 0) {
+                        enemylist[si][StageRuntime.ENEMY_X] = bossXFixed_39 + se;
+                        enemylist[si][StageRuntime.ENEMY_Y] = bossYFixed_39 + te;
                     }
 
                     sp = d1_39 << 2;
@@ -1445,9 +1446,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                     te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
                     si = bossWrk[9];
-                    if (si >= 0 && si < enemylist.length && enemylist[si][0] != 0) {
-                        enemylist[si][5] = bossXFixed_39 + se;
-                        enemylist[si][6] = bossYFixed_39 + te;
+                    if (si >= 0 && si < enemylist.length && enemylist[si][StageRuntime.ENEMY_ACTIVE] != 0) {
+                        enemylist[si][StageRuntime.ENEMY_X] = bossXFixed_39 + se;
+                        enemylist[si][StageRuntime.ENEMY_Y] = bossYFixed_39 + te;
                     }
 
                     sp = (d1_39 << 2) - 5;
@@ -1455,9 +1456,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                     te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
                     si = bossWrk[10];
-                    if (si >= 0 && si < enemylist.length && enemylist[si][0] != 0) {
-                        enemylist[si][5] = bossXFixed_39 + se;
-                        enemylist[si][6] = bossYFixed_39 + te;
+                    if (si >= 0 && si < enemylist.length && enemylist[si][StageRuntime.ENEMY_ACTIVE] != 0) {
+                        enemylist[si][StageRuntime.ENEMY_X] = bossXFixed_39 + se;
+                        enemylist[si][StageRuntime.ENEMY_Y] = bossYFixed_39 + te;
                     }
 
                     sp = (d1_39 << 2) - 5;
@@ -1465,9 +1466,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                     te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
                     si = bossWrk[11];
-                    if (si >= 0 && si < enemylist.length && enemylist[si][0] != 0) {
-                        enemylist[si][5] = bossXFixed_39 + se;
-                        enemylist[si][6] = bossYFixed_39 + te;
+                    if (si >= 0 && si < enemylist.length && enemylist[si][StageRuntime.ENEMY_ACTIVE] != 0) {
+                        enemylist[si][StageRuntime.ENEMY_X] = bossXFixed_39 + se;
+                        enemylist[si][StageRuntime.ENEMY_Y] = bossYFixed_39 + te;
                     }
 
                     sp = d1_39 << 3;
@@ -1475,9 +1476,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                     te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
                     si = bossWrk[12];
-                    if (si >= 0 && si < enemylist.length && enemylist[si][0] != 0) {
-                        enemylist[si][5] = bossXFixed_39 + se;
-                        enemylist[si][6] = bossYFixed_39 + te;
+                    if (si >= 0 && si < enemylist.length && enemylist[si][StageRuntime.ENEMY_ACTIVE] != 0) {
+                        enemylist[si][StageRuntime.ENEMY_X] = bossXFixed_39 + se;
+                        enemylist[si][StageRuntime.ENEMY_Y] = bossYFixed_39 + te;
                     }
 
                     sp = d1_39 << 3;
@@ -1485,9 +1486,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                     te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
                     si = bossWrk[13];
-                    if (si >= 0 && si < enemylist.length && enemylist[si][0] != 0) {
-                        enemylist[si][5] = bossXFixed_39 + se;
-                        enemylist[si][6] = bossYFixed_39 + te;
+                    if (si >= 0 && si < enemylist.length && enemylist[si][StageRuntime.ENEMY_ACTIVE] != 0) {
+                        enemylist[si][StageRuntime.ENEMY_X] = bossXFixed_39 + se;
+                        enemylist[si][StageRuntime.ENEMY_Y] = bossYFixed_39 + te;
                     }
 
                     sp = d1_39 * 10;
@@ -1495,9 +1496,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                     te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
                     si = bossWrk[14];
-                    if (si >= 0 && si < enemylist.length && enemylist[si][0] != 0) {
-                        enemylist[si][5] = bossXFixed_39 + se;
-                        enemylist[si][6] = bossYFixed_39 + te;
+                    if (si >= 0 && si < enemylist.length && enemylist[si][StageRuntime.ENEMY_ACTIVE] != 0) {
+                        enemylist[si][StageRuntime.ENEMY_X] = bossXFixed_39 + se;
+                        enemylist[si][StageRuntime.ENEMY_Y] = bossYFixed_39 + te;
                     }
 
                     sp = d1_39 * 10;
@@ -1505,9 +1506,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
                     se = (int) ((((long) Trig.cos(dir)) * (long) sp) >> 3);
                     te = (int) ((((long) Trig.sin(dir)) * (long) sp) >> 3);
                     si = bossWrk[15];
-                    if (si >= 0 && si < enemylist.length && enemylist[si][0] != 0) {
-                        enemylist[si][5] = bossXFixed_39 + se;
-                        enemylist[si][6] = bossYFixed_39 + te;
+                    if (si >= 0 && si < enemylist.length && enemylist[si][StageRuntime.ENEMY_ACTIVE] != 0) {
+                        enemylist[si][StageRuntime.ENEMY_X] = bossXFixed_39 + se;
+                        enemylist[si][StageRuntime.ENEMY_Y] = bossYFixed_39 + te;
                     }
                     return;
                 }
@@ -1524,9 +1525,9 @@ final class Stage4BossLogic extends AbstractBossStageLogic {
             if (si < 0 || si >= enemylist.length) {
                 continue;
             }
-            if (enemylist[si][0] != 0) {
-                int mt = enemylist[si][11];
-                if (mt != 100 && mt != 101 && mt != 102 && mt != 103) {
+            if (enemylist[si][StageRuntime.ENEMY_ACTIVE] != 0) {
+                int mt = enemylist[si][StageRuntime.ENEMY_MOVE_PATTERN];
+                if (mt != BossController.MIDBOSS_PATTERN && mt != BossController.BOSS_PATTERN && mt != BossController.SECOND_BOSS_PATTERN && mt != BossController.THIRD_BOSS_PATTERN) {
                     host.stageJb(si);
                     bossWrk[8 + i] = 0;
                 }

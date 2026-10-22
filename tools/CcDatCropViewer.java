@@ -38,6 +38,23 @@ import javax.swing.table.AbstractTableModel;
 
 public final class CcDatCropViewer {
     private static final int ZOOM = 3;
+    private static final int FORMAT_MAGIC = 0x43433031; // 'CC01'
+    private static final int FORMAT_VERSION = 1;
+    private static final int IMAGE_FIELDS = 4;
+    private static final int SPRITE_FIELDS = 13;
+    private static final int IMAGE = 0;
+    private static final int WIDTH = 1;
+    private static final int HEIGHT = 2;
+    private static final int ANCHOR_X = 3;
+    private static final int ANCHOR_Y = 4;
+    private static final int PIXEL_X = 5;
+    private static final int PIXEL_Y = 6;
+    private static final int RENDER_W = 7;
+    private static final int RENDER_H = 8;
+    private static final int TRIM_X = 9;
+    private static final int TRIM_Y = 10;
+    private static final int RENDER_MODE = 11;
+    private static final int BOTTOM_GAP = 12;
     
     private static final class Entry {
         final int spriteId;
@@ -49,31 +66,31 @@ public final class CcDatCropViewer {
         }
 
         int imgIndex() {
-            return row[0];
+            return row[IMAGE];
         }
 
         int srcX() {
-            return row[5];
+            return row[PIXEL_X];
         }
 
         int srcY() {
-            return row[6];
+            return row[PIXEL_Y];
         }
 
         int w() {
-            return row[7];
+            return row[RENDER_W];
         }
 
         int h() {
-            return row[8];
+            return row[RENDER_H];
         }
 
         int ax() {
-            return row[3] - row[9];
+            return row[ANCHOR_X] - row[TRIM_X];
         }
 
         int ay() {
-            return row[4] - row[10];
+            return row[ANCHOR_Y] - row[TRIM_Y];
         }
 
     }
@@ -152,12 +169,12 @@ public final class CcDatCropViewer {
                 case 7:
                     return Integer.valueOf(e.ay());
                 case 8:
-                    return Integer.valueOf(e.row[1]);
-                case 9: return Integer.valueOf(e.row[2]);
-                case 10: return Integer.valueOf(e.row[9]);
-                case 11: return Integer.valueOf(e.row[10]);
-                case 12: return Integer.valueOf(e.row[11]);
-                case 13: return Integer.valueOf(e.row[12]);
+                    return Integer.valueOf(e.row[WIDTH]);
+                case 9: return Integer.valueOf(e.row[HEIGHT]);
+                case 10: return Integer.valueOf(e.row[TRIM_X]);
+                case 11: return Integer.valueOf(e.row[TRIM_Y]);
+                case 12: return Integer.valueOf(e.row[RENDER_MODE]);
+                case 13: return Integer.valueOf(e.row[BOTTOM_GAP]);
                 default:
                     return "";
             }
@@ -443,7 +460,7 @@ public final class CcDatCropViewer {
             if (row == null || row.length != 13) {
                 continue;
             }
-            if (imgFilter != null && row[0] != imgFilter.intValue()) {
+            if (imgFilter != null && row[IMAGE] != imgFilter.intValue()) {
                 continue;
             }
             list.add(new Entry(i, row));
@@ -519,7 +536,7 @@ public final class CcDatCropViewer {
     private int[][] loadCcDat(File file) throws IOException {
         if (file == null || !file.isFile()) throw new IOException("Missing file: " + file);
         try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
-            if (in.readInt() != 0x43433031 || in.readUnsignedShort() != 1) {
+            if (in.readInt() != FORMAT_MAGIC || in.readUnsignedShort() != FORMAT_VERSION) {
                 throw new IOException("Invalid cc.dat header");
             }
             int imageCount = in.readUnsignedShort(), count = in.readUnsignedShort();
@@ -527,13 +544,13 @@ public final class CcDatCropViewer {
             String[] names = new String[imageCount];
             for (int i = 0; i < imageCount; i++) {
                 names[i] = in.readUTF();
-                for (int k = 0; k < 4; k++) in.readShort();
+                for (int k = 0; k < IMAGE_FIELDS; k++) in.readShort();
                 if (names[i].indexOf('/') >= 0 || names[i].indexOf('\\') >= 0 || names[i].indexOf("..") >= 0) {
                     throw new IOException("Invalid image filename");
                 }
             }
-            int[][] rows = new int[count][13];
-            for (int[] row : rows) for (int k = 0; k < 13; k++) row[k] = in.readShort();
+            int[][] rows = new int[count][SPRITE_FIELDS];
+            for (int[] row : rows) for (int k = 0; k < SPRITE_FIELDS; k++) row[k] = in.readShort();
             if (in.read() != -1) throw new IOException("Trailing cc.dat data");
             imageNames = names;
             return rows;

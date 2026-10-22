@@ -3,9 +3,13 @@ package touhou;
 import javax.microedition.lcdui.Graphics;
 
 import touhou.battle.BattleMath;
+import touhou.stage.StageRuntime;
 
 public final class DropItemSystem {
     private static final int CAPACITY = 64;
+    public static final int STATE_FALLING = 0;
+    public static final int STATE_SCATTERING = 1;
+    public static final int STATE_COLLECTING = 2;
 
     public static final int TYPE_NONE = 0;
     public static final int TYPE_SCORE = 1;
@@ -74,7 +78,7 @@ public final class DropItemSystem {
             timer[i] = 0;
             spriteBase[i] = 0;
             type[i] = 0;
-            state[i] = 0;
+            state[i] = STATE_FALLING;
             x[i] = 0;
             y[i] = 0;
             r[i] = 0;
@@ -91,7 +95,7 @@ public final class DropItemSystem {
         }
 
         int n = itemType;
-        if (stageIndex == 0 && power > 64 && !bossActive) {
+        if (stageIndex == StageRuntime.STAGE_1 && power > 64 && !bossActive) {
             if (n == TYPE_P) {
                 n = TYPE_SCORE;
             }
@@ -106,25 +110,25 @@ public final class DropItemSystem {
         int base;
         switch (n) {
             case TYPE_SCORE:
-                base = 111;
+                base = SpriteSheetCatalog.ITEM_SCORE;
                 break;
             case TYPE_P:
-                base = 120;
+                base = SpriteSheetCatalog.ITEM_POWER;
                 break;
             case TYPE_BIG_P:
-                base = 129;
+                base = SpriteSheetCatalog.ITEM_BIG_POWER;
                 break;
             case TYPE_FULL_POWER:
-                base = 138;
+                base = SpriteSheetCatalog.ITEM_FULL_POWER;
                 break;
             case TYPE_BOMB:
-                base = 147;
+                base = SpriteSheetCatalog.ITEM_BOMB;
                 break;
             case TYPE_1UP:
-                base = 156;
+                base = SpriteSheetCatalog.ITEM_LIFE;
                 break;
             case TYPE_CRISIS:
-                base = 165;
+                base = SpriteSheetCatalog.ITEM_CRISIS;
                 break;
             default:
                 return FixedSlotPool.NO_SLOT;
@@ -151,13 +155,13 @@ public final class DropItemSystem {
     public void update(int playerXFixed, int playerYFixed, boolean playerSlow, int stageIndex, int power, boolean playerDead,
             boolean disableItemCollectLimitCheat, int chara, int crisis) {
         int figcs = Fixed.fromInt(1);
-        int figisqrt = (chara == 1) ? Fixed.fromInt(40) : Fixed.fromInt(30);
+        int figisqrt = (chara == Player.MARISA) ? Fixed.fromInt(40) : Fixed.fromInt(30);
         int collectRange = figisqrt;
         if (!playerSlow) {
             collectRange >>= 2;
         }
 
-        if (playerYFixed < 4849664 && (disableItemCollectLimitCheat || power == 128 || stageIndex == 6)) {
+        if (playerYFixed < 4849664 && (disableItemCollectLimitCheat || power == 128 || stageIndex == StageRuntime.STAGE_EXTRA)) {
             forceCollect(0);
         }
 
@@ -166,11 +170,11 @@ public final class DropItemSystem {
                 continue;
             }
 
-            if (!playerDead && (state[i] == 2 || timer[i] > 3)) {
+            if (!playerDead && (state[i] == STATE_COLLECTING || timer[i] > 3)) {
                 int d0 = collectRange;
-                if (state[i] == 0 && BattleMath.rectsOverlapFixed(x[i] - r[i], y[i] - r[i], r[i] << 1, r[i] << 1, playerXFixed - (figcs + d0), playerYFixed - (figcs + d0), (figcs + d0) << 1, (figcs + d0) << 1)) {
+                if (state[i] == STATE_FALLING && BattleMath.rectsOverlapFixed(x[i] - r[i], y[i] - r[i], r[i] << 1, r[i] << 1, playerXFixed - (figcs + d0), playerYFixed - (figcs + d0), (figcs + d0) << 1, (figcs + d0) << 1)) {
                     timer[i] = 0;
-                    state[i] = 2;
+                    state[i] = STATE_COLLECTING;
                 }
 
                 if (BattleMath.rectsOverlapFixed(x[i] - r[i], y[i] - r[i], r[i] << 1, r[i] << 1, playerXFixed - (figcs + 131072), playerYFixed - (figcs + 131072), (figcs + 131072) << 1, (figcs + 131072) << 1)) {
@@ -181,7 +185,7 @@ public final class DropItemSystem {
             }
 
             switch (state[i]) {
-                case 0:
+                case STATE_FALLING:
                     y[i] += vel[i];
                     if (timer[i] < 8) {
                         if (vel[i] > -327680) {
@@ -193,15 +197,15 @@ public final class DropItemSystem {
                         }
                     }
                     break;
-                case 1:
+                case STATE_SCATTERING:
                     int ang = dir[i];
                     x[i] += BattleMath.speedCos(80, ang);
                     y[i] += BattleMath.speedSin(80, ang);
                     if (y[i] < 3145728 || x[i] < 1179648 || x[i] > 12582912) {
-                        state[i] = 0;
+                        state[i] = STATE_FALLING;
                     }
                     break;
-                case 2:
+                case STATE_COLLECTING:
                     int arc = BattleMath.arcTan2Deg(playerYFixed - y[i], playerXFixed - x[i]);
                     x0[i] = x[i];
                     y0[i] = y[i];
@@ -233,7 +237,7 @@ public final class DropItemSystem {
             }
 
             int frame = 0;
-            if (state[i] == 0 && timer[i] < 8) {
+            if (state[i] == STATE_FALLING && timer[i] < 8) {
                 frame = timer[i];
             }
 
@@ -256,21 +260,21 @@ public final class DropItemSystem {
 
     public void forceCollect(int mode) {
         for (int i = 0; i < CAPACITY; i++) {
-            if (!active[i] || state[i] == 2) {
+            if (!active[i] || state[i] == STATE_COLLECTING) {
                 continue;
             }
             if (mode == 0) {
                 timer[i] = 0;
-                state[i] = 2;
+                state[i] = STATE_COLLECTING;
             } else if (mode == 1) {
                 if (type[i] == TYPE_CRISIS) {
                     timer[i] = 0;
-                    state[i] = 2;
+                    state[i] = STATE_COLLECTING;
                 }
             } else if (mode == 2) {
                 if (type[i] != TYPE_FULL_POWER) {
                     timer[i] = 0;
-                    state[i] = 2;
+                    state[i] = STATE_COLLECTING;
                 }
             }
         }
@@ -283,7 +287,7 @@ public final class DropItemSystem {
                 continue;
             }
             vel[i] = 196608;
-            state[i] = 0;
+            state[i] = STATE_FALLING;
         }
     }
 

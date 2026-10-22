@@ -66,7 +66,7 @@ public final class StageAssets {
         openingActive = false;
         dialogueActive = false;
         for (int i = 0; i < activeSpellImages.length; i++) activeSpellImages[i] = false;
-        int[][] groups = { COMMON, stage == 4 && bossPhase ? STAGE5_BOSS_BACKGROUNDS : BACKGROUNDS[stage],
+        int[][] groups = { COMMON, stage == StageRuntime.STAGE_5 && bossPhase ? STAGE5_BOSS_BACKGROUNDS : BACKGROUNDS[stage],
                 PLAYERS[character], bossPhase ? bossImages() : ROUTE,
                 bossOnly ? EMPTY : OPENINGS[stage] };
         images.retain(groups);
@@ -76,7 +76,7 @@ public final class StageAssets {
     }
 
     private int[] bossImages() {
-        return stage == 3 && bossStep == 37 ? LAST_WORD : BOSSES[stage];
+        return stage == StageRuntime.STAGE_4 && bossStep == BossController.LAST_WORD_STEP ? LAST_WORD : BOSSES[stage];
     }
 
     public void releaseBoss(ImageBank images) {
@@ -86,23 +86,23 @@ public final class StageAssets {
     public static void setBackgroundDarkness(ImageBank images, int stage, int levels) {
         int[] backgrounds = BACKGROUNDS[stage];
         for (int i = 0; i < backgrounds.length; i++) images.setDarkness(backgrounds[i], levels);
-        if (stage == 4) images.setDarkness(100, levels);
+        if (stage == StageRuntime.STAGE_5) images.setDarkness(100, levels);
     }
 
     public static void setBackgroundOpacity(ImageBank images, int stage, boolean heavy) {
         int alpha = heavy ? 128 : 255;
         switch (stage) {
-            case 1: images.setOpacity(59, alpha); break;
-            case 2:
+            case StageRuntime.STAGE_2: images.setOpacity(59, alpha); break;
+            case StageRuntime.STAGE_3:
                 images.setOpacity(72, alpha);
                 images.setOpacity(73, alpha);
                 break;
-            case 3: images.setOpacity(83, heavy ? 127 : 255); break;
-            case 4:
+            case StageRuntime.STAGE_4: images.setOpacity(83, heavy ? 127 : 255); break;
+            case StageRuntime.STAGE_5:
                 images.setOpacity(98, alpha);
                 images.setTint(100, 0x80BFBFBF);
                 break;
-            case 5: images.setOpacity(107, alpha); break;
+            case StageRuntime.STAGE_6: images.setOpacity(107, alpha); break;
         }
     }
 
@@ -111,7 +111,7 @@ public final class StageAssets {
         if (bossMode && !bossPhase) {
             release(images, ROUTE);
             release(images, OPENINGS[stage]);
-            if (stage == 4) images.release(96);
+            if (stage == StageRuntime.STAGE_5) images.release(96);
             load(images, bossImages());
             bossPhase = true;
             midbossActive = false;
@@ -119,13 +119,13 @@ public final class StageAssets {
         if (!bossPhase) {
             boolean visible = false;
             for (int i = 0; i < enemies.length; i++) {
-                if (enemies[i][0] != 0 && enemies[i][11] == 100) {
+                if (enemies[i][StageRuntime.ENEMY_ACTIVE] != 0 && enemies[i][StageRuntime.ENEMY_MOVE_PATTERN] == BossController.MIDBOSS_PATTERN) {
                     visible = true;
                     break;
                 }
             }
             for (int i = 0; i < effects.length && !visible; i++) {
-                visible = effects[i][0] != 0 && effects[i][3] == MIDBOSS_EFFECTS[stage];
+                visible = effects[i][StageRuntime.EFFECT_ACTIVE] != 0 && effects[i][StageRuntime.EFFECT_ID] == MIDBOSS_EFFECTS[stage];
             }
             if (visible && !midbossActive) load(images, MIDBOSSES[stage]);
             if (!visible && midbossActive) release(images, MIDBOSSES[stage]);
@@ -137,7 +137,7 @@ public final class StageAssets {
         boolean visible = false;
         for (int i = 0; i < effects.length; i++) {
             // Effect IDs 23..36 are the seven pairs of opening animations.
-            if (effects[i][0] != 0 && effects[i][3] >= 23 && effects[i][3] <= 36) {
+            if (effects[i][StageRuntime.EFFECT_ACTIVE] != 0 && effects[i][StageRuntime.EFFECT_ID] >= 23 && effects[i][StageRuntime.EFFECT_ID] <= 36) {
                 visible = true;
                 break;
             }
@@ -151,22 +151,22 @@ public final class StageAssets {
         boolean orbs = false;
         boolean spheres = false;
         for (int i = 0; i < enemies.length; i++) {
-            if (enemies[i][0] == 0) continue;
-            int type = enemies[i][1];
+            if (enemies[i][StageRuntime.ENEMY_ACTIVE] == 0) continue;
+            int type = enemies[i][StageRuntime.ENEMY_APPEARANCE];
             if (type == 20 || type == 21) orbs = true;
             if (type == 22) spheres = true;
         }
         for (int i = 0; i < effects.length && !spheres; i++) {
-            spheres = effects[i][0] != 0 && effects[i][3] == 22;
+            spheres = effects[i][StageRuntime.EFFECT_ACTIVE] != 0 && effects[i][StageRuntime.EFFECT_ID] == 22;
         }
 
         boolean spellActive = boss.getBspellstep() != 0;
         int spellId = boss.getSpellId();
         int maskImage = visuals.getBlindAlpha() > 0 ? (visuals.getBlindSpellId() < 28 ? 65 : 64) : -1;
-        int offset = stage <= 3 ? stage - 1 : stage;
-        if (stage == 3 && bossStep == 37) offset = 3;
+        int offset = stage <= StageRuntime.STAGE_4 ? stage - 1 : stage;
+        if (stage == StageRuntime.STAGE_4 && bossStep == BossController.LAST_WORD_STEP) offset = 3;
         int cutInSprite = SpriteSheetCatalog.SINGLE_CUTIN_BASE + offset;
-        int cutInImage = stage == 0 ? -1 : sprites.getImageIndex(cutInSprite);
+        int cutInImage = stage == StageRuntime.STAGE_1 ? -1 : sprites.getImageIndex(cutInSprite);
         for (int i = 0; i < SPELL_IMAGES.length; i++) {
             int image = SPELL_IMAGES[i];
             boolean needed;
@@ -175,7 +175,7 @@ public final class StageAssets {
                 case 55:
                 case 56:
                     int character = image == 55 ? 108 : image == 56 ? 110 : 109;
-                    needed = stage == 0 && spellActive && (cutInCharacter == character || cutInCharacter == 111);
+                    needed = stage == StageRuntime.STAGE_1 && spellActive && (cutInCharacter == character || cutInCharacter == 111);
                     break;
                 case 64:
                 case 65:
@@ -187,7 +187,7 @@ public final class StageAssets {
                     needed = orbs;
                     break;
                 case 100:
-                    needed = stage == 4 && (timeStop > 0 || (spellActive && spellId >= 62 && spellId <= 73));
+                    needed = stage == StageRuntime.STAGE_5 && (timeStop > 0 || (spellActive && spellId >= 62 && spellId <= 73));
                     break;
                 case 103:
                 case 104:
@@ -199,7 +199,7 @@ public final class StageAssets {
                     break;
             }
             if (needed && !activeSpellImages[i]) {
-                if (image == cutInImage || (stage == 0 && image >= 54 && image <= 56)) {
+                if (image == cutInImage || (stage == StageRuntime.STAGE_1 && image >= 54 && image <= 56)) {
                     images.setOpacity(image, closeUpAlpha ? 128 : 255);
                 }
                 images.get(image);

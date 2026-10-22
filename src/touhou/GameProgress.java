@@ -1,5 +1,7 @@
 package touhou;
 
+import touhou.battle.BattleSessionConfig;
+
 /** Sole owner of persistent progress. Commands serialize read/modify/write and publish after success. */
 public final class GameProgress {
 
@@ -262,14 +264,14 @@ public final class GameProgress {
     }
 
     public synchronized void incPlayCountNormalByDifficulty(int level) {
-        if (level < 0 || level > 3) {
+        if (level < 0 || level > BattleSessionConfig.DIFFICULTY_LUNATIC) {
             throw new IllegalArgumentException("Invalid story difficulty: " + level);
         }
         incrementCounter(UD_NORMAL_EASY_COUNT + level);
     }
 
     public synchronized void incPlayCountPracticeByDifficulty(int level) {
-        if (level < 0 || level > 3) {
+        if (level < 0 || level > BattleSessionConfig.DIFFICULTY_LUNATIC) {
             throw new IllegalArgumentException("Invalid practice difficulty: " + level);
         }
         incrementCounter(UD_PRACTICE_EASY_COUNT + level);
@@ -294,7 +296,7 @@ public final class GameProgress {
     }
 
     private static void requireLevel(int level) {
-        if (level < 0 || level > 4) {
+        if (level < 0 || level > BattleSessionConfig.DIFFICULTY_EXTRA) {
             throw new IllegalArgumentException("Invalid score difficulty: " + level);
         }
     }

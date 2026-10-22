@@ -59,6 +59,6 @@ public final class VibrationController {
 
     private void refreshVibrationOptionNow() {
         int[] opt = GameOptions.load();
-        vibrationEnabled = opt[4] != 0;
+        vibrationEnabled = opt[GameOptions.IDX_VIBRATION] != 0;
     }
 }

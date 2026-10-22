@@ -9,6 +9,14 @@ import touhou.replay.ReplaySnapshotReader;
 import touhou.replay.ReplaySnapshotWriter;
 
 public final class Player {
+    public static final int REIMU = 0;
+    public static final int MARISA = 1;
+    public static final int ALICE = 2;
+    public static final int CHARACTER_COUNT = 3;
+    public static final int SHOT_A = 0;
+    public static final int SHOT_B = 1;
+    public static final int SHOT_TYPE_COUNT = 2;
+
     public static final int SNAPSHOT_SIZE = 223;
     // Movement constants and hitbox tuning.
     private static final int SPEED_MARISA_BOMB = 131072;
@@ -107,7 +115,7 @@ public final class Player {
         for (int i = 0; i < 4; i++) {
             optcx[i] = this.x;
             optcy[i] = this.y;
-            optdir[i] = (chara == 2) ? 180 : 0;
+            optdir[i] = (chara == ALICE) ? 180 : 0;
             optrad[i] = 0;
 
             opttgt[i] = -1;
@@ -118,7 +126,7 @@ public final class Player {
             optAimArc[i] = 90;
             optAimPower[i] = 4;
         }
-        if (chara != 2) {
+        if (chara != ALICE) {
             optdir[0] = 90;
             optdir[1] = 270;
         }
@@ -147,14 +155,14 @@ public final class Player {
     // Bomb state and Alice targeting reset.
     public void setBombActive(boolean bombActive) {
         this.bombActive = bombActive;
-        if (bombActive && chara == 2) {
+        if (bombActive && chara == ALICE) {
             aliceTarget = -1;
         }
     }
 
     // Set Alice target once when a homing hit is detected.
     public void setAliceTargetIfUnset(int targetIndex) {
-        if (chara != 2 || type != 0 || aliceTarget != -1) {
+        if (chara != ALICE || type != SHOT_A || aliceTarget != -1) {
             return;
         }
         aliceTarget = targetIndex;
@@ -173,7 +181,7 @@ public final class Player {
         // Reimu special ability: smaller hitbox. 
         // NOTE: In the orig.ver., the hitboxes of 3 player are the same size, which I think is a bug!
         // Fix: 0.75
-        return (chara == 0) ? REIMU_PLAYER_HITBOX : PLAYER_HITBOX_DEFAULT;
+        return (chara == REIMU) ? REIMU_PLAYER_HITBOX : PLAYER_HITBOX_DEFAULT;
     }
 
     // Replay snapshot I/O.
@@ -302,16 +310,16 @@ public final class Player {
     // Movement, input handling, and clamp to playfield bounds.
     public void update(int keys, int playX, int playY, int playW, int playH) {
         int slowSpd;
-        if (chara == 0) {
+        if (chara == REIMU) {
             slowSpd = 196608;
-        } else if (chara == 1) {
+        } else if (chara == MARISA) {
             slowSpd = 327680;
         } else {
             slowSpd = 262144;
         }
 
         int spd = slow ? slowSpd : (slowSpd + 196608);
-        if (bombActive && chara == 1) {
+        if (bombActive && chara == MARISA) {
             spd = SPEED_MARISA_BOMB;
         }
 
@@ -338,7 +346,7 @@ public final class Player {
             moveDir = 1;
         }
 
-        if (chara == 2 && type != 0) {
+        if (chara == ALICE && type != SHOT_A) {
             if (left) {
                 if (optbdir > -8) {
                     optbdir--;
@@ -399,7 +407,7 @@ public final class Player {
         int mode = slow ? 1 : 0;
 
         // Marisa A option sprite level depends on laser stage.
-        if (chara == 1 && type == 0) {
+        if (chara == MARISA && type == SHOT_A) {
             int s0 = 0;
             int s1 = 0;
             if (bullets != null) {
@@ -420,11 +428,11 @@ public final class Player {
         }
 
         // Alice option control and doll targeting.
-        if (chara == 2) {
+        if (chara == ALICE) {
             if (bombActive) {
                 aliceTarget = -1;
             }
-            if (type == 0) {
+            if (type == SHOT_A) {
                 // Alice type A: orbiting options with optional aiming.
                 if (mode != 0 && aliceTarget != -1 && (enemies == null || !enemies.isTargetable(aliceTarget))) {
                     aliceTarget = -1;
@@ -938,8 +946,8 @@ public final class Player {
         }
 
         // Reimu shot tables.
-        if (chara == 0) {
-            if (type == 0) {
+        if (chara == REIMU) {
+            if (type == SHOT_A) {
                 if (mode == 0) {
                     switch (shotLevel) {
                         case 0:
@@ -1242,8 +1250,8 @@ public final class Player {
         }
 
         // Marisa shot tables.
-        if (chara == 1) {
-            if (type == 0) {
+        if (chara == MARISA) {
+            if (type == SHOT_A) {
                 if (mode == 0) {
                     if ((fi & 1) == 0) {
                         switch (shotLevel) {
@@ -1393,7 +1401,7 @@ public final class Player {
         // Alice shot tables.
         int optLv = this.optLv;
 
-        if (type == 0) {
+        if (type == SHOT_A) {
             if ((fi & 1) != 0) {
                 return;
             }
@@ -1494,14 +1502,14 @@ public final class Player {
         int py = Fixed.toInt(y);
 
         if (sprites != null) {
-            if (chara == 0) {
+            if (chara == REIMU) {
                 int x1 = Fixed.toInt(optcx[1]);
                 int y1 = Fixed.toInt(optcy[1]);
                 int x0 = Fixed.toInt(optcx[0]);
                 int y0 = Fixed.toInt(optcy[0]);
                 sprites.draw(g, 27 + (tick & 0x3), x1, y1);
                 sprites.draw(g, 27 + (3 - ((tick + 1) & 0x3)), x0, y0);
-            } else if (chara == 1) {
+            } else if (chara == MARISA) {
                 int id = 100 + optSpriteLv;
                 int x1 = Fixed.toInt(optcx[1]);
                 int y1 = Fixed.toInt(optcy[1]);
@@ -1511,7 +1519,7 @@ public final class Player {
                 sprites.draw(g, id, x0, y0);
             } else {
                 int id = 731;
-                if (type == 0) {
+                if (type == SHOT_A) {
                     if (optbdir > 20) {
                         id = 732;
                     }

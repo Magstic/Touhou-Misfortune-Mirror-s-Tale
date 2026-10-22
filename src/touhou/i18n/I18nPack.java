@@ -7,6 +7,8 @@ import touhou.ResourceLoader;
 import touhou.ResourcePaths;
 
 final class I18nPack {
+    private static final int FORMAT_VERSION = 1;
+    private static final int HEADER_SIZE = 8;
     private static byte[] pack;
     private static String[] keys;
     private static int[] offsets;
@@ -75,14 +77,14 @@ final class I18nPack {
     }
 
     private static boolean parse(byte[] bytes) {
-        if (bytes == null || bytes.length < 8) {
+        if (bytes == null || bytes.length < HEADER_SIZE) {
             return false;
         }
         int position = 0;
         if (bytes[position++] != 'I' || bytes[position++] != '1' || bytes[position++] != '8' || bytes[position++] != 'N') {
             return false;
         }
-        if ((bytes[position++] & 0xFF) != 1 || bytes[position++] != 0) {
+        if ((bytes[position++] & 0xFF) != FORMAT_VERSION || bytes[position++] != 0) {
             return false;
         }
         int count = readU16(bytes, position);

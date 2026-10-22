@@ -1,8 +1,14 @@
 package touhou.stage;
 
 import touhou.SoundEffectSystem;
+import touhou.battle.BattleSessionConfig;
 
 public final class BossController {
+    public static final int MIDBOSS_PATTERN = 100;
+    public static final int BOSS_PATTERN = 101;
+    public static final int SECOND_BOSS_PATTERN = 102;
+    public static final int THIRD_BOSS_PATTERN = 103;
+    public static final int LAST_WORD_STEP = 37;
     public interface Host extends BossState, BossWorld, BossServices {}
 
     public interface BossState {
@@ -55,7 +61,7 @@ public final class BossController {
 
     private final Host host;
 
-    private final BossStageLogic[] stageLogic = new BossStageLogic[7];
+    private final BossStageLogic[] stageLogic = new BossStageLogic[StageRuntime.STAGE_COUNT];
 
     final int[] bwave = new int[3];
     int bspellcnt = 255;
@@ -75,13 +81,13 @@ public final class BossController {
     public BossController(Host host) {
         this.host = host;
 
-        stageLogic[0] = new Stage1BossLogic();
-        stageLogic[1] = new Stage2BossLogic();
-        stageLogic[2] = new Stage3BossLogic();
-        stageLogic[3] = new Stage4BossLogic();
-        stageLogic[4] = new Stage5BossLogic();
-        stageLogic[5] = new Stage6BossLogic();
-        stageLogic[6] = new StageExtraBossLogic();
+        stageLogic[StageRuntime.STAGE_1] = new Stage1BossLogic();
+        stageLogic[StageRuntime.STAGE_2] = new Stage2BossLogic();
+        stageLogic[StageRuntime.STAGE_3] = new Stage3BossLogic();
+        stageLogic[StageRuntime.STAGE_4] = new Stage4BossLogic();
+        stageLogic[StageRuntime.STAGE_5] = new Stage5BossLogic();
+        stageLogic[StageRuntime.STAGE_6] = new Stage6BossLogic();
+        stageLogic[StageRuntime.STAGE_EXTRA] = new StageExtraBossLogic();
     }
 
     private BossStageLogic getStageLogic(int stage) {
@@ -190,10 +196,10 @@ public final class BossController {
 
     public void tick(int enemyIdx) {
         int[][] enemylist = host.getEnemyList();
-        int mt = enemylist[enemyIdx][11];
+        int mt = enemylist[enemyIdx][StageRuntime.ENEMY_MOVE_PATTERN];
         int beforeBossf = host.getBossF();
 
-        if (mt == 100) {
+        if (mt == MIDBOSS_PATTERN) {
             if (host.isBossMode()) {
                 int bossf = host.getBossF();
                 if (bossf == 2) {
@@ -214,7 +220,7 @@ public final class BossController {
                 host.setBbaria(0);
             }
             int afterBossf = host.getBossF();
-            if (host.getGameMode() == 3 && beforeBossf == 2 && afterBossf != 2) {
+            if (host.getGameMode() == BattleSessionConfig.MODE_SPELL_PRACTICE && beforeBossf == 2 && afterBossf != 2) {
                 // Spell practice: entering a spell step via wb(step) must be invincible immediately (same frame).
                 host.setBbaria(2);
             }
@@ -250,7 +256,7 @@ public final class BossController {
             host.setBbaria(0);
         }
         int afterBossf = host.getBossF();
-        if (host.getGameMode() == 3 && beforeBossf == 2 && afterBossf != 2) {
+        if (host.getGameMode() == BattleSessionConfig.MODE_SPELL_PRACTICE && beforeBossf == 2 && afterBossf != 2) {
             // Spell practice: entering a spell step via wb(step) must be invincible immediately (same frame).
             host.setBbaria(2);
         }
@@ -307,7 +313,7 @@ public final class BossController {
     }
 
     void yb(int l, int n, int m) {
-        if (host.getGameMode() != 3 || m == 3) {
+        if (host.getGameMode() != BattleSessionConfig.MODE_SPELL_PRACTICE || m == 3) {
             k = 1;
             this.l = l;
             this.m = m;
@@ -332,29 +338,29 @@ public final class BossController {
         int[] bossy = host.getBossY();
 
         int idx = 0;
-        int mt = enemylist[enemyIdx][11];
-        if (mt == 102) {
+        int mt = enemylist[enemyIdx][StageRuntime.ENEMY_MOVE_PATTERN];
+        if (mt == SECOND_BOSS_PATTERN) {
             idx = 1;
-        } else if (mt == 103) {
+        } else if (mt == THIRD_BOSS_PATTERN) {
             idx = 2;
         }
 
         if (bossx[idx] == 0 && bossy[idx] == 0) {
-            bossx[idx] = enemylist[enemyIdx][5] >> 16;
-            bossy[idx] = enemylist[enemyIdx][6] >> 16;
+            bossx[idx] = enemylist[enemyIdx][StageRuntime.ENEMY_X] >> 16;
+            bossy[idx] = enemylist[enemyIdx][StageRuntime.ENEMY_Y] >> 16;
         }
 
-        if (enemylist[enemyIdx][5] < ((bossx[idx] + 1) << 16)) {
-            enemylist[enemyIdx][5] += enemylist[enemyIdx][14];
+        if (enemylist[enemyIdx][StageRuntime.ENEMY_X] < ((bossx[idx] + 1) << 16)) {
+            enemylist[enemyIdx][StageRuntime.ENEMY_X] += enemylist[enemyIdx][StageRuntime.ENEMY_VX];
         }
-        if (enemylist[enemyIdx][5] > ((bossx[idx] - 1) << 16)) {
-            enemylist[enemyIdx][5] -= enemylist[enemyIdx][14];
+        if (enemylist[enemyIdx][StageRuntime.ENEMY_X] > ((bossx[idx] - 1) << 16)) {
+            enemylist[enemyIdx][StageRuntime.ENEMY_X] -= enemylist[enemyIdx][StageRuntime.ENEMY_VX];
         }
-        if (enemylist[enemyIdx][6] < ((bossy[idx] + 1) << 16)) {
-            enemylist[enemyIdx][6] += enemylist[enemyIdx][15];
+        if (enemylist[enemyIdx][StageRuntime.ENEMY_Y] < ((bossy[idx] + 1) << 16)) {
+            enemylist[enemyIdx][StageRuntime.ENEMY_Y] += enemylist[enemyIdx][StageRuntime.ENEMY_VY];
         }
-        if (enemylist[enemyIdx][6] > ((bossy[idx] - 1) << 16)) {
-            enemylist[enemyIdx][6] -= enemylist[enemyIdx][15];
+        if (enemylist[enemyIdx][StageRuntime.ENEMY_Y] > ((bossy[idx] - 1) << 16)) {
+            enemylist[enemyIdx][StageRuntime.ENEMY_Y] -= enemylist[enemyIdx][StageRuntime.ENEMY_VY];
         }
 
         bwave[idx] = (bwave[idx] + 15) % 360;
@@ -366,7 +372,7 @@ public final class BossController {
             }
         }
 
-        if (mt == 100) {
+        if (mt == MIDBOSS_PATTERN) {
             BossStageLogic logic = getStageLogic(host.getStage());
             if (logic != null) {
                 logic.tickMidboss(this, enemyIdx);

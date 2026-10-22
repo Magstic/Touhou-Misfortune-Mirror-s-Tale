@@ -43,10 +43,10 @@ public final class InputSystem {
 
     public void refreshKeyOptions() {
         int[] opt = GameOptions.load();
-        optShotKey = opt[6];
-        optSlowKey = opt[7];
-        optSpellKey = opt[8];
-        optTenkeyMove = opt[5];
+        optShotKey = opt[GameOptions.IDX_SHOT_KEY];
+        optSlowKey = opt[GameOptions.IDX_SLOW_KEY];
+        optSpellKey = opt[GameOptions.IDX_SPELL_KEY];
+        optTenkeyMove = opt[GameOptions.IDX_TENKEY_MOVE];
     }
 
     public boolean onKeyPressed(int keyCode,

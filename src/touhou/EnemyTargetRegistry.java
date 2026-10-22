@@ -1,5 +1,7 @@
 package touhou;
 
+import touhou.stage.StageRuntime;
+
 /** Targeting projection of the enemy state owned by StageRuntime. It does not allocate enemies. */
 public final class EnemyTargetRegistry {
     public static final int CAPACITY = 32;

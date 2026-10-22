@@ -3,19 +3,21 @@ package touhou.battle;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
-import touhou.SpriteCatalog;
-import touhou.SpriteRenderer;
-import touhou.SpriteSheetCatalog;
 import touhou.AdditiveBackground;
 import touhou.Debug;
 import touhou.GameCore;
 import touhou.ImageBank;
 import touhou.Player;
+import touhou.SpriteCatalog;
+import touhou.SpriteRenderer;
+import touhou.SpriteSheetCatalog;
 import touhou.Trig;
 import touhou.i18n.I18n;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
+import touhou.stage.BossController;
 import touhou.stage.StageAssets;
+import touhou.stage.StageRuntime;
 import touhou.ui.StageClearResultPanel;
 import touhou.ui.UiDraw;
 
@@ -253,11 +255,11 @@ public final class BattleRenderer {
         int[][] enemylist = a.enemylist();
         boolean shielding = false;
         for (int i = 0; i < 32; i++) {
-            if (enemylist[i][0] == 0) {
+            if (enemylist[i][StageRuntime.ENEMY_ACTIVE] == 0) {
                 continue;
             }
-            int x = BattleRenderRules.fixedToScreen(a.originX(), enemylist[i][5]);
-            int y = BattleRenderRules.fixedToScreen(a.originY(), enemylist[i][6]);
+            int x = BattleRenderRules.fixedToScreen(a.originX(), enemylist[i][StageRuntime.ENEMY_X]);
+            int y = BattleRenderRules.fixedToScreen(a.originY(), enemylist[i][StageRuntime.ENEMY_Y]);
             int auraSprite = a.enemyAuraSpriteId(i);
             if (auraSprite != BattleEnemyVisuals.NO_SPRITE) {
                 drawSpriteAlpha(a, g, auraSprite, x, y, 127);
@@ -266,7 +268,7 @@ public final class BattleRenderer {
             if (spriteId == BattleEnemyVisuals.NO_SPRITE) {
                 continue;
             }
-            int type = enemylist[i][1];
+            int type = enemylist[i][StageRuntime.ENEMY_APPEARANCE];
             if ((type == 17 || type == 19) && !a.disableBossBombShieldCheat()
                     && a.bossVisualShieldActive() && a.bombCnt() > 0) {
                 shielding = true;
@@ -467,25 +469,25 @@ public final class BattleRenderer {
             g.setClip(PLAY_X, PLAY_Y, PLAY_W, PLAY_H);
 
             switch (a.stage()) {
-                case 0:
+                case StageRuntime.STAGE_1:
                     renderBgStage0(a, g);
                     break;
-                case 1:
+                case StageRuntime.STAGE_2:
                     renderBgStage1(a, g);
                     break;
-                case 2:
+                case StageRuntime.STAGE_3:
                     renderBgStage2(a, g);
                     break;
-                case 3:
+                case StageRuntime.STAGE_4:
                     renderBgStage3(a, g);
                     break;
-                case 4:
+                case StageRuntime.STAGE_5:
                     renderBgStage4(a, g);
                     break;
-                case 5:
+                case StageRuntime.STAGE_6:
                     renderBgStage5(a, g);
                     break;
-                case 6:
+                case StageRuntime.STAGE_EXTRA:
                     renderBgStage6(a, g);
                     break;
                 default:
@@ -1036,7 +1038,7 @@ public final class BattleRenderer {
             }
 
             switch (a.bossSpellCutInStage()) {
-                case 0:
+                case StageRuntime.STAGE_1:
                     switch (a.bossSpellCutInChara()) {
                         case 108:
                             sprites.draw(g, SpriteSheetCatalog.SUNNY_CUTIN, 130, 20 - (gc >> 2));
@@ -1054,22 +1056,22 @@ public final class BattleRenderer {
                             break;
                     }
                     break;
-                case 1:
+                case StageRuntime.STAGE_2:
                     sprites.draw(g, sprite, 0, 8 + (gc >> 3));
                     break;
-                case 2:
+                case StageRuntime.STAGE_3:
                     sprites.draw(g, sprite, 14 - (gc >> 2), 8 + (gc >> 2));
                     break;
-                case 3:
+                case StageRuntime.STAGE_4:
                     sprites.draw(g, sprite, 0, gc >> 2);
                     break;
-                case 4:
+                case StageRuntime.STAGE_5:
                     sprites.draw(g, sprite, 0 - (gc >> 2), gc >> 2);
                     break;
-                case 5:
+                case StageRuntime.STAGE_6:
                     sprites.draw(g, sprite, -20 + (gc >> 1), gc >> 2);
                     break;
-                case 6:
+                case StageRuntime.STAGE_EXTRA:
                     sprites.draw(g, sprite, 0, 8 - (gc >> 2));
                     break;
             }
@@ -1184,21 +1186,21 @@ public final class BattleRenderer {
 
         int idx = -1;
         idx = a.bossController().getHpBarTargetIndex();
-        if (idx < 0 || idx >= 32 || enemylist[idx][0] == 0) {
+        if (idx < 0 || idx >= 32 || enemylist[idx][StageRuntime.ENEMY_ACTIVE] == 0) {
             idx = -1;
         } else {
-            int mt = enemylist[idx][11];
+            int mt = enemylist[idx][StageRuntime.ENEMY_MOVE_PATTERN];
             if (mt < 101 || mt > 103) {
                 idx = -1;
             }
         }
         if (idx == -1) {
             for (int i = 0; i < 32; i++) {
-                if (enemylist[i][0] == 0) {
+                if (enemylist[i][StageRuntime.ENEMY_ACTIVE] == 0) {
                     continue;
                 }
-                int mt = enemylist[i][11];
-                if (mt >= 101 && mt <= 103) {
+                int mt = enemylist[i][StageRuntime.ENEMY_MOVE_PATTERN];
+                if (mt >= BossController.BOSS_PATTERN && mt <= BossController.THIRD_BOSS_PATTERN) {
                     idx = i;
                     break;
                 }
@@ -1206,11 +1208,11 @@ public final class BattleRenderer {
         }
         if (idx == -1) {
             for (int i = 0; i < 32; i++) {
-                if (enemylist[i][0] == 0) {
+                if (enemylist[i][StageRuntime.ENEMY_ACTIVE] == 0) {
                     continue;
                 }
-                int mt = enemylist[i][11];
-                if (mt >= 100 && mt <= 103) {
+                int mt = enemylist[i][StageRuntime.ENEMY_MOVE_PATTERN];
+                if (mt >= BossController.MIDBOSS_PATTERN && mt <= BossController.THIRD_BOSS_PATTERN) {
                     idx = i;
                     break;
                 }
@@ -1399,15 +1401,15 @@ public final class BattleRenderer {
         int yMax = (PLAY_Y + PLAY_H) << 16;
 
         for (int i = 0; i < 32; i++) {
-            if (enemylist[i][0] == 0) {
+            if (enemylist[i][StageRuntime.ENEMY_ACTIVE] == 0) {
                 continue;
             }
-            int mt = enemylist[i][11];
-            if (mt != 100 && mt != 101 && mt != 102 && mt != 103) {
+            int mt = enemylist[i][StageRuntime.ENEMY_MOVE_PATTERN];
+            if (mt != BossController.MIDBOSS_PATTERN && mt != BossController.BOSS_PATTERN && mt != BossController.SECOND_BOSS_PATTERN && mt != BossController.THIRD_BOSS_PATTERN) {
                 continue;
             }
-            int xFixed = enemylist[i][5];
-            int yFixed = enemylist[i][6];
+            int xFixed = enemylist[i][StageRuntime.ENEMY_X];
+            int yFixed = enemylist[i][StageRuntime.ENEMY_Y];
             if (xFixed <= 0 || xFixed >= xMax) {
                 continue;
             }

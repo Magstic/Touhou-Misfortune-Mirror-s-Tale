@@ -6,6 +6,7 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
 import touhou.ImageBank;
+import touhou.SpriteSheetCatalog;
 import touhou.i18n.I18n;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
@@ -158,7 +159,7 @@ public final class StoryScreen {
     }
 
     public void render(Graphics g, ImageBank imgs) {
-        UiDraw.drawRegion(g, imgs.get(83), 0, 0, 0, 0, 240, 240);
+        UiDraw.drawRegion(g, imgs.get(SpriteSheetCatalog.ICE_BACKGROUND_IMAGE), 0, 0, 0, 0, 240, 240);
         UiDraw.fillRectAlpha(g, 0, 0, 240, 240, 0x081629, 194);
 
         int remaining = TRANSITION_FRAMES - transitionFrame;

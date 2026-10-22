@@ -1,7 +1,6 @@
 package touhou.battle;
 
 import touhou.BulletSystem;
-import touhou.SpriteCatalog;
 import touhou.DropItemSystem;
 import touhou.EnemyBulletSystem;
 import touhou.EnemyTargetRegistry;
@@ -9,7 +8,9 @@ import touhou.Fixed;
 import touhou.Player;
 import touhou.ScoreSystem;
 import touhou.SoundEffectSystem;
+import touhou.SpriteCatalog;
 import touhou.stage.BossController;
+import touhou.stage.StageRuntime;
 
 /**
  * Battle gameplay engine.
@@ -317,29 +318,29 @@ public final class BattleEngine {
         }
 
         for (int i = 0; i < 64; i++) {
-            if (effectlist[i][0] == 0) {
+            if (effectlist[i][StageRuntime.EFFECT_ACTIVE] == 0) {
                 continue;
             }
 
-            effectlist[i][1] += 1;
-            effectlist[i][4] += effectlist[i][6];
-            effectlist[i][5] += effectlist[i][7];
+            effectlist[i][StageRuntime.EFFECT_TIMER] += 1;
+            effectlist[i][StageRuntime.EFFECT_X] += effectlist[i][StageRuntime.EFFECT_VX];
+            effectlist[i][StageRuntime.EFFECT_Y] += effectlist[i][StageRuntime.EFFECT_VY];
 
-            int id = effectlist[i][3];
+            int id = effectlist[i][StageRuntime.EFFECT_ID];
             if (id == 21) {
-                if (effectlist[i][1] >= effectlist[i][8]) {
-                    effectlist[i][0] = 0;
+                if (effectlist[i][StageRuntime.EFFECT_TIMER] >= effectlist[i][StageRuntime.EFFECT_DELAY]) {
+                    effectlist[i][StageRuntime.EFFECT_ACTIVE] = 0;
                 }
                 continue;
             }
 
             if (id == 16) {
-                effectlist[i][7] = (effectlist[i][2] - 1) << 1;
+                effectlist[i][StageRuntime.EFFECT_VY] = (effectlist[i][StageRuntime.EFFECT_FRAME] - 1) << 1;
             } else if (id == 17 || id == 18) {
-                if (effectlist[i][2] == 0) {
-                    effectlist[i][7] = 0;
+                if (effectlist[i][StageRuntime.EFFECT_FRAME] == 0) {
+                    effectlist[i][StageRuntime.EFFECT_VY] = 0;
                 } else {
-                    effectlist[i][7] = (effectlist[i][2] - 2) << 1;
+                    effectlist[i][StageRuntime.EFFECT_VY] = (effectlist[i][StageRuntime.EFFECT_FRAME] - 2) << 1;
                 }
             }
 
@@ -348,25 +349,25 @@ public final class BattleEngine {
                 row = effectTable[id];
             }
             if (row == null || row.length == 0) {
-                effectlist[i][0] = 0;
+                effectlist[i][StageRuntime.EFFECT_ACTIVE] = 0;
                 continue;
             }
 
-            int frame = effectlist[i][2];
+            int frame = effectlist[i][StageRuntime.EFFECT_FRAME];
             int p = frame << 1;
             if (p < 0 || p >= row.length) {
-                effectlist[i][0] = 0;
+                effectlist[i][StageRuntime.EFFECT_ACTIVE] = 0;
                 continue;
             }
 
             int dur = row[p];
-            if (dur < effectlist[i][1]) {
-                effectlist[i][1] = 0;
-                effectlist[i][2] = frame + 1;
-                frame = effectlist[i][2];
+            if (dur < effectlist[i][StageRuntime.EFFECT_TIMER]) {
+                effectlist[i][StageRuntime.EFFECT_TIMER] = 0;
+                effectlist[i][StageRuntime.EFFECT_FRAME] = frame + 1;
+                frame = effectlist[i][StageRuntime.EFFECT_FRAME];
                 p = frame << 1;
                 if (p < 0 || p >= row.length) {
-                    effectlist[i][0] = 0;
+                    effectlist[i][StageRuntime.EFFECT_ACTIVE] = 0;
                     continue;
                 }
                 dur = row[p];
@@ -374,23 +375,23 @@ public final class BattleEngine {
 
             if (id >= 6 && id <= 15) {
                 if (host != null) {
-                    host.spawnStageEffect(3, effectlist[i][4], effectlist[i][5]);
-                    host.spawnStageEffect(4, effectlist[i][4], effectlist[i][5]);
-                    host.spawnStageEffect(5, effectlist[i][4], effectlist[i][5]);
+                    host.spawnStageEffect(3, effectlist[i][StageRuntime.EFFECT_X], effectlist[i][StageRuntime.EFFECT_Y]);
+                    host.spawnStageEffect(4, effectlist[i][StageRuntime.EFFECT_X], effectlist[i][StageRuntime.EFFECT_Y]);
+                    host.spawnStageEffect(5, effectlist[i][StageRuntime.EFFECT_X], effectlist[i][StageRuntime.EFFECT_Y]);
                 }
-                if (effectlist[i][2] != 0) {
+                if (effectlist[i][StageRuntime.EFFECT_FRAME] != 0) {
                     if (host != null) {
-                        host.spawnStageEffect(3, effectlist[i][4], effectlist[i][5]);
-                        host.spawnStageEffect(3, effectlist[i][4], effectlist[i][5]);
-                        host.spawnStageEffect(4, effectlist[i][4], effectlist[i][5]);
-                        host.spawnStageEffect(4, effectlist[i][4], effectlist[i][5]);
-                        host.spawnStageEffect(5, effectlist[i][4], effectlist[i][5]);
-                        host.spawnStageEffect(5, effectlist[i][4], effectlist[i][5]);
+                        host.spawnStageEffect(3, effectlist[i][StageRuntime.EFFECT_X], effectlist[i][StageRuntime.EFFECT_Y]);
+                        host.spawnStageEffect(3, effectlist[i][StageRuntime.EFFECT_X], effectlist[i][StageRuntime.EFFECT_Y]);
+                        host.spawnStageEffect(4, effectlist[i][StageRuntime.EFFECT_X], effectlist[i][StageRuntime.EFFECT_Y]);
+                        host.spawnStageEffect(4, effectlist[i][StageRuntime.EFFECT_X], effectlist[i][StageRuntime.EFFECT_Y]);
+                        host.spawnStageEffect(5, effectlist[i][StageRuntime.EFFECT_X], effectlist[i][StageRuntime.EFFECT_Y]);
+                        host.spawnStageEffect(5, effectlist[i][StageRuntime.EFFECT_X], effectlist[i][StageRuntime.EFFECT_Y]);
                         host.setResetFlag(2);
                         host.setTargetFps(16);
                     }
                 }
-                if (effectlist[i][2] == 2) {
+                if (effectlist[i][StageRuntime.EFFECT_FRAME] == 2) {
                     if (host != null) {
                         host.setFlash(1);
                     }
@@ -398,12 +399,12 @@ public final class BattleEngine {
             }
 
             if (dur == 255) {
-                if (effectlist[i][8] > 0) {
-                    effectlist[i][2] = 0;
-                    effectlist[i][1] = 0;
-                    effectlist[i][8] -= 1;
+                if (effectlist[i][StageRuntime.EFFECT_DELAY] > 0) {
+                    effectlist[i][StageRuntime.EFFECT_FRAME] = 0;
+                    effectlist[i][StageRuntime.EFFECT_TIMER] = 0;
+                    effectlist[i][StageRuntime.EFFECT_DELAY] -= 1;
                 } else {
-                    effectlist[i][0] = 0;
+                    effectlist[i][StageRuntime.EFFECT_ACTIVE] = 0;
                 }
             }
         }
@@ -472,13 +473,13 @@ public final class BattleEngine {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
-        if (enemylist[enemyIndex][16] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_TARGETABLE] == 0) {
             return;
         }
-        if (enemylist[enemyIndex][21] == 8) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_DROP_TYPE] == 8) {
             return;
         }
         if (sBbaria != 0) {
@@ -491,27 +492,27 @@ public final class BattleEngine {
             return;
         }
 
-        int enemyKind = enemylist[enemyIndex][1];
+        int enemyKind = enemylist[enemyIndex][StageRuntime.ENEMY_APPEARANCE];
         if (!disableBossBombShieldCheat && (enemyKind == 17 || enemyKind == 19) && bossWrk != null && bossWrk.length > 2 && bossWrk[2] != 0 && bombCnt > 0) {
             // DoJa : kind 17/19 uses m_bossWrk[2] + s_sccnt for special bomb/spell flicker.
             // Use the same condition to gate bullet damage (boss invincibility during bomb).
             // Also mark as untargetable for homing devices during invincibility.
-            enemylist[enemyIndex][16] = 0;
+            enemylist[enemyIndex][StageRuntime.ENEMY_TARGETABLE] = 0;
             return;
         }
 
-        int enemyMt = enemylist[enemyIndex][11];
+        int enemyMt = enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_PATTERN];
 
-        int ex = enemylist[enemyIndex][5];
-        int ey = enemylist[enemyIndex][6];
-        int el = ex - enemylist[enemyIndex][17];
-        int et = ey - enemylist[enemyIndex][19];
-        int ew = enemylist[enemyIndex][17] + enemylist[enemyIndex][18];
-        int eh = enemylist[enemyIndex][19] + enemylist[enemyIndex][20];
+        int ex = enemylist[enemyIndex][StageRuntime.ENEMY_X];
+        int ey = enemylist[enemyIndex][StageRuntime.ENEMY_Y];
+        int el = ex - enemylist[enemyIndex][StageRuntime.ENEMY_HIT_LEFT];
+        int et = ey - enemylist[enemyIndex][StageRuntime.ENEMY_HIT_TOP];
+        int ew = enemylist[enemyIndex][StageRuntime.ENEMY_HIT_LEFT] + enemylist[enemyIndex][StageRuntime.ENEMY_HIT_RIGHT];
+        int eh = enemylist[enemyIndex][StageRuntime.ENEMY_HIT_TOP] + enemylist[enemyIndex][StageRuntime.ENEMY_HIT_BOTTOM];
 
         int max = bullets.capacity();
         for (int i = 0; i < max; i++) {
-            if (enemylist[enemyIndex][0] == 0) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
                 return;
             }
             if (!bullets.isActive(i) || !bullets.isFromPlayer(i)) {
@@ -644,7 +645,7 @@ public final class BattleEngine {
                 dmg = 1;
             }
 
-            if (enemyMt == 100 || enemyMt == 101 || enemyMt == 102 || enemyMt == 103) {
+            if (enemyMt == BossController.MIDBOSS_PATTERN || enemyMt == BossController.BOSS_PATTERN || enemyMt == BossController.SECOND_BOSS_PATTERN || enemyMt == BossController.THIRD_BOSS_PATTERN) {
                 if (bossController != null) {
                     if (bossController.applyBossDamage(dmg) <= 0) {
                         if (host != null) {
@@ -657,8 +658,8 @@ public final class BattleEngine {
                     player.setAliceTargetIfUnset(enemyIndex);
                 }
             } else {
-                enemylist[enemyIndex][4] -= dmg;
-                if (enemylist[enemyIndex][4] <= 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_HP] -= dmg;
+                if (enemylist[enemyIndex][StageRuntime.ENEMY_HP] <= 0) {
                     if (host != null) {
                         host.onEnemyKilled(enemyIndex);
                     }
@@ -841,16 +842,16 @@ public final class BattleEngine {
         int playerTop = playerYFixed - playerRadiusFixed;
 
         for (int i = 0; i < enemylist.length; i++) {
-            if (enemylist[i][0] == 0) {
+            if (enemylist[i][StageRuntime.ENEMY_ACTIVE] == 0) {
                 continue;
             }
 
-            int ex = enemylist[i][5];
-            int ey = enemylist[i][6];
-            int el = ex - enemylist[i][17];
-            int et = ey - enemylist[i][19];
-            int ew = enemylist[i][17] + enemylist[i][18];
-            int eh = enemylist[i][19] + enemylist[i][20];
+            int ex = enemylist[i][StageRuntime.ENEMY_X];
+            int ey = enemylist[i][StageRuntime.ENEMY_Y];
+            int el = ex - enemylist[i][StageRuntime.ENEMY_HIT_LEFT];
+            int et = ey - enemylist[i][StageRuntime.ENEMY_HIT_TOP];
+            int ew = enemylist[i][StageRuntime.ENEMY_HIT_LEFT] + enemylist[i][StageRuntime.ENEMY_HIT_RIGHT];
+            int eh = enemylist[i][StageRuntime.ENEMY_HIT_TOP] + enemylist[i][StageRuntime.ENEMY_HIT_BOTTOM];
 
             if (BattleMath.rectsOverlapFixed(el, et, ew, eh, playerLeft, playerTop, playerSize, playerSize)) {
                 return true;

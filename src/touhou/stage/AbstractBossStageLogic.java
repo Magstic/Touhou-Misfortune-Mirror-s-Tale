@@ -1,5 +1,8 @@
 package touhou.stage;
 
+import touhou.battle.BattleSessionConfig;
+
+
 /** Stage patterns operate on the Controller's sole state, including during Host callbacks. */
 abstract class AbstractBossStageLogic implements BossStageLogic {
     BossController core;
@@ -42,7 +45,7 @@ abstract class AbstractBossStageLogic implements BossStageLogic {
     }
 
     void yb(int targetIndex, int nameIndex, int mode) {
-        if (host.getGameMode() != 3 || mode == 3) {
+        if (host.getGameMode() != BattleSessionConfig.MODE_SPELL_PRACTICE || mode == 3) {
             core.k = 1;
             core.l = targetIndex;
             core.m = mode;

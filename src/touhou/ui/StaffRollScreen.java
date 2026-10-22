@@ -4,9 +4,10 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
-import touhou.SpriteRenderer;
 import touhou.GameCore;
 import touhou.ImageBank;
+import touhou.SpriteRenderer;
+import touhou.SpriteSheetCatalog;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 
@@ -114,7 +115,7 @@ public final class StaffRollScreen {
             this.imgs = imgs;
         }
 
-        Image bg = (this.imgs != null) ? this.imgs.get(37) : null;
+        Image bg = (this.imgs != null) ? this.imgs.get(SpriteSheetCatalog.MENU_BACKGROUND_IMAGE) : null;
         if (bg != null) {
             UiDraw.drawRegion(g, bg, 0, 0, 0, 0, 240, 240);
         } else {

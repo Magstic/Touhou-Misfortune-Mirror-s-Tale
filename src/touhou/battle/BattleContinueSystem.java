@@ -17,7 +17,7 @@ public final class BattleContinueSystem {
             return;
         }
         // Mirrors DoJa : s_continue = 3 for normal runs.
-        remainingContinues = (gamemode == 0) ? 3 : 0;
+        remainingContinues = (gamemode == BattleSessionConfig.MODE_STORY) ? 3 : 0;
     }
 
     public int getRemainingContinues() {
@@ -32,7 +32,7 @@ public final class BattleContinueSystem {
         if (spellPractice) {
             return false;
         }
-        if (gamemode != 0) {
+        if (gamemode != BattleSessionConfig.MODE_STORY) {
             return false;
         }
         return remainingContinues > 0;

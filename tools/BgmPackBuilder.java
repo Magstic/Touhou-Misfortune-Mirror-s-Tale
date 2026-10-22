@@ -44,7 +44,7 @@ public final class BgmPackBuilder {
             }
         }
 
-        int headerSize = 16 + entryCount * 8;
+        int headerSize = BgmCatalog.HEADER_SIZE + entryCount * BgmCatalog.ENTRY_SIZE;
         int[] offsets = new int[entryCount];
         int[] lengths = new int[entryCount];
         Arrays.fill(offsets, -1);

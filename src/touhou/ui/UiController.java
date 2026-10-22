@@ -2,11 +2,14 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Graphics;
 
-import touhou.SpriteRenderer;
 import touhou.ImageBank;
+import touhou.Player;
 import touhou.ResultStats;
 import touhou.SoundEffectSystem;
+import touhou.SpriteRenderer;
+import touhou.SpriteSheetCatalog;
 import touhou.UnlockFlags;
+import touhou.battle.BattleSessionConfig;
 import touhou.i18n.TextId;
 
 public final class UiController {
@@ -237,11 +240,11 @@ public final class UiController {
     private void updateTitle(int pressed) {
         int action = title.update(pressed);
         if (action == TitleScreen.ACTION_START) {
-            openStartSetup(0);
+            openStartSetup(BattleSessionConfig.MODE_STORY);
         } else if (action == TitleScreen.ACTION_EXTRA_START) {
-            openStartSetup(1);
+            openStartSetup(BattleSessionConfig.MODE_EXTRA);
         } else if (action == TitleScreen.ACTION_PRACTICE) {
-            openStartSetup(2);
+            openStartSetup(BattleSessionConfig.MODE_STAGE_PRACTICE);
         } else if (action == TitleScreen.ACTION_HELP) {
             help.enter();
             transitionTo(STATE_HELP);
@@ -315,7 +318,7 @@ public final class UiController {
         if (r.kind == SpellPracticeScreen.Result.KIND_BACK_TO_TITLE) {
             returnToTitleKeepCursor();
         } else if (r.kind == SpellPracticeScreen.Result.KIND_START_PRACTICE) {
-            if (r.chara == 2 && !UnlockFlags.isAliceUnlocked()) {
+            if (r.chara == Player.ALICE && !UnlockFlags.isAliceUnlocked()) {
                 return false;
             }
             if (listener != null) {
@@ -414,31 +417,35 @@ public final class UiController {
         int[] sheets;
         switch (nextState) {
             case STATE_STARTUP_LANGUAGE:
-                sheets = new int[] { 0, 2, 3, 5, 127 };
+                sheets = new int[] { SpriteSheetCatalog.TITLE_BACKGROUND_IMAGE, SpriteSheetCatalog.TITLE_GLYPHS_IMAGE,
+                        SpriteSheetCatalog.TITLE_CAPTION_IMAGE, SpriteSheetCatalog.TITLE_PORTRAIT_IMAGE, 127 };
                 break;
             case STATE_TITLE:
             case STATE_QUIT:
-                sheets = new int[] { 0, 1, 2, 3, 5 };
+                sheets = new int[] { SpriteSheetCatalog.TITLE_BACKGROUND_IMAGE, 1, SpriteSheetCatalog.TITLE_GLYPHS_IMAGE,
+                        SpriteSheetCatalog.TITLE_CAPTION_IMAGE, SpriteSheetCatalog.TITLE_PORTRAIT_IMAGE };
                 break;
             case STATE_START_SETUP:
-                sheets = new int[] { 6, setup.getGameMode() == 1 ? 8 : 7, 28, 37 };
+                sheets = new int[] { SpriteSheetCatalog.CHARACTER_PORTRAITS_IMAGE,
+                        setup.getGameMode() == BattleSessionConfig.MODE_EXTRA ? SpriteSheetCatalog.EXTRA_DIFFICULTY_IMAGE : SpriteSheetCatalog.DIFFICULTY_IMAGE,
+                        28, SpriteSheetCatalog.MENU_BACKGROUND_IMAGE };
                 break;
             case STATE_HELP:
-                sheets = new int[] { 4, 10 };
+                sheets = new int[] { SpriteSheetCatalog.HELP_ARROWS_IMAGE, 10 };
                 break;
             case STATE_SPELL_PRACTICE:
-                sheets = new int[] { 6 };
+                sheets = new int[] { SpriteSheetCatalog.CHARACTER_PORTRAITS_IMAGE };
                 break;
             case STATE_STORY:
-                sheets = new int[] { 83 };
+                sheets = new int[] { SpriteSheetCatalog.ICE_BACKGROUND_IMAGE };
                 break;
             case STATE_REPLAY:
-                sheets = new int[] { 6, 37 };
+                sheets = new int[] { SpriteSheetCatalog.CHARACTER_PORTRAITS_IMAGE, SpriteSheetCatalog.MENU_BACKGROUND_IMAGE };
                 break;
             case STATE_REPLAY_RECEIVE:
             case STATE_REPLAY_SEND:
             case STATE_REPLAY_FILES:
-                sheets = new int[] { 37 };
+                sheets = new int[] { SpriteSheetCatalog.MENU_BACKGROUND_IMAGE };
                 break;
             default:
                 sheets = new int[0];

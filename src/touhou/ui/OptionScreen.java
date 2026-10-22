@@ -158,7 +158,7 @@ public final class OptionScreen {
         if (listener == null) {
             return;
         }
-        listener.onVolumesChanged(opt[1], opt[2]);
+        listener.onVolumesChanged(opt[GameOptions.IDX_BGM_VOLUME], opt[GameOptions.IDX_SE_VOLUME]);
         int mask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
         listener.onSeMaskChanged(mask);
         listener.onHeavyBgmChanged(GameOptions.isHeavyBgmEnabled(opt));
@@ -404,21 +404,21 @@ public final class OptionScreen {
 
     private void adjustOptionValue(int dir) {
         if (cursorUD == 0) {
-            opt[1] = clamp(opt[1] + dir * 10, 0, 100);
+            opt[GameOptions.IDX_BGM_VOLUME] = clamp(opt[GameOptions.IDX_BGM_VOLUME] + dir * 10, 0, 100);
             GameOptions.save(opt);
             if (listener != null) {
-                listener.onVolumesChanged(opt[1], opt[2]);
+                listener.onVolumesChanged(opt[GameOptions.IDX_BGM_VOLUME], opt[GameOptions.IDX_SE_VOLUME]);
             }
         } else if (cursorUD == 1) {
-            opt[2] = clamp(opt[2] + dir * 10, 0, 100);
+            opt[GameOptions.IDX_SE_VOLUME] = clamp(opt[GameOptions.IDX_SE_VOLUME] + dir * 10, 0, 100);
             GameOptions.save(opt);
             if (listener != null) {
-                listener.onVolumesChanged(opt[1], opt[2]);
+                listener.onVolumesChanged(opt[GameOptions.IDX_BGM_VOLUME], opt[GameOptions.IDX_SE_VOLUME]);
             }
         } else if (cursorUD == 2) {
             // S.E. config entry (no value).
         } else if (cursorUD == 3) {
-            opt[4] ^= 1;
+            opt[GameOptions.IDX_VIBRATION] ^= 1;
             GameOptions.save(opt);
         }
     }
@@ -549,15 +549,15 @@ public final class OptionScreen {
 
     private void adjustGameValue(int dir) {
         if (cursorUD == 0) {
-            opt[0] = clamp(opt[0] + dir, 1, 6);
+            opt[GameOptions.IDX_LIVES] = clamp(opt[GameOptions.IDX_LIVES] + dir, 1, 6);
         } else if (cursorUD == 1) {
-            opt[5] ^= 1;
+            opt[GameOptions.IDX_TENKEY_MOVE] ^= 1;
         } else if (cursorUD == 2) {
-            opt[6] = MenuCursor.move(opt[6], dir, 14);
+            opt[GameOptions.IDX_SHOT_KEY] = MenuCursor.move(opt[GameOptions.IDX_SHOT_KEY], dir, 14);
         } else if (cursorUD == 3) {
-            opt[7] = MenuCursor.move(opt[7], dir, 14);
+            opt[GameOptions.IDX_SLOW_KEY] = MenuCursor.move(opt[GameOptions.IDX_SLOW_KEY], dir, 14);
         } else if (cursorUD == 4) {
-            opt[8] = MenuCursor.move(opt[8], dir, 14);
+            opt[GameOptions.IDX_SPELL_KEY] = MenuCursor.move(opt[GameOptions.IDX_SPELL_KEY], dir, 14);
         }
     }
 
@@ -820,19 +820,19 @@ public final class OptionScreen {
 
     private String optionValueText(int idx) {
         if (idx == 0) {
-            if (opt[1] == 0) {
+            if (opt[GameOptions.IDX_BGM_VOLUME] == 0) {
                 return UiText.get(TextId.COMMON_OFF);
             }
-            return String.valueOf(opt[1]);
+            return String.valueOf(opt[GameOptions.IDX_BGM_VOLUME]);
         }
         if (idx == 1) {
-            return String.valueOf(opt[2]);
+            return String.valueOf(opt[GameOptions.IDX_SE_VOLUME]);
         }
         if (idx == 2) {
             return UiText.get(TextId.COMMON_NEXT);
         }
         if (idx == 3) {
-            return (opt[4] == 0) ? UiText.get(TextId.COMMON_OFF) : UiText.get(TextId.COMMON_ON);
+            return (opt[GameOptions.IDX_VIBRATION] == 0) ? UiText.get(TextId.COMMON_OFF) : UiText.get(TextId.COMMON_ON);
         }
         if (idx == 4) {
             return UiText.get(TextId.COMMON_NEXT);
@@ -883,19 +883,19 @@ public final class OptionScreen {
 
     private String gameValueText(int idx) {
         if (idx == 0) {
-            return String.valueOf(opt[0]);
+            return String.valueOf(opt[GameOptions.IDX_LIVES]);
         }
         if (idx == 1) {
-            return (opt[5] == 0) ? UiText.get(TextId.COMMON_OFF) : UiText.get(TextId.COMMON_ON);
+            return (opt[GameOptions.IDX_TENKEY_MOVE] == 0) ? UiText.get(TextId.COMMON_OFF) : UiText.get(TextId.COMMON_ON);
         }
         if (idx == 2) {
-            return keyLabel(opt[6]);
+            return keyLabel(opt[GameOptions.IDX_SHOT_KEY]);
         }
         if (idx == 3) {
-            return keyLabel(opt[7]);
+            return keyLabel(opt[GameOptions.IDX_SLOW_KEY]);
         }
         if (idx == 4) {
-            return keyLabel(opt[8]);
+            return keyLabel(opt[GameOptions.IDX_SPELL_KEY]);
         }
         if (idx == 5) {
             return UiText.get(TextId.COMMON_NEXT);

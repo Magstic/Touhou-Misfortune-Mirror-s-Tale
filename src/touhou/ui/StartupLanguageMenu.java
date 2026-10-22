@@ -2,10 +2,10 @@ package touhou.ui;
 
 import javax.microedition.lcdui.Graphics;
 
-import touhou.SpriteSheetCatalog;
-import touhou.SpriteRenderer;
 import touhou.GameOptions;
 import touhou.ImageBank;
+import touhou.SpriteRenderer;
+import touhou.SpriteSheetCatalog;
 import touhou.i18n.I18nBootstrap;
 
 public final class StartupLanguageMenu {
@@ -71,7 +71,7 @@ public final class StartupLanguageMenu {
             return;
         }
 
-        UiDraw.drawRegion(g, imgs.get(0), 0, 0, 0, 0, 240, 240);
+        UiDraw.drawRegion(g, imgs.get(SpriteSheetCatalog.TITLE_BACKGROUND_IMAGE), 0, 0, 0, 0, 240, 240);
 
         int wob = 4 - (count >> 1);
         if (sprites != null) {
@@ -92,7 +92,7 @@ public final class StartupLanguageMenu {
             }
         }
 
-        g.drawImage(imgs.get(5), 5, 93, Graphics.TOP | Graphics.LEFT);
+        g.drawImage(imgs.get(SpriteSheetCatalog.TITLE_PORTRAIT_IMAGE), 5, 93, Graphics.TOP | Graphics.LEFT);
 
         UiDraw.fillRectAlpha(g, 0, 0, 240, 240, TINT_RGB, TINT_ALPHA);
 

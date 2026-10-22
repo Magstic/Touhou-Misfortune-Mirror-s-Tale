@@ -1,5 +1,7 @@
 package touhou;
 
+import touhou.battle.BattleSessionConfig;
+
 /** Owns lifecycle/gameplay clocks and translates events into serialized progress commands. */
 public final class ResultStats {
     public static final ResultStats INSTANCE = new ResultStats();
@@ -47,11 +49,11 @@ public final class ResultStats {
         if (replayActive) {
             return;
         }
-        if (gamemode == 0) {
+        if (gamemode == BattleSessionConfig.MODE_STORY) {
             GameProgress.INSTANCE.incPlayCountNormalByDifficulty(level);
-        } else if (gamemode == 2) {
+        } else if (gamemode == BattleSessionConfig.MODE_STAGE_PRACTICE) {
             GameProgress.INSTANCE.incPlayCountPracticeByDifficulty(level);
-        } else if (gamemode == 1) {
+        } else if (gamemode == BattleSessionConfig.MODE_EXTRA) {
             GameProgress.INSTANCE.incPlayCountExtra();
         }
         startPlaytime();

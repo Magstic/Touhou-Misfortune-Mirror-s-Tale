@@ -4,12 +4,15 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
-import touhou.SpriteRenderer;
 import touhou.ImageBank;
+import touhou.SpriteRenderer;
+import touhou.SpriteSheetCatalog;
+import touhou.battle.BattleSessionConfig;
 import touhou.i18n.SpellText;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 import touhou.replay.ReplayHeader;
+import touhou.stage.StageRuntime;
 
 final class ReplayUi {
     // Shared replay presentation for save, playback, send and receive screens.
@@ -22,7 +25,7 @@ final class ReplayUi {
     }
 
     static void renderBackground(Graphics g, ImageBank images) {
-        Image background = images == null ? null : images.get(37);
+        Image background = images == null ? null : images.get(SpriteSheetCatalog.MENU_BACKGROUND_IMAGE);
         if (background != null) {
             UiDraw.drawRegion(g, background, 0, 0, 0, 0, 240, 240);
             for (int y = 0; y < 240; y += 8) {
@@ -155,7 +158,7 @@ final class ReplayUi {
                 int detailClipW = boxW - 12 - tagsW;
                 if (detailClipW < 20) { detailClipW = 20; }
 
-                if (h.getMode() == 3) {
+                if (h.getMode() == BattleSessionConfig.MODE_SPELL_PRACTICE) {
                     int spellId = h.getSpellId();
                     String name = getSpellName(spellId);
 
@@ -223,15 +226,15 @@ final class ReplayUi {
 
     static String difficultyName(int v) {
         switch (v) {
-            case 0:
+            case BattleSessionConfig.DIFFICULTY_EASY:
                 return UiText.get(TextId.REPLAY_DIFFICULTY_EASY);
-            case 1:
+            case BattleSessionConfig.DIFFICULTY_NORMAL:
                 return UiText.get(TextId.REPLAY_DIFFICULTY_NORMAL);
-            case 2:
+            case BattleSessionConfig.DIFFICULTY_HARD:
                 return UiText.get(TextId.REPLAY_DIFFICULTY_HARD);
-            case 3:
+            case BattleSessionConfig.DIFFICULTY_LUNATIC:
                 return UiText.get(TextId.REPLAY_DIFFICULTY_LUNATIC);
-            case 4:
+            case BattleSessionConfig.DIFFICULTY_EXTRA:
                 return UiText.get(TextId.REPLAY_DIFFICULTY_EXTRA);
             default:
                 return "-";
@@ -240,19 +243,19 @@ final class ReplayUi {
 
     static String stageName(int v) {
         switch (v) {
-            case 0:
+            case StageRuntime.STAGE_1:
                 return UiText.get(TextId.REPLAY_STAGE_1);
-            case 1:
+            case StageRuntime.STAGE_2:
                 return UiText.get(TextId.REPLAY_STAGE_2);
-            case 2:
+            case StageRuntime.STAGE_3:
                 return UiText.get(TextId.REPLAY_STAGE_3);
-            case 3:
+            case StageRuntime.STAGE_4:
                 return UiText.get(TextId.REPLAY_STAGE_4);
-            case 4:
+            case StageRuntime.STAGE_5:
                 return UiText.get(TextId.REPLAY_STAGE_5);
-            case 5:
+            case StageRuntime.STAGE_6:
                 return UiText.get(TextId.REPLAY_STAGE_6);
-            case 6:
+            case StageRuntime.STAGE_EXTRA:
                 return UiText.get(TextId.REPLAY_STAGE_EX);
             default:
                 return "-";
@@ -285,14 +288,14 @@ final class ReplayUi {
             return "";
         }
         String tag = "";
-        if (h.getMode() == 3) {
+        if (h.getMode() == BattleSessionConfig.MODE_SPELL_PRACTICE) {
             tag = UiText.get(TextId.REPLAY_TAG_SP);
         }
         if (h.getFlag() == ReplayHeader.FLAG_IMPORTED) {
             if (tag.length() > 0) { tag += " "; }
             tag += UiText.get(TextId.REPLAY_TAG_IMPORTED);
         }
-        if (h.getMode() != 3 && hasBossOnly) {
+        if (h.getMode() != BattleSessionConfig.MODE_SPELL_PRACTICE && hasBossOnly) {
             if (tag.length() > 0) { tag += " "; }
             tag += UiText.get(TextId.REPLAY_TAG_ST);
         }
@@ -304,7 +307,7 @@ final class ReplayUi {
             return "-";
         }
 
-        if (h.getMode() == 3) {
+        if (h.getMode() == BattleSessionConfig.MODE_SPELL_PRACTICE) {
             return getSpellName(h.getSpellId());
         }
 

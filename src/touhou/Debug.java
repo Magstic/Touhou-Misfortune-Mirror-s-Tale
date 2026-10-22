@@ -3,6 +3,7 @@ package touhou;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
+import touhou.stage.StageRuntime;
 import touhou.ui.UiDraw;
 
 public final class Debug {
@@ -457,7 +458,7 @@ public final class Debug {
         }
 
         for (int i = 0; i != 32; ++i) {
-            if (enemylist[i][0] == 0) {
+            if (enemylist[i][StageRuntime.ENEMY_ACTIVE] == 0) {
                 continue;
             }
             int spriteMain = resolveEnemySpriteId(enemylist, i);
@@ -470,10 +471,10 @@ public final class Debug {
         }
 
         for (int i = 0; i < 64; i++) {
-            if (effectlist[i][0] == 0) {
+            if (effectlist[i][StageRuntime.EFFECT_ACTIVE] == 0) {
                 continue;
             }
-            int id = effectlist[i][3];
+            int id = effectlist[i][StageRuntime.EFFECT_ID];
             if (id == 21) {
                 continue;
             }
@@ -485,7 +486,7 @@ public final class Debug {
                 continue;
             }
 
-            int frame = effectlist[i][2];
+            int frame = effectlist[i][StageRuntime.EFFECT_FRAME];
             int spriteIdx = (frame << 1) + 1;
             if (spriteIdx < 0 || spriteIdx >= row.length) {
                 continue;
@@ -545,7 +546,7 @@ public final class Debug {
 
         if (bestId == -1) {
             for (int i = 0; i != 32; ++i) {
-                if (enemylist[i][0] == 0) {
+                if (enemylist[i][StageRuntime.ENEMY_ACTIVE] == 0) {
                     continue;
                 }
                 int spriteMain = resolveEnemySpriteId(enemylist, i);
@@ -563,8 +564,8 @@ public final class Debug {
                     }
                     bestType = 2;
                     bestId = useSprite;
-                    bestX = enemylist[i][5];
-                    bestY = enemylist[i][6];
+                    bestX = enemylist[i][StageRuntime.ENEMY_X];
+                    bestY = enemylist[i][StageRuntime.ENEMY_Y];
                     break;
                 }
             }
@@ -572,10 +573,10 @@ public final class Debug {
 
         if (bestId == -1) {
             for (int i = 0; i < 64; i++) {
-                if (effectlist[i][0] == 0) {
+                if (effectlist[i][StageRuntime.EFFECT_ACTIVE] == 0) {
                     continue;
                 }
-                int id = effectlist[i][3];
+                int id = effectlist[i][StageRuntime.EFFECT_ID];
                 if (id == 21) {
                     continue;
                 }
@@ -586,7 +587,7 @@ public final class Debug {
                 if (rowFx == null || rowFx.length == 0) {
                     continue;
                 }
-                int frame = effectlist[i][2];
+                int frame = effectlist[i][StageRuntime.EFFECT_FRAME];
                 int spriteIdx = (frame << 1) + 1;
                 if (spriteIdx < 0 || spriteIdx >= rowFx.length) {
                     continue;
@@ -599,8 +600,8 @@ public final class Debug {
                     }
                     bestType = 3;
                     bestId = spriteId;
-                    bestX = effectlist[i][4];
-                    bestY = effectlist[i][5];
+                    bestX = effectlist[i][StageRuntime.EFFECT_X];
+                    bestY = effectlist[i][StageRuntime.EFFECT_Y];
                     break;
                 }
             }
@@ -634,37 +635,37 @@ public final class Debug {
             return -1;
         }
         int spriteId;
-        switch (enemylist[i][1]) {
+        switch (enemylist[i][StageRuntime.ENEMY_APPEARANCE]) {
             case 0:
-                spriteId = 0 + ((enemylist[i][2] / 3) & 0x3);
+                spriteId = 0 + ((enemylist[i][StageRuntime.ENEMY_AGE] / 3) & 0x3);
                 break;
             case 1:
-                spriteId = 4 + ((enemylist[i][2] / 3) & 0x3);
+                spriteId = 4 + ((enemylist[i][StageRuntime.ENEMY_AGE] / 3) & 0x3);
                 break;
             case 2:
-                spriteId = 8 + ((enemylist[i][2] / 3) & 0x3);
+                spriteId = 8 + ((enemylist[i][StageRuntime.ENEMY_AGE] / 3) & 0x3);
                 break;
             case 3:
-                spriteId = 12 + ((enemylist[i][2] / 3) & 0x3);
+                spriteId = 12 + ((enemylist[i][StageRuntime.ENEMY_AGE] / 3) & 0x3);
                 break;
             case 4:
-                spriteId = 16 + ((enemylist[i][2] / 3) & 0x1);
+                spriteId = 16 + ((enemylist[i][StageRuntime.ENEMY_AGE] / 3) & 0x1);
                 break;
             case 5:
-                spriteId = 18 + ((enemylist[i][2] / 3) & 0x1);
+                spriteId = 18 + ((enemylist[i][StageRuntime.ENEMY_AGE] / 3) & 0x1);
                 break;
             case 6:
-                spriteId = 20 + ((enemylist[i][2] / 3) & 0x1);
+                spriteId = 20 + ((enemylist[i][StageRuntime.ENEMY_AGE] / 3) & 0x1);
                 break;
             case 7:
-                spriteId = 22 + ((enemylist[i][2] / 3) & 0x1);
+                spriteId = 22 + ((enemylist[i][StageRuntime.ENEMY_AGE] / 3) & 0x1);
                 break;
             case 8:
-                spriteId = 24 + ((enemylist[i][2] / 3) % 3);
+                spriteId = 24 + ((enemylist[i][StageRuntime.ENEMY_AGE] / 3) % 3);
                 break;
             case 20:
             case 21: {
-                int idx = (enemylist[i][2] / 3) % 12;
+                int idx = (enemylist[i][StageRuntime.ENEMY_AGE] / 3) % 12;
                 spriteId = 380 + ENEMY20_ANIM[idx];
                 break;
             }
@@ -681,11 +682,11 @@ public final class Debug {
         if (enemylist == null) {
             return -1;
         }
-        if (enemylist[i][1] == 20 || enemylist[i][1] == 21) {
-            if (enemylist[i][1] == 20) {
-                return 388 + ((enemylist[i][2] >> 1) & 0x3);
+        if (enemylist[i][StageRuntime.ENEMY_APPEARANCE] == 20 || enemylist[i][StageRuntime.ENEMY_APPEARANCE] == 21) {
+            if (enemylist[i][StageRuntime.ENEMY_APPEARANCE] == 20) {
+                return 388 + ((enemylist[i][StageRuntime.ENEMY_AGE] >> 1) & 0x3);
             }
-            return 388 + (3 - ((enemylist[i][2] >> 1) & 0x3));
+            return 388 + (3 - ((enemylist[i][StageRuntime.ENEMY_AGE] >> 1) & 0x3));
         }
         return -1;
     }

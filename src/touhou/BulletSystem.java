@@ -3,8 +3,16 @@ package touhou;
 import javax.microedition.lcdui.Graphics;
 
 import touhou.battle.BattleMath;
+import touhou.battle.BattleSessionConfig;
 
 public final class BulletSystem {
+    private static final int RENDER_ENEMY = 0;
+    private static final int RENDER_PLAYER = 1;
+    private static final int LARGE_BULLET_FIRST = 87;
+    private static final int LARGE_BULLET_LAST = 96;
+    private static final int DIRECTION_STATIC = 0;
+    private static final int DIRECTION_16 = 16;
+    private static final int DIRECTION_36 = 36;
     // Callback for stage effects (mirrors DoJa kc(effectId, x, y)).
     public interface EffectSpawner {
         void spawnEffect(int effectId, int xFixed, int yFixed);
@@ -1349,7 +1357,7 @@ public final class BulletSystem {
                 delta[i] = dist;
 
                 int bid = bulletId[i];
-                if (enemyLevel == 0) {
+                if (enemyLevel == BattleSessionConfig.DIFFICULTY_EASY) {
                     if (tt == 3) {
                         spawn(bid, 0, ang + 90, spd, x[i], y[i]);
                         spawn(bid, 0, ang - 90, spd, x[i], y[i]);
@@ -1361,17 +1369,17 @@ public final class BulletSystem {
                     return;
                 }
                 switch (enemyLevel) {
-                    case 1:
+                    case BattleSessionConfig.DIFFICULTY_NORMAL:
                         spawn(bid, 0, ang + 90, spd, x[i], y[i]);
                         spawn(bid, 0, ang - 90, spd, x[i], y[i]);
                         break;
-                    case 2:
+                    case BattleSessionConfig.DIFFICULTY_HARD:
                         spawn(bid, 0, ang + 90 + 30, spd, x[i], y[i]);
                         spawn(bid, 0, ang - 90 + 30, spd, x[i], y[i]);
                         spawn(bid, 0, ang + 90 - 30, spd, x[i], y[i]);
                         spawn(bid, 0, ang - 90 - 30, spd, x[i], y[i]);
                         break;
-                    case 3:
+                    case BattleSessionConfig.DIFFICULTY_LUNATIC:
                     default:
                         spawn(bid, 0, ang + 90, spd, x[i], y[i]);
                         spawn(bid, 0, ang - 90, spd, x[i], y[i]);
@@ -1492,10 +1500,10 @@ public final class BulletSystem {
                 y[i] = y0[i] + Fixed.mul(s, distFixed);
 
                 int div = 4;
-                if (enemyLevel <= 1) {
+                if (enemyLevel <= BattleSessionConfig.DIFFICULTY_NORMAL) {
                     div++;
                 }
-                if (enemyLevel <= 0) {
+                if (enemyLevel <= BattleSessionConfig.DIFFICULTY_EASY) {
                     div++;
                 }
 
@@ -2128,16 +2136,16 @@ public final class BulletSystem {
                 if (((tt + 1) & 0xF) == 0 && y[i] < 13369344) {
                     int div;
                     switch (enemyLevel) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             div = 8;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             div = 15;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             div = 20;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             div = 24;
                             break;
@@ -2457,16 +2465,16 @@ public final class BulletSystem {
                 }
                 int count;
                 switch (enemyLevel) {
-                    case 0:
+                    case BattleSessionConfig.DIFFICULTY_EASY:
                         count = 4;
                         break;
-                    case 1:
+                    case BattleSessionConfig.DIFFICULTY_NORMAL:
                         count = 5;
                         break;
-                    case 2:
+                    case BattleSessionConfig.DIFFICULTY_HARD:
                         count = 6;
                         break;
-                    case 3:
+                    case BattleSessionConfig.DIFFICULTY_LUNATIC:
                     default:
                         count = 7;
                         break;
@@ -2481,16 +2489,16 @@ public final class BulletSystem {
                 if (tick == 0) {
                     int div;
                     switch (enemyLevel) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             div = 6;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             div = 8;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             div = 10;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             div = 12;
                             break;
@@ -2562,16 +2570,16 @@ public final class BulletSystem {
                     int aim = BattleMath.arcTan2Deg(enemyAimTargetY - y[i], enemyAimTargetX - x[i]);
                     int div;
                     switch (enemyLevel) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             div = 12;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             div = 15;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             div = 20;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             div = 24;
                             break;
@@ -2651,16 +2659,16 @@ public final class BulletSystem {
                 int div;
                 int ringCount = 1;
                 switch (enemyLevel) {
-                    case 0:
+                    case BattleSessionConfig.DIFFICULTY_EASY:
                         div = 8;
                         break;
-                    case 1:
+                    case BattleSessionConfig.DIFFICULTY_NORMAL:
                         div = 12;
                         break;
-                    case 2:
+                    case BattleSessionConfig.DIFFICULTY_HARD:
                         div = 16;
                         break;
-                    case 3:
+                    case BattleSessionConfig.DIFFICULTY_LUNATIC:
                     default:
                         div = 24;
                         ringCount = 3;
@@ -3064,27 +3072,27 @@ public final class BulletSystem {
     private static final byte[] DIR_MODE_TABLE = new byte[1024];
     static {
         // Directional sprites (mode 16).
-        DIR_MODE_TABLE[32] = 16;
-        DIR_MODE_TABLE[239] = 16;
-        DIR_MODE_TABLE[255] = 16;
-        DIR_MODE_TABLE[271] = 16;
-        DIR_MODE_TABLE[287] = 16;
-        DIR_MODE_TABLE[303] = 16;
-        DIR_MODE_TABLE[319] = 16;
-        DIR_MODE_TABLE[335] = 16;
-        DIR_MODE_TABLE[521] = 16;
-        DIR_MODE_TABLE[537] = 16;
-        DIR_MODE_TABLE[553] = 16;
-        DIR_MODE_TABLE[569] = 16;
+        DIR_MODE_TABLE[32] = DIRECTION_16;
+        DIR_MODE_TABLE[239] = DIRECTION_16;
+        DIR_MODE_TABLE[255] = DIRECTION_16;
+        DIR_MODE_TABLE[271] = DIRECTION_16;
+        DIR_MODE_TABLE[287] = DIRECTION_16;
+        DIR_MODE_TABLE[303] = DIRECTION_16;
+        DIR_MODE_TABLE[319] = DIRECTION_16;
+        DIR_MODE_TABLE[335] = DIRECTION_16;
+        DIR_MODE_TABLE[521] = DIRECTION_16;
+        DIR_MODE_TABLE[537] = DIRECTION_16;
+        DIR_MODE_TABLE[553] = DIRECTION_16;
+        DIR_MODE_TABLE[569] = DIRECTION_16;
 
         // Directional sprites (mode 36).
-        DIR_MODE_TABLE[585] = 36;
-        DIR_MODE_TABLE[603] = 36;
-        DIR_MODE_TABLE[621] = 36;
-        DIR_MODE_TABLE[639] = 36;
-        DIR_MODE_TABLE[657] = 36;
-        DIR_MODE_TABLE[675] = 36;
-        DIR_MODE_TABLE[693] = 36;
+        DIR_MODE_TABLE[585] = DIRECTION_36;
+        DIR_MODE_TABLE[603] = DIRECTION_36;
+        DIR_MODE_TABLE[621] = DIRECTION_36;
+        DIR_MODE_TABLE[639] = DIRECTION_36;
+        DIR_MODE_TABLE[657] = DIRECTION_36;
+        DIR_MODE_TABLE[675] = DIRECTION_36;
+        DIR_MODE_TABLE[693] = DIRECTION_36;
     }
 
     private static int resolveDirectionMode(int bulletId) {
@@ -3096,7 +3104,7 @@ public final class BulletSystem {
 
     private static int resolveDirectionFrame(int bulletId, int angleDeg, int speed) {
         int mode = resolveDirectionMode(bulletId);
-        if (mode == 0) {
+        if (mode == DIRECTION_STATIC) {
             return 0;
         }
 
@@ -3111,7 +3119,7 @@ public final class BulletSystem {
             }
         }
 
-        if (mode == 16) {
+        if (mode == DIRECTION_16) {
             return 15 - (((ang / 22) + 11) & 0xF);
         }
 
@@ -3124,11 +3132,11 @@ public final class BulletSystem {
     }
 
     public void renderPlayerBullets(Graphics g) {
-        renderInternal(g, 1);
+        renderInternal(g, RENDER_PLAYER);
     }
 
     public void renderEnemyBullets(Graphics g) {
-        renderInternal(g, 0);
+        renderInternal(g, RENDER_ENEMY);
     }
 
     // mode: 0=enemy, 1=player.
@@ -3148,17 +3156,17 @@ public final class BulletSystem {
 
         // DoJa ec(): two-pass draw order.
         // Pass1 draws bulletId 87..96 (large bullets) first so small bullets render on top.
-        // Player bullets never use 87..96, so skip pass1 for mode==1.
-        if (mode != 1) {
+        // Player bullets never use 87..96, so skip pass1 for mode==RENDER_PLAYER.
+        if (mode != RENDER_PLAYER) {
             for (int i = 0; i < max; i++) {
                 if (!active[i]) {
                     continue;
                 }
-                if (mode == 0 && fromPlayer[i]) {
+                if (mode == RENDER_ENEMY && fromPlayer[i]) {
                     continue;
                 }
                 int baseId = bulletId[i];
-                if (baseId < 87 || baseId > 96) {
+                if (baseId < LARGE_BULLET_FIRST || baseId > LARGE_BULLET_LAST) {
                     continue;
                 }
                 renderSlot(g, i, clipX, clipY, clipW, clipH);
@@ -3168,14 +3176,14 @@ public final class BulletSystem {
             if (!active[i]) {
                 continue;
             }
-            if (mode == 0 && fromPlayer[i]) {
+            if (mode == RENDER_ENEMY && fromPlayer[i]) {
                 continue;
             }
-            if (mode == 1 && !fromPlayer[i]) {
+            if (mode == RENDER_PLAYER && !fromPlayer[i]) {
                 continue;
             }
             int baseId = bulletId[i];
-            if (baseId < 0 || (baseId >= 87 && baseId <= 96)) {
+            if (baseId < 0 || (baseId >= LARGE_BULLET_FIRST && baseId <= LARGE_BULLET_LAST)) {
                 continue;
             }
             renderSlot(g, i, clipX, clipY, clipW, clipH);

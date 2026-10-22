@@ -21,6 +21,8 @@ import touhou.i18n.I18nSchema;
 import touhou.i18n.TextId;
 
 public final class I18nPackBuilder {
+    private static final int FORMAT_MAGIC = 0x4931384E; // 'I18N'
+    private static final int FORMAT_VERSION = 1;
     private static final String[] DEFAULT_LANGUAGES = new String[] { "en", "ja", "zht" };
 
     private I18nPackBuilder() {
@@ -204,8 +206,8 @@ public final class I18nPackBuilder {
 
         ByteArrayOutputStream bytes = new ByteArrayOutputStream(position);
         DataOutputStream out = new DataOutputStream(bytes);
-        out.writeInt(0x4931384E);
-        out.writeByte(1);
+        out.writeInt(FORMAT_MAGIC);
+        out.writeByte(FORMAT_VERSION);
         out.writeByte(0);
         out.writeShort(entryCount);
         for (int i = 0; i < entryCount; i++) {

@@ -3,10 +3,12 @@ package touhou;
 import javax.microedition.lcdui.Graphics;
 
 import touhou.battle.BattleHudModel;
+import touhou.battle.BattleSessionConfig;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 import touhou.replay.ReplaySnapshotReader;
 import touhou.replay.ReplaySnapshotWriter;
+import touhou.stage.StageRuntime;
 import touhou.ui.UiDraw;
 
 public final class ScoreSystem {
@@ -126,7 +128,7 @@ public final class ScoreSystem {
         }
 
         // Mirrors DoJa : m_optlife is only applied for gamemode 0; otherwise fixed to 3.
-        int opt = (gamemode == 0) ? optLife : 3;
+        int opt = (gamemode == BattleSessionConfig.MODE_STORY) ? optLife : 3;
         if (opt > 3) {
             scoreRate -= (opt << 3);
         }
@@ -465,7 +467,7 @@ public final class ScoreSystem {
         spellBonusArmed = false;
 
         scoreRate -= 4;
-        if (stage == 0) {
+        if (stage == StageRuntime.STAGE_1) {
             scoreRate -= 26;
         }
 
@@ -487,7 +489,7 @@ public final class ScoreSystem {
 
     // Mirrors DoJa : continue penalty to score rate.
     private void onContinueUsed(int stage) {
-        if (stage <= 1) {
+        if (stage <= StageRuntime.STAGE_2) {
             scoreRate -= 20;
         } else {
             scoreRate -= 5;

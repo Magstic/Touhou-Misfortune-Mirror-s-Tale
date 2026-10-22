@@ -1,5 +1,7 @@
 package touhou.battle;
 
+import touhou.BgmCatalog;
+
 /** Immutable spell-practice metadata shared by UI, battle setup and replay. */
 public final class SpellPracticeCatalog {
     private static final int STAGE = 0;
@@ -71,7 +73,7 @@ public final class SpellPracticeCatalog {
 
     public static int getBossBgmTrack(int spellId) {
         int stage = getStage(spellId);
-        return spellId >= LAST_WORD_START ? 17 : 2 + (stage * 2);
+        return spellId >= LAST_WORD_START ? BgmCatalog.LAST_WORD : BgmCatalog.FIRST_BOSS_TRACK + (stage * 2);
     }
 
     private static int[] entry(int spellId) {

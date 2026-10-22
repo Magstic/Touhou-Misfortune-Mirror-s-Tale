@@ -5,6 +5,15 @@ public final class GameOptions {
 
     public static final int SIZE = 16;
 
+    public static final int IDX_LIVES = 0;
+    public static final int IDX_BGM_VOLUME = 1;
+    public static final int IDX_SE_VOLUME = 2;
+    public static final int IDX_VIBRATION = 4;
+    public static final int IDX_TENKEY_MOVE = 5;
+    public static final int IDX_SHOT_KEY = 6;
+    public static final int IDX_SLOW_KEY = 7;
+    public static final int IDX_SPELL_KEY = 8;
+
     public static final int IDX_SE_MASK = 12;
     public static final int IDX_SE_MASK_HI = 13;
 
@@ -144,15 +153,15 @@ public final class GameOptions {
     public static int[] defaults() {
         int[] opt = new int[SIZE];
         boolean emu = isProbablyEmulator();
-        opt[0] = 3;
-        opt[1] = 70;
-        opt[2] = 100;
+        opt[IDX_LIVES] = 3;
+        opt[IDX_BGM_VOLUME] = 70;
+        opt[IDX_SE_VOLUME] = 100;
         opt[IDX_RENDER_FLAGS] = ALPHA_MASK;
-        opt[4] = 0;
-        opt[5] = 0;
-        opt[6] = 10;
-        opt[7] = 11;
-        opt[8] = 12;
+        opt[IDX_VIBRATION] = 0;
+        opt[IDX_TENKEY_MOVE] = 0;
+        opt[IDX_SHOT_KEY] = 10;
+        opt[IDX_SLOW_KEY] = 11;
+        opt[IDX_SPELL_KEY] = 12;
         // HeavyBG: always ON; Mistia Fade: ON for emulator, OFF for real device.
         // Hit Spark: always ON.
         opt[IDX_RENDER_MISC_FLAGS] = emu ? 0 : RENDER_BLIND_MASK_NO_FADE;
@@ -234,25 +243,25 @@ public final class GameOptions {
                 return false;
             }
         }
-        if (opt[0] < 1 || opt[0] > 6) {
+        if (opt[IDX_LIVES] < 1 || opt[IDX_LIVES] > 6) {
             return false;
         }
-        if (opt[1] < 0 || opt[1] > 100) {
+        if (opt[IDX_BGM_VOLUME] < 0 || opt[IDX_BGM_VOLUME] > 100) {
             return false;
         }
-        if (opt[2] < 0 || opt[2] > 100) {
+        if (opt[IDX_SE_VOLUME] < 0 || opt[IDX_SE_VOLUME] > 100) {
             return false;
         }
         if ((opt[IDX_RENDER_FLAGS] & ~(ALPHA_MASK | DEBUG_MASK)) != 0) {
             return false;
         }
-        if (opt[6] < 0 || opt[6] > 13) {
+        if (opt[IDX_SHOT_KEY] < 0 || opt[IDX_SHOT_KEY] > 13) {
             return false;
         }
-        if (opt[7] < 0 || opt[7] > 13) {
+        if (opt[IDX_SLOW_KEY] < 0 || opt[IDX_SLOW_KEY] > 13) {
             return false;
         }
-        if (opt[8] < 0 || opt[8] > 13) {
+        if (opt[IDX_SPELL_KEY] < 0 || opt[IDX_SPELL_KEY] > 13) {
             return false;
         }
         if (opt[IDX_SE_MASK] < 0 || opt[IDX_SE_MASK] > 255) {

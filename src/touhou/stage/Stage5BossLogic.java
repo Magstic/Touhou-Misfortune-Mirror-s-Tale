@@ -1,7 +1,8 @@
 package touhou.stage;
 
-import touhou.battle.BattleMath;
 import touhou.Trig;
+import touhou.battle.BattleMath;
+import touhou.battle.BattleSessionConfig;
 
 final class Stage5BossLogic extends AbstractBossStageLogic {
     void tickBossImpl(int enemyIdx) {
@@ -19,11 +20,11 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
         int[] bossWrk = host.getBossWrk();
         int bossf = host.getBossF();
 
-        int mt = enemylist[enemyIdx][11];
+        int mt = enemylist[enemyIdx][StageRuntime.ENEMY_MOVE_PATTERN];
         int idx = 0;
-        if (mt == 102) {
+        if (mt == BossController.SECOND_BOSS_PATTERN) {
             idx = 1;
-        } else if (mt == 103) {
+        } else if (mt == BossController.THIRD_BOSS_PATTERN) {
             idx = 2;
         }
 
@@ -34,14 +35,14 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 core.bspellcnt = 255;
                 core.batkf = false;
                 host.setResetFlag(4);
-                enemylist[enemyIdx][16] = 1;
+                enemylist[enemyIdx][StageRuntime.ENEMY_TARGETABLE] = 1;
                 return;
 
             case 2:
                 if (host.getMGCnt() == 0) {
                     host.setBbaria(1);
                 }
-                if (host.getGameMode() != 3) {
+                if (host.getGameMode() != BattleSessionConfig.MODE_SPELL_PRACTICE) {
                     bossx[idx] = 97;
                     bossy[idx] = 56;
                 }
@@ -51,7 +52,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 if (host.getMGCnt() <= 10) {
                     return;
                 }
-                if (host.getGameMode() == 3) {
+                if (host.getGameMode() == BattleSessionConfig.MODE_SPELL_PRACTICE) {
                     core.bspellcnt = 120;
                     int step = host.getSpellPracticeBossStep();
                     wb(step);
@@ -109,7 +110,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     host.setResetFlag(4);
                     core.j = 65535;
                     yb(core.l, core.n, 2);
-                    enemylist[enemyIdx][3] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     wb(10);
                     return;
                 }
@@ -118,7 +119,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 int d03 = (host.getMGCnt() + 1) % 240;
                 if (d03 % 120 == 40) {
-                    if (host.getPlayerXFixed() < enemylist[enemyIdx][5]) {
+                    if (host.getPlayerXFixed() < enemylist[enemyIdx][StageRuntime.ENEMY_X]) {
                         bossx[idx] += 30;
                     } else {
                         bossx[idx] -= 30;
@@ -133,45 +134,45 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 switch (d03) {
                     case 16:
-                        enemylist[enemyIdx][3] = 9;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 9;
                         break;
                     case 17:
-                        enemylist[enemyIdx][3] = 10;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 10;
                         break;
                     case 18:
-                        enemylist[enemyIdx][3] = 11;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 11;
                         break;
                     case 20:
-                        enemylist[enemyIdx][3] = 12;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 12;
                         break;
                     case 40:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
 
                 if (d03 >= 20 && d03 < 40 && (d03 & 0x1) == 0) {
-                    int ex = enemylist[enemyIdx][5];
-                    int ey = enemylist[enemyIdx][6];
+                    int ex = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                    int ey = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
                     if (d03 == 20) {
-                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey, host.getPlayerXFixed() - ex);
+                        enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey, host.getPlayerXFixed() - ex);
                     }
 
                     int d4;
                     int d5;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             d4 = 64;
                             d5 = 2;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             d4 = 51;
                             d5 = 3;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             d4 = 40;
                             d5 = 5;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             d4 = 32;
                             d5 = 6;
@@ -179,7 +180,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     }
 
                     int span = d4 * d5;
-                    int aim = enemylist[enemyIdx][10];
+                    int aim = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
                     for (int v = 0; v <= span; v += d4) {
                         int off = (v + (d03 << 3)) % span - (span >> 1);
                         host.spawnEnemyBullet(537, 0, aim + off, 40, ex, ey);
@@ -191,46 +192,46 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 switch (d03) {
                     case 136:
-                        enemylist[enemyIdx][3] = 5;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 5;
                         break;
                     case 137:
-                        enemylist[enemyIdx][3] = 6;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 6;
                         break;
                     case 138:
-                        enemylist[enemyIdx][3] = 7;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 7;
                         break;
                     case 140:
-                        enemylist[enemyIdx][3] = 8;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 8;
                         break;
                     case 160:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
 
                 if (d03 >= 140 && d03 < 160 && (d03 & 0x1) == 0) {
-                    int ex = enemylist[enemyIdx][5];
-                    int ey = enemylist[enemyIdx][6];
+                    int ex = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                    int ey = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
                     if (d03 == 140) {
-                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey, host.getPlayerXFixed() - ex);
+                        enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey, host.getPlayerXFixed() - ex);
                     }
                     int d8 = 160 - d03;
 
                     int d4;
                     int d5;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             d4 = 64;
                             d5 = 2;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             d4 = 52;
                             d5 = 3;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             d4 = 40;
                             d5 = 5;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             d4 = 32;
                             d5 = 6;
@@ -238,7 +239,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     }
 
                     int span = d4 * d5;
-                    int aim = enemylist[enemyIdx][10];
+                    int aim = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
                     for (int v = 0; v <= span; v += d4) {
                         int off = (v + (d8 << 3)) % span - (span >> 1);
                         host.spawnEnemyBullet(569, 0, aim + off, 40, ex, ey);
@@ -251,47 +252,47 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 switch (d03) {
                     case 76:
                     case 196:
-                        enemylist[enemyIdx][3] = 5;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 5;
                         break;
                     case 77:
                     case 197:
-                        enemylist[enemyIdx][3] = 6;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 6;
                         break;
                     case 78:
                     case 198:
-                        enemylist[enemyIdx][3] = 7;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 7;
                         break;
                     case 79:
                     case 199:
-                        enemylist[enemyIdx][3] = 8;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 8;
                         break;
                     case 81:
                     case 201:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
 
                 if (d03 == 80 || d03 == 200) {
-                    int ex = enemylist[enemyIdx][5];
-                    int ey = enemylist[enemyIdx][6];
-                    enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey, host.getPlayerXFixed() - ex);
+                    int ex = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                    int ey = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
+                    enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey, host.getPlayerXFixed() - ex);
 
                     int div;
                     int count;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             div = 12;
                             count = 1;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             div = 18;
                             count = 3;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             div = 20;
                             count = 3;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             div = 24;
                             count = 5;
@@ -299,7 +300,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     }
 
                     int step = 360 / div;
-                    int aim = enemylist[enemyIdx][10];
+                    int aim = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
                     for (int a = 0; a < 360; a += step) {
                         for (int k = 0; k < count; k++) {
                             host.spawnEnemyBullet(537, 37, aim + a, 28 + (k << 2), ex, ey);
@@ -313,7 +314,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     host.setResetFlag(4);
                     core.j = 65535;
                     yb(core.l, core.n, 2);
-                    enemylist[enemyIdx][3] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     wb(13);
                     return;
                 }
@@ -321,10 +322,10 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 core.batkf = true;
 
                 int d04 = (host.getMGCnt() + 1) % 300;
-                int ex04 = enemylist[enemyIdx][5];
-                int ey04 = enemylist[enemyIdx][6];
+                int ex04 = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                int ey04 = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
                 if (d04 % 150 == 0) {
-                    if (host.getPlayerXFixed() > enemylist[enemyIdx][5]) {
+                    if (host.getPlayerXFixed() > enemylist[enemyIdx][StageRuntime.ENEMY_X]) {
                         bossx[idx] += 40;
                     } else {
                         bossx[idx] -= 40;
@@ -339,44 +340,44 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 switch (d04) {
                     case 16:
-                        enemylist[enemyIdx][3] = 9;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 9;
                         break;
                     case 17:
-                        enemylist[enemyIdx][3] = 10;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 10;
                         break;
                     case 18:
-                        enemylist[enemyIdx][3] = 11;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 11;
                         break;
                     case 20:
-                        enemylist[enemyIdx][3] = 12;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 12;
                         break;
                     case 50:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
 
                 if (d04 >= 20 && d04 < 50 && ((d04 - 20) & 0x7) == 0) {
                     if (d04 == 20) {
-                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey04, host.getPlayerXFixed() - ex04);
+                        enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey04, host.getPlayerXFixed() - ex04);
                     }
                     int div;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             div = 5;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             div = 6;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             div = 8;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             div = 10;
                             break;
                     }
                     int step = 360 / div;
-                    int aim = enemylist[enemyIdx][10];
+                    int aim = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
                     for (int a = 0; a < 360; a += step) {
                         int ang = aim + a + (d04 << 2);
                         for (int o = -2; o <= 2; o++) {
@@ -387,45 +388,45 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 switch (d04) {
                     case 136:
-                        enemylist[enemyIdx][3] = 5;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 5;
                         break;
                     case 137:
-                        enemylist[enemyIdx][3] = 6;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 6;
                         break;
                     case 138:
-                        enemylist[enemyIdx][3] = 7;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 7;
                         break;
                     case 140:
-                        enemylist[enemyIdx][3] = 8;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 8;
                         break;
                     case 160:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
 
                 if (d04 >= 140 && d04 < 160 && ((d04 - 140) & 0x7) == 0) {
                     if (d04 == 140) {
-                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey04, host.getPlayerXFixed() - ex04);
+                        enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey04, host.getPlayerXFixed() - ex04);
                     }
                     int d8 = 160 - d04;
                     int div;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             div = 5;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             div = 6;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             div = 8;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             div = 10;
                             break;
                     }
                     int step = 360 / div;
-                    int aim = enemylist[enemyIdx][10];
+                    int aim = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
                     for (int a = 0; a < 360; a += step) {
                         int ang = aim + a + (d8 << 2);
                         for (int o = -2; o <= 2; o++) {
@@ -437,46 +438,46 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 switch (d04) {
                     case 76:
                     case 196:
-                        enemylist[enemyIdx][3] = 5;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 5;
                         break;
                     case 77:
                     case 197:
-                        enemylist[enemyIdx][3] = 6;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 6;
                         break;
                     case 78:
                     case 198:
-                        enemylist[enemyIdx][3] = 7;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 7;
                         break;
                     case 79:
                     case 199:
-                        enemylist[enemyIdx][3] = 8;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 8;
                         break;
                     case 81:
                     case 201:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
 
                 if (d04 == 80 || d04 == 200) {
-                    enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey04, host.getPlayerXFixed() - ex04);
+                    enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey04, host.getPlayerXFixed() - ex04);
                     int div;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             div = 5;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             div = 6;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             div = 8;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             div = 10;
                             break;
                     }
                     int step = 70 / div;
-                    int aim = enemylist[enemyIdx][10];
+                    int aim = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
                     for (int a = -70; a <= 70; a += step) {
                         for (int k = 0; k < 5; k++) {
                             host.spawnEnemyBullet(569, 0, aim + a, 28 + (k << 2), ex04, ey04);
@@ -488,8 +489,8 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
             case 10:
                 bossx[idx] = 97;
                 bossy[idx] = 68;
-                enemylist[enemyIdx][14] = 458752;
-                enemylist[enemyIdx][15] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
                 core.batkf = false;
                 host.setBbaria(2);
                 if (host.getMGCnt() > 30) {
@@ -505,26 +506,26 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 switch (host.getMGCnt()) {
                     case 1:
                     case 29:
-                        enemylist[enemyIdx][3] = 1;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 1;
                         break;
                     case 4:
                     case 26:
-                        enemylist[enemyIdx][3] = 2;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 2;
                         break;
                     case 7:
                     case 23:
-                        enemylist[enemyIdx][3] = 3;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 3;
                         break;
                     case 10:
-                        enemylist[enemyIdx][3] = 4;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 4;
                         break;
                 }
-                enemylist[enemyIdx][14] = 262144;
-                enemylist[enemyIdx][15] = 262144;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 262144;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 262144;
                 if (host.getMGCnt() > 30) {
                     bossWrk[3] = 0;
                     bossWrk[4] = 0;
-                    enemylist[enemyIdx][3] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
                     core.batkf = true;
                     host.setBbaria(0);
@@ -543,52 +544,52 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 }
 
                 int d12 = host.getMGCnt() % 330;
-                int ex12 = enemylist[enemyIdx][5];
-                int ey12 = enemylist[enemyIdx][6];
+                int ex12 = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                int ey12 = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
 
                 switch (d12) {
                     case 16:
-                        enemylist[enemyIdx][3] = 5;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 5;
                         break;
                     case 17:
-                        enemylist[enemyIdx][3] = 6;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 6;
                         break;
                     case 18:
-                        enemylist[enemyIdx][3] = 7;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 7;
                         break;
                     case 20:
-                        enemylist[enemyIdx][3] = 8;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 8;
                         break;
                     case 40:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
 
                 if (d12 >= 20 && d12 < 40) {
                     if (d12 == 20) {
-                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey12, host.getPlayerXFixed() - ex12);
+                        enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey12, host.getPlayerXFixed() - ex12);
                     }
 
                     int d4;
                     int d5;
                     int d6;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             d4 = 40;
                             d5 = 2;
                             d6 = 4;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             d4 = 32;
                             d5 = 3;
                             d6 = 3;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             d4 = 28;
                             d5 = 4;
                             d6 = 2;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             d4 = 24;
                             d5 = 5;
@@ -598,7 +599,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                     if (d12 % d6 == 0) {
                         int span = d4 * d5;
-                        int aim = enemylist[enemyIdx][10];
+                        int aim = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
                         int sp = (d12 - 20) << 5;
 
                         for (int n4 = 0; n4 <= span; n4 += d4) {
@@ -618,28 +619,28 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 }
 
                 if (d12 >= 40 && d12 < 70) {
-                    enemylist[enemyIdx][10] = 450;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = 450;
 
                     int d6;
                     int d7;
                     int d8;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             d6 = 30;
                             d7 = 2;
                             d8 = 6;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             d6 = 24;
                             d7 = 3;
                             d8 = 5;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             d6 = 18;
                             d7 = 4;
                             d8 = 4;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             d6 = 14;
                             d7 = 5;
@@ -661,48 +662,48 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 switch (d12) {
                     case 156:
-                        enemylist[enemyIdx][3] = 9;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 9;
                         break;
                     case 157:
-                        enemylist[enemyIdx][3] = 10;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 10;
                         break;
                     case 158:
-                        enemylist[enemyIdx][3] = 11;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 11;
                         break;
                     case 159:
-                        enemylist[enemyIdx][3] = 12;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 12;
                         break;
                     case 161:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
 
                 if (d12 == 160) {
-                    enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey12, host.getPlayerXFixed() - ex12);
+                    enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey12, host.getPlayerXFixed() - ex12);
 
                     int d4;
                     int d5;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             d4 = 3;
                             d5 = 3;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             d4 = 4;
                             d5 = 4;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             d4 = 5;
                             d5 = 5;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             d4 = 6;
                             d5 = 6;
                             break;
                     }
 
-                    int aim = enemylist[enemyIdx][10];
+                    int aim = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
                     for (int n6 = -d4; n6 <= d4; n6++) {
                         for (int n7 = 0; n7 < d5; n7++) {
                             host.spawnEnemyBullet(521, 26, aim + (n6 << 4), 24 + (n7 << 3), ex12, ey12);
@@ -717,14 +718,14 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 if (d12 == 80 || d12 == 190 || d12 == 220 || d12 == 270) {
                     if (host.getMGCnt() == 80) {
-                        if (host.getPlayerXFixed() < enemylist[enemyIdx][5]) {
+                        if (host.getPlayerXFixed() < enemylist[enemyIdx][StageRuntime.ENEMY_X]) {
                             bossx[idx] = 127;
                             bossy[idx] = 48;
                         } else {
                             bossx[idx] = 67;
                             bossy[idx] = 48;
                         }
-                    } else if (enemylist[enemyIdx][5] < 6356992) {
+                    } else if (enemylist[enemyIdx][StageRuntime.ENEMY_X] < 6356992) {
                         bossx[idx] = 147;
                         bossy[idx] = 68;
                     } else {
@@ -736,16 +737,16 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 if ((d12 > 80 && d12 < 110) || (d12 > 270 && d12 < 300)) {
                     int d8;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             d8 = 32;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             d8 = 28;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             d8 = 24;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             d8 = 20;
                             break;
@@ -778,28 +779,28 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 }
 
                 if (d12 >= 190 && d12 < 240) {
-                    enemylist[enemyIdx][10] = 450;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = 450;
 
                     int d6;
                     int d7;
                     int d8;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             d6 = 30;
                             d7 = 2;
                             d8 = 6;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             d6 = 24;
                             d7 = 3;
                             d8 = 5;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             d6 = 18;
                             d7 = 4;
                             d8 = 4;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             d6 = 14;
                             d7 = 5;
@@ -823,8 +824,8 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
             case 13:
                 bossx[idx] = 97;
                 bossy[idx] = 78;
-                enemylist[enemyIdx][14] = 458752;
-                enemylist[enemyIdx][15] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
                 core.batkf = false;
                 host.setBbaria(2);
                 if (host.getMGCnt() > 30) {
@@ -840,22 +841,22 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 switch (host.getMGCnt()) {
                     case 1:
                     case 29:
-                        enemylist[enemyIdx][3] = 1;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 1;
                         break;
                     case 4:
                     case 26:
-                        enemylist[enemyIdx][3] = 2;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 2;
                         break;
                     case 7:
                     case 23:
-                        enemylist[enemyIdx][3] = 3;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 3;
                         break;
                     case 10:
-                        enemylist[enemyIdx][3] = 4;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 4;
                         break;
                 }
                 if (host.getMGCnt() > 30) {
-                    enemylist[enemyIdx][3] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
                     core.batkf = true;
                     host.setBbaria(0);
@@ -873,54 +874,54 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     return;
                 }
                 int d15 = (host.getMGCnt() + 1) % 140;
-                int ex15 = enemylist[enemyIdx][5];
-                int ey15 = enemylist[enemyIdx][6];
+                int ex15 = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                int ey15 = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
                 if (d15 == 60) {
                     host.setTimeStop(10);
                     host.aimEnemyBulletsToPlayer();
                 }
                 switch (d15) {
                     case 16:
-                        enemylist[enemyIdx][3] = 9;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 9;
                         break;
                     case 17:
-                        enemylist[enemyIdx][3] = 10;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 10;
                         break;
                     case 18:
-                        enemylist[enemyIdx][3] = 11;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 11;
                         break;
                     case 20:
-                        enemylist[enemyIdx][3] = 12;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 12;
                         break;
                     case 30:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
 
                 if (d15 >= 20 && d15 < 30) {
                     if (d15 == 20) {
-                        enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey15, host.getPlayerXFixed() - ex15);
+                        enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey15, host.getPlayerXFixed() - ex15);
                     }
 
                     if ((d15 & 0x1) == 0) {
                         int div;
                         switch (host.getLevel()) {
-                            case 0:
+                            case BattleSessionConfig.DIFFICULTY_EASY:
                                 div = 4;
                                 break;
-                            case 1:
+                            case BattleSessionConfig.DIFFICULTY_NORMAL:
                                 div = 5;
                                 break;
-                            case 2:
+                            case BattleSessionConfig.DIFFICULTY_HARD:
                                 div = 6;
                                 break;
-                            case 3:
+                            case BattleSessionConfig.DIFFICULTY_LUNATIC:
                             default:
                                 div = 8;
                                 break;
                         }
                         int step = 60 / div;
-                        int aim = enemylist[enemyIdx][10];
+                        int aim = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
                         for (int a = 0; a < 60; a += step) {
                             for (int k = 0; k < 3; k++) {
                                 int angR = aim + a + (step >> 1) + 12;
@@ -932,22 +933,22 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                         }
                     }
 
-                    if (((d15 & 0x3) == 0x1) && host.getLevel() > 0) {
+                    if (((d15 & 0x3) == 0x1) && host.getLevel() > BattleSessionConfig.DIFFICULTY_EASY) {
                         int div;
                         switch (host.getLevel()) {
-                            case 1:
+                            case BattleSessionConfig.DIFFICULTY_NORMAL:
                                 div = 10;
                                 break;
-                            case 2:
+                            case BattleSessionConfig.DIFFICULTY_HARD:
                                 div = 15;
                                 break;
-                            case 3:
+                            case BattleSessionConfig.DIFFICULTY_LUNATIC:
                             default:
                                 div = 20;
                                 break;
                         }
                         int step = 360 / div;
-                        int aim = enemylist[enemyIdx][10];
+                        int aim = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
                         for (int a = 0; a < 360; a += step) {
                             host.spawnEnemyBullet(537, 0, aim + a, 24, ex15, ey15);
                         }
@@ -956,21 +957,21 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 if (d15 == 70) {
                     bossy[idx] = 40;
-                    enemylist[enemyIdx][5] = bossx[idx] << 16;
-                    enemylist[enemyIdx][6] = bossy[idx] << 16;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_X] = bossx[idx] << 16;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_Y] = bossy[idx] << 16;
 
                     int step;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             step = 15;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             step = 10;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             step = 8;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             step = 6;
                             break;
@@ -979,20 +980,20 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     int toggle = 0;
                     int mod = (host.getMGCnt() + 1) % 280;
                     if (mod < 130) {
-                        if (host.getPlayerXFixed() > enemylist[enemyIdx][5]) {
+                        if (host.getPlayerXFixed() > enemylist[enemyIdx][StageRuntime.ENEMY_X]) {
                             bossx[idx] = 37;
                         } else {
                             bossx[idx] = 157;
                         }
 
                         for (int x = 0; x < 194; x += step) {
-                            if (host.getLevel() >= 2) {
+                            if (host.getLevel() >= BattleSessionConfig.DIFFICULTY_HARD) {
                                 host.spawnEnemyBullet(521, 0, 450, 24 - (toggle << 3), x << 16, 524288);
                             }
                             host.spawnEnemyBullet(521, 0, 450, 20 + (toggle << 3), x << 16, 524288);
                             toggle ^= 0x1;
                         }
-                    } else if (host.getPlayerXFixed() > enemylist[enemyIdx][5]) {
+                    } else if (host.getPlayerXFixed() > enemylist[enemyIdx][StageRuntime.ENEMY_X]) {
                         bossx[idx] = 57;
                     } else {
                         bossx[idx] = 137;
@@ -1001,13 +1002,13 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     if (mod >= 130) {
                         step += 2;
                         for (int y = 8; y < 234; y += step) {
-                            if (host.getLevel() >= 2) {
+                            if (host.getLevel() >= BattleSessionConfig.DIFFICULTY_HARD) {
                                 host.spawnEnemyBullet(521, 0, 360, 18 - (toggle << 3), 0, y << 16);
                             }
                             host.spawnEnemyBullet(521, 0, 360, 14 + (toggle << 3), 0, y << 16);
                             toggle ^= 0x1;
 
-                            if (host.getLevel() >= 2) {
+                            if (host.getLevel() >= BattleSessionConfig.DIFFICULTY_HARD) {
                                 host.spawnEnemyBullet(521, 0, 540, 18 - (toggle << 3), 12713984, y << 16);
                             }
                             host.spawnEnemyBullet(521, 0, 540, 14 + (toggle << 3), 12713984, y << 16);
@@ -1019,14 +1020,14 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
             case 16:
                 bossx[idx] = 97;
                 bossy[idx] = 64;
-                enemylist[enemyIdx][14] = 458752;
-                enemylist[enemyIdx][15] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
                 core.batkf = false;
                 host.setBbaria(2);
                 if (host.getMGCnt() > 30) {
                     host.setQ(true);
-                    enemylist[enemyIdx][14] = 65536;
-                    enemylist[enemyIdx][15] = 65536;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 65536;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 65536;
                     core.bspellstep = 1;
                     core.spellId = 70 + host.getLevel();
                     wb(17);
@@ -1038,24 +1039,24 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 switch (host.getMGCnt()) {
                     case 1:
                     case 29:
-                        enemylist[enemyIdx][3] = 1;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 1;
                         break;
                     case 4:
                     case 26:
-                        enemylist[enemyIdx][3] = 2;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 2;
                         break;
                     case 7:
                     case 23:
-                        enemylist[enemyIdx][3] = 3;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 3;
                         break;
                     case 10:
-                        enemylist[enemyIdx][3] = 4;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 4;
                         break;
                 }
                 if (host.getMGCnt() > 30) {
-                    enemylist[enemyIdx][14] = 327680;
-                    enemylist[enemyIdx][15] = 327680;
-                    enemylist[enemyIdx][3] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 327680;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 327680;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
                     core.batkf = true;
                     host.setBbaria(0);
@@ -1072,22 +1073,22 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 }
                 int d18 = host.getMGCnt() % 260;
 
-                int ex18 = enemylist[enemyIdx][5];
-                int ey18 = enemylist[enemyIdx][6];
+                int ex18 = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                int ey18 = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
 
                 if (d18 < 100) {
                     int count;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             count = 3;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             count = 4;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             count = 5;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             count = 6;
                             break;
@@ -1120,22 +1121,22 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     int baseSp;
                     int interval;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             count = 1;
                             baseSp = 30;
                             interval = 3;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             count = 3;
                             baseSp = 36;
                             interval = 2;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             count = 4;
                             baseSp = 40;
                             interval = 1;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             count = 5;
                             baseSp = 44;
@@ -1175,24 +1176,24 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 }
 
                 if (d18 == 200) {
-                    enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey18, host.getPlayerXFixed() - ex18);
+                    enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey18, host.getPlayerXFixed() - ex18);
 
                     int div;
                     int count;
                     switch (host.getLevel()) {
-                        case 0:
+                        case BattleSessionConfig.DIFFICULTY_EASY:
                             div = 12;
                             count = 2;
                             break;
-                        case 1:
+                        case BattleSessionConfig.DIFFICULTY_NORMAL:
                             div = 18;
                             count = 3;
                             break;
-                        case 2:
+                        case BattleSessionConfig.DIFFICULTY_HARD:
                             div = 20;
                             count = 3;
                             break;
-                        case 3:
+                        case BattleSessionConfig.DIFFICULTY_LUNATIC:
                         default:
                             div = 24;
                             count = 5;
@@ -1200,7 +1201,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     }
 
                     int step = 360 / div;
-                    int aim = enemylist[enemyIdx][10];
+                    int aim = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
                     for (int a = 0; a < 360; a += step) {
                         for (int k = 0; k < count; k++) {
                             host.spawnEnemyBullet(537, 37, aim + a, 28 + (k << 2), ex18, ey18);
@@ -1210,7 +1211,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
 
                 if (d18 == 210) {
                     if (host.getMGCnt() == 210) {
-                        if (host.getPlayerXFixed() < enemylist[enemyIdx][5]) {
+                        if (host.getPlayerXFixed() < enemylist[enemyIdx][StageRuntime.ENEMY_X]) {
                             bossx[idx] = 137;
                         } else {
                             bossx[idx] = 57;
@@ -1218,7 +1219,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                         bossy[idx] = 54;
                         return;
                     }
-                    if (enemylist[enemyIdx][5] < 6356992) {
+                    if (enemylist[enemyIdx][StageRuntime.ENEMY_X] < 6356992) {
                         bossx[idx] = 117;
                     } else {
                         bossx[idx] = 77;
@@ -1231,14 +1232,14 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
             case 19:
                 bossx[idx] = 97;
                 bossy[idx] = 121;
-                enemylist[enemyIdx][14] = 458752;
-                enemylist[enemyIdx][15] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
                 core.batkf = false;
                 host.setBbaria(2);
                 if (host.getMGCnt() > 30) {
                     host.setQ(true);
-                    enemylist[enemyIdx][14] = 65536;
-                    enemylist[enemyIdx][15] = 65536;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 65536;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 65536;
                     core.bspellstep = 1;
                     core.spellId = 74 + host.getLevel();
                     wb(20);
@@ -1250,24 +1251,24 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 switch (host.getMGCnt()) {
                     case 1:
                     case 29:
-                        enemylist[enemyIdx][3] = 1;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 1;
                         break;
                     case 4:
                     case 26:
-                        enemylist[enemyIdx][3] = 2;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 2;
                         break;
                     case 7:
                     case 23:
-                        enemylist[enemyIdx][3] = 3;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 3;
                         break;
                     case 10:
-                        enemylist[enemyIdx][3] = 4;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 4;
                         break;
                 }
                 if (host.getMGCnt() > 30) {
-                    enemylist[enemyIdx][14] = 0;
-                    enemylist[enemyIdx][15] = 0;
-                    enemylist[enemyIdx][3] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
                     core.batkf = true;
                     host.setBbaria(0);
@@ -1283,16 +1284,16 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     return;
                 }
 
-                int ex21 = enemylist[enemyIdx][5];
-                int ey21 = enemylist[enemyIdx][6];
+                int ex21 = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                int ey21 = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
 
-                if (host.getLevel() <= 1) {
+                if (host.getLevel() <= BattleSessionConfig.DIFFICULTY_NORMAL) {
                     int d0 = (host.getMGCnt() + 10) % 360;
                     if (host.getMGCnt() <= 10) {
                         return;
                     }
 
-                    if (host.getLevel() >= 1) {
+                    if (host.getLevel() >= BattleSessionConfig.DIFFICULTY_NORMAL) {
                         int ang = (360 - ((d0 * 15) % 360)) + 270;
                         host.spawnEnemyBullet(537, 0, ang, 40, ex21, ey21);
                     }
@@ -1354,7 +1355,7 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     int te = (int) ((((long) Trig.sin(ang)) * (long) dist) >> 3);
                     host.spawnEnemyBullet(675, 39, ang + 180, 24, ex21 + se, ey21 + te);
 
-                    if (host.getLevel() == 3) {
+                    if (host.getLevel() == BattleSessionConfig.DIFFICULTY_LUNATIC) {
                         ang = ((d0 << 2) % 360) + 180;
                         se = (int) ((((long) Trig.cos(ang)) * (long) dist) >> 3);
                         te = (int) ((((long) Trig.sin(ang)) * (long) dist) >> 3);
@@ -1367,8 +1368,8 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
             case 37:
                 bossx[idx] = 97;
                 bossy[idx] = 68;
-                enemylist[enemyIdx][14] = 458752;
-                enemylist[enemyIdx][15] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VX] = 458752;
+                enemylist[enemyIdx][StageRuntime.ENEMY_VY] = 458752;
                 core.batkf = false;
                 host.setBbaria(2);
                 if (host.getMGCnt() > 30) {
@@ -1384,22 +1385,22 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 switch (host.getMGCnt()) {
                     case 1:
                     case 29:
-                        enemylist[enemyIdx][3] = 1;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 1;
                         break;
                     case 4:
                     case 26:
-                        enemylist[enemyIdx][3] = 2;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 2;
                         break;
                     case 7:
                     case 23:
-                        enemylist[enemyIdx][3] = 3;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 3;
                         break;
                     case 10:
-                        enemylist[enemyIdx][3] = 4;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 4;
                         break;
                 }
                 if (host.getMGCnt() > 30) {
-                    enemylist[enemyIdx][3] = 0;
+                    enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                     core.bspellstep = 2;
                     core.batkf = true;
                     host.setBbaria(0);
@@ -1421,29 +1422,29 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                     return;
                 }
 
-                int ex_39 = enemylist[enemyIdx][5];
-                int ey_39 = enemylist[enemyIdx][6];
+                int ex_39 = enemylist[enemyIdx][StageRuntime.ENEMY_X];
+                int ey_39 = enemylist[enemyIdx][StageRuntime.ENEMY_Y];
 
                 if ((d0_39 & 0x1F) == 0) {
-                    enemylist[enemyIdx][10] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey_39, host.getPlayerXFixed() - ex_39);
+                    enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(host.getPlayerYFixed() - ey_39, host.getPlayerXFixed() - ex_39);
                 }
-                int aim_39 = enemylist[enemyIdx][10];
+                int aim_39 = enemylist[enemyIdx][StageRuntime.ENEMY_WORK_1];
 
                 switch (d0_39) {
                     case 16:
-                        enemylist[enemyIdx][3] = 9;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 9;
                         break;
                     case 17:
-                        enemylist[enemyIdx][3] = 10;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 10;
                         break;
                     case 18:
-                        enemylist[enemyIdx][3] = 11;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 11;
                         break;
                     case 20:
-                        enemylist[enemyIdx][3] = 12;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 12;
                         break;
                     case 120:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
 
@@ -1472,19 +1473,19 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 int da_39 = d0_39 - 160;
                 switch (da_39) {
                     case 166:
-                        enemylist[enemyIdx][3] = 5;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 5;
                         break;
                     case 167:
-                        enemylist[enemyIdx][3] = 6;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 6;
                         break;
                     case 168:
-                        enemylist[enemyIdx][3] = 7;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 7;
                         break;
                     case 170:
-                        enemylist[enemyIdx][3] = 8;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 8;
                         break;
                     case 270:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
 
@@ -1527,19 +1528,19 @@ final class Stage5BossLogic extends AbstractBossStageLogic {
                 da_39 = d0_39 - 360;
                 switch (da_39) {
                     case 16:
-                        enemylist[enemyIdx][3] = 9;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 9;
                         break;
                     case 17:
-                        enemylist[enemyIdx][3] = 10;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 10;
                         break;
                     case 18:
-                        enemylist[enemyIdx][3] = 11;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 11;
                         break;
                     case 20:
-                        enemylist[enemyIdx][3] = 12;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 12;
                         break;
                     case 120:
-                        enemylist[enemyIdx][3] = 0;
+                        enemylist[enemyIdx][StageRuntime.ENEMY_ATTACK_STATE] = 0;
                         break;
                 }
 

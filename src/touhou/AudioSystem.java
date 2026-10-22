@@ -651,7 +651,7 @@ public final class AudioSystem implements PlayerListener {
                 trackCount = dis.readShort() & 0xFFFF;
                 int entryCount = dis.readShort() & 0xFFFF;
                 int reserved = dis.readInt();
-                if (version != 1 || codec != 0 || partCount != BgmCatalog.PART_COUNT
+                if (version != BgmCatalog.PACK_VERSION || codec != BgmCatalog.CODEC_MIDI || partCount != BgmCatalog.PART_COUNT
                         || trackCount != BgmCatalog.TRACK_COUNT
                         || entryCount != BgmCatalog.TRACK_COUNT * BgmCatalog.PART_COUNT || reserved != 0) {
                     headerFailed = true;
@@ -670,7 +670,7 @@ public final class AudioSystem implements PlayerListener {
                         return;
                     }
                 }
-                int dataPosition = 16 + entryCount * 8;
+                int dataPosition = BgmCatalog.HEADER_SIZE + entryCount * BgmCatalog.ENTRY_SIZE;
                 for (int i = 0; i < entryCount; i++) {
                     if (lengths[i] == 0) {
                         continue;

@@ -4,8 +4,14 @@ public final class ReplayShareCodec {
     public static final int MAGIC = 0x50524854; // 'THRP' little-endian
     public static final int VERSION = 4;
 
-    private static final int FIXED_SIZE = 4 + 2 + 4 * 4 + 4;
-    private static final int CHECKSUM_OFFSET = FIXED_SIZE - 4;
+    private static final int OFFSET_MAGIC = 0;
+    private static final int OFFSET_VERSION = 4;
+    private static final int OFFSET_HEADER_SIZE = 6;
+    private static final int OFFSET_NAME_SIZE = 10;
+    private static final int OFFSET_INPUT_SIZE = 14;
+    private static final int OFFSET_SNAPSHOT_SIZE = 18;
+    private static final int CHECKSUM_OFFSET = 22;
+    private static final int FIXED_SIZE = 26;
     public static final int MAX_PACKET_SIZE = FIXED_SIZE + ReplayHeader.SIZE + ReplayFormat.NAME_SIZE
             + ReplayCodec.ENCODED_SIZE + ReplayFormat.SNAPSHOT_MAX_SIZE;
 
@@ -52,14 +58,14 @@ public final class ReplayShareCodec {
         if (packet == null || packet.length < FIXED_SIZE) {
             return null;
         }
-        if (readI32LE(packet, 0) != MAGIC || readU16LE(packet, 4) != VERSION) {
+        if (readI32LE(packet, OFFSET_MAGIC) != MAGIC || readU16LE(packet, OFFSET_VERSION) != VERSION) {
             return null;
         }
 
-        int headerLength = readI32LE(packet, 6);
-        int nameLength = readI32LE(packet, 10);
-        int fullLength = readI32LE(packet, 14);
-        int stageLength = readI32LE(packet, 18);
+        int headerLength = readI32LE(packet, OFFSET_HEADER_SIZE);
+        int nameLength = readI32LE(packet, OFFSET_NAME_SIZE);
+        int fullLength = readI32LE(packet, OFFSET_INPUT_SIZE);
+        int stageLength = readI32LE(packet, OFFSET_SNAPSHOT_SIZE);
         if (headerLength != ReplayHeader.SIZE || nameLength != ReplayFormat.NAME_SIZE
                 || fullLength != ReplayCodec.ENCODED_SIZE
                 || stageLength <= 0 || stageLength > ReplayFormat.SNAPSHOT_MAX_SIZE) {

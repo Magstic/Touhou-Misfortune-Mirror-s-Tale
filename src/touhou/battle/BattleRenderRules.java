@@ -1,7 +1,10 @@
 package touhou.battle;
 
+import touhou.Player;
 import touhou.SpriteCatalog;
 import touhou.SpriteSheetCatalog;
+import touhou.stage.BossController;
+import touhou.stage.StageRuntime;
 
 /** Pure layout and resource-selection rules for the 240x240 battle screen. */
 public final class BattleRenderRules {
@@ -34,7 +37,7 @@ public final class BattleRenderRules {
     }
 
     public static int bombPortraitSprite(int character) {
-        return (character >= 0 && character <= 2) ? SpriteSheetCatalog.BOMB_PORTRAIT_BASE + character : -1;
+        return (character >= Player.REIMU && character <= Player.ALICE) ? SpriteSheetCatalog.BOMB_PORTRAIT_BASE + character : -1;
     }
 
     public static int safeCharacterIndex(int character) {
@@ -42,7 +45,7 @@ public final class BattleRenderRules {
     }
 
     public static int bombOverlayX(int character, int bombAge) {
-        if (character == 0) {
+        if (character == Player.REIMU) {
             return 0;
         }
         return -((70 + 6 * bombAge) >> 5);
@@ -64,17 +67,17 @@ public final class BattleRenderRules {
 
     public static int backgroundBaseImage(int stage, int phase) {
         switch (stage) {
-            case 0:
-            case 1:
-            case 2:
+            case StageRuntime.STAGE_1:
+            case StageRuntime.STAGE_2:
+            case StageRuntime.STAGE_3:
                 return 45;
-            case 3:
+            case StageRuntime.STAGE_4:
                 return 92;
-            case 4:
+            case StageRuntime.STAGE_5:
                 return 96;
-            case 5:
+            case StageRuntime.STAGE_6:
                 return 106;
-            case 6:
+            case StageRuntime.STAGE_EXTRA:
                 return (phase & 3) == 0 ? 114 : 127 + (phase & 3);
             default:
                 return 45;
@@ -83,13 +86,13 @@ public final class BattleRenderRules {
 
     public static int backgroundOverlayImage(int stage, int phase) {
         switch (stage) {
-            case 1:
+            case StageRuntime.STAGE_2:
                 return 59;
-            case 3:
+            case StageRuntime.STAGE_4:
                 return 83;
-            case 4:
+            case StageRuntime.STAGE_5:
                 return 98;
-            case 6:
+            case StageRuntime.STAGE_EXTRA:
                 return (phase & 3) == 0 ? 115 : 130 + (phase & 3);
             default:
                 return -1;
@@ -97,7 +100,7 @@ public final class BattleRenderRules {
     }
 
     public static int backgroundSecondaryImage(int stage) {
-        return (stage == 4) ? 97 : -1;
+        return (stage == StageRuntime.STAGE_5) ? 97 : -1;
     }
 
     /** Sprite ID, logical destination X/Y and text color. */
@@ -119,13 +122,13 @@ public final class BattleRenderRules {
 
     public static int bossSpellCutInSprite(int stage, int gameMode, int spellStep) {
         switch (stage) {
-            case 0: return SpriteSheetCatalog.SUNNY_CUTIN;
-            case 1: return SpriteSheetCatalog.SINGLE_CUTIN_BASE;
-            case 2: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 1;
-            case 3: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + ((gameMode == BattleSessionConfig.MODE_SPELL_PRACTICE && spellStep == 37) ? 3 : 2);
-            case 4: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 4;
-            case 5: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 5;
-            case 6: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 6;
+            case StageRuntime.STAGE_1: return SpriteSheetCatalog.SUNNY_CUTIN;
+            case StageRuntime.STAGE_2: return SpriteSheetCatalog.SINGLE_CUTIN_BASE;
+            case StageRuntime.STAGE_3: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 1;
+            case StageRuntime.STAGE_4: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + ((gameMode == BattleSessionConfig.MODE_SPELL_PRACTICE && spellStep == BossController.LAST_WORD_STEP) ? 3 : 2);
+            case StageRuntime.STAGE_5: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 4;
+            case StageRuntime.STAGE_6: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 5;
+            case StageRuntime.STAGE_EXTRA: return SpriteSheetCatalog.SINGLE_CUTIN_BASE + 6;
             default: throw new IllegalArgumentException("stage");
         }
     }

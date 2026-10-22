@@ -3,15 +3,22 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
-import touhou.SpriteSheetCatalog;
-import touhou.SpriteRenderer;
-import touhou.ImageBank;
 import touhou.GameProgress;
+import touhou.ImageBank;
+import touhou.Player;
+import touhou.SpriteRenderer;
+import touhou.SpriteSheetCatalog;
 import touhou.UnlockFlags;
+import touhou.battle.BattleSessionConfig;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
+import touhou.stage.StageRuntime;
 
 public final class StartSetupScreen {
+    private static final int SCENE_DIFFICULTY = 0;
+    private static final int SCENE_CHARACTER = 1;
+    private static final int SCENE_STAGE = 2;
+    private static final int SCENE_STARTING = 3;
     public static final class Result {
         public static final int KIND_BACK_TO_TITLE = 1;
         public static final int KIND_START_GAME = 2;
@@ -123,20 +130,20 @@ public final class StartSetupScreen {
         int[] progress = GameProgress.INSTANCE.getStageProgress();
         System.arraycopy(progress, 0, progressByDifficulty, 0, progress.length);
 
-        sLevel = 0;
-        if (gamemode == 1) {
-            sLevel = 4;
+        sLevel = BattleSessionConfig.DIFFICULTY_EASY;
+        if (gamemode == BattleSessionConfig.MODE_EXTRA) {
+            sLevel = BattleSessionConfig.DIFFICULTY_EXTRA;
         }
-        sChara = 0;
-        sType = 0;
-        startStage = 0;
+        sChara = Player.REIMU;
+        sType = Player.SHOT_A;
+        startStage = StageRuntime.STAGE_1;
 
-        if (!UnlockFlags.isAliceUnlocked() && sChara == 2) {
-            sChara = 0;
+        if (!UnlockFlags.isAliceUnlocked() && sChara == Player.ALICE) {
+            sChara = Player.REIMU;
         }
 
-        charaMax = 3;
-        typeMax = 2;
+        charaMax = Player.CHARACTER_COUNT;
+        typeMax = Player.SHOT_TYPE_COUNT;
 
         effect1 = 5;
         effect2 = 0;
@@ -156,25 +163,25 @@ public final class StartSetupScreen {
         pracBoss = false;
         resetWork();
 
-        scene = 0;
+        scene = SCENE_DIFFICULTY;
     }
 
     public Result update(int pressed) {
         switch (scene) {
-            case 0:
+            case SCENE_DIFFICULTY:
                 tickScene0();
                 if (UiInput.confirm(pressed)) {
-                    scene = 1;
+                    scene = SCENE_CHARACTER;
                     effect3 = 0;
                     effect5 = 0;
                     effect9 = effect8;
                     effect8 = charaColor(sChara);
                     return null;
                 }
-                if (UiInput.down(pressed) && gamemode != 1) {
+                if (UiInput.down(pressed) && gamemode != BattleSessionConfig.MODE_EXTRA) {
                     sLevel = MenuCursor.move(sLevel, 1, 4);
                     return null;
-                } else if (UiInput.up(pressed) && gamemode != 1) {
+                } else if (UiInput.up(pressed) && gamemode != BattleSessionConfig.MODE_EXTRA) {
                     sLevel = MenuCursor.move(sLevel, -1, 4);
                     return null;
                 }
@@ -184,18 +191,18 @@ public final class StartSetupScreen {
                 }
                 return null;
 
-            case 1:
+            case SCENE_CHARACTER:
                 tickScene1();
                 if (UiInput.confirm(pressed)) {
                     effect4 = 0;
                     effectC = 255;
-                    if (gamemode == 1) {
-                        scene = 3;
-                        startStage = 6;
+                    if (gamemode == BattleSessionConfig.MODE_EXTRA) {
+                        scene = SCENE_STARTING;
+                        startStage = StageRuntime.STAGE_EXTRA;
                         return null;
                     }
-                    scene = 2;
-                    startStage = 0;
+                    scene = SCENE_STAGE;
+                    startStage = StageRuntime.STAGE_1;
                     pracBoss = false;
                     resetWork();
                     return null;
@@ -213,7 +220,7 @@ public final class StartSetupScreen {
                     do {
                         sChara = MenuCursor.move(sChara, -1, charaMax);
                         n++;
-                    } while (n < charaMax && sChara == 2 && !UnlockFlags.isAliceUnlocked());
+                    } while (n < charaMax && sChara == Player.ALICE && !UnlockFlags.isAliceUnlocked());
                     effect5 = 0;
                     effect9 = effect8;
                     effect8 = charaColor(sChara);
@@ -224,14 +231,14 @@ public final class StartSetupScreen {
                     do {
                         sChara = MenuCursor.move(sChara, 1, charaMax);
                         n++;
-                    } while (n < charaMax && sChara == 2 && !UnlockFlags.isAliceUnlocked());
+                    } while (n < charaMax && sChara == Player.ALICE && !UnlockFlags.isAliceUnlocked());
                     effect5 = 0;
                     effect9 = effect8;
                     effect8 = charaColor(sChara);
                     return null;
                 }
                 if (UiInput.cancel(pressed)) {
-                    scene = 0;
+                    scene = SCENE_DIFFICULTY;
                     effect2 = 0;
                     effect9 = effect8;
                     effect8 = charaColor(sChara);
@@ -240,10 +247,10 @@ public final class StartSetupScreen {
                 }
                 return null;
 
-            case 2:
+            case SCENE_STAGE:
                 tickScene2();
                 if (UiInput.confirm(pressed)) {
-                    scene = 3;
+                    scene = SCENE_STARTING;
                     effectB = 0;
                     return null;
                 }
@@ -264,18 +271,18 @@ public final class StartSetupScreen {
                     return null;
                 }
                 if (UiInput.left(pressed)) {
-                    if (gamemode == 2 && bossToggleAvailable()) {
+                    if (gamemode == BattleSessionConfig.MODE_STAGE_PRACTICE && bossToggleAvailable()) {
                         pracBoss = false;
                         return null;
                     }
                 } else if (UiInput.right(pressed)) {
-                    if (gamemode == 2 && bossToggleAvailable()) {
+                    if (gamemode == BattleSessionConfig.MODE_STAGE_PRACTICE && bossToggleAvailable()) {
                         pracBoss = true;
                         return null;
                     }
                 }
                 if (UiInput.cancel(pressed)) {
-                    scene = 1;
+                    scene = SCENE_CHARACTER;
                     effect3 = 0;
                     effect9 = effect8;
                     effect8 = charaColor(sChara);
@@ -283,7 +290,7 @@ public final class StartSetupScreen {
                 }
                 return null;
 
-            case 3:
+            case SCENE_STARTING:
                 effectB++;
                 if (effectB >= 15) {
                     return new Result(Result.KIND_START_GAME, gamemode, sLevel, sChara, sType, startStage, pracBoss);
@@ -298,13 +305,13 @@ public final class StartSetupScreen {
             return;
         }
 
-        UiDraw.drawRegion(g, imgs.get(37), 0, 0, 0, 0, 240, 240);
+        UiDraw.drawRegion(g, imgs.get(SpriteSheetCatalog.MENU_BACKGROUND_IMAGE), 0, 0, 0, 0, 240, 240);
 
         int colorFrom = 0x303030;
         int colorTo = 0xFFFFA0;
-        if (gamemode == 1) {
+        if (gamemode == BattleSessionConfig.MODE_EXTRA) {
             colorTo = 0xFFB000;
-        } else if (gamemode == 2) {
+        } else if (gamemode == BattleSessionConfig.MODE_STAGE_PRACTICE) {
             colorTo = 0xA10010;
         }
         UiDraw.drawGradationAlpha(g, 0, 0, 240, 240, colorFrom, colorTo, 32, 128);
@@ -318,7 +325,7 @@ public final class StartSetupScreen {
     }
 
     private void renderPracticeLabel(Graphics g) {
-        if (gamemode != 2) {
+        if (gamemode != BattleSessionConfig.MODE_STAGE_PRACTICE) {
             return;
         }
         UiDraw.drawString2(g, null, UiText.get(TextId.PRACTICE_MODE_LABEL), 140, 36, 0, 16777120, 3158064);
@@ -345,13 +352,13 @@ private void renderTopHints(Graphics g) {
         }
 
         if (effect1 <= 5) {
-            if (gamemode == 1) {
-                sprites.draw(g, 476, 105, 120 - effect1);
+            if (gamemode == BattleSessionConfig.MODE_EXTRA) {
+                sprites.draw(g, SpriteSheetCatalog.EXTRA_DIFFICULTY, 105, 120 - effect1);
             } else {
                 for (int j = 0; j < 4; j++) {
                     int id = 467 + j;
                     if (j == sLevel) {
-                        id = 472 + j;
+                        id = SpriteSheetCatalog.DIFFICULTY_BASE + j;
                     }
                     int xBase = 75 + 30 * j;
                     int y = 50 + 45 * j;
@@ -365,7 +372,7 @@ private void renderTopHints(Graphics g) {
                 }
             }
 
-            if (gamemode != 1) {
+            if (gamemode != BattleSessionConfig.MODE_EXTRA) {
                 UiDraw.drawString2(g, null, UiText.get(DIFF_DESC[sLevel]), 120, 230, 1, 0xCFE7FF, 0x2F2F2F);
             } else {
                 UiDraw.drawString2(g, null, UiText.get(TextId.DIFFICULTY_DESC_EXTRA), 120, 230, 1, 0xCFE7FF, 0x2F2F2F);
@@ -376,14 +383,14 @@ private void renderTopHints(Graphics g) {
             renderDifficultyHighlight(g, sprites);
         }
 
-        if (scene == 0 && effectD > 0) {
+        if (scene == SCENE_DIFFICULTY && effectD > 0) {
             int y = 210;
             if (typeMax > 1) {
                 y += 10;
             }
-            int id = 472 + sLevel;
-            if (gamemode == 1) {
-                id = 476;
+            int id = SpriteSheetCatalog.DIFFICULTY_BASE + sLevel;
+            if (gamemode == BattleSessionConfig.MODE_EXTRA) {
+                id = SpriteSheetCatalog.EXTRA_DIFFICULTY;
             }
             if (difficultyFade == null) difficultyFade = sprites.createAlphaSprite(id);
             else difficultyFade.setSprite(id);
@@ -394,9 +401,9 @@ private void renderTopHints(Graphics g) {
     }
 
     private void renderDifficultyHighlight(Graphics g, SpriteRenderer sprites) {
-        int id = 472 + sLevel;
-        if (gamemode == 1) {
-            id = 476;
+        int id = SpriteSheetCatalog.DIFFICULTY_BASE + sLevel;
+        if (gamemode == BattleSessionConfig.MODE_EXTRA) {
+            id = SpriteSheetCatalog.EXTRA_DIFFICULTY;
         }
 
         int y = 210;
@@ -433,32 +440,32 @@ private void renderTopHints(Graphics g) {
         int baseX1 = 79 - effect6 + offset;
         int baseX2 = 94 - effect6 + offset;
 
-        if (sChara != 2 && charaMax >= 3) {
-            sprites.drawAlpha(g, 479, baseX2, 170, 128);
+        if (sChara != Player.ALICE && charaMax >= 3) {
+            sprites.drawAlpha(g, SpriteSheetCatalog.CHARACTER_SELECT_BASE + Player.ALICE, baseX2, 170, 128);
         }
-        if (sChara != 1) {
-            sprites.drawAlpha(g, 478, baseX1, 170, 128);
+        if (sChara != Player.MARISA) {
+            sprites.drawAlpha(g, SpriteSheetCatalog.CHARACTER_SELECT_BASE + Player.MARISA, baseX1, 170, 128);
         }
-        if (sChara != 0) {
-            sprites.drawAlpha(g, 477, baseX0, 170, 128);
+        if (sChara != Player.REIMU) {
+            sprites.drawAlpha(g, SpriteSheetCatalog.CHARACTER_SELECT_BASE, baseX0, 170, 128);
         }
 
         int selX = baseX0;
-        int selId = 480;
+        int selId = SpriteSheetCatalog.CHARACTER_PORTRAIT_BASE;
         int titleColor = 16764879;
         int titleShadow = 0;
         int nameColor = 16756655;
         int nameShadow = 0;
-        if (sChara == 1) {
+        if (sChara == Player.MARISA) {
             selX = baseX1;
-            selId = 481;
+            selId = SpriteSheetCatalog.CHARACTER_PORTRAIT_BASE + Player.MARISA;
             titleColor = 13619151;
             titleShadow = 0;
             nameColor = 11513775;
             nameShadow = 0;
-        } else if (sChara == 2) {
+        } else if (sChara == Player.ALICE) {
             selX = baseX2;
-            selId = 482;
+            selId = SpriteSheetCatalog.CHARACTER_PORTRAIT_BASE + Player.ALICE;
             titleColor = 12566527;
             titleShadow = 31;
             nameColor = 9408511;
@@ -495,7 +502,7 @@ private void renderTopHints(Graphics g) {
             int c0Shadow;
             int c1Main;
             int c1Shadow;
-            if (sType == 0) {
+            if (sType == Player.SHOT_A) {
                 c0Main = 16777215;
                 c0Shadow = 0;
                 c1Main = 8355711;
@@ -637,10 +644,10 @@ private void renderTopHints(Graphics g) {
     }
 
     private void renderStageBlocks(Graphics g, SpriteRenderer sprites) {
-        if (gamemode == 1) {
+        if (gamemode == BattleSessionConfig.MODE_EXTRA) {
             return;
         }
-        if (!(scene == 1 || scene == 2 || scene == 3)) {
+        if (!(scene == SCENE_CHARACTER || scene == SCENE_STAGE || scene == SCENE_STARTING)) {
             return;
         }
 
@@ -671,7 +678,7 @@ private void renderTopHints(Graphics g) {
                 UiDraw.fillRectAlpha(g, x, y, 105, 26, 0x000000, 96);
             }
 
-            if (gamemode == 2 && k == startStage && bossToggleAvailable()) {
+            if (gamemode == BattleSessionConfig.MODE_STAGE_PRACTICE && k == startStage && bossToggleAvailable()) {
                 int bx0 = x + (n21 >> 1) - 23 - 26 + effectC;
                 int by = y + 20;
                 int bx1 = x + (n21 >> 1) - 23 + 54 - 26 + effectC;
@@ -704,7 +711,7 @@ private void renderTopHints(Graphics g) {
         }
 
         int t = progressByDifficulty[idx];
-        if (gamemode == 2 && t > 0) {
+        if (gamemode == BattleSessionConfig.MODE_STAGE_PRACTICE && t > 0) {
             t--;
         }
         if (t > 5) {
@@ -729,10 +736,10 @@ private void renderTopHints(Graphics g) {
     }
 
     private static int charaColor(int chara) {
-        if (chara == 0) {
+        if (chara == Player.REIMU) {
             return 0xFF0000;
         }
-        if (chara == 1) {
+        if (chara == Player.MARISA) {
             return 0x000000;
         }
         return 0x0000FF;

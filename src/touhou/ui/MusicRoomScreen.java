@@ -3,9 +3,9 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
+import touhou.BgmCatalog;
 import touhou.GameOptions;
 import touhou.GameProgress;
-import touhou.BgmCatalog;
 import touhou.MusicRoomSettings;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
@@ -103,7 +103,7 @@ public final class MusicRoomScreen {
         opt = GameOptions.load();
 
         selectedTrack = 0;
-        stVolume = MusicRoomSettings.loadVolume(opt[1]);
+        stVolume = MusicRoomSettings.loadVolume(opt[GameOptions.IDX_BGM_VOLUME]);
     }
 
     public int getVolume() {

@@ -1,5 +1,8 @@
 package touhou.battle;
 
+import touhou.stage.StageRuntime;
+
+
 /** Update-owned transient visual state. Rendering reads this object without mutating it. */
 public final class BattleVisualState {
     private static final int BLIND_ALPHA_MAX = 128;
@@ -53,7 +56,7 @@ public final class BattleVisualState {
     }
 
     private void advanceBlind(int stage, boolean bossMode, int spellId, int bossFrame, boolean fadeEnabled) {
-        if (stage != 1) {
+        if (stage != StageRuntime.STAGE_2) {
             blindAlpha = 0;
             blindSpellId = -1;
             return;

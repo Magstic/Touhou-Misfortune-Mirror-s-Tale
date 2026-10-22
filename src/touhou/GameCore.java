@@ -15,6 +15,9 @@ import touhou.battle.BattleStageFlow;
 import touhou.battle.BattleStageHost;
 import touhou.battle.BattleVisualState;
 import touhou.battle.SpellPracticeCatalog;
+import touhou.i18n.I18nBootstrap;
+import touhou.i18n.SpellText;
+import touhou.i18n.TextId;
 import touhou.replay.ReplayHeader;
 import touhou.replay.ReplayPlaybackController;
 import touhou.replay.ReplayRecordingController;
@@ -22,12 +25,10 @@ import touhou.replay.ReplayRng;
 import touhou.replay.ReplayStageSnapshotService;
 import touhou.replay.ReplayTimeScaleController;
 import touhou.stage.BossController;
+import touhou.stage.StageAssets;
+import touhou.stage.StageDat;
 import touhou.stage.StageDochu;
 import touhou.stage.StageRuntime;
-import touhou.stage.StageAssets;
-import touhou.i18n.I18nBootstrap;
-import touhou.i18n.SpellText;
-import touhou.i18n.TextId;
 import touhou.ui.BattlePauseScreen;
 import touhou.ui.EndingScreen;
 import touhou.ui.InputSystem;
@@ -104,8 +105,8 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
         // Stage6 clear (story) skips stage clear panel and proceeds to ending.
         // Extra clear proceeds directly to the final result panel (no ending/staff roll).
-        if (mGamemode == 0) {
-            return mStage >= 5; // Stage index: 5 == Stage6.
+        if (mGamemode == BattleSessionConfig.MODE_STORY) {
+            return mStage >= StageRuntime.STAGE_6; // Stage index: 5 == Stage6.
         }
         return false;
     }
@@ -124,7 +125,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         // For story clear (Stage6), there is no stage clear panel, so we arm pending here to allow
         // the final result screen to prompt for replay saving.
         replayRecording.clearPending();
-        if (!replayPlayback.isActive() && !session.isSpellPractice() && (mGamemode == 0 || mGamemode == 1)) {
+        if (!replayPlayback.isActive() && !session.isSpellPractice() && (mGamemode == BattleSessionConfig.MODE_STORY || mGamemode == BattleSessionConfig.MODE_EXTRA)) {
             int continuesUsed = runInitialContinueCount - continueSystem.getRemainingContinues();
             if (continuesUsed < 0) {
                 continuesUsed = 0;
@@ -365,7 +366,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
     // Resolve cut-in portrait based on boss/spell.
     private static int resolveBossCharaForCutIn(int stage, int mt, int spellId) {
-        if (stage != 0) {
+        if (stage != StageRuntime.STAGE_1) {
             return 0;
         }
 
@@ -393,13 +394,13 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             return 108;
         }
 
-        if (mt == 100 || mt == 101) {
+        if (mt == BossController.MIDBOSS_PATTERN || mt == BossController.BOSS_PATTERN) {
             return 108;
         }
-        if (mt == 102) {
+        if (mt == BossController.SECOND_BOSS_PATTERN) {
             return 109;
         }
-        if (mt == 103) {
+        if (mt == BossController.THIRD_BOSS_PATTERN) {
             return 110;
         }
         return 0;
@@ -408,19 +409,19 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     // Find boss enemy type for cut-in overlay.
     private int resolveBossMtForCutIn() {
         int idx = bossController.getHpBarTargetIndex();
-        if (idx >= 0 && idx < 32 && enemylist[idx][0] != 0) {
-            int mt = enemylist[idx][11];
-            if (mt >= 100 && mt <= 103) {
+        if (idx >= 0 && idx < 32 && enemylist[idx][StageRuntime.ENEMY_ACTIVE] != 0) {
+            int mt = enemylist[idx][StageRuntime.ENEMY_MOVE_PATTERN];
+            if (mt >= BossController.MIDBOSS_PATTERN && mt <= BossController.THIRD_BOSS_PATTERN) {
                 return mt;
             }
         }
 
         for (int i = 0; i < 32; i++) {
-            if (enemylist[i][0] == 0) {
+            if (enemylist[i][StageRuntime.ENEMY_ACTIVE] == 0) {
                 continue;
             }
-            int mt = enemylist[i][11];
-            if (mt >= 100 && mt <= 103) {
+            int mt = enemylist[i][StageRuntime.ENEMY_MOVE_PATTERN];
+            if (mt >= BossController.MIDBOSS_PATTERN && mt <= BossController.THIRD_BOSS_PATTERN) {
                 return mt;
             }
         }
@@ -598,7 +599,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             I18nBootstrap.initFromOptions(opt);
             softkeys = new SoftkeyBar();
 
-            audioSystem.setVolumes(opt[1], opt[2]);
+            audioSystem.setVolumes(opt[GameOptions.IDX_BGM_VOLUME], opt[GameOptions.IDX_SE_VOLUME]);
             audioSystem.setHeavyBgmEnabled(GameOptions.isHeavyBgmEnabled(opt));
             int seMask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
             audioSystem.setSeEnabledMask14(seMask);
@@ -877,7 +878,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             int bossBgm = SpellPracticeCatalog.getBossBgmTrack(session.getSpellId());
             GameProgress.INSTANCE.markMusicPlayed(bossBgm);
             audioSystem.requestBgm(bossBgm, true);
-        } else if (session.getGameMode() == 2 && session.isPracticeBoss()) {
+        } else if (session.getGameMode() == BattleSessionConfig.MODE_STAGE_PRACTICE && session.isPracticeBoss()) {
             stageCe();
             ensureTalkTableLoaded();
         }
@@ -960,15 +961,15 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
                 }
                 int i0 = stageFb(9, 108, 3000, 0, 101, 180, 5, sBossx[0] << 16, sBossy[0] << 16);
                 if (i0 >= 0) {
-                    enemylist[i0][16] = 1;
+                    enemylist[i0][StageRuntime.ENEMY_TARGETABLE] = 1;
                 }
                 int i1 = stageFb(11, 109, 3000, 0, 102, 180, 5, sBossx[1] << 16, sBossy[1] << 16);
                 if (i1 >= 0) {
-                    enemylist[i1][16] = 1;
+                    enemylist[i1][StageRuntime.ENEMY_TARGETABLE] = 1;
                 }
                 n4 = stageFb(10, 110, 3000, 0, 103, 180, 5, sBossx[2] << 16, sBossy[2] << 16);
                 if (n4 >= 0) {
-                    enemylist[n4][16] = 1;
+                    enemylist[n4][StageRuntime.ENEMY_TARGETABLE] = 1;
                 }
                 break;
             case 112:
@@ -996,17 +997,17 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         }
 
         if (n4 >= 0) {
-            enemylist[n4][16] = 1;
+            enemylist[n4][StageRuntime.ENEMY_TARGETABLE] = 1;
         }
         if (!b) {
             sBossf = 2;
             sBbaria = 1;
             mBossmodef = true;
         } else if (n4 >= 0) {
-            if (mStage == 0 && hud instanceof BattleHudModel) {
+            if (mStage == StageRuntime.STAGE_1 && hud instanceof BattleHudModel) {
                 ((BattleHudModel) hud).setPower(28);
             }
-            enemylist[n4][7] = 1;
+            enemylist[n4][StageRuntime.ENEMY_MOVE_STATE] = 1;
         }
     }
 
@@ -1025,13 +1026,13 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         m.setGraze(0);
 
         int power = 128;
-        if (stage == 0) {
+        if (stage == StageRuntime.STAGE_1) {
             power = 64;
         }
         if (level == 5) {
             power = 128;
         }
-        if (stage == 0 && enemy == 130) {
+        if (stage == StageRuntime.STAGE_1 && enemy == 130) {
             power = 28;
         }
         m.setPower(power);
@@ -1047,13 +1048,13 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
         int player;
         int bomb;
-        if (gamemode == 0) {
-            player = opt[0];
+        if (gamemode == BattleSessionConfig.MODE_STORY) {
+            player = opt[GameOptions.IDX_LIVES];
             bomb = 3;
-        } else if (gamemode == 1) {
+        } else if (gamemode == BattleSessionConfig.MODE_EXTRA) {
             player = 3;
             bomb = 3;
-        } else if (gamemode == 2) {
+        } else if (gamemode == BattleSessionConfig.MODE_STAGE_PRACTICE) {
             player = 7;
             bomb = 3;
         } else {
@@ -1065,24 +1066,24 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
         int unit = (chara << 1) + type;
         int hi = 0;
-        if (gamemode != 3) {
+        if (gamemode != BattleSessionConfig.MODE_SPELL_PRACTICE) {
             hi = GameProgress.INSTANCE.getHighScore(unit, level);
         }
         m.setHiScore(hi);
         m.setScore(0);
 
         int power = 0;
-        if (startStage == 0) {
+        if (startStage == StageRuntime.STAGE_1) {
             power = 0;
             if (pracBoss) {
                 power = 70;
             }
-        } else if (startStage == 1) {
+        } else if (startStage == StageRuntime.STAGE_2) {
             power = 70;
             if (pracBoss) {
                 power = 128;
             }
-        } else if (startStage == 6) {
+        } else if (startStage == StageRuntime.STAGE_EXTRA) {
             power = 0;
         } else {
             power = 128;
@@ -1112,14 +1113,14 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         if (si < 0 || si >= enemylist.length) {
             return "wrk" + bossWrkIndex + "=" + si;
         }
-        if (enemylist[si][0] == 0) {
+        if (enemylist[si][StageRuntime.ENEMY_ACTIVE] == 0) {
             return "wrk" + bossWrkIndex + "=" + si + " dead";
         }
         return "wrk" + bossWrkIndex + "=" + si
-                + " id=" + enemylist[si][1]
-                + " mt=" + enemylist[si][11]
-                + " x=" + (enemylist[si][5] >> 16)
-                + " y=" + (enemylist[si][6] >> 16);
+                + " id=" + enemylist[si][StageRuntime.ENEMY_APPEARANCE]
+                + " mt=" + enemylist[si][StageRuntime.ENEMY_MOVE_PATTERN]
+                + " x=" + (enemylist[si][StageRuntime.ENEMY_X] >> 16)
+                + " y=" + (enemylist[si][StageRuntime.ENEMY_Y] >> 16);
     }
 
     // Format logical sprite geometry for debug output.
@@ -1280,7 +1281,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             if (audioOptPollCnt <= 0) {
                 audioOptPollCnt = 30;
                 int[] opt = GameOptions.load();
-                audioSystem.setVolumes(opt[1], opt[2]);
+                audioSystem.setVolumes(opt[GameOptions.IDX_BGM_VOLUME], opt[GameOptions.IDX_SE_VOLUME]);
                 audioSystem.setHeavyBgmEnabled(GameOptions.isHeavyBgmEnabled(opt));
                 int seMask = (opt[GameOptions.IDX_SE_MASK] & 0xFF) | ((opt[GameOptions.IDX_SE_MASK_HI] & 0xFF) << 8);
                 audioSystem.setSeEnabledMask14(seMask);
@@ -1545,7 +1546,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             scoreSystem.post(ScoreSystem.EVT_CONTINUE_USED, 0, mStage, 0);
             scoreSystem.post(ScoreSystem.EVT_CONTINUE_RESET, 0, 0, 0);
             int[] opt = GameOptions.load();
-            int playerCount = opt[0];
+            int playerCount = opt[GameOptions.IDX_LIVES];
             BattleEngine.ContinueReviveResult rr = battleEngine.continueReviveInPlace(dropItems, (hud instanceof BattleHudModel) ? (BattleHudModel) hud : null,
                     player, PLAY_X, PLAY_Y, PLAY_W, PLAY_H, playerCount);
             bombCnt = rr.newBombCnt;
@@ -1886,9 +1887,9 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             if (r.bombActivated) {
                 stageBombUsedCount++;
                 runBombUsedCount++;
-                if (session.getCharacter() == 0) {
+                if (session.getCharacter() == Player.REIMU) {
                     audioSystem.playSeType(SoundEffectSystem.SE_REIMU_BOMB);
-                } else if (session.getCharacter() == 1) {
+                } else if (session.getCharacter() == Player.MARISA) {
                     audioSystem.playSeType(SoundEffectSystem.SE_MARISA_BOMB);
                 } else {
                     audioSystem.playSeType(SoundEffectSystem.SE_ALICE_BOMB);
@@ -1911,7 +1912,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
     public boolean battleMainAdvanceAndHandleDeath() {
         if (sDeadcnt == 0) {
-            if (mStage == 1 || mStage == 2) {
+            if (mStage == StageRuntime.STAGE_2 || mStage == StageRuntime.STAGE_3) {
                 bgMoveSpd++;
             } else {
                 bgMoveSpd += 2;
@@ -1999,7 +2000,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         battleEngine.tickDropItems(dropItems, hud, player, PLAY_X, PLAY_Y, PLAY_W, PLAY_H, mStage, disableItemCollectLimitCheat, session.getCharacter(), sDeadcnt);
 
         long w3 = System.currentTimeMillis();
-        if (mGamemode != 3) {
+        if (mGamemode != BattleSessionConfig.MODE_SPELL_PRACTICE) {
             stageMa();
         }
         stageRuntime.advanceEnemyAnimations();
@@ -2013,7 +2014,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
     }
 
     public void battleMainTickBulletsAndCollisionAndHpBar() {
-        int enemyLevel = 0;
+        int enemyLevel = BattleSessionConfig.DIFFICULTY_EASY;
         if (hud instanceof BattleHudData) {
             enemyLevel = ((BattleHudData) hud).getLevel();
         }
@@ -2366,7 +2367,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         int fx = player.getXFixed();
         int fy = player.getYFixed();
 
-        if (session.getCharacter() == 0) {
+        if (session.getCharacter() == Player.REIMU) {
             // Reimu bomb: explosion effect is spawned when bomb bullets end (see BulletSystem).
             if (d0 == 2) {
                 int sx = fx + BattleMath.speedCos(240, 0);
@@ -2391,7 +2392,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             }
         }
 
-        if (session.getCharacter() == 1) {
+        if (session.getCharacter() == Player.MARISA) {
             if (d0 < 45) {
                 int y = fy - Fixed.fromInt(10);
                 bullets.spawnOrUpdatePlayerLaser(105, 3, 2, fx, y, 12);
@@ -2411,7 +2412,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             mOriginy = te >> 16;
         }
 
-        if (session.getCharacter() == 2) {
+        if (session.getCharacter() == Player.ALICE) {
             if (d0 == 10) {
                 for (int i = 0; i < 6; i++) {
                     bombSpawnXa(16, 0 + 60 * i, 20, 4, fx, fy);
@@ -2474,12 +2475,12 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             int maxHp = -1;
             int e16 = -1;
             int e21 = -1;
-            if (t >= 0 && t < 32 && enemylist[t][0] != 0) {
-                mt = enemylist[t][11];
-                hp = enemylist[t][4];
-                maxHp = enemylist[t][9];
-                e16 = enemylist[t][16];
-                e21 = enemylist[t][21];
+            if (t >= 0 && t < 32 && enemylist[t][StageRuntime.ENEMY_ACTIVE] != 0) {
+                mt = enemylist[t][StageRuntime.ENEMY_MOVE_PATTERN];
+                hp = enemylist[t][StageRuntime.ENEMY_HP];
+                maxHp = enemylist[t][StageRuntime.ENEMY_WORK_0];
+                e16 = enemylist[t][StageRuntime.ENEMY_TARGETABLE];
+                e21 = enemylist[t][StageRuntime.ENEMY_DROP_TYPE];
             }
             debugLine2 = "t=" + t + " mt=" + mt + " ehp=" + hp + "/" + maxHp + " j=" + bossController.getHpBarAnimJ() + " e16=" + e16 + " e21=" + e21 + " baria=" + sBbaria + " k=" + bossController.getHpBarAnimK() + " m=" + bossController.getHpBarAnimMode();
             debugLine3 = buildSummonDebugLine(9);
@@ -2493,16 +2494,16 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
     // Boss update and movement smoothing.
     private void stageUb(final int n) {
-        int mt = enemylist[n][11];
-        if (mt == 100 || mt == 101 || mt == 102 || mt == 103) {
+        int mt = enemylist[n][StageRuntime.ENEMY_MOVE_PATTERN];
+        if (mt == BossController.MIDBOSS_PATTERN || mt == BossController.BOSS_PATTERN || mt == BossController.SECOND_BOSS_PATTERN || mt == BossController.THIRD_BOSS_PATTERN) {
             long bt0 = System.currentTimeMillis();
             bossController.tick(n);
             lastBossTickMs = (int) (System.currentTimeMillis() - bt0);
             int sid = bossController.getSpellId();
             scoreSystem.post(ScoreSystem.EVT_SPELL_ID_CHANGED, sid, 0, 0);
             onStageSpellIdChanged(sid);
-            if (mt != 100) {
-                enemylist[n][16] = (sBbaria == 0) ? 1 : 0;
+            if (mt != BossController.MIDBOSS_PATTERN) {
+                enemylist[n][StageRuntime.ENEMY_TARGETABLE] = (sBbaria == 0) ? 1 : 0;
             }
             return;
         }
@@ -2510,45 +2511,45 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         bossTargetsUpdateMinimal();
 
         int idx = 0;
-        if (mt == 102) {
+        if (mt == BossController.SECOND_BOSS_PATTERN) {
             idx = 1;
-        } else if (mt == 103) {
+        } else if (mt == BossController.THIRD_BOSS_PATTERN) {
             idx = 2;
         }
 
-        if (mBossmodef && mStage == 0 && sBossf == 1 && mt == 102) {
+        if (mBossmodef && mStage == StageRuntime.STAGE_1 && sBossf == 1 && mt == BossController.SECOND_BOSS_PATTERN) {
             if (mGcnt == 30) {
-                enemylist[n][14] = 131072;
-                enemylist[n][15] = 131072;
+                enemylist[n][StageRuntime.ENEMY_VX] = 131072;
+                enemylist[n][StageRuntime.ENEMY_VY] = 131072;
             } else if (mGcnt == 45) {
-                enemylist[n][14] = 458752;
-                enemylist[n][15] = 458752;
+                enemylist[n][StageRuntime.ENEMY_VX] = 458752;
+                enemylist[n][StageRuntime.ENEMY_VY] = 458752;
             }
         }
 
-        if (mBossmodef && mStage == 2 && sBossf == 2 && mGcnt == 0) {
-            enemylist[n][14] = 393216;
-            enemylist[n][15] = 393216;
+        if (mBossmodef && mStage == StageRuntime.STAGE_3 && sBossf == 2 && mGcnt == 0) {
+            enemylist[n][StageRuntime.ENEMY_VX] = 393216;
+            enemylist[n][StageRuntime.ENEMY_VY] = 393216;
         }
 
-        enemylist[n][16] = (sBbaria == 0) ? 1 : 0;
+        enemylist[n][StageRuntime.ENEMY_TARGETABLE] = (sBbaria == 0) ? 1 : 0;
 
         if (sBossx[idx] == 0 && sBossy[idx] == 0) {
-            sBossx[idx] = enemylist[n][5] >> 16;
-            sBossy[idx] = enemylist[n][6] >> 16;
+            sBossx[idx] = enemylist[n][StageRuntime.ENEMY_X] >> 16;
+            sBossy[idx] = enemylist[n][StageRuntime.ENEMY_Y] >> 16;
         }
 
-        if (enemylist[n][5] < (sBossx[idx] + 1 << 16)) {
-            enemylist[n][5] += enemylist[n][14];
+        if (enemylist[n][StageRuntime.ENEMY_X] < (sBossx[idx] + 1 << 16)) {
+            enemylist[n][StageRuntime.ENEMY_X] += enemylist[n][StageRuntime.ENEMY_VX];
         }
-        if (enemylist[n][5] > (sBossx[idx] - 1 << 16)) {
-            enemylist[n][5] -= enemylist[n][14];
+        if (enemylist[n][StageRuntime.ENEMY_X] > (sBossx[idx] - 1 << 16)) {
+            enemylist[n][StageRuntime.ENEMY_X] -= enemylist[n][StageRuntime.ENEMY_VX];
         }
-        if (enemylist[n][6] < (sBossy[idx] + 1 << 16)) {
-            enemylist[n][6] += enemylist[n][15];
+        if (enemylist[n][StageRuntime.ENEMY_Y] < (sBossy[idx] + 1 << 16)) {
+            enemylist[n][StageRuntime.ENEMY_Y] += enemylist[n][StageRuntime.ENEMY_VY];
         }
-        if (enemylist[n][6] > (sBossy[idx] - 1 << 16)) {
-            enemylist[n][6] -= enemylist[n][15];
+        if (enemylist[n][StageRuntime.ENEMY_Y] > (sBossy[idx] - 1 << 16)) {
+            enemylist[n][StageRuntime.ENEMY_Y] -= enemylist[n][StageRuntime.ENEMY_VY];
         }
     }
 
@@ -2561,7 +2562,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             return;
         }
 
-        if (sBossf == 2 && mGcnt > 10 && mGamemode != 3) {
+        if (sBossf == 2 && mGcnt > 10 && mGamemode != BattleSessionConfig.MODE_SPELL_PRACTICE) {
             sBbaria = 0;
             bossWb(3);
         }
@@ -2574,7 +2575,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             }
         }
 
-        if (mStage == 0) {
+        if (mStage == StageRuntime.STAGE_1) {
             if (sBossf == 1) {
                 sBossx[0] = 97;
                 sBossy[0] = 56;
@@ -2616,13 +2617,13 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             return;
         }
 
-        if (mStage == 1) {
+        if (mStage == StageRuntime.STAGE_2) {
             sBossx[0] = 97;
             sBossy[0] = 56;
             return;
         }
 
-        if (mStage >= 2) {
+        if (mStage >= StageRuntime.STAGE_3) {
             if (sBossf == 1) {
                 sBossx[0] = 97;
                 sBossy[0] = 56;
@@ -2752,12 +2753,12 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         // Death bursts for specific enemy types.
         if (enemyType == 80) {
             int ang = BattleMath.arcTan2Deg(py - ey, px - ex);
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 enemyBullets.spawn(81, 0, ang, 32, ex, ey, px, py);
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 enemyBullets.spawn(81, 0, ang, 40, ex, ey, px, py);
                 enemyBullets.spawn(81, 0, ang, 36, ex, ey, px, py);
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 enemyBullets.spawn(81, 0, ang, 48, ex, ey, px, py);
                 enemyBullets.spawn(81, 0, ang, 44, ex, ey, px, py);
             } else {
@@ -2768,13 +2769,13 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
             int ang = BattleMath.arcTan2Deg(py - ey, px - ex);
             int step;
             int count;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 step = 30;
                 count = 1;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 step = 25;
                 count = 2;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 step = 15;
                 count = 3;
             } else {
@@ -2788,13 +2789,13 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         if (enemyType == 82) {
             int ang = BattleMath.arcTan2Deg(py - ey, px - ex);
             int div;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 div = 8;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 div = 9;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 div = 10;
-            } else if (level == 3) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_LUNATIC) {
                 div = 15;
             } else {
                 div = 12;
@@ -2807,20 +2808,20 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
     // Handle enemy death and boss phase transitions.
     private void stageJb(final int n) {
-        if (enemylist[n][0] == 0) {
+        if (enemylist[n][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
-        int mt = enemylist[n][11];
-        int ex = enemylist[n][5];
-        int ey = enemylist[n][6];
-        int dropType = enemylist[n][21];
+        int mt = enemylist[n][StageRuntime.ENEMY_MOVE_PATTERN];
+        int ex = enemylist[n][StageRuntime.ENEMY_X];
+        int ey = enemylist[n][StageRuntime.ENEMY_Y];
+        int dropType = enemylist[n][StageRuntime.ENEMY_DROP_TYPE];
 
-        if (mt == 100) {
+        if (mt == BossController.MIDBOSS_PATTERN) {
             stageJbHandleMt100(n, ex, ey, dropType);
             return;
         }
 
-        if (mt == 101 || mt == 102 || mt == 103) {
+        if (mt == BossController.BOSS_PATTERN || mt == BossController.SECOND_BOSS_PATTERN || mt == BossController.THIRD_BOSS_PATTERN) {
             stageJbHandleMt101to103(n, ex, ey);
             return;
         }
@@ -2863,7 +2864,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         scoreSystem.setScoreEnabled(!anyCheatActive);
         replayRecording.setEnabled(!anyCheatActive);
 
-        int optLife = opt[0];
+        int optLife = opt[GameOptions.IDX_LIVES];
         scoreSystem.resetForNewRun(initialHiScore, session.getGameMode(), optLife,
                 session.getCharacter(), session.getShotType(), session.getDifficulty());
     }
@@ -2876,302 +2877,302 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
     // Update non-boss enemy movement patterns.
     private void stageDb(final int n) {
-        enemylist[n][5] += enemylist[n][14];
-        enemylist[n][6] += enemylist[n][15];
-        switch (enemylist[n][11]) {
+        enemylist[n][StageRuntime.ENEMY_X] += enemylist[n][StageRuntime.ENEMY_VX];
+        enemylist[n][StageRuntime.ENEMY_Y] += enemylist[n][StageRuntime.ENEMY_VY];
+        switch (enemylist[n][StageRuntime.ENEMY_MOVE_PATTERN]) {
             case 1:
-                if (enemylist[n][2] % 3 == 0) {
-                    enemylist[n][15] += 65536;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] % 3 == 0) {
+                    enemylist[n][StageRuntime.ENEMY_VY] += 65536;
                     return;
                 }
                 break;
             case 2:
-                if (enemylist[n][2] % 5 == 0) {
-                    enemylist[n][14] += 65536;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] % 5 == 0) {
+                    enemylist[n][StageRuntime.ENEMY_VX] += 65536;
                     return;
                 }
                 break;
             case 3:
-                if (enemylist[n][2] % 5 == 0) {
-                    enemylist[n][14] -= 65536;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] % 5 == 0) {
+                    enemylist[n][StageRuntime.ENEMY_VX] -= 65536;
                     return;
                 }
                 break;
             case 4:
-                if (enemylist[n][2] > 15 && enemylist[n][2] < 50) {
-                    enemylist[n][7] = 1;
-                    enemylist[n][5] -= enemylist[n][14];
-                    enemylist[n][6] -= enemylist[n][15];
+                if (enemylist[n][StageRuntime.ENEMY_AGE] > 15 && enemylist[n][StageRuntime.ENEMY_AGE] < 50) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                    enemylist[n][StageRuntime.ENEMY_X] -= enemylist[n][StageRuntime.ENEMY_VX];
+                    enemylist[n][StageRuntime.ENEMY_Y] -= enemylist[n][StageRuntime.ENEMY_VY];
                     return;
                 }
-                enemylist[n][7] = 0;
+                enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 0;
                 return;
             case 8:
-                if (enemylist[n][2] > 50) {
-                    enemylist[n][7] = 0;
-                    if ((enemylist[n][2] & 0x1) == 0) {
-                        enemylist[n][12] -= 1;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] > 50) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 0;
+                    if ((enemylist[n][StageRuntime.ENEMY_AGE] & 0x1) == 0) {
+                        enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                     }
-                    enemylist[n][13] -= 2;
-                } else if (enemylist[n][12] == 0) {
-                    enemylist[n][7] = 1;
-                } else if (enemylist[n][2] > 13) {
-                    enemylist[n][12] -= 1;
+                    enemylist[n][StageRuntime.ENEMY_ANGLE] -= 2;
+                } else if (enemylist[n][StageRuntime.ENEMY_SPEED] == 0) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_AGE] > 13) {
+                    enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                 }
-                enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 return;
             case 9:
-                if (enemylist[n][2] > 50) {
-                    enemylist[n][7] = 0;
-                    if ((enemylist[n][2] & 0x1) == 0) {
-                        enemylist[n][12] -= 1;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] > 50) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 0;
+                    if ((enemylist[n][StageRuntime.ENEMY_AGE] & 0x1) == 0) {
+                        enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                     }
-                    enemylist[n][13] += 2;
-                } else if (enemylist[n][12] == 0) {
-                    enemylist[n][7] = 1;
-                } else if (enemylist[n][2] > 13) {
-                    enemylist[n][12] -= 1;
+                    enemylist[n][StageRuntime.ENEMY_ANGLE] += 2;
+                } else if (enemylist[n][StageRuntime.ENEMY_SPEED] == 0) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_AGE] > 13) {
+                    enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                 }
-                enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 return;
             case 5:
-                if (enemylist[n][2] > 14 && enemylist[n][2] % 5 == 0) {
-                    enemylist[n][14] += 65536;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] > 14 && enemylist[n][StageRuntime.ENEMY_AGE] % 5 == 0) {
+                    enemylist[n][StageRuntime.ENEMY_VX] += 65536;
                     return;
                 }
                 break;
             case 6:
-                if (enemylist[n][2] > 14 && enemylist[n][2] % 5 == 0) {
-                    enemylist[n][14] -= 65536;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] > 14 && enemylist[n][StageRuntime.ENEMY_AGE] % 5 == 0) {
+                    enemylist[n][StageRuntime.ENEMY_VX] -= 65536;
                     return;
                 }
                 break;
             case 7:
-                if (enemylist[n][2] > 50) {
-                    enemylist[n][7] = 0;
-                    if ((enemylist[n][2] & 0x1) == 0) {
-                        enemylist[n][12] -= 1;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] > 50) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 0;
+                    if ((enemylist[n][StageRuntime.ENEMY_AGE] & 0x1) == 0) {
+                        enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                     }
-                } else if (enemylist[n][12] == 0) {
-                    enemylist[n][7] = 1;
-                } else if (enemylist[n][2] > 13) {
-                    enemylist[n][12] -= 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_SPEED] == 0) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_AGE] > 13) {
+                    enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                 }
-                enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 return;
             case 10:
-                if (enemylist[n][2] > 100) {
-                    enemylist[n][7] = 0;
-                    if ((enemylist[n][2] & 0x1) == 0) {
-                        enemylist[n][12] -= 1;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] > 100) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 0;
+                    if ((enemylist[n][StageRuntime.ENEMY_AGE] & 0x1) == 0) {
+                        enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                     }
-                } else if (enemylist[n][12] == 0) {
-                    enemylist[n][7] = 1;
-                } else if (enemylist[n][2] > 13) {
-                    enemylist[n][12] -= 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_SPEED] == 0) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_AGE] > 13) {
+                    enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                 }
-                enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 return;
             case 11:
-                if (enemylist[n][2] >= 20 && enemylist[n][2] < 30) {
-                    enemylist[n][7] = 1;
-                    enemylist[n][13] = (enemylist[n][13] - 18 + 360) % 360;
-                    enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                    enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                if (enemylist[n][StageRuntime.ENEMY_AGE] >= 20 && enemylist[n][StageRuntime.ENEMY_AGE] < 30) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                    enemylist[n][StageRuntime.ENEMY_ANGLE] = (enemylist[n][StageRuntime.ENEMY_ANGLE] - 18 + 360) % 360;
+                    enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                    enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                     return;
                 }
                 break;
             case 12:
-                if (enemylist[n][2] >= 20 && enemylist[n][2] < 30) {
-                    enemylist[n][7] = 1;
-                    enemylist[n][13] = (enemylist[n][13] + 18 + 360) % 360;
-                    enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                    enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                if (enemylist[n][StageRuntime.ENEMY_AGE] >= 20 && enemylist[n][StageRuntime.ENEMY_AGE] < 30) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                    enemylist[n][StageRuntime.ENEMY_ANGLE] = (enemylist[n][StageRuntime.ENEMY_ANGLE] + 18 + 360) % 360;
+                    enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                    enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                     return;
                 }
                 break;
             case 13:
-                if (enemylist[n][2] >= 30) {
-                    enemylist[n][7] = 0;
-                    if (enemylist[n][2] == 30) {
-                        enemylist[n][13] += 90;
-                        enemylist[n][12] = 8;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] >= 30) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 0;
+                    if (enemylist[n][StageRuntime.ENEMY_AGE] == 30) {
+                        enemylist[n][StageRuntime.ENEMY_ANGLE] += 90;
+                        enemylist[n][StageRuntime.ENEMY_SPEED] = 8;
                     }
-                } else if (enemylist[n][12] == 0) {
-                    enemylist[n][7] = 1;
-                } else if (enemylist[n][2] > 10) {
-                    enemylist[n][12] -= 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_SPEED] == 0) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_AGE] > 10) {
+                    enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                 }
-                enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 return;
             case 14:
-                if (enemylist[n][2] >= 30) {
-                    enemylist[n][7] = 0;
-                    if (enemylist[n][2] == 30) {
-                        enemylist[n][13] += 270;
-                        enemylist[n][12] = 8;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] >= 30) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 0;
+                    if (enemylist[n][StageRuntime.ENEMY_AGE] == 30) {
+                        enemylist[n][StageRuntime.ENEMY_ANGLE] += 270;
+                        enemylist[n][StageRuntime.ENEMY_SPEED] = 8;
                     }
-                } else if (enemylist[n][12] == 0) {
-                    enemylist[n][7] = 1;
-                } else if (enemylist[n][2] > 10) {
-                    enemylist[n][12] -= 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_SPEED] == 0) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_AGE] > 10) {
+                    enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                 }
-                enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 return;
             case 15: {
-                enemylist[n][13] = (enemylist[n][13] + 2) % 360;
-                int a = (enemylist[n][13] + 90) % 360;
-                if (enemylist[n][5] < 6356992) {
+                enemylist[n][StageRuntime.ENEMY_ANGLE] = (enemylist[n][StageRuntime.ENEMY_ANGLE] + 2) % 360;
+                int a = (enemylist[n][StageRuntime.ENEMY_ANGLE] + 90) % 360;
+                if (enemylist[n][StageRuntime.ENEMY_X] < 6356992) {
                     if (a > 90) {
-                        enemylist[n][13] = 360;
+                        enemylist[n][StageRuntime.ENEMY_ANGLE] = 360;
                     }
-                    enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                    enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                    enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                    enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 } else {
                     if (a < 90) {
-                        enemylist[n][13] = 360;
+                        enemylist[n][StageRuntime.ENEMY_ANGLE] = 360;
                     }
                     if (a > 135) {
-                        enemylist[n][13] = 405;
+                        enemylist[n][StageRuntime.ENEMY_ANGLE] = 405;
                     }
-                    enemylist[n][7] = 1;
-                    enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 2, enemylist[n][13]);
-                    enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 2, enemylist[n][13]);
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                    enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 2, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                    enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 2, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 }
                 return;
             }
             case 16: {
-                enemylist[n][13] = (enemylist[n][13] + 360 - 2) % 360;
-                int a = (enemylist[n][13] + 90) % 360;
-                if (enemylist[n][5] > 6356992) {
+                enemylist[n][StageRuntime.ENEMY_ANGLE] = (enemylist[n][StageRuntime.ENEMY_ANGLE] + 360 - 2) % 360;
+                int a = (enemylist[n][StageRuntime.ENEMY_ANGLE] + 90) % 360;
+                if (enemylist[n][StageRuntime.ENEMY_X] > 6356992) {
                     if (a < 270) {
-                        enemylist[n][13] = 540;
+                        enemylist[n][StageRuntime.ENEMY_ANGLE] = 540;
                     }
-                    enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                    enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                    enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                    enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 } else {
                     if (a > 270) {
-                        enemylist[n][13] = 540;
+                        enemylist[n][StageRuntime.ENEMY_ANGLE] = 540;
                     }
                     if (a < 225) {
-                        enemylist[n][13] = 495;
+                        enemylist[n][StageRuntime.ENEMY_ANGLE] = 495;
                     }
-                    enemylist[n][7] = 1;
-                    enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 2, enemylist[n][13]);
-                    enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 2, enemylist[n][13]);
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                    enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 2, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                    enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 2, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 }
                 return;
             }
             case 17:
-                if (enemylist[n][2] == 50) {
+                if (enemylist[n][StageRuntime.ENEMY_AGE] == 50) {
                     if (player != null) {
-                        enemylist[n][13] = BattleMath.arcTan2Deg(player.getYFixed() - enemylist[n][6], player.getXFixed() - enemylist[n][5]);
+                        enemylist[n][StageRuntime.ENEMY_ANGLE] = BattleMath.arcTan2Deg(player.getYFixed() - enemylist[n][StageRuntime.ENEMY_Y], player.getXFixed() - enemylist[n][StageRuntime.ENEMY_X]);
                     }
-                } else if (enemylist[n][2] > 50) {
-                    enemylist[n][7] = 0;
-                    if ((enemylist[n][2] & 0x1) == 0) {
-                        enemylist[n][12] += 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_AGE] > 50) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 0;
+                    if ((enemylist[n][StageRuntime.ENEMY_AGE] & 0x1) == 0) {
+                        enemylist[n][StageRuntime.ENEMY_SPEED] += 1;
                     }
-                    if (enemylist[n][12] > 4) {
-                        enemylist[n][12] = 4;
+                    if (enemylist[n][StageRuntime.ENEMY_SPEED] > 4) {
+                        enemylist[n][StageRuntime.ENEMY_SPEED] = 4;
                     }
-                } else if (enemylist[n][12] == 0) {
-                    enemylist[n][7] = 1;
-                } else if (enemylist[n][2] > 13) {
-                    enemylist[n][12] -= 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_SPEED] == 0) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_AGE] > 13) {
+                    enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                 }
-                enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 return;
             case 18:
-                if (enemylist[n][5] < -1966080 || enemylist[n][6] < -1441792 || enemylist[n][5] > 14680064 || enemylist[n][6] > 17301504) {
-                    enemylist[n][2] -= 1;
+                if (enemylist[n][StageRuntime.ENEMY_X] < -1966080 || enemylist[n][StageRuntime.ENEMY_Y] < -1441792 || enemylist[n][StageRuntime.ENEMY_X] > 14680064 || enemylist[n][StageRuntime.ENEMY_Y] > 17301504) {
+                    enemylist[n][StageRuntime.ENEMY_AGE] -= 1;
                     return;
                 }
                 break;
             case 19:
-                if (enemylist[n][7] == 1) {
+                if (enemylist[n][StageRuntime.ENEMY_MOVE_STATE] == 1) {
                     break;
                 }
-                if (enemylist[n][12] == 0) {
-                    enemylist[n][7] = 1;
-                    enemylist[n][13] += 90;
-                    enemylist[n][12] = 8;
-                    enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                    enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                if (enemylist[n][StageRuntime.ENEMY_SPEED] == 0) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                    enemylist[n][StageRuntime.ENEMY_ANGLE] += 90;
+                    enemylist[n][StageRuntime.ENEMY_SPEED] = 8;
+                    enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                    enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                     return;
                 }
-                if (enemylist[n][2] > 5) {
-                    enemylist[n][12] -= 1;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] > 5) {
+                    enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                     return;
                 }
                 break;
             case 20:
-                if (enemylist[n][7] == 1) {
+                if (enemylist[n][StageRuntime.ENEMY_MOVE_STATE] == 1) {
                     break;
                 }
-                if (enemylist[n][12] == 0) {
-                    enemylist[n][7] = 1;
-                    enemylist[n][13] += 270;
-                    enemylist[n][12] = 8;
-                    enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                    enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                if (enemylist[n][StageRuntime.ENEMY_SPEED] == 0) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                    enemylist[n][StageRuntime.ENEMY_ANGLE] += 270;
+                    enemylist[n][StageRuntime.ENEMY_SPEED] = 8;
+                    enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                    enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                     return;
                 }
-                if (enemylist[n][2] > 5) {
-                    enemylist[n][12] -= 1;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] > 5) {
+                    enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                     return;
                 }
                 break;
             case 21:
-                if (enemylist[n][2] >= 30) {
-                    enemylist[n][7] = 0;
-                    if (enemylist[n][2] == 30) {
-                        if (enemylist[n][5] < 6356992) {
-                            enemylist[n][13] = 315;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] >= 30) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 0;
+                    if (enemylist[n][StageRuntime.ENEMY_AGE] == 30) {
+                        if (enemylist[n][StageRuntime.ENEMY_X] < 6356992) {
+                            enemylist[n][StageRuntime.ENEMY_ANGLE] = 315;
                         } else {
-                            enemylist[n][13] = 585;
+                            enemylist[n][StageRuntime.ENEMY_ANGLE] = 585;
                         }
-                        enemylist[n][12] = 4;
+                        enemylist[n][StageRuntime.ENEMY_SPEED] = 4;
                     }
-                } else if (enemylist[n][12] == 0) {
-                    enemylist[n][7] = 1;
-                } else if (enemylist[n][2] > 5) {
-                    enemylist[n][12] -= 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_SPEED] == 0) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_AGE] > 5) {
+                    enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                 }
-                enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 return;
             case 22:
-                if (enemylist[n][2] >= 30) {
-                    enemylist[n][7] = 0;
-                    if (enemylist[n][2] == 30) {
-                        if (enemylist[n][5] < 6356992) {
-                            enemylist[n][13] = 405;
+                if (enemylist[n][StageRuntime.ENEMY_AGE] >= 30) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 0;
+                    if (enemylist[n][StageRuntime.ENEMY_AGE] == 30) {
+                        if (enemylist[n][StageRuntime.ENEMY_X] < 6356992) {
+                            enemylist[n][StageRuntime.ENEMY_ANGLE] = 405;
                         } else {
-                            enemylist[n][13] = 495;
+                            enemylist[n][StageRuntime.ENEMY_ANGLE] = 495;
                         }
-                        enemylist[n][12] = 4;
+                        enemylist[n][StageRuntime.ENEMY_SPEED] = 4;
                     }
-                } else if (enemylist[n][12] == 0) {
-                    enemylist[n][7] = 1;
-                } else if (enemylist[n][2] > 5) {
-                    enemylist[n][12] -= 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_SPEED] == 0) {
+                    enemylist[n][StageRuntime.ENEMY_MOVE_STATE] = 1;
+                } else if (enemylist[n][StageRuntime.ENEMY_AGE] > 5) {
+                    enemylist[n][StageRuntime.ENEMY_SPEED] -= 1;
                 }
-                enemylist[n][14] = BattleMath.speedCos(enemylist[n][12] << 3, enemylist[n][13]);
-                enemylist[n][15] = BattleMath.speedSin(enemylist[n][12] << 3, enemylist[n][13]);
+                enemylist[n][StageRuntime.ENEMY_VX] = BattleMath.speedCos(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
+                enemylist[n][StageRuntime.ENEMY_VY] = BattleMath.speedSin(enemylist[n][StageRuntime.ENEMY_SPEED] << 3, enemylist[n][StageRuntime.ENEMY_ANGLE]);
                 break;
         }
     }
 
     private void stageEb(final int n) {
-        if (enemylist[n][0] == 0) {
+        if (enemylist[n][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
@@ -3186,9 +3187,9 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         }
 
         int level = session.getDifficulty();
-        int enemyType = enemylist[n][8];
-        int ex = enemylist[n][5];
-        int ey = enemylist[n][6];
+        int enemyType = enemylist[n][StageRuntime.ENEMY_SHOT_PATTERN];
+        int ex = enemylist[n][StageRuntime.ENEMY_X];
+        int ey = enemylist[n][StageRuntime.ENEMY_Y];
 
         stageDochu.tickEnemyShootingStageA(n, enemylist, enemyType, ex, ey, px, py, level);
         stageDochu.tickEnemyShootingStageB(n, enemylist, enemyType, ex, ey, px, py, level);
@@ -3385,7 +3386,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
         // DoJa: disable replay save after any continue was used.
         replayRecording.clearPending();
-        if (!session.isSpellPractice() && (mGamemode == 0 || mGamemode == 1)) {
+        if (!session.isSpellPractice() && (mGamemode == BattleSessionConfig.MODE_STORY || mGamemode == BattleSessionConfig.MODE_EXTRA)) {
             int continuesUsed = runInitialContinueCount - continueSystem.getRemainingContinues();
             if (continuesUsed < 0) {
                 continuesUsed = 0;
@@ -3438,7 +3439,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         }
 
         // Extra clear: show final result panel directly.
-        if (mGamemode == 1) {
+        if (mGamemode == BattleSessionConfig.MODE_EXTRA) {
             enterFinalResultPanelAfterExtraClear();
             return;
         }
@@ -3460,7 +3461,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
 
         boolean allowReplaySave = false;
         // DoJa: after any continue, replay save is disabled on stage-clear result (a.ci = false).
-        if (continuesUsed == 0 && !replayPlayback.isActive() && !session.isSpellPractice() && mGamemode == 0) {
+        if (continuesUsed == 0 && !replayPlayback.isActive() && !session.isSpellPractice() && mGamemode == BattleSessionConfig.MODE_STORY) {
             int lvl = (hud != null) ? hud.getLevel() : session.getDifficulty();
             int spellId = stageLastSpellId;
             if (spellId < 0) {
@@ -3525,14 +3526,14 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
         }
         resetStageRuntimeState();
 
-        if (mGamemode == 2 || mGamemode == 3) {
+        if (mGamemode == BattleSessionConfig.MODE_STAGE_PRACTICE || mGamemode == BattleSessionConfig.MODE_SPELL_PRACTICE) {
             endBattleToTitle();
             return;
         }
 
         scoreSystem.post(ScoreSystem.EVT_STAGE_ADVANCED, mStage, 0, 0);
 
-        if (mStage >= 5) {
+        if (mStage >= StageRuntime.STAGE_6) {
             UnlockFlags.tryUnlockExtraOnStoryClear(mStage, mGamemode, session.getDifficulty(), continueSystem.getRemainingContinues(), session.getRunStartStage(), session.isPracticeBoss());
             UnlockFlags.tryUnlockAliceOnExtraClear(mStage, mGamemode);
             scoreSystem.commitScoreToProgress();
@@ -3764,7 +3765,7 @@ public final class GameCore extends javax.microedition.lcdui.game.GameCanvas imp
                 return null;
             }
             short[] command = table[stageIndex][core.mStep];
-            if (command.length < 5 || command[1] != 246 || command[0] > core.mGcnt + 1) {
+            if (command.length < 5 || command[StageDat.OP] != StageDat.DIALOGUE || command[StageDat.FRAME] > core.mGcnt + 1) {
                 return null;
             }
             return command;

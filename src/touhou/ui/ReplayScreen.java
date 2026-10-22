@@ -3,8 +3,10 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
-import touhou.SpriteRenderer;
 import touhou.ImageBank;
+import touhou.SpriteRenderer;
+import touhou.SpriteSheetCatalog;
+import touhou.battle.BattleSessionConfig;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 import touhou.replay.ReplayHeader;
@@ -269,7 +271,7 @@ public final class ReplayScreen {
         ReplayHeader h = slots.header(cursor);
         cachedHasData = slots.hasData(cursor);
 
-        cachedSpellPractice = (h != null && h.getMode() == 3);
+        cachedSpellPractice = (h != null && h.getMode() == BattleSessionConfig.MODE_SPELL_PRACTICE);
 
         if (!cachedHasData || h == null) {
             cachedTitle = UiText.get(TextId.REPLAY_LABEL_EMPTY);
@@ -369,7 +371,7 @@ public final class ReplayScreen {
             UiDraw.drawString2(g, font, UiText.get(TextId.REPLAY_LABEL_SCORE), 18, 118, 0, 0xB0B0B0, 0x404040);
             UiDraw.drawString2(g, font, cachedScore, 226, 118, 2, 0xFFFFFF, 0x303040);
 
-            int sprite = 480 + h.getChara();
+            int sprite = SpriteSheetCatalog.CHARACTER_PORTRAIT_BASE + h.getChara();
             sprites.getSizeAndAnchor(sprite, tmpSpriteMetrics);
             sprites.draw(g, sprite, 43 - (tmpSpriteMetrics[0] >> 1) + tmpSpriteMetrics[2],
                     231 - tmpSpriteMetrics[1] + tmpSpriteMetrics[3]);

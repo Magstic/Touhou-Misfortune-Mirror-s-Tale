@@ -6,6 +6,7 @@ import javax.microedition.lcdui.Image;
 
 import touhou.GameCore;
 import touhou.ImageBank;
+import touhou.Player;
 import touhou.i18n.I18n;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
@@ -158,7 +159,7 @@ public final class EndingScreen {
     // Enter ending playback.
     public void enter(int chara, boolean qualifiesNextExtra, ImageBank imgs) {
         if (chara < 0) {
-            chara = 0;
+            chara = Player.REIMU;
         }
         if (chara >= ENDING_SCRIPTS.length) {
             chara = ENDING_SCRIPTS.length - 1;

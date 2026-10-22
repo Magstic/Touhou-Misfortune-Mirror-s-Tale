@@ -2,6 +2,7 @@ package touhou.stage;
 
 import touhou.EnemyBulletSystem;
 import touhou.battle.BattleMath;
+import touhou.battle.BattleSessionConfig;
 
 public class StageDochu {
     private final EnemyBulletSystem enemyBullets;
@@ -21,16 +22,16 @@ public class StageDochu {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
         // Stage 1/2: enemyType 10 simple aimed shots.
-        if (enemyType == 10 && ey < 14680064 && (enemylist[enemyIndex][2] == 10 || enemylist[enemyIndex][2] == 25)) {
-            if (level != 0) {
+        if (enemyType == 10 && ey < 14680064 && (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] == 10 || enemylist[enemyIndex][StageRuntime.ENEMY_AGE] == 25)) {
+            if (level != BattleSessionConfig.DIFFICULTY_EASY) {
                 enemyBullets.spawn(81, 3, 0, 48, ex, ey, px, py);
             }
-            if (level >= 2) {
+            if (level >= BattleSessionConfig.DIFFICULTY_HARD) {
                 enemyBullets.spawn(81, 3, 0, 56, ex + 196608, ey, px, py);
                 enemyBullets.spawn(81, 3, 0, 64, ex, ey + 196608, px, py);
                 enemyBullets.spawn(81, 3, 0, 72, ex - 196608, ey, px, py);
@@ -39,16 +40,16 @@ public class StageDochu {
         }
 
         // Stage 1/2: enemyType 20 aimed spread.
-        if (enemyType == 20 && enemylist[enemyIndex][2] > 15 && ey < 7929856) {
+        if (enemyType == 20 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] > 15 && ey < 7929856) {
             int ang = BattleMath.arcTan2Deg(py - ey, px - ex);
-            if (enemylist[enemyIndex][2] == 20) {
-                if (level == 1) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] == 20) {
+                if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                     enemyBullets.spawn(81, 0, ang, 40, ex, ey, px, py);
-                } else if (level == 2) {
+                } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                     enemyBullets.spawn(81, 0, ang, 40, ex, ey, px, py);
                     enemyBullets.spawn(81, 0, ang + 15, 40, ex, ey, px, py);
                     enemyBullets.spawn(81, 0, ang - 15, 40, ex, ey, px, py);
-                } else if (level >= 3) {
+                } else if (level >= BattleSessionConfig.DIFFICULTY_LUNATIC) {
                     enemyBullets.spawn(81, 0, ang, 40, ex, ey, px, py);
                     enemyBullets.spawn(81, 0, ang + 10, 40, ex, ey, px, py);
                     enemyBullets.spawn(81, 0, ang - 10, 40, ex, ey, px, py);
@@ -59,14 +60,14 @@ public class StageDochu {
         }
 
         // Stage 1/2: enemyType 21 accelerating ring.
-        if (enemyType == 21 && enemylist[enemyIndex][2] > 15 && ey < 7929856
-                && (enemylist[enemyIndex][2] == 20 || (level > 1 && enemylist[enemyIndex][2] == 25) || (level > 1 && enemylist[enemyIndex][2] == 30))) {
+        if (enemyType == 21 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] > 15 && ey < 7929856
+                && (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] == 20 || (level > BattleSessionConfig.DIFFICULTY_NORMAL && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] == 25) || (level > BattleSessionConfig.DIFFICULTY_NORMAL && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] == 30))) {
             int div;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 div = 12;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 div = 18;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 div = 24;
             } else {
                 div = 36;
@@ -76,15 +77,15 @@ public class StageDochu {
             }
         }
 
-        if (enemyType == 22 && (level >= 2 || (enemylist[enemyIndex][2] & 1) == 0)) {
-            if (enemylist[enemyIndex][2] > 15 && enemylist[enemyIndex][2] < 25) {
-                int a = enemylist[enemyIndex][2] * 10;
+        if (enemyType == 22 && (level >= BattleSessionConfig.DIFFICULTY_HARD || (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] & 1) == 0)) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] > 15 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] < 25) {
+                int a = enemylist[enemyIndex][StageRuntime.ENEMY_AGE] * 10;
                 enemyBullets.spawn(81, 1, a, 8, ex, ey, px, py);
                 enemyBullets.spawn(81, 1, a + 90, 8, ex, ey, px, py);
                 enemyBullets.spawn(81, 1, a + 180, 8, ex, ey, px, py);
                 enemyBullets.spawn(81, 1, a + 270, 8, ex, ey, px, py);
-            } else if (enemylist[enemyIndex][2] > 25 && enemylist[enemyIndex][2] < 35) {
-                int a = (enemylist[enemyIndex][2] * 10) % 360;
+            } else if (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] > 25 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] < 35) {
+                int a = (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] * 10) % 360;
                 enemyBullets.spawn(81, 1, 360 - a, 24, ex, ey, px, py);
                 enemyBullets.spawn(81, 1, 360 - (a + 90), 24, ex, ey, px, py);
                 enemyBullets.spawn(81, 1, 360 - (a + 180), 24, ex, ey, px, py);
@@ -92,16 +93,16 @@ public class StageDochu {
             }
         }
 
-        if (enemyType == 23 && (level >= 2 || (enemylist[enemyIndex][2] & 1) == 0) && enemylist[enemyIndex][2] > 15 && enemylist[enemyIndex][2] < 25) {
-            int a = enemylist[enemyIndex][2] * 10;
+        if (enemyType == 23 && (level >= BattleSessionConfig.DIFFICULTY_HARD || (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] & 1) == 0) && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] > 15 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] < 25) {
+            int a = enemylist[enemyIndex][StageRuntime.ENEMY_AGE] * 10;
             enemyBullets.spawn(82, 1, a, 24, ex, ey, px, py);
             enemyBullets.spawn(82, 1, a + 90, 24, ex, ey, px, py);
             enemyBullets.spawn(82, 1, a + 180, 24, ex, ey, px, py);
             enemyBullets.spawn(82, 1, a + 270, 24, ex, ey, px, py);
         }
 
-        if (enemyType == 24 && (level >= 2 || (enemylist[enemyIndex][2] & 1) == 0) && enemylist[enemyIndex][2] > 15 && enemylist[enemyIndex][2] < 25) {
-            int a = (enemylist[enemyIndex][2] * 10) % 360;
+        if (enemyType == 24 && (level >= BattleSessionConfig.DIFFICULTY_HARD || (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] & 1) == 0) && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] > 15 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] < 25) {
+            int a = (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] * 10) % 360;
             enemyBullets.spawn(82, 1, 360 - a, 24, ex, ey, px, py);
             enemyBullets.spawn(82, 1, 360 - (a + 90), 24, ex, ey, px, py);
             enemyBullets.spawn(82, 1, 360 - (a + 180), 24, ex, ey, px, py);
@@ -117,13 +118,13 @@ public class StageDochu {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
         if (enemyType == 25) {
-            if (enemylist[enemyIndex][7] == 1 && enemylist[enemyIndex][2] % 20 == 0) {
-                if (level == 4) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] % 20 == 0) {
+                if (level == BattleSessionConfig.DIFFICULTY_EXTRA) {
                     for (int j = 0; j < 360; j += 15) {
                         enemyBullets.spawn(82, 0, j, 40, ex, ey + 524288, px, py);
                         enemyBullets.spawn(82, 0, j, 56, ex, ey + 262144, px, py);
@@ -137,29 +138,29 @@ public class StageDochu {
                     enemyBullets.spawn(82, 0, 270, 72, ex, ey, px, py);
                 }
             }
-            enemylist[enemyIndex][15] -= 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_VY] -= 1;
         }
 
         // Stage 1/2: enemyType 27 paired curve spread.
-        if (enemyType == 27 && enemylist[enemyIndex][7] == 1) {
-            if (enemylist[enemyIndex][9] == 0) {
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+        if (enemyType == 27 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
             }
-            if (enemylist[enemyIndex][9] % 3 == 0) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] % 3 == 0) {
                 int d3 = 7;
-                int base = enemylist[enemyIndex][10];
-                int step = (enemylist[enemyIndex][9] << 2);
+                int base = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1];
+                int step = (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] << 2);
                 enemyBullets.spawn(84, 0, base + 180 + step, d3 << 3, ex, ey, px, py);
                 enemyBullets.spawn(84, 0, base + 180 - step, d3 << 3, ex, ey, px, py);
-                if (level > 0) {
+                if (level > BattleSessionConfig.DIFFICULTY_EASY) {
                     d3--;
                     enemyBullets.spawn(84, 0, base + 180 + step + 5, d3 << 3, ex, ey, px, py);
                     enemyBullets.spawn(84, 0, base + 180 - step - 5, d3 << 3, ex, ey, px, py);
-                    if (level > 1) {
+                    if (level > BattleSessionConfig.DIFFICULTY_NORMAL) {
                         d3--;
                         enemyBullets.spawn(84, 0, base + 180 + step + 10, d3 << 3, ex, ey, px, py);
                         enemyBullets.spawn(84, 0, base + 180 - step - 10, d3 << 3, ex, ey, px, py);
-                        if (level > 2) {
+                        if (level > BattleSessionConfig.DIFFICULTY_HARD) {
                             d3--;
                             enemyBullets.spawn(84, 0, base + 180 + step + 15, d3 << 3, ex, ey, px, py);
                             enemyBullets.spawn(84, 0, base + 180 - step - 15, d3 << 3, ex, ey, px, py);
@@ -167,7 +168,7 @@ public class StageDochu {
                     }
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
     }
 
@@ -179,20 +180,20 @@ public class StageDochu {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
         // Stage 5: enemyType 34 spread with delayed accel shots.
-        if (enemyType == 34 && enemylist[enemyIndex][7] == 1 && enemylist[enemyIndex][9] == 0) {
-            enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+        if (enemyType == 34 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1 && enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] == 0) {
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
 
             int div;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 div = 6;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 div = 8;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 div = 10;
             } else {
                 div = 12;
@@ -200,7 +201,7 @@ public class StageDochu {
 
             int slot = 0;
             for (int ang = -60; ang <= 60; ang += 120 / div) {
-                int aim = (enemylist[enemyIndex][10] + 360 + ang) % 360;
+                int aim = (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + 360 + ang) % 360;
                 enemyBullets.spawn(603, 0, aim, 48, ex, ey, px, py);
                 if ((slot & 1) == 0) {
                     enemyBullets.spawn(603, 26, aim, 32, ex, ey, px, py);
@@ -210,28 +211,28 @@ public class StageDochu {
                 }
                 slot++;
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
         // Stage 5: enemyType 35 negative accel fan.
-        if (enemyType == 35 && enemylist[enemyIndex][7] == 1) {
-            enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
-            if (enemylist[enemyIndex][9] < 10 && (enemylist[enemyIndex][9] & 1) == 0) {
+        if (enemyType == 35 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] < 10 && (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
                 int spd = -8;
-                int base = enemylist[enemyIndex][10];
+                int base = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1];
                 enemyBullets.spawn(639, 1, base, spd << 3, ex, ey, px, py);
                 enemyBullets.spawn(639, 1, base + 20, spd << 3, ex, ey, px, py);
                 enemyBullets.spawn(639, 1, base - 20, spd << 3, ex, ey, px, py);
-                if (level > 1) {
+                if (level > BattleSessionConfig.DIFFICULTY_NORMAL) {
                     enemyBullets.spawn(639, 1, base + 40, spd << 3, ex, ey, px, py);
                     enemyBullets.spawn(639, 1, base - 40, spd << 3, ex, ey, px, py);
-                    if (level > 2) {
+                    if (level > BattleSessionConfig.DIFFICULTY_HARD) {
                         enemyBullets.spawn(639, 1, base + 60, spd << 3, ex, ey, px, py);
                         enemyBullets.spawn(639, 1, base - 60, spd << 3, ex, ey, px, py);
                     }
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
     }
 
@@ -243,61 +244,61 @@ public class StageDochu {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
         if (enemyType == 36) {
             int d1;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 d1 = 3;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 d1 = 4;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 d1 = 6;
             } else {
                 d1 = 8;
             }
-            if ((enemylist[enemyIndex][9] & 1) == 0 && enemylist[enemyIndex][9] % 20 < (d1 << 1)) {
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0 && enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] % 20 < (d1 << 1)) {
                 enemyBullets.spawn(86, 0, 450, 56, ex, ey, px, py);
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
-        if (enemyType == 37 && enemylist[enemyIndex][7] == 1) {
+        if (enemyType == 37 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
             int d1;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 d1 = 2;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 d1 = 3;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 d1 = 4;
             } else {
                 d1 = 5;
             }
-            if ((enemylist[enemyIndex][9] & 1) == 0) {
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
                 for (int a = 0; a < 360; a += 360 / d1) {
-                    int shift = (enemylist[enemyIndex][9] << 2);
+                    int shift = (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] << 2);
                     enemyBullets.spawn(86, 41, a - shift, 0, ex, ey, px, py);
                     enemyBullets.spawn(86, 41, a + shift + 180, 0, ex, ey, px, py);
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
-        if (enemyType == 38 && enemylist[enemyIndex][7] == 1) {
+        if (enemyType == 38 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
             int d1;
             int d4;
             int d5;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 d1 = 2;
                 d4 = 7;
                 d5 = 4;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 d1 = 3;
                 d4 = 6;
                 d5 = 3;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 d1 = 4;
                 d4 = 5;
                 d5 = 2;
@@ -306,34 +307,34 @@ public class StageDochu {
                 d4 = 4;
                 d5 = 2;
             }
-            if (enemylist[enemyIndex][9] % d5 == 0) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] % d5 == 0) {
                 for (int a = 0; a < 360; a += 360 / d1) {
-                    int ang = a + (enemylist[enemyIndex][9] * d4) + 270;
-                    if (level != 1) {
+                    int ang = a + (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] * d4) + 270;
+                    if (level != BattleSessionConfig.DIFFICULTY_NORMAL) {
                         enemyBullets.spawn(585, 0, ang, 56, ex, ey, px, py);
                     }
-                    if (level >= 1) {
+                    if (level >= BattleSessionConfig.DIFFICULTY_NORMAL) {
                         enemyBullets.spawn(585, 0, ang + 8, 56, ex, ey, px, py);
                         enemyBullets.spawn(585, 0, ang - 8, 56, ex, ey, px, py);
                     }
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
-        if (enemyType == 39 && enemylist[enemyIndex][7] == 1) {
+        if (enemyType == 39 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
             int d1;
             int d4;
             int d5;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 d1 = 2;
                 d4 = 7;
                 d5 = 4;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 d1 = 3;
                 d4 = 6;
                 d5 = 3;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 d1 = 4;
                 d4 = 5;
                 d5 = 2;
@@ -342,19 +343,19 @@ public class StageDochu {
                 d4 = 4;
                 d5 = 2;
             }
-            if (enemylist[enemyIndex][9] % d5 == 0) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] % d5 == 0) {
                 for (int a = 0; a < 360; a += 360 / d1) {
-                    int ang = a - (enemylist[enemyIndex][9] * d4) + 270;
-                    if (level != 1) {
+                    int ang = a - (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] * d4) + 270;
+                    if (level != BattleSessionConfig.DIFFICULTY_NORMAL) {
                         enemyBullets.spawn(585, 0, ang, 56, ex, ey, px, py);
                     }
-                    if (level >= 1) {
+                    if (level >= BattleSessionConfig.DIFFICULTY_NORMAL) {
                         enemyBullets.spawn(585, 0, ang + 8, 56, ex, ey, px, py);
                         enemyBullets.spawn(585, 0, ang - 8, 56, ex, ey, px, py);
                     }
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
     }
 
@@ -366,7 +367,7 @@ public class StageDochu {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
@@ -374,13 +375,13 @@ public class StageDochu {
         if (enemyType == 54) {
             int fireStep;
             int angleStep;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 fireStep = 4;
                 angleStep = 18;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 fireStep = 3;
                 angleStep = 15;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 fireStep = 2;
                 angleStep = 10;
             } else {
@@ -388,73 +389,73 @@ public class StageDochu {
                 angleStep = 8;
             }
 
-            if (enemylist[enemyIndex][7] == 1 && enemylist[enemyIndex][2] % fireStep == 0) {
-                int offset = enemylist[enemyIndex][9] * angleStep;
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] % fireStep == 0) {
+                int offset = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] * angleStep;
                 for (int i = 0; i < 6; i++) {
                     int spd = 32 + (i << 2);
-                    if (enemylist[enemyIndex][9] == 0) {
+                    if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] == 0) {
                         enemyBullets.spawn(335, 0, 450, spd, ex, ey, px, py);
                     } else {
                         enemyBullets.spawn(335, 0, (180 + offset + 360) % 360 + 270, spd, ex, ey, px, py);
                         enemyBullets.spawn(335, 0, (180 - offset + 360) % 360 + 270, spd, ex, ey, px, py);
                     }
                 }
-                enemylist[enemyIndex][9] += 1;
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
             }
 
-            if (enemylist[enemyIndex][7] != 1 && enemylist[enemyIndex][9] > 0 && (enemylist[enemyIndex][2] & 1) == 0) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] != 1 && enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] > 0 && (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] & 1) == 0) {
                 int div;
-                if (level == 0) {
+                if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                     div = 10;
-                } else if (level == 1) {
+                } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                     div = 12;
-                } else if (level == 2) {
+                } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                     div = 15;
                 } else {
                     div = 18;
                 }
                 for (int ang = 0; ang < 360; ang += 360 / div) {
-                    int offset = enemylist[enemyIndex][9] << 1;
+                    int offset = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] << 1;
                     enemyBullets.spawn(81, 2, (ang + offset + 360) % 360, 64, ex, ey, px, py);
                     enemyBullets.spawn(81, 2, (ang - offset + 360) % 360, 64, ex, ey, px, py);
                 }
-                enemylist[enemyIndex][9] += 1;
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
             }
         }
 
         // Stage 5: enemyType 55 alternating ring shots.
         if (enemyType == 55) {
             int fireStep;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 fireStep = 16;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 fireStep = 12;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 fireStep = 10;
             } else {
                 fireStep = 8;
             }
 
-            if (enemylist[enemyIndex][7] == 1 && enemylist[enemyIndex][2] % fireStep == 0) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] % fireStep == 0) {
                 int div;
-                if (level == 0) {
+                if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                     div = 10;
-                } else if (level == 1) {
+                } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                     div = 15;
-                } else if (level == 2) {
+                } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                     div = 15;
                 } else {
                     div = 18;
                 }
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
                 for (int ang = 0; ang < 360; ang += 360 / div) {
-                    if ((enemylist[enemyIndex][9] & 1) == 0) {
-                        enemyBullets.spawn(86, 9, enemylist[enemyIndex][10] + ang, 64 + (enemylist[enemyIndex][9] << 1), ex, ey, px, py);
+                    if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
+                        enemyBullets.spawn(86, 9, enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + ang, 64 + (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] << 1), ex, ey, px, py);
                     } else {
-                        enemyBullets.spawn(86, 0, enemylist[enemyIndex][10] + ang, 48 + (enemylist[enemyIndex][9] << 1), ex, ey, px, py);
+                        enemyBullets.spawn(86, 0, enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + ang, 48 + (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] << 1), ex, ey, px, py);
                     }
                 }
-                enemylist[enemyIndex][9] += 1;
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
             }
         }
     }
@@ -467,37 +468,37 @@ public class StageDochu {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
         // Stage 1/2: enemyType 28 burst aimed shots.
-        if (enemyType == 28 && enemylist[enemyIndex][7] == 1) {
-            if (enemylist[enemyIndex][9] == 0) {
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+        if (enemyType == 28 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
             }
-            if (enemylist[enemyIndex][9] < 10 && (enemylist[enemyIndex][9] & 1) == 0) {
-                int d3 = 3 + enemylist[enemyIndex][9];
-                int base = enemylist[enemyIndex][10];
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] < 10 && (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
+                int d3 = 3 + enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0];
+                int base = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1];
                 enemyBullets.spawn(86, 0, base, d3 << 3, ex, ey, px, py);
-                if (level > 1) {
+                if (level > BattleSessionConfig.DIFFICULTY_NORMAL) {
                     enemyBullets.spawn(86, 0, base + 20, d3 << 3, ex, ey, px, py);
                     enemyBullets.spawn(86, 0, base - 20, d3 << 3, ex, ey, px, py);
-                    if (level > 2) {
+                    if (level > BattleSessionConfig.DIFFICULTY_HARD) {
                         enemyBullets.spawn(86, 0, base + 40, d3 << 3, ex, ey, px, py);
                         enemyBullets.spawn(86, 0, base - 40, d3 << 3, ex, ey, px, py);
                     }
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
         // Stage 2/3: enemyType 26 aimed fan shots.
-        if (enemyType == 26 && enemylist[enemyIndex][7] == 1 && enemylist[enemyIndex][2] % 20 == 0) {
+        if (enemyType == 26 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] % 20 == 0) {
             int ang = BattleMath.arcTan2Deg(py - ey, px - ex);
             int d3 = 7;
 
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 enemyBullets.spawn(82, 0, ang + 10, d3 << 3, ex, ey, px, py);
                 enemyBullets.spawn(82, 0, ang - 10, d3 << 3, ex, ey, px, py);
             } else {
@@ -505,12 +506,12 @@ public class StageDochu {
                 d3--;
                 enemyBullets.spawn(82, 0, ang + 10, d3 << 3, ex, ey, px, py);
                 enemyBullets.spawn(82, 0, ang - 10, d3 << 3, ex, ey, px, py);
-                if (level > 1) {
+                if (level > BattleSessionConfig.DIFFICULTY_NORMAL) {
                     d3--;
                     enemyBullets.spawn(82, 0, ang + 20, d3 << 3, ex, ey, px, py);
                     enemyBullets.spawn(82, 0, ang, d3 << 3, ex, ey, px, py);
                     enemyBullets.spawn(82, 0, ang - 20, d3 << 3, ex, ey, px, py);
-                    if (level > 2) {
+                    if (level > BattleSessionConfig.DIFFICULTY_HARD) {
                         d3--;
                         enemyBullets.spawn(82, 0, ang + 30, d3 << 3, ex, ey, px, py);
                         enemyBullets.spawn(82, 0, ang + 10, d3 << 3, ex, ey, px, py);
@@ -530,29 +531,29 @@ public class StageDochu {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
         if (enemyType == 50) {
             int step;
-            if (level == 0 || level == 1) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY || level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 step = 5;
             } else {
                 step = 4;
             }
-            if (enemylist[enemyIndex][2] % step == 0 && enemylist[enemyIndex][2] > 20) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] % step == 0 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] > 20) {
                 enemyBullets.spawn(82, 0, 0, 48, ex, ey, px, py);
             }
         }
 
-        if (enemyType == 51 && enemylist[enemyIndex][2] % 5 == 0 && enemylist[enemyIndex][2] > 15 && ey > 4194304 && ey < 8585216) {
+        if (enemyType == 51 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] % 5 == 0 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] > 15 && ey > 4194304 && ey < 8585216) {
             int angStep;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 angStep = 60;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 angStep = 40;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 angStep = 30;
             } else {
                 angStep = 20;
@@ -563,29 +564,29 @@ public class StageDochu {
         }
 
         // Stage 2/3: enemyType 52 rotating accelerating double ring.
-        if (enemyType == 52 && enemylist[enemyIndex][7] == 1) {
-            if (enemylist[enemyIndex][9] == 0) {
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+        if (enemyType == 52 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
             }
 
-            if ((enemylist[enemyIndex][2] & 0x7) == 0) {
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_AGE] & 0x7) == 0) {
                 int div;
-                if (level == 0) {
+                if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                     div = 9;
-                } else if (level == 1) {
+                } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                     div = 10;
-                } else if (level == 2) {
+                } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                     div = 12;
                 } else {
                     div = 18;
                 }
 
-                int rot = (enemylist[enemyIndex][9] << 2);
+                int rot = (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] << 2);
                 for (int angBase = 0; angBase < 360; angBase += 360 / div) {
                     enemyBullets.spawn(82, 2, angBase + rot, 88, ex, ey, px, py);
                     enemyBullets.spawn(82, 2, angBase - rot, 88, ex, ey, px, py);
                 }
-                enemylist[enemyIndex][9] += 1;
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
             }
         }
     }
@@ -598,16 +599,16 @@ public class StageDochu {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
         // Stage 3: enemyType 29 alternating spiral ring.
-        if (enemyType == 29 && enemylist[enemyIndex][7] == 1 && enemylist[enemyIndex][2] % 20 == 0) {
-            if (enemylist[enemyIndex][9] == 0) {
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+        if (enemyType == 29 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] % 20 == 0) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
             }
-            int base = enemylist[enemyIndex][10];
+            int base = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1];
 
             int moveType = 22;
             if (ex < 6356992) {
@@ -616,18 +617,18 @@ public class StageDochu {
 
             int d3 = 7;
             int div;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 div = 8;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 div = 12;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 div = 18;
             } else {
                 div = 24;
             }
 
             int ang = 0;
-            if ((enemylist[enemyIndex][9] & 1) == 0) {
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
                 ang = (360 / div >> 1);
             }
 
@@ -635,39 +636,39 @@ public class StageDochu {
                 enemyBullets.spawn(82, moveType, base + ang, d3 << 3, ex, ey, px, py);
                 ang += 360 / div;
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
         // Stage 3: enemyType 30 staggered spiral ring burst.
-        if (enemyType == 30 && enemylist[enemyIndex][7] == 1 && (enemylist[enemyIndex][2] & 0x3) == 0 && enemylist[enemyIndex][9] < 6) {
-            if (enemylist[enemyIndex][9] == 0) {
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+        if (enemyType == 30 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1 && (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] & 0x3) == 0 && enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] < 6) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
             }
-            int base = enemylist[enemyIndex][10];
+            int base = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1];
 
             int moveType = 0;
-            int d3 = 3 + enemylist[enemyIndex][9];
+            int d3 = 3 + enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0];
 
             int div;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 div = 8;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 div = 12;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 div = 18;
             } else {
                 div = 24;
             }
 
             int ang = 0;
-            if ((enemylist[enemyIndex][9] & 1) == 0) {
-                ang = (360 / div >> 1) + (enemylist[enemyIndex][9] << 3);
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
+                ang = (360 / div >> 1) + (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] << 3);
             }
             while (ang < 360) {
                 enemyBullets.spawn(82, moveType, base + ang, d3 << 3, ex, ey, px, py);
                 ang += 360 / div;
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
     }
 
@@ -679,42 +680,42 @@ public class StageDochu {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
         // Stage 4: enemyType 32 ring + stop/aim shots.
-        if (enemyType == 32 && enemylist[enemyIndex][7] == 1) {
-            if (enemylist[enemyIndex][10] == 0) {
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+        if (enemyType == 32 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
             }
-            if ((enemylist[enemyIndex][2] & 1) == 0) {
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_AGE] & 1) == 0) {
                 int div;
-                if (level == 0) {
+                if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                     div = 8;
-                } else if (level == 1) {
+                } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                     div = 9;
-                } else if (level == 2) {
+                } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                     div = 10;
                 } else {
                     div = 12;
                 }
 
-                int base = enemylist[enemyIndex][10] + ((360 / div) >> 1);
+                int base = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + ((360 / div) >> 1);
                 for (int ang = 0; ang < 360; ang += 360 / div) {
                     enemyBullets.spawn(82, 1, base + ang, 24, ex, ey, px, py);
                 }
             }
-            if (enemylist[enemyIndex][2] % 10 == 0) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] % 10 == 0) {
                 int base = (BattleMath.arcTan2Deg(py - ey, px - ex) + 180) % 360;
-                if (level == 0) {
+                if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                     enemyBullets.spawn(86, 9, base + 30, 64, ex, ey, px, py);
                     enemyBullets.spawn(86, 9, base - 30, 64, ex, ey, px, py);
-                } else if (level == 1) {
+                } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                     enemyBullets.spawn(86, 9, base + 40, 64, ex, ey, px, py);
                     enemyBullets.spawn(86, 9, base, 64, ex, ey, px, py);
                     enemyBullets.spawn(86, 9, base - 40, 64, ex, ey, px, py);
-                } else if (level == 2) {
+                } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                     enemyBullets.spawn(86, 9, base + 50, 64, ex, ey, px, py);
                     enemyBullets.spawn(86, 9, base + 25, 64, ex, ey, px, py);
                     enemyBullets.spawn(86, 9, base - 25, 64, ex, ey, px, py);
@@ -730,43 +731,43 @@ public class StageDochu {
         }
 
         // Stage 4: enemyType 33 short burst acceleration shots.
-        if (enemyType == 33 && enemylist[enemyIndex][7] == 1 && (enemylist[enemyIndex][2] & 1) == 0) {
-            if ((enemylist[enemyIndex][9] & 7) == 0) {
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+        if (enemyType == 33 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1 && (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] & 1) == 0) {
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 7) == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
             }
 
             int limit;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 limit = 1;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 limit = 3;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 limit = 5;
             } else {
                 limit = 8;
             }
 
-            if (enemylist[enemyIndex][9] <= limit) {
-                enemyBullets.spawn(90, 1, enemylist[enemyIndex][10], 24, ex, ey, px, py);
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] <= limit) {
+                enemyBullets.spawn(90, 1, enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1], 24, ex, ey, px, py);
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
         // Stage 4: enemyType 53 dense accelerating ring.
-        if (enemyType == 53 && enemylist[enemyIndex][7] == 1 && (enemylist[enemyIndex][2] & 7) == 0) {
-            if (enemylist[enemyIndex][9] == 0) {
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+        if (enemyType == 53 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1 && (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] & 7) == 0) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
             }
 
             int div;
             int mod;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 div = 30;
                 mod = 5;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 div = 36;
                 mod = 6;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 div = 40;
                 mod = 8;
             } else {
@@ -777,16 +778,16 @@ public class StageDochu {
             int baseSpeed = 4;
             int phase = 0;
             for (int ang = 0; ang < 360; ang += 360 / div) {
-                int spd = baseSpeed + (enemylist[enemyIndex][9] << 2) + (phase << 2);
-                enemyBullets.spawn(81, 28, enemylist[enemyIndex][10] + ang, spd, ex, ey, px, py);
+                int spd = baseSpeed + (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] << 2) + (phase << 2);
+                enemyBullets.spawn(81, 28, enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + ang, spd, ex, ey, px, py);
 
-                if ((enemylist[enemyIndex][9] & 1) == 0) {
+                if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
                     phase = (phase + 1) % mod;
                 } else {
                     phase = (phase - 1 + mod) % mod;
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
     }
 
@@ -798,11 +799,11 @@ public class StageDochu {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
-        if (enemyType == 70 && (enemylist[enemyIndex][2] & 1) == 0 && enemylist[enemyIndex][2] > 5 && enemylist[enemyIndex][2] < 15) {
+        if (enemyType == 70 && (enemylist[enemyIndex][StageRuntime.ENEMY_AGE] & 1) == 0 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] > 5 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] < 15) {
             enemyBullets.spawn(81, 3, 0, 56, ex, ey, px, py);
             enemyBullets.spawn(81, 3, 0, 64, ex, ey, px, py);
             enemyBullets.spawn(81, 3, 0, 72, ex, ey, px, py);
@@ -819,102 +820,102 @@ public class StageDochu {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
-        if (enemyType == 90 && enemylist[enemyIndex][7] == 1) {
-            if ((enemylist[enemyIndex][9] & 3) == 0) {
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+        if (enemyType == 90 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 3) == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
                 for (int a = 0; a < 360; a += 45) {
-                    int base = enemylist[enemyIndex][10] + a;
+                    int base = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + a;
                     for (int k = 0; k < 5; k++) {
                         enemyBullets.spawn(319, 0, base, 40 + (k << 3), ex, ey, px, py);
                     }
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
-        if (enemyType == 91 && enemylist[enemyIndex][7] == 1) {
-            if ((enemylist[enemyIndex][9] & 1) == 0) {
-                enemylist[enemyIndex][10] = 450;
+        if (enemyType == 91 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = 450;
                 for (int off = -80; off <= 80; off += 20) {
-                    enemyBullets.spawn(84, 0, enemylist[enemyIndex][10] + off, 46, ex, ey, px, py);
+                    enemyBullets.spawn(84, 0, enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + off, 46, ex, ey, px, py);
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
-        if (enemyType == 92 && enemylist[enemyIndex][7] == 1) {
-            if ((enemylist[enemyIndex][9] & 1) == 0) {
-                int d5 = enemylist[enemyIndex][9];
-                enemylist[enemyIndex][10] = d5 << 4;
+        if (enemyType == 92 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
+                int d5 = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0];
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = d5 << 4;
                 for (int k = 0; k < 6; k++) {
                     int ang = ((d5 << 3) + (k * 90)) % 360;
                     int sx = ex + BattleMath.speedCos(100, ang);
                     int sy = ey + BattleMath.speedSin(100, ang);
-                    enemyBullets.spawn(82, 0, enemylist[enemyIndex][10] + (k * 60), 46, sx, sy, px, py);
+                    enemyBullets.spawn(82, 0, enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + (k * 60), 46, sx, sy, px, py);
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
-        if (enemyType == 93 && enemylist[enemyIndex][7] == 1) {
-            if ((enemylist[enemyIndex][9] & 1) == 0) {
-                int d5 = enemylist[enemyIndex][9];
-                enemylist[enemyIndex][10] = 360 - ((d5 << 4) % 360);
+        if (enemyType == 93 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
+                int d5 = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0];
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = 360 - ((d5 << 4) % 360);
                 for (int k = 0; k < 6; k++) {
                     int ang = 360 - (((d5 << 3) + (k * 90)) % 360);
                     int sx = ex + BattleMath.speedCos(100, ang);
                     int sy = ey + BattleMath.speedSin(100, ang);
-                    enemyBullets.spawn(82, 0, enemylist[enemyIndex][10] + (k * 60), 46, sx, sy, px, py);
+                    enemyBullets.spawn(82, 0, enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + (k * 60), 46, sx, sy, px, py);
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
         if (enemyType == 94 && ex > 0 && ex < 12713984) {
-            if ((enemylist[enemyIndex][9] & 1) == 0) {
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
                 for (int off = -60; off <= 20; off += 60) {
-                    enemyBullets.spawn(81, 40, enemylist[enemyIndex][10] + off, 48, ex, ey, px, py);
+                    enemyBullets.spawn(81, 40, enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + off, 48, ex, ey, px, py);
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
-        if (enemyType == 95 && enemylist[enemyIndex][7] == 1) {
-            if (enemylist[enemyIndex][9] == 0) {
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+        if (enemyType == 95 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
                 int mt = 22;
                 if (ex < 6356992) {
                     mt = 21;
                 }
                 int div = 24;
                 int ang = 0;
-                if ((enemylist[enemyIndex][9] & 1) == 0) {
+                if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
                     ang = (360 / div) >> 1;
                 }
                 while (ang < 360) {
-                    enemyBullets.spawn(86, mt, enemylist[enemyIndex][10] + ang, 40, ex, ey, px, py);
+                    enemyBullets.spawn(86, mt, enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + ang, 40, ex, ey, px, py);
                     ang += 360 / div;
                 }
-            } else if (enemylist[enemyIndex][9] % 10 == 0) {
-                enemylist[enemyIndex][10] = BattleMath.arcTan2Deg(py - ey, px - ex);
+            } else if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] % 10 == 0) {
+                enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] = BattleMath.arcTan2Deg(py - ey, px - ex);
                 for (int off = -20; off <= 20; off += 20) {
-                    int base = enemylist[enemyIndex][10] + off;
+                    int base = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_1] + off;
                     for (int k = 0; k < 3; k++) {
                         enemyBullets.spawn(81, 0, base, 40 + (k << 2), ex, ey, px, py);
                     }
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
-        if (enemyType == 96 && enemylist[enemyIndex][7] == 1) {
-            if ((enemylist[enemyIndex][9] & 1) == 0) {
-                int shift = enemylist[enemyIndex][9] << 2;
+        if (enemyType == 96 && enemylist[enemyIndex][StageRuntime.ENEMY_MOVE_STATE] == 1) {
+            if ((enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] & 1) == 0) {
+                int shift = enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] << 2;
                 for (int a = 0; a < 360; a += 60) {
                     enemyBullets.spawn(83, 43, a - shift, 0, ex, ey, px, py);
                     enemyBullets.spawn(83, 44, a - shift, 0, ex, ey, px, py);
@@ -922,18 +923,18 @@ public class StageDochu {
                     enemyBullets.spawn(83, 44, a + shift + 180, 0, ex, ey, px, py);
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
 
         if (enemyType == 97 && ex > 0 && ex < 12713984 && ey > 524288 && ey < 15335424) {
-            if (enemylist[enemyIndex][9] < 15) {
+            if (enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] < 15) {
                 for (int a = 0; a < 360; a += 45) {
                     for (int k = 4; k <= 9; k++) {
                         enemyBullets.spawn(603, 0, a, k << 3, ex, ey, px, py);
                     }
                 }
             }
-            enemylist[enemyIndex][9] += 1;
+            enemylist[enemyIndex][StageRuntime.ENEMY_WORK_0] += 1;
         }
     }
 
@@ -945,18 +946,18 @@ public class StageDochu {
         if (enemylist == null || enemyIndex < 0 || enemyIndex >= enemylist.length) {
             return;
         }
-        if (enemylist[enemyIndex][0] == 0) {
+        if (enemylist[enemyIndex][StageRuntime.ENEMY_ACTIVE] == 0) {
             return;
         }
 
         // Stage 1: enemyType 31 accelerating aimed petals.
-        if (enemyType == 31 && enemylist[enemyIndex][2] == 20) {
+        if (enemyType == 31 && enemylist[enemyIndex][StageRuntime.ENEMY_AGE] == 20) {
             int div;
-            if (level == 0) {
+            if (level == BattleSessionConfig.DIFFICULTY_EASY) {
                 div = 3;
-            } else if (level == 1) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_NORMAL) {
                 div = 5;
-            } else if (level == 2) {
+            } else if (level == BattleSessionConfig.DIFFICULTY_HARD) {
                 div = 6;
             } else {
                 div = 8;

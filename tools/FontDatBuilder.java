@@ -20,6 +20,8 @@ import java.util.TreeSet;
  * Rasterize a language's source texts into font.dat for I18nPackBuilder.
  */
 public final class FontDatBuilder {
+    private static final int FORMAT_VERSION = 2;
+    private static final int BITS_PER_PIXEL = 1;
 
     public static final class BuildConfig {
         public File ttfFile;
@@ -489,8 +491,8 @@ public final class FontDatBuilder {
         out.write('F');
         out.write('N');
         out.write('T');
-        out.write(2); // version
-        out.write(1); // bpp
+        out.write(FORMAT_VERSION);
+        out.write(BITS_PER_PIXEL);
         out.write(cellW & 0xFF);
         out.write(cellH & 0xFF);
         out.write(baseline & 0xFF);

@@ -2,7 +2,17 @@ package touhou.battle;
 
 /** Immutable settings for one battle session, including its retry stage. */
 public final class BattleSessionConfig {
+    public static final int MODE_STORY = 0;
+    public static final int MODE_EXTRA = 1;
+    public static final int MODE_STAGE_PRACTICE = 2;
     public static final int MODE_SPELL_PRACTICE = 3;
+
+    public static final int DIFFICULTY_EASY = 0;
+    public static final int DIFFICULTY_NORMAL = 1;
+    public static final int DIFFICULTY_HARD = 2;
+    public static final int DIFFICULTY_LUNATIC = 3;
+    public static final int DIFFICULTY_EXTRA = 4;
+    public static final int DIFFICULTY_LAST_WORD = 5;
 
     private final int gameMode;
     private final int difficulty;
@@ -36,7 +46,7 @@ public final class BattleSessionConfig {
             throw new IllegalArgumentException("Invalid spell practice id: " + spellId);
         }
         int stage = SpellPracticeCatalog.getStage(spellId);
-        return new BattleSessionConfig(MODE_SPELL_PRACTICE, 0, character, shotType,
+        return new BattleSessionConfig(MODE_SPELL_PRACTICE, DIFFICULTY_EASY, character, shotType,
                 stage, stage, true, spellId);
     }
 
@@ -93,6 +103,6 @@ public final class BattleSessionConfig {
     }
 
     public int getContinueGameMode() {
-        return isSpellPractice() ? 0 : gameMode;
+        return isSpellPractice() ? MODE_STORY : gameMode;
     }
 }

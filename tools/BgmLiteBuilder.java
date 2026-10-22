@@ -17,6 +17,17 @@ import touhou.BgmCatalog;
 
 /** Offline arrangements for the original MLD channel layout; not run when packaging edited MIDIs. */
 public final class BgmLiteBuilder {
+    private static final int MELODY = 0;
+    private static final int ALT_MELODY = 1;
+    private static final int HARMONY = 2;
+    private static final int BASS = 3;
+    private static final int DRUM_CHANNEL = 9;
+    private static final int META_TRACK_NAME = 3;
+    private static final int META_END_OF_TRACK = 0x2F;
+    private static final int CC_PAN = 10;
+    private static final int CC_SUSTAIN = 64;
+    private static final int CC_REVERB = 91;
+    private static final int CC_CHORUS = 93;
     // Zero-based MIDI channels: melody, harmony, bass. Delayed/stacked copies are omitted.
     private static final int[][] LOOP = {
         null, { 0, 13, 12, 8 }, { 1, -1, 5, 8 },
@@ -66,7 +77,7 @@ public final class BgmLiteBuilder {
 
     private static boolean melody(int song, boolean intro, int channel, double beat) {
         int[] plan = intro ? INTRO[song] : LOOP[song];
-        if (intro) return channel == plan[0] || channel == plan[1];
+        if (intro) return channel == plan[MELODY] || channel == plan[ALT_MELODY];
         // These arrangements hand the melody to another instrument between phrases.
         switch (song) {
             case 3: return channel == (beat < 32 ? 3 : beat < 96 ? 0 : 1);
@@ -77,7 +88,7 @@ public final class BgmLiteBuilder {
             case 10: return channel == (beat < 31.5 ? 11 : 0);
             case 13: return channel == (beat >= 127 && beat < 256 ? 0 : 1);
             case 17: return channel == (beat < 64 ? 0 : 1);
-            default: return channel == plan[0] || channel == plan[1];
+            default: return channel == plan[MELODY] || channel == plan[ALT_MELODY];
         }
     }
 
@@ -89,8 +100,8 @@ public final class BgmLiteBuilder {
             for (int i = 0; i < track.size(); i++) {
                 MidiEvent event = track.get(i);
                 MidiMessage message = event.getMessage();
-                if (message instanceof MetaMessage && ((MetaMessage) message).getType() != 0x2F) {
-                    if (((MetaMessage) message).getType() != 3) conductor.add(copy(event));
+                if (message instanceof MetaMessage && ((MetaMessage) message).getType() != META_END_OF_TRACK) {
+                    if (((MetaMessage) message).getType() != META_TRACK_NAME) conductor.add(copy(event));
                 } else if (message.getStatus() == 0xF0 || message.getStatus() == 0xF7) {
                     conductor.add(copy(event));
                 }
@@ -107,7 +118,7 @@ public final class BgmLiteBuilder {
             for (Note note : notes) {
                 double beat = note.start / (double) original.getResolution();
                 boolean lead = melody(song, intro, channel, beat);
-                if (channel == 9) {
+                if (channel == DRUM_CHANNEL) {
                     int family = drumFamily(note.pitch);
                     if (family < 0) continue;
                     long gap = original.getResolution() / (family == 2 ? 2 : 4);
@@ -115,39 +126,39 @@ public final class BgmLiteBuilder {
                     if (note.start - drumAt[family] < gap) continue;
                     drumAt[family] = note.start;
                     note.end = Math.min(note.end, note.start + original.getResolution() / 4);
-                } else if (!lead && channel != plan[2] && channel != plan[3]) {
+                } else if (!lead && channel != plan[HARMONY] && channel != plan[BASS]) {
                     continue;
                 }
                 selected.add(note);
             }
             if (selected.isEmpty()) continue;
-            if (channel != 9) selected = limitVoices(selected, channel == plan[3] ? 1 : 2, channel == plan[3]);
+            if (channel != DRUM_CHANNEL) selected = limitVoices(selected, channel == plan[BASS] ? 1 : 2, channel == plan[BASS]);
             Track target = lite.createTrack();
-            String role = channel == 9 ? "Drums" : channel == plan[3] ? "Bass" : channel == plan[2] ? "Harmony" : "Melody";
+            String role = channel == DRUM_CHANNEL ? "Drums" : channel == plan[BASS] ? "Bass" : channel == plan[HARMONY] ? "Harmony" : "Melody";
             MetaMessage title = new MetaMessage();
             byte[] name = (role + " (channel " + (channel + 1) + ")").getBytes("US-ASCII");
-            title.setMessage(3, name, name.length);
+            title.setMessage(META_TRACK_NAME, name, name.length);
             target.add(new MidiEvent(title, 0));
             for (Track track : original.getTracks()) {
                 for (int i = 0; i < track.size(); i++) {
                     MidiEvent event = track.get(i);
                     if (!(event.getMessage() instanceof ShortMessage)) continue;
                     ShortMessage message = (ShortMessage) event.getMessage();
-                    if (message.getChannel() != channel || message.getCommand() == 0x80 || message.getCommand() == 0x90) continue;
+                    if (message.getChannel() != channel || message.getCommand() == ShortMessage.NOTE_OFF || message.getCommand() == ShortMessage.NOTE_ON) continue;
                     int cc = message.getData1();
-                    if (message.getCommand() == 0xB0 && (cc == 10 || cc == 64 || cc == 91 || cc == 93)) continue;
+                    if (message.getCommand() == ShortMessage.CONTROL_CHANGE && (cc == CC_PAN || cc == CC_SUSTAIN || cc == CC_REVERB || cc == CC_CHORUS)) continue;
                     target.add(copy(event));
                 }
             }
             // A dry, centered mix also removes the source's dense stereo-pan automation.
-            add(target, 0, 0xB0, channel, 10, 64);
-            add(target, 0, 0xB0, channel, 64, 0);
-            add(target, 0, 0xB0, channel, 91, 0);
-            add(target, 0, 0xB0, channel, 93, 0);
+            add(target, 0, ShortMessage.CONTROL_CHANGE, channel, CC_PAN, 64);
+            add(target, 0, ShortMessage.CONTROL_CHANGE, channel, CC_SUSTAIN, 0);
+            add(target, 0, ShortMessage.CONTROL_CHANGE, channel, CC_REVERB, 0);
+            add(target, 0, ShortMessage.CONTROL_CHANGE, channel, CC_CHORUS, 0);
             for (Note note : selected) {
                 if (note.end <= note.start) continue;
-                add(target, note.start, 0x90, channel, note.pitch, note.velocity);
-                add(target, note.end, 0x80, channel, note.pitch, 0);
+                add(target, note.start, ShortMessage.NOTE_ON, channel, note.pitch, note.velocity);
+                add(target, note.end, ShortMessage.NOTE_OFF, channel, note.pitch, 0);
                 after++;
             }
             finish(target, original.getTickLength());
@@ -169,13 +180,13 @@ public final class BgmLiteBuilder {
             ShortMessage message = (ShortMessage) event.getMessage();
             if (message.getChannel() != channel) continue;
             int command = message.getCommand(), pitch = message.getData1();
-            if (command == 0x90 && message.getData2() > 0) {
+            if (command == ShortMessage.NOTE_ON && message.getData2() > 0) {
                 Note note = new Note(event.getTick(), pitch, message.getData2());
                 note.end = sequence.getTickLength();
                 held.get(pitch).add(note); result.add(note);
-            } else if (command == 0x80 || command == 0x90) {
+            } else if (command == ShortMessage.NOTE_OFF || command == ShortMessage.NOTE_ON) {
                 if (!held.get(pitch).isEmpty()) held.get(pitch).remove().end = event.getTick();
-            } else if (command == 0xB0 && pitch == 64) {
+            } else if (command == ShortMessage.CONTROL_CHANGE && pitch == CC_SUSTAIN) {
                 if (message.getData2() >= 64 && pedalStart < 0) pedalStart = event.getTick();
                 if (message.getData2() < 64 && pedalStart >= 0) {
                     pedals.add(new long[] { pedalStart, event.getTick() }); pedalStart = -1;
@@ -234,6 +245,6 @@ public final class BgmLiteBuilder {
         ShortMessage message = new ShortMessage(); message.setMessage(command, channel, a, b); track.add(new MidiEvent(message, tick));
     }
     private static void finish(Track track, long tick) throws Exception {
-        MetaMessage end = new MetaMessage(); end.setMessage(0x2F, new byte[0], 0); track.add(new MidiEvent(end, tick));
+        MetaMessage end = new MetaMessage(); end.setMessage(META_END_OF_TRACK, new byte[0], 0); track.add(new MidiEvent(end, tick));
     }
 }

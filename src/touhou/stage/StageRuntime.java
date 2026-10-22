@@ -2,18 +2,68 @@ package touhou.stage;
 
 import java.io.IOException;
 
-import touhou.ResourceException;
-
 import javax.microedition.lcdui.Graphics;
 
 import touhou.GameProgress;
+import touhou.Player;
+import touhou.ResourceException;
 import touhou.UnlockFlags;
 import touhou.battle.BattleMath;
+import touhou.battle.BattleSessionConfig;
 import touhou.i18n.I18n;
 import touhou.ui.FontTextMeasurer;
 import touhou.ui.UiTextLayout;
 
 public final class StageRuntime {
+    public static final int STAGE_1 = 0;
+    public static final int STAGE_2 = 1;
+    public static final int STAGE_3 = 2;
+    public static final int STAGE_4 = 3;
+    public static final int STAGE_5 = 4;
+    public static final int STAGE_6 = 5;
+    public static final int STAGE_EXTRA = 6;
+    public static final int STAGE_COUNT = 7;
+
+    // Enemy table fields. Pattern scratch values are reused; bosses store maximum HP in ENEMY_WORK_0.
+    public static final int ENEMY_ACTIVE = 0;
+    public static final int ENEMY_APPEARANCE = 1;
+    public static final int ENEMY_AGE = 2;
+    public static final int ENEMY_ATTACK_STATE = 3;
+    public static final int ENEMY_HP = 4;
+    public static final int ENEMY_X = 5;
+    public static final int ENEMY_Y = 6;
+    public static final int ENEMY_MOVE_STATE = 7;
+    public static final int ENEMY_SHOT_PATTERN = 8;
+    public static final int ENEMY_WORK_0 = 9;
+    public static final int ENEMY_WORK_1 = 10;
+    public static final int ENEMY_MOVE_PATTERN = 11;
+    public static final int ENEMY_SPEED = 12;
+    public static final int ENEMY_ANGLE = 13;
+    public static final int ENEMY_VX = 14;
+    public static final int ENEMY_VY = 15;
+    public static final int ENEMY_TARGETABLE = 16;
+    public static final int ENEMY_HIT_LEFT = 17;
+    public static final int ENEMY_HIT_RIGHT = 18;
+    public static final int ENEMY_HIT_TOP = 19;
+    public static final int ENEMY_HIT_BOTTOM = 20;
+    public static final int ENEMY_DROP_TYPE = 21;
+    public static final int ENEMY_FIELD_COUNT = 22;
+
+    // Effect table fields.
+    public static final int EFFECT_ACTIVE = 0;
+    public static final int EFFECT_TIMER = 1;
+    public static final int EFFECT_FRAME = 2;
+    public static final int EFFECT_ID = 3;
+    public static final int EFFECT_X = 4;
+    public static final int EFFECT_Y = 5;
+    public static final int EFFECT_VX = 6;
+    public static final int EFFECT_VY = 7;
+    public static final int EFFECT_DELAY = 8;
+    public static final int EFFECT_FIELD_COUNT = 9;
+
+    public static final int ENEMY_CAPACITY = 32;
+    public static final int EFFECT_CAPACITY = 64;
+    private static final int BOSS_WORK_SIZE = 28;
     private static final UiTextLayout.Measurer DIALOGUE_MEASURER = new FontTextMeasurer(null);
 
     private static void fillPlayRect(Graphics g, int x, int y, int w, int h, int playX, int playY, int playW, int playH) {
@@ -141,9 +191,9 @@ public final class StageRuntime {
     private StageDat stageDat;
     private short[][][] stageTable;
 
-    private final int[][] enemyList = new int[32][22];
-    private final int[] bossWrk = new int[28];
-    private final int[][] effectList = new int[64][9];
+    private final int[][] enemyList = new int[ENEMY_CAPACITY][ENEMY_FIELD_COUNT];
+    private final int[] bossWrk = new int[BOSS_WORK_SIZE];
+    private final int[][] effectList = new int[EFFECT_CAPACITY][EFFECT_FIELD_COUNT];
     private final EnemyAnimationState enemyAnimation = new EnemyAnimationState();
 
     private String[] talkTable;
@@ -216,26 +266,26 @@ public final class StageRuntime {
             if (si < 0 || si >= enemyList.length) {
                 continue;
             }
-            if (enemyList[si][0] == 0) {
+            if (enemyList[si][ENEMY_ACTIVE] == 0) {
                 continue;
             }
-            int mt = enemyList[si][11];
-            if (mt == 100 || mt == 101 || mt == 102 || mt == 103) {
+            int mt = enemyList[si][ENEMY_MOVE_PATTERN];
+            if (mt == BossController.MIDBOSS_PATTERN || mt == BossController.BOSS_PATTERN || mt == BossController.SECOND_BOSS_PATTERN || mt == BossController.THIRD_BOSS_PATTERN) {
                 continue;
             }
-            stageKcEffect(0, enemyList[si][5], enemyList[si][6]);
-            enemyList[si][0] = 0;
+            stageKcEffect(0, enemyList[si][ENEMY_X], enemyList[si][ENEMY_Y]);
+            enemyList[si][ENEMY_ACTIVE] = 0;
             host.freeEnemy(si);
             bossWrk[8 + i] = 0;
         }
 
-        for (int i = 0; i != 32; ++i) {
-            if (enemyList[i][0] == 0) {
+        for (int i = 0; i != ENEMY_CAPACITY; ++i) {
+            if (enemyList[i][ENEMY_ACTIVE] == 0) {
                 continue;
             }
-            int id = enemyList[i][1];
+            int id = enemyList[i][ENEMY_APPEARANCE];
             if (id == 20 || id == 21) {
-                enemyList[i][0] = 0;
+                enemyList[i][ENEMY_ACTIVE] = 0;
                 host.freeEnemy(i);
             }
         }
@@ -249,26 +299,26 @@ public final class StageRuntime {
     public int stageJbResolveSpellPracticeBossDefeatEffectId() {
         int stage = host.getStage();
         int effectId = -1;
-        if (stage == 0) {
+        if (stage == STAGE_1) {
             effectId = 6;
         } else {
             switch (stage) {
-                case 1:
+                case STAGE_2:
                     effectId = 9;
                     break;
-                case 2:
+                case STAGE_3:
                     effectId = 10;
                     break;
-                case 3:
+                case STAGE_4:
                     effectId = (bossWrk[24] == 0) ? 11 : 12;
                     break;
-                case 4:
+                case STAGE_5:
                     effectId = 13;
                     break;
-                case 5:
+                case STAGE_6:
                     effectId = 14;
                     break;
-                case 6:
+                case STAGE_EXTRA:
                     effectId = 15;
                     break;
             }
@@ -276,15 +326,15 @@ public final class StageRuntime {
         return effectId;
     }
 
-    // StageJb core: mt==100 early handling and state transition.
+    // StageJb core: mt==BossController.MIDBOSS_PATTERN early handling and state transition.
     // Return true if caller should return immediately.
     public boolean stageJbMt100PreProcess(final int n, final int ex, final int ey) {
-        if (enemyList[n][7] == 0) {
+        if (enemyList[n][ENEMY_MOVE_STATE] == 0) {
             return true;
         }
 
-        if (enemyList[n][7] == 2) {
-            enemyList[n][0] = 0;
+        if (enemyList[n][ENEMY_MOVE_STATE] == 2) {
+            enemyList[n][ENEMY_ACTIVE] = 0;
             host.freeEnemy(n);
             host.setStep(0);
             host.setMGCnt(0);
@@ -292,7 +342,7 @@ public final class StageRuntime {
             return true;
         }
 
-        enemyList[n][3] = 0;
+        enemyList[n][ENEMY_ATTACK_STATE] = 0;
         host.setResetFlag(4);
         stageKcEffect(0, ex, ey);
         return false;
@@ -306,13 +356,13 @@ public final class StageRuntime {
         host.setBossF(0);
 
         int stage = host.getStage();
-        if (stage == 0) {
+        if (stage == STAGE_1) {
             for (int i = 0; i < 3; ++i) {
-                if (enemyList[i][0] == 0) {
+                if (enemyList[i][ENEMY_ACTIVE] == 0) {
                     continue;
                 }
-                stageKcEffect(6 + i, enemyList[i][5], enemyList[i][6]);
-                enemyList[i][0] = 0;
+                stageKcEffect(6 + i, enemyList[i][ENEMY_X], enemyList[i][ENEMY_Y]);
+                enemyList[i][ENEMY_ACTIVE] = 0;
                 host.freeEnemy(i);
             }
             return;
@@ -320,22 +370,22 @@ public final class StageRuntime {
 
         int stageEffect = -1;
         switch (stage) {
-            case 1:
+            case STAGE_2:
                 stageEffect = 9;
                 break;
-            case 2:
+            case STAGE_3:
                 stageEffect = 10;
                 break;
-            case 3:
+            case STAGE_4:
                 stageEffect = (bossWrk[24] == 0) ? 11 : 12;
                 break;
-            case 4:
+            case STAGE_5:
                 stageEffect = 13;
                 break;
-            case 5:
+            case STAGE_6:
                 stageEffect = 14;
                 break;
-            case 6:
+            case STAGE_EXTRA:
                 stageEffect = 15;
                 break;
         }
@@ -344,7 +394,7 @@ public final class StageRuntime {
         }
     }
 
-    // StageJb core: spell practice boss defeated (mt==100) enter sequence.
+    // StageJb core: spell practice boss defeated (mt==BossController.MIDBOSS_PATTERN) enter sequence.
     public void stageJbSpellPracticeBossDefeatedEnter(final int bossEnemyIdx, final int ex, final int ey) {
         host.setTargetFps(5);
         int effectId = stageJbResolveSpellPracticeBossDefeatEffectId();
@@ -370,55 +420,55 @@ public final class StageRuntime {
 
         host.setBbaria(1);
 
-        int maxHp = enemyList[bossEnemyIdx][9];
+        int maxHp = enemyList[bossEnemyIdx][ENEMY_WORK_0];
         if (maxHp <= 0) {
             maxHp = 1;
         }
-        enemyList[bossEnemyIdx][4] = maxHp;
-        enemyList[bossEnemyIdx][16] = 0;
+        enemyList[bossEnemyIdx][ENEMY_HP] = maxHp;
+        enemyList[bossEnemyIdx][ENEMY_TARGETABLE] = 0;
     }
 
-    // StageJb core: mt==100, hp bar anim mode 1 transition state.
+    // StageJb core: mt==BossController.MIDBOSS_PATTERN, hp bar anim mode 1 transition state.
     public void stageJbMt100EnterHpBarAnimMode1Transition(final int bossEnemyIdx) {
         host.setMGCnt(-1);
-        enemyList[bossEnemyIdx][16] = 0;
-        enemyList[bossEnemyIdx][7] = 8;
+        enemyList[bossEnemyIdx][ENEMY_TARGETABLE] = 0;
+        enemyList[bossEnemyIdx][ENEMY_MOVE_STATE] = 8;
     }
 
-    // StageJb core: mt==100, non-practice boss defeat state enter (enemy remains for script).
+    // StageJb core: mt==BossController.MIDBOSS_PATTERN, non-practice boss defeat state enter (enemy remains for script).
     public void stageJbMt100EnterNonPracticeDefeatedState(final int bossEnemyIdx) {
-        enemyList[bossEnemyIdx][4] = 1;
-        enemyList[bossEnemyIdx][16] = 0;
+        enemyList[bossEnemyIdx][ENEMY_HP] = 1;
+        enemyList[bossEnemyIdx][ENEMY_TARGETABLE] = 0;
         host.setMGCnt(-1);
-        enemyList[bossEnemyIdx][7] = 2;
+        enemyList[bossEnemyIdx][ENEMY_MOVE_STATE] = 2;
     }
 
-    // StageJb core: mt==100, spell practice boss defeated cleanup (no end flow).
+    // StageJb core: mt==BossController.MIDBOSS_PATTERN, spell practice boss defeated cleanup (no end flow).
     public void stageJbMt100SpellPracticeBossDefeatedCleanup(final int bossEnemyIdx) {
         host.setBossF(0);
-        if (enemyList[bossEnemyIdx][0] != 0) {
-            enemyList[bossEnemyIdx][0] = 0;
+        if (enemyList[bossEnemyIdx][ENEMY_ACTIVE] != 0) {
+            enemyList[bossEnemyIdx][ENEMY_ACTIVE] = 0;
             host.freeEnemy(bossEnemyIdx);
         }
     }
 
-    // StageJb core: mt==101..103 boss on death common state clear.
+    // StageJb core: mt==BossController.BOSS_PATTERN..103 boss on death common state clear.
     public void stageJbBossClearStateOnDeath(final int bossEnemyIdx) {
-        enemyList[bossEnemyIdx][3] = 0;
+        enemyList[bossEnemyIdx][ENEMY_ATTACK_STATE] = 0;
     }
 
     // StageJb core: free enemy slot if still alive.
     public void stageJbFreeEnemyIfAlive(final int enemyIdx) {
-        if (enemyList[enemyIdx][0] != 0) {
-            enemyList[enemyIdx][0] = 0;
+        if (enemyList[enemyIdx][ENEMY_ACTIVE] != 0) {
+            enemyList[enemyIdx][ENEMY_ACTIVE] = 0;
             host.freeEnemy(enemyIdx);
         }
     }
 
     // StageJb core: normal enemy death - free and return enemy type for upper-layer side effects.
     public int stageJbNormalEnemyDeathFreeAndGetEnemyType(final int enemyIdx) {
-        int enemyType = enemyList[enemyIdx][8];
-        enemyList[enemyIdx][0] = 0;
+        int enemyType = enemyList[enemyIdx][ENEMY_SHOT_PATTERN];
+        enemyList[enemyIdx][ENEMY_ACTIVE] = 0;
         host.freeEnemy(enemyIdx);
         return enemyType;
     }
@@ -427,16 +477,16 @@ public final class StageRuntime {
     public void stageJbNormalEnemyDeathSpawnEffects(final int mt, final int ex, final int ey) {
         stageKcEffect(0, ex, ey);
 
-        if (mt >= 100) {
+        if (mt >= BossController.MIDBOSS_PATTERN) {
             int stage = host.getStage();
             int stageEffect = -1;
-            if (stage == 3) {
+            if (stage == STAGE_4) {
                 stageEffect = 11;
-            } else if (stage == 4) {
+            } else if (stage == STAGE_5) {
                 stageEffect = 13;
-            } else if (stage == 5) {
+            } else if (stage == STAGE_6) {
                 stageEffect = 14;
-            } else if (stage == 6) {
+            } else if (stage == STAGE_EXTRA) {
                 stageEffect = 15;
             }
             if (stageEffect != -1) {
@@ -483,10 +533,10 @@ public final class StageRuntime {
 
         String prefix;
         switch (chara) {
-            case 0:
+            case Player.REIMU:
                 prefix = "r";
                 break;
-            case 1:
+            case Player.MARISA:
                 prefix = "m";
                 break;
             default:
@@ -496,22 +546,22 @@ public final class StageRuntime {
 
         String suffix;
         switch (stage) {
-            case 0:
+            case STAGE_1:
                 suffix = "01";
                 break;
-            case 1:
+            case STAGE_2:
                 suffix = "02";
                 break;
-            case 2:
+            case STAGE_3:
                 suffix = "03";
                 break;
-            case 3:
+            case STAGE_4:
                 suffix = "04";
                 break;
-            case 4:
+            case STAGE_5:
                 suffix = "05";
                 break;
-            case 5:
+            case STAGE_6:
                 suffix = "06";
                 break;
             default:
@@ -566,10 +616,10 @@ public final class StageRuntime {
         if (stageTable[stageNa][step].length < 5) {
             return false;
         }
-        if (stageTable[stageNa][step][1] != 246) {
+        if (stageTable[stageNa][step][StageDat.OP] != StageDat.DIALOGUE) {
             return false;
         }
-        if (stageTable[stageNa][step][0] > gcntPlusOne) {
+        if (stageTable[stageNa][step][StageDat.FRAME] > gcntPlusOne) {
             return false;
         }
         return true;
@@ -577,16 +627,16 @@ public final class StageRuntime {
 
     public void stageIb() {
         enemyAnimation.reset();
-        for (int i = 0; i != 32; ++i) {
-            for (int j = 0; j != 22; ++j) {
+        for (int i = 0; i != ENEMY_CAPACITY; ++i) {
+            for (int j = 0; j != ENEMY_FIELD_COUNT; ++j) {
                 enemyList[i][j] = 0;
             }
         }
-        for (int k = 0; k < 28; ++k) {
+        for (int k = 0; k < BOSS_WORK_SIZE; ++k) {
             bossWrk[k] = 0;
         }
-        for (int i = 0; i < 64; i++) {
-            for (int j = 0; j < 9; j++) {
+        for (int i = 0; i < EFFECT_CAPACITY; i++) {
+            for (int j = 0; j < EFFECT_FIELD_COUNT; j++) {
                 effectList[i][j] = 0;
             }
         }
@@ -597,29 +647,29 @@ public final class StageRuntime {
     }
 
     public int stageFb(final int n, final int n2, final int n3, final int n4, final int n5, final int n6, final int n7, final int n8, final int n9) {
-        for (int i = 0; i != 32; ++i) {
-            if (enemyList[i][0] == 0) {
-                enemyList[i][0] = 1;
-                enemyList[i][2] = 0;
-                enemyList[i][9] = 0;
-                enemyList[i][5] = n8;
-                enemyList[i][6] = n9;
-                enemyList[i][4] = n3;
-                enemyList[i][11] = n5;
-                enemyList[i][8] = n2;
-                enemyList[i][1] = n;
-                enemyList[i][21] = n4;
-                enemyList[i][7] = 0;
-                enemyList[i][3] = 0;
-                enemyList[i][16] = 1;
-                enemyList[i][10] = 0;
-                enemyList[i][13] = n6 + 270;
-                enemyList[i][12] = n7;
+        for (int i = 0; i != ENEMY_CAPACITY; ++i) {
+            if (enemyList[i][ENEMY_ACTIVE] == 0) {
+                enemyList[i][ENEMY_ACTIVE] = 1;
+                enemyList[i][ENEMY_AGE] = 0;
+                enemyList[i][ENEMY_WORK_0] = 0;
+                enemyList[i][ENEMY_X] = n8;
+                enemyList[i][ENEMY_Y] = n9;
+                enemyList[i][ENEMY_HP] = n3;
+                enemyList[i][ENEMY_MOVE_PATTERN] = n5;
+                enemyList[i][ENEMY_SHOT_PATTERN] = n2;
+                enemyList[i][ENEMY_APPEARANCE] = n;
+                enemyList[i][ENEMY_DROP_TYPE] = n4;
+                enemyList[i][ENEMY_MOVE_STATE] = 0;
+                enemyList[i][ENEMY_ATTACK_STATE] = 0;
+                enemyList[i][ENEMY_TARGETABLE] = 1;
+                enemyList[i][ENEMY_WORK_1] = 0;
+                enemyList[i][ENEMY_ANGLE] = n6 + 270;
+                enemyList[i][ENEMY_SPEED] = n7;
 
-                int sp = enemyList[i][12] << 3;
-                int dir = enemyList[i][13];
-                enemyList[i][14] = BattleMath.speedCos(sp, dir);
-                enemyList[i][15] = BattleMath.speedSin(sp, dir);
+                int sp = enemyList[i][ENEMY_SPEED] << 3;
+                int dir = enemyList[i][ENEMY_ANGLE];
+                enemyList[i][ENEMY_VX] = BattleMath.speedCos(sp, dir);
+                enemyList[i][ENEMY_VY] = BattleMath.speedSin(sp, dir);
 
                 switch (n) {
                     case 0:
@@ -630,21 +680,21 @@ public final class StageRuntime {
                     case 5:
                     case 6:
                     case 7:
-                        enemyList[i][17] = 458752;
-                        enemyList[i][18] = 458752;
-                        enemyList[i][19] = 458752;
-                        enemyList[i][20] = 196608;
+                        enemyList[i][ENEMY_HIT_LEFT] = 458752;
+                        enemyList[i][ENEMY_HIT_RIGHT] = 458752;
+                        enemyList[i][ENEMY_HIT_TOP] = 458752;
+                        enemyList[i][ENEMY_HIT_BOTTOM] = 196608;
                         break;
                     case 8:
-                        enemyList[i][17] = 524288;
-                        enemyList[i][18] = 524288;
-                        enemyList[i][19] = 524288;
-                        enemyList[i][20] = 262144;
+                        enemyList[i][ENEMY_HIT_LEFT] = 524288;
+                        enemyList[i][ENEMY_HIT_RIGHT] = 524288;
+                        enemyList[i][ENEMY_HIT_TOP] = 524288;
+                        enemyList[i][ENEMY_HIT_BOTTOM] = 262144;
                         break;
                     case 20:
                     case 21:
                     case 22:
-                        enemyList[i][16] = 0;
+                        enemyList[i][ENEMY_TARGETABLE] = 0;
                         break;
                     case 9:
                     case 10:
@@ -654,64 +704,64 @@ public final class StageRuntime {
                     case 14:
                     case 15:
                     case 16:
-                        enemyList[i][17] = 1048576;
-                        enemyList[i][18] = 1048576;
-                        enemyList[i][19] = 1048576;
-                        enemyList[i][20] = 524288;
+                        enemyList[i][ENEMY_HIT_LEFT] = 1048576;
+                        enemyList[i][ENEMY_HIT_RIGHT] = 1048576;
+                        enemyList[i][ENEMY_HIT_TOP] = 1048576;
+                        enemyList[i][ENEMY_HIT_BOTTOM] = 524288;
                         break;
                     case 17:
                     case 19:
-                        enemyList[i][17] = 1048576;
-                        enemyList[i][18] = 1048576;
-                        enemyList[i][19] = 1048576;
-                        enemyList[i][20] = 524288;
+                        enemyList[i][ENEMY_HIT_LEFT] = 1048576;
+                        enemyList[i][ENEMY_HIT_RIGHT] = 1048576;
+                        enemyList[i][ENEMY_HIT_TOP] = 1048576;
+                        enemyList[i][ENEMY_HIT_BOTTOM] = 524288;
                         bossWrk[26] = 10;
                         break;
                     case 18:
-                        enemyList[i][16] = 0;
+                        enemyList[i][ENEMY_TARGETABLE] = 0;
                         break;
                 }
 
-                if (enemyList[i][11] == 100 || enemyList[i][11] == 101 || enemyList[i][11] == 102 || enemyList[i][11] == 103) {
-                    enemyList[i][16] = 0;
-                    enemyList[i][14] = 524288;
-                    enemyList[i][15] = 524288;
-                    enemyList[i][9] = enemyList[i][4];
+                if (enemyList[i][ENEMY_MOVE_PATTERN] == BossController.MIDBOSS_PATTERN || enemyList[i][ENEMY_MOVE_PATTERN] == BossController.BOSS_PATTERN || enemyList[i][ENEMY_MOVE_PATTERN] == BossController.SECOND_BOSS_PATTERN || enemyList[i][ENEMY_MOVE_PATTERN] == BossController.THIRD_BOSS_PATTERN) {
+                    enemyList[i][ENEMY_TARGETABLE] = 0;
+                    enemyList[i][ENEMY_VX] = 524288;
+                    enemyList[i][ENEMY_VY] = 524288;
+                    enemyList[i][ENEMY_WORK_0] = enemyList[i][ENEMY_HP];
 
                     int stage = host.getStage();
                     int bstock;
                     switch (stage) {
-                        case 0:
+                        case STAGE_1:
                             bstock = 1;
                             break;
-                        case 1:
-                        case 2:
+                        case STAGE_2:
+                        case STAGE_3:
                             bstock = 2;
                             break;
-                        case 3:
-                        case 4:
+                        case STAGE_4:
+                        case STAGE_5:
                             bstock = 3;
                             break;
-                        case 5:
+                        case STAGE_6:
                             bstock = 4;
                             break;
-                        case 6:
+                        case STAGE_EXTRA:
                             bstock = 8;
                             break;
                         default:
                             bstock = 0;
                             break;
                     }
-                    if (enemyList[i][11] == 100) {
+                    if (enemyList[i][ENEMY_MOVE_PATTERN] == BossController.MIDBOSS_PATTERN) {
                         ++bstock;
                     }
-                    if (host.getGameMode() == 3) {
+                    if (host.getGameMode() == BattleSessionConfig.MODE_SPELL_PRACTICE) {
                         bstock = 0;
                     }
                     host.setBstock(bstock);
                 }
 
-                host.setEnemyAabb(i, enemyList[i][5], enemyList[i][6], enemyList[i][17], enemyList[i][18], enemyList[i][19], enemyList[i][20], enemyList[i][16] != 0);
+                host.setEnemyAabb(i, enemyList[i][ENEMY_X], enemyList[i][ENEMY_Y], enemyList[i][ENEMY_HIT_LEFT], enemyList[i][ENEMY_HIT_RIGHT], enemyList[i][ENEMY_HIT_TOP], enemyList[i][ENEMY_HIT_BOTTOM], enemyList[i][ENEMY_TARGETABLE] != 0);
                 return i;
             }
         }
@@ -720,25 +770,25 @@ public final class StageRuntime {
 
     // Per-frame enemy/boss update and collision processing.
     public void stageGb() {
-        for (int i = 0; i != 32; ++i) {
-            if (enemyList[i][0] != 0) {
-                int mt = enemyList[i][11];
-                if (mt >= 100 && mt <= 103) {
+        for (int i = 0; i != ENEMY_CAPACITY; ++i) {
+            if (enemyList[i][ENEMY_ACTIVE] != 0) {
+                int mt = enemyList[i][ENEMY_MOVE_PATTERN];
+                if (mt >= BossController.MIDBOSS_PATTERN && mt <= BossController.THIRD_BOSS_PATTERN) {
                     // Boss: update state first so bbaria/phase changes apply immediately before bullet collision.
                     host.stageUb(i);
-                    if (enemyList[i][0] == 0) {
+                    if (enemyList[i][ENEMY_ACTIVE] == 0) {
                         host.freeEnemy(i);
                         continue;
                     }
 
                     host.stageHd(i);
-                    if (enemyList[i][0] == 0) {
+                    if (enemyList[i][ENEMY_ACTIVE] == 0) {
                         host.freeEnemy(i);
                         continue;
                     }
                 } else {
                     host.stageHd(i);
-                    if (enemyList[i][0] == 0) {
+                    if (enemyList[i][ENEMY_ACTIVE] == 0) {
                         host.freeEnemy(i);
                         continue;
                     }
@@ -746,15 +796,15 @@ public final class StageRuntime {
                     host.stageDb(i);
                     host.stageEb(i);
 
-                    if (enemyList[i][2] > 10 && enemyList[i][11] != 50
-                            && (enemyList[i][5] < -1966080 || enemyList[i][6] < -1441792 || enemyList[i][5] > 14680064 || enemyList[i][6] > 17301504)) {
-                        enemyList[i][0] = 0;
+                    if (enemyList[i][ENEMY_AGE] > 10 && enemyList[i][ENEMY_MOVE_PATTERN] != 50
+                            && (enemyList[i][ENEMY_X] < -1966080 || enemyList[i][ENEMY_Y] < -1441792 || enemyList[i][ENEMY_X] > 14680064 || enemyList[i][ENEMY_Y] > 17301504)) {
+                        enemyList[i][ENEMY_ACTIVE] = 0;
                     }
                 }
 
-                if (enemyList[i][0] != 0) {
-                    enemyList[i][2] += 1;
-                    host.setEnemyAabb(i, enemyList[i][5], enemyList[i][6], enemyList[i][17], enemyList[i][18], enemyList[i][19], enemyList[i][20], enemyList[i][16] != 0);
+                if (enemyList[i][ENEMY_ACTIVE] != 0) {
+                    enemyList[i][ENEMY_AGE] += 1;
+                    host.setEnemyAabb(i, enemyList[i][ENEMY_X], enemyList[i][ENEMY_Y], enemyList[i][ENEMY_HIT_LEFT], enemyList[i][ENEMY_HIT_RIGHT], enemyList[i][ENEMY_HIT_TOP], enemyList[i][ENEMY_HIT_BOTTOM], enemyList[i][ENEMY_TARGETABLE] != 0);
                 } else {
                     host.freeEnemy(i);
                 }
@@ -791,12 +841,12 @@ public final class StageRuntime {
             return;
         }
 
-        while (step >= 0 && step < stageTable[na].length && stageTable[na][step][0] <= gcnt) {
-            int op = stageTable[na][step][1];
-            if (op == 245) {
+        while (step >= 0 && step < stageTable[na].length && stageTable[na][step][StageDat.FRAME] <= gcnt) {
+            int op = stageTable[na][step][StageDat.OP];
+            if (op == StageDat.RESTART) {
                 step = 0;
                 gcnt = 0;
-            } else if (op == 246) {
+            } else if (op == StageDat.DIALOGUE) {
                 int talkIndex = -1;
                 if (stageTable[na][step].length > 3) {
                     talkIndex = stageTable[na][step][3];
@@ -847,7 +897,7 @@ public final class StageRuntime {
                     }
                 }
             } else {
-                if (op == 247) {
+                if (op == StageDat.BOSS_START) {
                     stageIb();
                     host.setBossF(1);
                     host.setBbaria(1);
@@ -868,13 +918,13 @@ public final class StageRuntime {
                     host.markBossStart();
                     return;
                 }
-                if (op == 248) {
+                if (op == StageDat.BOSS_ATTACK) {
                     gcnt = -1;
                     host.setBossF(2);
                     host.setHFlash(1);
-                } else if (op == 249 || op == 252 || op == 255) {
-                    if (op == 255) {
-                        if (host.getGameMode() != 2 && !host.isReplayPlaybackActive()) {
+                } else if (op == StageDat.STAGE_CLEAR || op == StageDat.EXTRA_CLEAR || op == StageDat.STORY_CLEAR) {
+                    if (op == StageDat.STORY_CLEAR) {
+                        if (host.getGameMode() != BattleSessionConfig.MODE_STAGE_PRACTICE && !host.isReplayPlaybackActive()) {
                             UnlockFlags.tryUnlockSpellPracticeOnAnyEnding();
                         }
                     }
@@ -887,28 +937,28 @@ public final class StageRuntime {
                         host.enterStageClearResultPanel();
                     }
                     return;
-                } else if (op == 254) {
+                } else if (op == StageDat.FLASH) {
                     host.setIFlash(10);
-                } else if (op == 250) {
+                } else if (op == StageDat.EFFECT) {
                     int id = stageTable[na][step][2];
                     int xFixed = stageTable[na][step][3] << 16;
                     int yFixed = stageTable[na][step][4] << 16;
                     stageKc(id, xFixed, yFixed);
-                } else if (op == 251) {
+                } else if (op == StageDat.BGM) {
                     host.playSound(stageTable[na][step][2], true);
-                } else if (op == 253) {
+                } else if (op == StageDat.SAVE_PROGRESS) {
                     stagePd(stageTable[na][step][2]);
-                } else if (op == 243) {
-                    if (host.getGameMode() != 3 && !host.isReplayPlaybackActive()) {
+                } else if (op == StageDat.UNLOCK) {
+                    if (host.getGameMode() != BattleSessionConfig.MODE_SPELL_PRACTICE && !host.isReplayPlaybackActive()) {
                         UnlockFlags.tryUnlockFlag1FromStageOp(host.getGameMode());
                     }
-                } else if (op == 244) {
+                } else if (op == StageDat.LATTER_HALF) {
                     step = -1;
                     gcnt = 0;
                     host.setLatterFlag(true);
                 } else {
                     if (stageTable[na][step].length >= 10) {
-                        stageFb(stageTable[na][step][1], stageTable[na][step][2], stageTable[na][step][3], stageTable[na][step][4], stageTable[na][step][5],
+                        stageFb(stageTable[na][step][StageDat.OP], stageTable[na][step][2], stageTable[na][step][3], stageTable[na][step][4], stageTable[na][step][5],
                                 stageTable[na][step][6], stageTable[na][step][7], stageTable[na][step][8] << 16, stageTable[na][step][9] << 16);
                     }
                 }
@@ -939,7 +989,7 @@ public final class StageRuntime {
         int n = host.getStage() * 5;
         ++n;
         int step = 0;
-        while (n >= 0 && n < stageTable.length && step >= 0 && step < stageTable[n].length && stageTable[n][step][1] != 247) {
+        while (n >= 0 && n < stageTable.length && step >= 0 && step < stageTable[n].length && stageTable[n][step][StageDat.OP] != StageDat.BOSS_START) {
             ++step;
         }
         host.setStep(step);
@@ -969,11 +1019,11 @@ public final class StageRuntime {
             return;
         }
 
-        if (host.getGameMode() == 3) {
+        if (host.getGameMode() == BattleSessionConfig.MODE_SPELL_PRACTICE) {
             return;
         }
         int level = host.getStartLevel();
-        if (level < 0 || level > 3) {
+        if (level < 0 || level > BattleSessionConfig.DIFFICULTY_LUNATIC) {
             return;
         }
 
@@ -988,23 +1038,23 @@ public final class StageRuntime {
         int playW = host.getPlayW();
         int playH = host.getPlayH();
 
-        for (int i = 0; i < 64; i++) {
-            if (effectList[i][0] == 0) {
+        for (int i = 0; i < EFFECT_CAPACITY; i++) {
+            if (effectList[i][EFFECT_ACTIVE] == 0) {
                 continue;
             }
 
-            int id = effectList[i][3];
-            int x = ox + (effectList[i][4] >> 16);
-            int y = oy + (effectList[i][5] >> 16);
+            int id = effectList[i][EFFECT_ID];
+            int x = ox + (effectList[i][EFFECT_X] >> 16);
+            int y = oy + (effectList[i][EFFECT_Y] >> 16);
 
             if (id == 21) {
                 if (host.isHitSparkEnabled()) {
-                    int n = effectList[i][8] - effectList[i][1];
+                    int n = effectList[i][EFFECT_DELAY] - effectList[i][EFFECT_TIMER];
                     int c = (255 - (n << 4)) & 0xFF;
                     int size = 1 + (n >> 2);
                     g.setColor(0xFF0000 | (c << 8) | c);
-                    int rx = (effectList[i][4] >> 16);
-                    int ry = (effectList[i][5] >> 16);
+                    int rx = (effectList[i][EFFECT_X] >> 16);
+                    int ry = (effectList[i][EFFECT_Y] >> 16);
                     fillPlayRect(g, rx, ry, size, size, playX, playY, playW, playH);
                 }
                 continue;
@@ -1019,7 +1069,7 @@ public final class StageRuntime {
                 continue;
             }
 
-            int frame = effectList[i][2];
+            int frame = effectList[i][EFFECT_FRAME];
             int spriteIdx = (frame << 1) + 1;
             if (spriteIdx < 0 || spriteIdx >= row.length) {
                 continue;
@@ -1031,7 +1081,7 @@ public final class StageRuntime {
 
             //stage start connection lines
             if (id == 23 || id == 25 || id == 27 || id == 29 || id == 31 || id == 33 || id == 35) {
-                int intensity = 255 - (effectList[i][2] * 64);
+                int intensity = 255 - (effectList[i][EFFECT_FRAME] * 64);
                 if (intensity < 0) {
                     intensity = 0;
                 } else if (intensity > 255) {
@@ -1047,8 +1097,8 @@ public final class StageRuntime {
                     rgb = intensity << 16;
                 }
 
-                int lineY = 3 + ((effectList[i][5] >> 16) + 10);
-                int lineX = playX + 3 + ((effectList[i][4] >> 16) + 25);
+                int lineY = 3 + ((effectList[i][EFFECT_Y] >> 16) + 10);
+                int lineX = playX + 3 + ((effectList[i][EFFECT_X] >> 16) + 25);
 
                 g.setColor(rgb);
                 g.drawLine(playX, lineY, playX + playW - 1, lineY);
@@ -1057,12 +1107,12 @@ public final class StageRuntime {
 
             // DoJa : effectId 2 and 21 both render a small red spark rectangle.
             if (id == 2 && host.isHitSparkEnabled()) {
-                int n = effectList[i][8] - effectList[i][1];
+                int n = effectList[i][EFFECT_DELAY] - effectList[i][EFFECT_TIMER];
                 int c = (255 - (n << 4)) & 0xFF;
                 int size = 1 + (n >> 2);
                 g.setColor(0xFF0000 | (c << 8) | c);
-                int rx = (effectList[i][4] >> 16);
-                int ry = (effectList[i][5] >> 16);
+                int rx = (effectList[i][EFFECT_X] >> 16);
+                int ry = (effectList[i][EFFECT_Y] >> 16);
                 fillPlayRect(g, rx, ry, size, size, playX, playY, playW, playH);
             }
         }
@@ -1085,13 +1135,13 @@ public final class StageRuntime {
                     if (a < 0 || b < 0 || a >= enemyList.length || b >= enemyList.length) {
                         continue;
                     }
-                    if (enemyList[a][0] == 0 || enemyList[b][0] == 0) {
+                    if (enemyList[a][ENEMY_ACTIVE] == 0 || enemyList[b][ENEMY_ACTIVE] == 0) {
                         continue;
                     }
-                    int x1 = ox + (enemyList[a][5] >> 16);
-                    int y1 = oy + (enemyList[a][6] >> 16);
-                    int x2 = ox + (enemyList[b][5] >> 16);
-                    int y2 = oy + (enemyList[b][6] >> 16);
+                    int x1 = ox + (enemyList[a][ENEMY_X] >> 16);
+                    int y1 = oy + (enemyList[a][ENEMY_Y] >> 16);
+                    int x2 = ox + (enemyList[b][ENEMY_X] >> 16);
+                    int y2 = oy + (enemyList[b][ENEMY_Y] >> 16);
                     g.drawLine(x1, y1, x2, y2);
                 }
             }
@@ -1102,13 +1152,13 @@ public final class StageRuntime {
                     if (a < 0 || b < 0 || a >= enemyList.length || b >= enemyList.length) {
                         continue;
                     }
-                    if (enemyList[a][0] == 0 || enemyList[b][0] == 0) {
+                    if (enemyList[a][ENEMY_ACTIVE] == 0 || enemyList[b][ENEMY_ACTIVE] == 0) {
                         continue;
                     }
-                    int x1 = ox + (enemyList[a][5] >> 16);
-                    int y1 = oy + (enemyList[a][6] >> 16);
-                    int x2 = ox + (enemyList[b][5] >> 16);
-                    int y2 = oy + (enemyList[b][6] >> 16);
+                    int x1 = ox + (enemyList[a][ENEMY_X] >> 16);
+                    int y1 = oy + (enemyList[a][ENEMY_Y] >> 16);
+                    int x2 = ox + (enemyList[b][ENEMY_X] >> 16);
+                    int y2 = oy + (enemyList[b][ENEMY_Y] >> 16);
                     g.drawLine(x1, y1, x2, y2);
                 }
             }
@@ -1130,8 +1180,8 @@ public final class StageRuntime {
 
     public void stageKcEffect(int effectId, int xFixed, int yFixed) {
         int slot = -1;
-        for (int i = 0; i < 64; i++) {
-            if (effectList[i][0] == 0) {
+        for (int i = 0; i < EFFECT_CAPACITY; i++) {
+            if (effectList[i][EFFECT_ACTIVE] == 0) {
                 slot = i;
                 break;
             }
@@ -1139,8 +1189,8 @@ public final class StageRuntime {
         if (slot == -1) {
             int best = 0;
             int bestScore = -1;
-            for (int i = 0; i < 64; i++) {
-                int score = (effectList[i][2] << 8) + (effectList[i][1] & 0xFF);
+            for (int i = 0; i < EFFECT_CAPACITY; i++) {
+                int score = (effectList[i][EFFECT_FRAME] << 8) + (effectList[i][EFFECT_TIMER] & 0xFF);
                 if (score > bestScore) {
                     bestScore = score;
                     best = i;
@@ -1149,36 +1199,36 @@ public final class StageRuntime {
             slot = best;
         }
 
-        effectList[slot][0] = 1;
-        effectList[slot][1] = 0;
-        effectList[slot][2] = 0;
-        effectList[slot][3] = effectId;
-        effectList[slot][4] = xFixed;
-        effectList[slot][5] = yFixed;
-        effectList[slot][6] = 0;
-        effectList[slot][7] = 0;
-        effectList[slot][8] = 0;
+        effectList[slot][EFFECT_ACTIVE] = 1;
+        effectList[slot][EFFECT_TIMER] = 0;
+        effectList[slot][EFFECT_FRAME] = 0;
+        effectList[slot][EFFECT_ID] = effectId;
+        effectList[slot][EFFECT_X] = xFixed;
+        effectList[slot][EFFECT_Y] = yFixed;
+        effectList[slot][EFFECT_VX] = 0;
+        effectList[slot][EFFECT_VY] = 0;
+        effectList[slot][EFFECT_DELAY] = 0;
 
         if (effectId == 21) {
-            effectList[slot][6] = (abs(host.randomNextInt()) % 15 - 7) << 16;
-            effectList[slot][7] = (abs(host.randomNextInt()) % 12 + 4) << 16;
-            effectList[slot][8] = (abs(host.randomNextInt()) % 16);
+            effectList[slot][EFFECT_VX] = (abs(host.randomNextInt()) % 15 - 7) << 16;
+            effectList[slot][EFFECT_VY] = (abs(host.randomNextInt()) % 12 + 4) << 16;
+            effectList[slot][EFFECT_DELAY] = (abs(host.randomNextInt()) % 16);
             return;
         }
         if (effectId >= 23 && effectId <= 36) {
             if ((effectId & 1) != 0) {
-                effectList[slot][6] = 1 << 16;
-                effectList[slot][7] = 0;
+                effectList[slot][EFFECT_VX] = 1 << 16;
+                effectList[slot][EFFECT_VY] = 0;
             } else {
-                effectList[slot][6] = 0;
-                effectList[slot][7] = 2 << 16;
+                effectList[slot][EFFECT_VX] = 0;
+                effectList[slot][EFFECT_VY] = 2 << 16;
             }
             return;
         }
         if (effectId == 3 || effectId == 4 || effectId == 5) {
-            effectList[slot][6] = (abs(host.randomNextInt()) % 17 - 8) << 16;
-            effectList[slot][7] = (abs(host.randomNextInt()) % 17 - 8) << 16;
-            effectList[slot][8] = (abs(host.randomNextInt()) % 4);
+            effectList[slot][EFFECT_VX] = (abs(host.randomNextInt()) % 17 - 8) << 16;
+            effectList[slot][EFFECT_VY] = (abs(host.randomNextInt()) % 17 - 8) << 16;
+            effectList[slot][EFFECT_DELAY] = (abs(host.randomNextInt()) % 4);
         }
     }
 

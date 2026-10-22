@@ -2,6 +2,26 @@ package touhou;
 
 /** Stable logical IDs; all asset names and geometry live in cc.dat. */
 public final class SpriteSheetCatalog {
+    public static final int TITLE_BACKGROUND_IMAGE = 0;
+    public static final int TITLE_PORTRAIT_IMAGE = 5;
+    public static final int CHARACTER_PORTRAITS_IMAGE = 6;
+    public static final int DIFFICULTY_IMAGE = 7;
+    public static final int EXTRA_DIFFICULTY_IMAGE = 8;
+    public static final int MENU_BACKGROUND_IMAGE = 37;
+    public static final int ICE_BACKGROUND_IMAGE = 83;
+    public static final int ITEM_SCORE = 111;
+    public static final int ITEM_POWER = 120;
+    public static final int ITEM_BIG_POWER = 129;
+    public static final int ITEM_FULL_POWER = 138;
+    public static final int ITEM_BOMB = 147;
+    public static final int ITEM_LIFE = 156;
+    public static final int ITEM_CRISIS = 165;
+    public static final int DIFFICULTY_BASE = 472;
+    public static final int EXTRA_DIFFICULTY = 476;
+    public static final int CHARACTER_SELECT_BASE = 477;
+    public static final int CHARACTER_PORTRAIT_BASE = 480;
+    public static final int TITLE_MENU_BASE = 766;
+    public static final int TITLE_MENU_SELECTED_BASE = 775;
     public static final int[] PLAYER_IMAGES = { 13, 18, 24 };
     public static final int[] PLAYER_OPTIONS_IMAGES = { 14, 19, 25 };
     public static final int[] PLAYER_SHOTS_IMAGES = { 15, 20, 26 };

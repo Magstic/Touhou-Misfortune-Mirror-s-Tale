@@ -1,5 +1,8 @@
 package touhou.replay;
 
+import touhou.battle.BattleSessionConfig;
+
+
 public final class ReplayPlaybackController {
     public static final class StartParams {
         public int gamemode;
@@ -56,7 +59,7 @@ public final class ReplayPlaybackController {
 
     public StartParams startFromSlot(int slot, boolean bossOnly) {
         ReplaySlotData data = ReplaySlotStore.loadSlot(slot);
-        if (data == null || (bossOnly && (data.header.getBossStartFrame() < 0 || data.header.getMode() == 3))) {
+        if (data == null || (bossOnly && (data.header.getBossStartFrame() < 0 || data.header.getMode() == BattleSessionConfig.MODE_SPELL_PRACTICE))) {
             stop();
             return null;
         }
@@ -86,7 +89,7 @@ public final class ReplayPlaybackController {
         sp.startStage = header.getStage();
         sp.spellId = header.getSpellId();
         // A practice recording marked at frame zero starts in Boss practice, not at the stage intro.
-        sp.practiceBoss = sp.gamemode == 2 && header.getBossStartFrame() == 0;
+        sp.practiceBoss = sp.gamemode == BattleSessionConfig.MODE_STAGE_PRACTICE && header.getBossStartFrame() == 0;
         return sp;
     }
 

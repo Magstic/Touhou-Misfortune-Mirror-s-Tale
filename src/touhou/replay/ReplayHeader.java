@@ -5,6 +5,21 @@ public final class ReplayHeader {
     static final int INTEGRITY_OFFSET = 8;
     static final int INTEGRITY_SIZE = 16;
 
+    private static final int OFFSET_FLAG = 0;
+    private static final int OFFSET_DIFFICULTY = 1;
+    private static final int OFFSET_CHARACTER = 2;
+    private static final int OFFSET_STAGE = 3;
+    private static final int OFFSET_SCORE = 4;
+    private static final int OFFSET_VERSION = INTEGRITY_OFFSET + 4;
+    private static final int OFFSET_RESERVED = INTEGRITY_OFFSET + 5;
+    private static final int OFFSET_CHECKSUM = INTEGRITY_OFFSET + 6;
+    private static final int OFFSET_SHOT_TYPE = 24;
+    private static final int OFFSET_MODE = 25;
+    private static final int OFFSET_SPELL = 26;
+    private static final int OFFSET_BOSS_FRAME = 28;
+    private static final int OFFSET_DIALOGUE_COUNT = 32;
+    private static final int OFFSET_DIALOGUE_PAGES = 33;
+
     private static final int FORMAT_MAGIC = 0x34504852; // 'RHP4'
     private static final int FORMAT_VERSION = 1;
 
@@ -59,53 +74,53 @@ public final class ReplayHeader {
     }
 
     public int getFlag() {
-        return data[0] & 0xFF;
+        return data[OFFSET_FLAG] & 0xFF;
     }
 
     public void setFlag(int v) {
-        data[0] = (byte) (v & 0xFF);
+        data[OFFSET_FLAG] = (byte) (v & 0xFF);
     }
 
     public int getDifficulty() {
-        return data[1] & 0xFF;
+        return data[OFFSET_DIFFICULTY] & 0xFF;
     }
 
     public void setDifficulty(int v) {
-        data[1] = (byte) (v & 0xFF);
+        data[OFFSET_DIFFICULTY] = (byte) (v & 0xFF);
     }
 
     public int getChara() {
-        return data[2] & 0xFF;
+        return data[OFFSET_CHARACTER] & 0xFF;
     }
 
     public void setChara(int v) {
-        data[2] = (byte) (v & 0xFF);
+        data[OFFSET_CHARACTER] = (byte) (v & 0xFF);
     }
 
     public int getStage() {
-        return data[3] & 0xFF;
+        return data[OFFSET_STAGE] & 0xFF;
     }
 
     public void setStage(int v) {
-        data[3] = (byte) (v & 0xFF);
+        data[OFFSET_STAGE] = (byte) (v & 0xFF);
     }
 
     public int getScore() {
-        return readI32LE(data, 4);
+        return readI32LE(data, OFFSET_SCORE);
     }
 
     public void setScore(int v) {
-        writeI32LE(data, 4, v);
+        writeI32LE(data, OFFSET_SCORE, v);
     }
 
     boolean hasCurrentFormat() {
         return readI32LE(data, INTEGRITY_OFFSET) == FORMAT_MAGIC
-                && (data[INTEGRITY_OFFSET + 4] & 0xFF) == FORMAT_VERSION
-                && data[INTEGRITY_OFFSET + 5] == 0;
+                && (data[OFFSET_VERSION] & 0xFF) == FORMAT_VERSION
+                && data[OFFSET_RESERVED] == 0;
     }
 
     int getPayloadChecksum() {
-        return readI32LE(data, INTEGRITY_OFFSET + 6);
+        return readI32LE(data, OFFSET_CHECKSUM);
     }
 
     void setPayloadIntegrity(int checksum) {
@@ -113,44 +128,44 @@ public final class ReplayHeader {
             data[INTEGRITY_OFFSET + i] = 0;
         }
         writeI32LE(data, INTEGRITY_OFFSET, FORMAT_MAGIC);
-        data[INTEGRITY_OFFSET + 4] = (byte) FORMAT_VERSION;
-        writeI32LE(data, INTEGRITY_OFFSET + 6, checksum);
+        data[OFFSET_VERSION] = (byte) FORMAT_VERSION;
+        writeI32LE(data, OFFSET_CHECKSUM, checksum);
     }
 
     public int getType() {
-        return data[24] & 0xFF;
+        return data[OFFSET_SHOT_TYPE] & 0xFF;
     }
 
     public void setType(int v) {
-        data[24] = (byte) (v & 0xFF);
+        data[OFFSET_SHOT_TYPE] = (byte) (v & 0xFF);
     }
 
     public int getMode() {
-        return data[25] & 0xFF;
+        return data[OFFSET_MODE] & 0xFF;
     }
 
     public void setMode(int v) {
-        data[25] = (byte) (v & 0xFF);
+        data[OFFSET_MODE] = (byte) (v & 0xFF);
     }
 
     public int getSpellId() {
-        return data[26] & 0xFF;
+        return data[OFFSET_SPELL] & 0xFF;
     }
 
     public void setSpellId(int v) {
-        data[26] = (byte) (v & 0xFF);
+        data[OFFSET_SPELL] = (byte) (v & 0xFF);
     }
 
     public int getBossStartFrame() {
-        return readI32LE(data, 28);
+        return readI32LE(data, OFFSET_BOSS_FRAME);
     }
 
     public void setBossStartFrame(int v) {
-        writeI32LE(data, 28, v);
+        writeI32LE(data, OFFSET_BOSS_FRAME, v);
     }
 
     public int getDialoguePageCountLen() {
-        return data[32] & 0xFF;
+        return data[OFFSET_DIALOGUE_COUNT] & 0xFF;
     }
 
     public void setDialoguePageCountLen(int len) {
@@ -160,7 +175,7 @@ public final class ReplayHeader {
         if (len > DIALOGUE_MAX) {
             len = DIALOGUE_MAX;
         }
-        data[32] = (byte) (len & 0xFF);
+        data[OFFSET_DIALOGUE_COUNT] = (byte) (len & 0xFF);
     }
 
     public int getDialoguePageCountAt(int idx) {
@@ -171,7 +186,7 @@ public final class ReplayHeader {
         if (idx >= len) {
             return -1;
         }
-        return data[33 + idx] & 0xFF;
+        return data[OFFSET_DIALOGUE_PAGES + idx] & 0xFF;
     }
 
     public void setDialoguePageCounts(byte[] counts, int len) {
@@ -191,7 +206,7 @@ public final class ReplayHeader {
             if (i < len && i < counts.length) {
                 v = counts[i] & 0xFF;
             }
-            data[33 + i] = (byte) (v & 0xFF);
+            data[OFFSET_DIALOGUE_PAGES + i] = (byte) (v & 0xFF);
         }
     }
 

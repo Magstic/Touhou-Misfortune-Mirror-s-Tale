@@ -1,5 +1,6 @@
 package touhou.ui;
 
+import touhou.battle.BattleSessionConfig;
 import touhou.replay.ReplayHeader;
 
 /** Cached display text for a replay preview card. */
@@ -23,7 +24,7 @@ final class ReplayPreview {
     }
 
     boolean isSpellPractice() {
-        return hasData() && header.getMode() == 3;
+        return hasData() && header.getMode() == BattleSessionConfig.MODE_SPELL_PRACTICE;
     }
 
     String title() {

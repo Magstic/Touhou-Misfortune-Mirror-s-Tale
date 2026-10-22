@@ -1,19 +1,16 @@
 package touhou.battle;
 
 import javax.microedition.lcdui.Graphics;
+import javax.microedition.lcdui.game.GameCanvas;
 
 import touhou.AudioSystem;
 import touhou.GameCore;
 import touhou.SoundEffectSystem;
 import touhou.stage.BossController;
 import touhou.stage.StageRuntime;
-
-import javax.microedition.lcdui.game.GameCanvas;
-
+import touhou.ui.BattlePauseScreen;
 import touhou.ui.SpellPracticeEndScreen;
 import touhou.ui.StageClearResultPanel;
-
-import touhou.ui.BattlePauseScreen;
 
 public final class BattleScene {
 
@@ -125,7 +122,7 @@ public final class BattleScene {
 
             // Prepare the next stage underneath the exit (corner expand) animation.
             // This matches DoJa's feel: a short stall happens before leaving starts, and the transition reveals the next stage.
-            if (!stageClearAdvancedUnderTransition && nextStage >= 0) {
+            if (!stageClearAdvancedUnderTransition && nextStage >= StageRuntime.STAGE_1) {
                 stageClearAdvancedUnderTransition = true;
                 core.stageAdvanceToNextStageOrEnd();
                 if (core.sceneIsInGame()) {

@@ -149,35 +149,35 @@ public final class HelpScreen {
                 return;
 
             case 4:
-                sprites.draw(g, 120, 25, 53);
+                sprites.draw(g, SpriteSheetCatalog.ITEM_POWER, 25, 53);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_LABEL_P_SMALL, 40, 58, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_DESC_P_SMALL_1, 20, 72, 0xFFFFFF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_DESC_P_SMALL_2, 20, 86, 0xFFFFFF);
 
-                sprites.draw(g, 111, 25, 102);
+                sprites.draw(g, SpriteSheetCatalog.ITEM_SCORE, 25, 102);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_LABEL_POINT, 40, 107, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_DESC_POINT_1, 20, 121, 0xFFFFFF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_DESC_POINT_2, 20, 135, 0xFFFFFF);
 
-                sprites.draw(g, 129, 26, 151);
+                sprites.draw(g, SpriteSheetCatalog.ITEM_BIG_POWER, 26, 151);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_LABEL_P_BIG, 40, 156, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_DESC_P_BIG, 20, 170, 0xFFFFFF);
 
-                sprites.draw(g, 138, 26, 186);
+                sprites.draw(g, SpriteSheetCatalog.ITEM_FULL_POWER, 26, 186);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_LABEL_F, 40, 191, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P4_DESC_F, 20, 205, 0xFFFFFF);
                 return;
 
             case 5:
-                sprites.draw(g, 147, 26, 53);
+                sprites.draw(g, SpriteSheetCatalog.ITEM_BOMB, 26, 53);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_LABEL_B, 40, 58, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_DESC_B, 20, 72, 0xFFFFFF);
 
-                sprites.draw(g, 156, 26, 87);
+                sprites.draw(g, SpriteSheetCatalog.ITEM_LIFE, 26, 87);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_LABEL_1UP, 40, 93, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_DESC_1UP, 20, 107, 0xFFFFFF);
 
-                sprites.draw(g, 165, 26, 123);
+                sprites.draw(g, SpriteSheetCatalog.ITEM_CRISIS, 26, 123);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_LABEL_STAR, 40, 128, 0x0077FF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_DESC_STAR_1, 20, 142, 0xFFFFFF);
                 drawPlainId(g, font, TextId.HELP_CONTENT_P5_DESC_STAR_2, 20, 156, 0xFFFFFF);

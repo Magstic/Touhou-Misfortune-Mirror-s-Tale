@@ -1,5 +1,6 @@
 package touhou.ui;
 
+import touhou.battle.BattleSessionConfig;
 import touhou.replay.ReplayCodec;
 import touhou.replay.ReplayFormat;
 import touhou.replay.ReplayHeader;
@@ -50,7 +51,7 @@ final class ReplaySlotListModel {
 
     boolean hasBossOnly(int slot) {
         ReplayHeader header = header(slot);
-        return header != null && header.getFlag() != 0 && header.getMode() != 3
+        return header != null && header.getFlag() != 0 && header.getMode() != BattleSessionConfig.MODE_SPELL_PRACTICE
                 && header.getBossStartFrame() >= 0 && header.getBossStartFrame() < ReplayCodec.FRAME_COUNT
                 && hasStageSnapshot[slot];
     }

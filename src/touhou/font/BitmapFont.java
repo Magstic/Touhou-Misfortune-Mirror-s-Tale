@@ -6,6 +6,9 @@ import touhou.i18n.I18n;
 import touhou.ResourceException;
 
 public final class BitmapFont {
+    private static final int FORMAT_VERSION = 2;
+    private static final int BITS_PER_PIXEL = 1;
+    private static final int HEADER_SIZE = 14;
     private static BitmapFont instance;
 
     private final int cellW;
@@ -228,7 +231,7 @@ public final class BitmapFont {
     }
 
     private static BitmapFont parse(byte[] bytes) {
-        if (bytes == null || bytes.length < 14) {
+        if (bytes == null || bytes.length < HEADER_SIZE) {
             throw invalidFont();
         }
         int position = 0;
@@ -236,10 +239,10 @@ public final class BitmapFont {
             throw invalidFont();
         }
         int version = bytes[position++] & 0xFF;
-        if (version != 2) {
+        if (version != FORMAT_VERSION) {
             throw invalidFont();
         }
-        if ((bytes[position++] & 0xFF) != 1) {
+        if ((bytes[position++] & 0xFF) != BITS_PER_PIXEL) {
             throw invalidFont();
         }
         int cellW = bytes[position++] & 0xFF;

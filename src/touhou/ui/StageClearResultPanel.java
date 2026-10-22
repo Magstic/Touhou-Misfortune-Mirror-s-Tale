@@ -4,8 +4,10 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
-import touhou.SpriteRenderer;
 import touhou.ImageBank;
+import touhou.Player;
+import touhou.SpriteRenderer;
+import touhou.SpriteSheetCatalog;
 import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 import touhou.replay.ReplaySaveService;
@@ -122,7 +124,7 @@ public final class StageClearResultPanel {
         this.subsecCount = 0;
         this.slide = 0;
         this.leaving = false;
-        this.chara = 0;
+        this.chara = Player.REIMU;
         this.finalCount = 0;
 
         this.photo = null;
@@ -150,8 +152,8 @@ public final class StageClearResultPanel {
         portrait = null;
         photoRgb = null;
         scaledRgb = null;
-        images.release(6);
-        images.release(37);
+        images.release(SpriteSheetCatalog.CHARACTER_PORTRAITS_IMAGE);
+        images.release(SpriteSheetCatalog.MENU_BACKGROUND_IMAGE);
     }
 
     public Result update(int pressed) {
