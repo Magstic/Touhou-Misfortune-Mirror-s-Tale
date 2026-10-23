@@ -87,50 +87,14 @@ public final class UiController {
         transitionTo(STATE_LOADING);
     }
 
-    // Defer creating language-dependent screens until after startup language selection.
-    private void ensureMainScreens() {
-        if (title != null) {
-            return;
-        }
-        title = new TitleScreen();
-        setup = new StartSetupScreen();
-        help = new HelpScreen();
-        story = new StoryScreen();
-        spellPractice = new SpellPracticeScreen();
-        replay = new ReplayScreen();
-        replayReceive = new ReplayReceiveScreen();
-        replaySend = new ReplaySendScreen();
-        result = new ResultScreen();
-        musicRoom = new MusicRoomScreen();
-        option = new OptionScreen(new OptionScreen.Listener() {
-            public void onVolumesChanged(int bgmVol, int seVol) {
-                if (UiController.this.listener != null) {
-                    UiController.this.listener.onVolumesChanged(bgmVol, seVol);
-                }
-            }
-
-            public void onSeMaskChanged(int seMask) {
-                if (UiController.this.listener != null) {
-                    UiController.this.listener.onSeMaskChanged(seMask);
-                }
-            }
-
-            public void onHeavyBgmChanged(boolean enabled) {
-                if (UiController.this.listener != null) {
-                    UiController.this.listener.onHeavyBgmChanged(enabled);
-                }
-            }
-        });
-        quit = new QuitScreen();
-    }
-
     public void returnToTitleKeepCursor() {
         openTitle(false);
     }
 
     private void openTitle(boolean resetCursor) {
-        ensureMainScreens();
-        if (resetCursor) {
+        if (title == null) {
+            title = new TitleScreen();
+        } else if (resetCursor) {
             title.reset();
         } else {
             title.onReturnToTitle();
@@ -140,23 +104,25 @@ public final class UiController {
     }
 
     public void returnToSpellPracticeKeepCursor() {
-        ensureMainScreens();
+        if (spellPractice == null) {
+            spellPractice = new SpellPracticeScreen();
+        }
         spellPractice.enter(false);
         transitionTo(STATE_SPELL_PRACTICE);
     }
 
     // Return from gameplay to replay menu.
     public void returnToReplayKeepCursor() {
-        ensureMainScreens();
+        if (replay == null) {
+            replay = new ReplayScreen();
+        }
         replay.returnToList();
         transitionTo(STATE_REPLAY);
     }
 
     public void returnToReplayKeepCursorWithMessage(String msg) {
-        ensureMainScreens();
-        replay.returnToList();
+        returnToReplayKeepCursor();
         replay.showMessage(msg);
-        transitionTo(STATE_REPLAY);
     }
 
     public void update(int keys, int pressed) {
@@ -245,38 +211,87 @@ public final class UiController {
         } else if (action == TitleScreen.ACTION_PRACTICE) {
             openStartSetup(BattleSessionConfig.MODE_STAGE_PRACTICE);
         } else if (action == TitleScreen.ACTION_HELP) {
+            if (help == null) {
+                help = new HelpScreen();
+            }
             help.enter();
             transitionTo(STATE_HELP);
         } else if (action == TitleScreen.ACTION_STORY) {
+            if (story == null) {
+                story = new StoryScreen();
+            }
             story.enter();
             transitionTo(STATE_STORY);
         } else if (action == TitleScreen.ACTION_SPELL_PRACTICE) {
+            if (spellPractice == null) {
+                spellPractice = new SpellPracticeScreen();
+            }
             spellPractice.enter(true);
             transitionTo(STATE_SPELL_PRACTICE);
         } else if (action == TitleScreen.ACTION_REPLAY) {
+            if (replay == null) {
+                replay = new ReplayScreen();
+            }
             replay.enter();
             transitionTo(STATE_REPLAY);
         } else if (action == TitleScreen.ACTION_RESULT) {
+            if (result == null) {
+                result = new ResultScreen();
+            }
             result.enter();
             transitionTo(STATE_RESULT);
         } else if (action == TitleScreen.ACTION_MUSIC_ROOM) {
+            if (musicRoom == null) {
+                musicRoom = new MusicRoomScreen();
+            }
             musicRoom.enter();
             transitionTo(STATE_MUSIC_ROOM);
             if (listener != null) {
                 listener.onMusicRoomVolumeChanged(musicRoom.getVolume());
             }
         } else if (action == TitleScreen.ACTION_OPTION) {
-            option.enter();
-            transitionTo(STATE_OPTION);
+            openOptions();
         } else if (action == TitleScreen.ACTION_QUIT) {
+            if (quit == null) {
+                quit = new QuitScreen();
+            }
             quit.enter();
             transitionTo(STATE_QUIT);
         }
     }
 
     private void openStartSetup(int mode) {
+        if (setup == null) {
+            setup = new StartSetupScreen();
+        }
         setup.enter(mode);
         transitionTo(STATE_START_SETUP);
+    }
+
+    private void openOptions() {
+        if (option == null) {
+            option = new OptionScreen(new OptionScreen.Listener() {
+                public void onVolumesChanged(int bgmVol, int seVol) {
+                    if (listener != null) {
+                        listener.onVolumesChanged(bgmVol, seVol);
+                    }
+                }
+
+                public void onSeMaskChanged(int seMask) {
+                    if (listener != null) {
+                        listener.onSeMaskChanged(seMask);
+                    }
+                }
+
+                public void onHeavyBgmChanged(boolean enabled) {
+                    if (listener != null) {
+                        listener.onHeavyBgmChanged(enabled);
+                    }
+                }
+            });
+        }
+        option.enter();
+        transitionTo(STATE_OPTION);
     }
 
     private boolean updateStartSetup(int pressed) {
@@ -338,9 +353,15 @@ public final class UiController {
                 listener.onStartReplayRequested(r.slot, r.bossOnly);
             }
         } else if (r.kind == ReplayScreen.Result.KIND_OPEN_BT_RECEIVE) {
+            if (replayReceive == null) {
+                replayReceive = new ReplayReceiveScreen();
+            }
             replayReceive.enter(r.slot);
             transitionTo(STATE_REPLAY_RECEIVE);
         } else if (r.kind == ReplayScreen.Result.KIND_OPEN_BT_SEND) {
+            if (replaySend == null) {
+                replaySend = new ReplaySendScreen();
+            }
             replaySend.enter(r.slot);
             transitionTo(STATE_REPLAY_SEND);
         } else if (r.kind == ReplayScreen.Result.KIND_OPEN_EXPORT || r.kind == ReplayScreen.Result.KIND_OPEN_IMPORT) {

@@ -40,6 +40,7 @@ public final class BitmapFont {
     }
 
     public static void loadForCurrentLanguage() {
+        instance = null;
         instance = parse(I18n.loadRequiredBytes("font/font.dat"));
     }
 

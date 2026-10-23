@@ -12,6 +12,8 @@ public final class SpellText {
     }
 
     public static void load() {
+        names = null;
+        comments = null;
         String[] loadedNames = I18n.splitLines(I18n.loadText("spcard.dat"));
         String[] loadedComments = I18n.splitLines(I18n.loadText("sprac.dat"));
         if (loadedNames.length != SPELL_COUNT || loadedComments.length != SPELL_COUNT) {

@@ -9,6 +9,7 @@ public final class UiText {
     }
 
     public static void load() {
+        table = null;
         String[] loaded = I18n.splitLines(I18n.loadText("ui.txt"));
         if (loaded.length != TextId.COUNT) {
             throw new ResourceException("ui.txt lines=" + loaded.length + " expected=" + TextId.COUNT);

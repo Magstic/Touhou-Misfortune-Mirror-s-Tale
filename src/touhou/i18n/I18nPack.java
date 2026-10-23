@@ -21,9 +21,9 @@ final class I18nPack {
 
     static void loadForCurrentLanguage() throws IOException {
         String path = ResourcePaths.languagePack(I18n.getLanguageCode());
+        clear();
         byte[] bytes = ResourceLoader.readRequiredBytes(path);
         if (!parse(bytes)) {
-            clear();
             throw new IOException("Invalid i18n pack: " + path);
         }
     }
