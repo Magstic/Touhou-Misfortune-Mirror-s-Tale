@@ -1,7 +1,7 @@
 package touhou.replay;
 
 public final class ReplayStageRecorder {
-    private final ReplayInputBuffer full = new ReplayInputBuffer();
+    private ReplayInputBuffer full;
 
     private final byte[] dialoguePageCounts = new byte[ReplayHeader.DIALOGUE_MAX];
     private int dialoguePageCountLen;
@@ -10,7 +10,9 @@ public final class ReplayStageRecorder {
     private int bossStartFrame = -1;
 
     public void reset() {
-        full.clear();
+        if (full != null) {
+            full.clear();
+        }
         recording = false;
         bossStartFrame = -1;
 
@@ -21,6 +23,9 @@ public final class ReplayStageRecorder {
     }
 
     public void start() {
+        if (full == null) {
+            full = new ReplayInputBuffer();
+        }
         reset();
         recording = true;
     }
@@ -34,7 +39,7 @@ public final class ReplayStageRecorder {
     }
 
     public int getFramePos() {
-        return full.getPos();
+        return full == null ? 0 : full.getPos();
     }
 
     public void markBossStart(int frameIndex) {
@@ -81,6 +86,9 @@ public final class ReplayStageRecorder {
     }
 
     public byte[] encodeFull() {
+        if (full == null) {
+            full = new ReplayInputBuffer();
+        }
         return ReplayCodec.encode(full.raw());
     }
 
