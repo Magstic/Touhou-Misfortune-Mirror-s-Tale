@@ -5,6 +5,9 @@ import java.io.IOException;
 import javax.microedition.lcdui.Image;
 
 public final class ImageBank {
+    private static final int PNG_PALETTE = 0x504C5445;
+    private static final int PNG_TRANSPARENCY = 0x74524E53;
+    private static final int PNG_IMAGE_DATA = 0x49444154;
     private static final int[][] STAGEEX_TD = new int[][] {
         { 0x0E7625, 0x109325, 0x104C26, 0x0EB71B, 0x12A627, 0x0E8323, 0x16CE2A, 0x0C6322, 0x17EC28, 0x13D920, 0x10F90C, 0x22C44E, 0x26D356,
             0x0A4621, 0x083F1D, 0x073C1B },
@@ -82,12 +85,9 @@ public final class ImageBank {
             return cached;
         }
         try {
-            Image img = catalog.variantBase(imgIndex) >= 0 || darkness[imgIndex] != 0 || tints[imgIndex] != 0
+            Image img = catalog.variantBase(imgIndex) >= 0 || darkness[imgIndex] != 0 || tints[imgIndex] != 0 || opacity[imgIndex] != 255
                     ? buildPaletteImage(imgIndex)
                     : Image.createImage(catalog.imagePath(imgIndex));
-            if (opacity[imgIndex] != 255) {
-                img = createAlphaImage(img, opacity[imgIndex]);
-            }
             images[imgIndex] = img;
             return img;
         } catch (IOException e) {
@@ -234,19 +234,6 @@ public final class ImageBank {
         return img;
     }
 
-    private static Image createAlphaImage(Image base, int alpha) {
-        int w = base.getWidth(), h = base.getHeight();
-        int[] rgb = new int[w * h];
-        base.getRGB(rgb, 0, w, 0, 0, w, h);
-        for (int i = 0; i < rgb.length; i++) {
-            int p = rgb[i];
-            int originalAlpha = p >>> 24;
-            int a = (originalAlpha * alpha) / 255;
-            rgb[i] = originalAlpha == 0 ? 0 : (a << 24) | (p & 0xFFFFFF);
-        }
-        return Image.createRGBImage(rgb, w, h, true);
-    }
-
     Image getAlphaRegion(int imgIndex, int srcX, int srcY, int w, int h, int alpha) {
         if (w <= 0 || h <= 0) {
             return null;
@@ -372,7 +359,38 @@ public final class ImageBank {
         if (!applyPngPalette(png, palette, darkness[imgIndex], tints[imgIndex])) {
             throw new IOException("Missing PNG palette: " + imgIndex);
         }
+        if (opacity[imgIndex] != 255) {
+            png = applyPngOpacity(png, opacity[imgIndex]);
+        }
         return Image.createImage(png, 0, png.length);
+    }
+
+    /** Scale indexed transparency before decoding, without an opaque image or full-size ARGB buffer. */
+    private static byte[] applyPngOpacity(byte[] png, int alpha) {
+        int offset = 8, colors = 0;
+        while (true) {
+            int length = readPngInt(png, offset);
+            int type = readPngInt(png, offset + 4);
+            if (type == PNG_PALETTE) {
+                colors = length / 3;
+            }
+            if (type == PNG_TRANSPARENCY || type == PNG_IMAGE_DATA) {
+                int oldLength = type == PNG_TRANSPARENCY ? length : 0;
+                int oldSize = type == PNG_TRANSPARENCY ? length + 12 : 0;
+                byte[] result = new byte[png.length - oldSize + colors + 12];
+                System.arraycopy(png, 0, result, 0, offset);
+                writePngInt(result, offset, colors);
+                writePngInt(result, offset + 4, PNG_TRANSPARENCY);
+                for (int i = 0; i < colors; i++) {
+                    int originalAlpha = i < oldLength ? png[offset + 8 + i] & 255 : 255;
+                    result[offset + 8 + i] = (byte) (originalAlpha * alpha / 255);
+                }
+                updatePngCrc(result, offset, colors);
+                System.arraycopy(png, offset + oldSize, result, offset + colors + 12, png.length - offset - oldSize);
+                return result;
+            }
+            offset += length + 12;
+        }
     }
 
     private static boolean applyPngPalette(byte[] pngBytes, int[] palette, int levels, int tint) {
@@ -382,7 +400,7 @@ public final class ImageBank {
             if (length < 0 || length > pngBytes.length - offset - 12) {
                 return false;
             }
-            if (readPngInt(pngBytes, offset + 4) == 0x504C5445) {
+            if (readPngInt(pngBytes, offset + 4) == PNG_PALETTE) {
                 if (palette != null && length < palette.length * 3) {
                     return false;
                 }
@@ -403,20 +421,7 @@ public final class ImageBank {
                     pngBytes[p + 1] = (byte) (c >> 8);
                     pngBytes[p + 2] = (byte) c;
                 }
-                // PNG stores a CRC over the chunk type and data, including the changed palette.
-                int crc = -1;
-                for (int p = offset + 4; p < offset + 8 + length; p++) {
-                    crc ^= pngBytes[p] & 0xFF;
-                    for (int bit = 0; bit < 8; bit++) {
-                        crc = (crc & 1) != 0 ? (crc >>> 1) ^ 0xEDB88320 : crc >>> 1;
-                    }
-                }
-                crc = ~crc;
-                int p = offset + 8 + length;
-                pngBytes[p] = (byte) (crc >>> 24);
-                pngBytes[p + 1] = (byte) (crc >>> 16);
-                pngBytes[p + 2] = (byte) (crc >>> 8);
-                pngBytes[p + 3] = (byte) crc;
+                updatePngCrc(pngBytes, offset, length);
                 return true;
             }
             offset += length + 12;
@@ -427,6 +432,24 @@ public final class ImageBank {
     private static int readPngInt(byte[] bytes, int offset) {
         return ((bytes[offset] & 0xFF) << 24) | ((bytes[offset + 1] & 0xFF) << 16)
                 | ((bytes[offset + 2] & 0xFF) << 8) | (bytes[offset + 3] & 0xFF);
+    }
+
+    private static void writePngInt(byte[] bytes, int offset, int value) {
+        bytes[offset] = (byte) (value >>> 24);
+        bytes[offset + 1] = (byte) (value >>> 16);
+        bytes[offset + 2] = (byte) (value >>> 8);
+        bytes[offset + 3] = (byte) value;
+    }
+
+    private static void updatePngCrc(byte[] png, int offset, int length) {
+        int crc = -1;
+        for (int p = offset + 4; p < offset + 8 + length; p++) {
+            crc ^= png[p] & 255;
+            for (int bit = 0; bit < 8; bit++) {
+                crc = (crc & 1) != 0 ? (crc >>> 1) ^ 0xEDB88320 : crc >>> 1;
+            }
+        }
+        writePngInt(png, offset + 8 + length, ~crc);
     }
 
 }
