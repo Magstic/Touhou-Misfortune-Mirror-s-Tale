@@ -3,9 +3,10 @@ package touhou.ui;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 
-import touhou.SpriteRenderer;
 import touhou.GameProgress;
-import touhou.ImageBank;
+import touhou.Player;
+import touhou.SpriteRenderer;
+import touhou.SpriteSheetCatalog;
 import touhou.UnlockFlags;
 import touhou.battle.SpellPracticeCatalog;
 import touhou.i18n.SpellText;
@@ -13,8 +14,9 @@ import touhou.i18n.TextId;
 import touhou.i18n.UiText;
 
 public final class SpellPracticeScreen {
+    private static final int SCENE_CHARACTER = 0;
+    private static final int SCENE_SPELL = 1;
     public static final class Result {
-        public static final int KIND_NONE = 0;
         public static final int KIND_BACK_TO_TITLE = 1;
         public static final int KIND_START_PRACTICE = 2;
 
@@ -25,8 +27,8 @@ public final class SpellPracticeScreen {
 
         public Result(int kind) {
             this.kind = kind;
-            this.chara = 0;
-            this.type = 0;
+            this.chara = Player.REIMU;
+            this.type = Player.SHOT_A;
             this.spellId = 0;
         }
 
@@ -42,12 +44,12 @@ public final class SpellPracticeScreen {
     private static final String[] STAGE_NAMES = new String[] { "Stage1", "Stage2", "Stage3", "Stage4", "Stage5", "Stage6", "ExtraStage", "LastWord" };
     private static final String[] CHARA_EN = new String[] { "Reimu", "Marisa", "Alice" };
     private static final int[][] CHARA_INFO = new int[][] {
-            { TextId.CHARACTER_INFO_REIMU_TITLE, TextId.CHARACTER_INFO_REIMU_NAME,
-                    TextId.CHARACTER_INFO_REIMU_TYPE_A_TITLE, TextId.CHARACTER_INFO_REIMU_TYPE_B_TITLE },
-            { TextId.CHARACTER_INFO_MARISA_TITLE, TextId.CHARACTER_INFO_MARISA_NAME,
-                    TextId.CHARACTER_INFO_MARISA_TYPE_A_TITLE, TextId.CHARACTER_INFO_MARISA_TYPE_B_TITLE },
-            { TextId.CHARACTER_INFO_ALICE_TITLE, TextId.CHARACTER_INFO_ALICE_NAME,
-                    TextId.CHARACTER_INFO_ALICE_TYPE_A_TITLE, TextId.CHARACTER_INFO_ALICE_TYPE_B_TITLE } };
+        { TextId.CHARACTER_INFO_REIMU_TITLE, TextId.CHARACTER_INFO_REIMU_NAME,
+            TextId.CHARACTER_INFO_REIMU_TYPE_A_TITLE, TextId.CHARACTER_INFO_REIMU_TYPE_B_TITLE },
+        { TextId.CHARACTER_INFO_MARISA_TITLE, TextId.CHARACTER_INFO_MARISA_NAME,
+            TextId.CHARACTER_INFO_MARISA_TYPE_A_TITLE, TextId.CHARACTER_INFO_MARISA_TYPE_B_TITLE },
+        { TextId.CHARACTER_INFO_ALICE_TITLE, TextId.CHARACTER_INFO_ALICE_NAME,
+            TextId.CHARACTER_INFO_ALICE_TYPE_A_TITLE, TextId.CHARACTER_INFO_ALICE_TYPE_B_TITLE } };
 
     private static final int SPELL_COUNT = SpellPracticeCatalog.size();
 
@@ -75,7 +77,7 @@ public final class SpellPracticeScreen {
     private boolean spellCommentCacheVisible;
     private String spellCommentCacheText;
     private String[] spellCommentCacheLines;
-    private final FontTextMeasurer textMeasurer = new FontTextMeasurer(null);
+    private final FontTextMeasurer textMeasurer = new FontTextMeasurer();
 
     private int chara;
     private int type;
@@ -97,9 +99,9 @@ public final class SpellPracticeScreen {
         if (reset) {
             cursorLR = 0;
             cursorUD = 0;
-            scene = 0;
-            chara = 0;
-            type = 0;
+            scene = SCENE_CHARACTER;
+            chara = Player.REIMU;
+            type = Player.SHOT_A;
             effect1 = 255;
             effect5 = 0;
             effect6 = 255;
@@ -217,7 +219,7 @@ public final class SpellPracticeScreen {
             effect5++;
         }
 
-        if (scene == 1) {
+        if (scene == SCENE_SPELL) {
             spellNameMarqueeTick += 2;
             spellCommentScrollTick += 2;
         } else {
@@ -225,10 +227,10 @@ public final class SpellPracticeScreen {
         }
 
         if (UiInput.cancel(pressed)) {
-            if (scene == 0) {
+            if (scene == SCENE_CHARACTER) {
                 return new Result(Result.KIND_BACK_TO_TITLE);
             }
-            scene = 0;
+            scene = SCENE_CHARACTER;
             effect1 = 255;
             spellNameMarqueeTick = 0;
             return null;
@@ -239,9 +241,9 @@ public final class SpellPracticeScreen {
             return null;
         }
 
-        if (scene == 0) {
+        if (scene == SCENE_CHARACTER) {
             if (UiInput.confirm(pressed)) {
-                scene = 1;
+                scene = SCENE_SPELL;
                 cursor2 = 0;
                 cursorLR = 0;
                 effect1 = 255;
@@ -257,14 +259,14 @@ public final class SpellPracticeScreen {
 
             if (UiInput.left(pressed)) {
                 chara = MenuCursor.move(chara, -1, 3);
-                if (chara == 2 && !UnlockFlags.isAliceUnlocked()) {
-                    chara = 1;
+                if (chara == Player.ALICE && !UnlockFlags.isAliceUnlocked()) {
+                    chara = Player.MARISA;
                 }
                 applyCharaChangeEffects();
             } else if (UiInput.right(pressed)) {
                 chara = MenuCursor.move(chara, 1, 3);
-                if (chara == 2 && !UnlockFlags.isAliceUnlocked()) {
-                    chara = 0;
+                if (chara == Player.ALICE && !UnlockFlags.isAliceUnlocked()) {
+                    chara = Player.REIMU;
                 }
                 applyCharaChangeEffects();
             }
@@ -333,7 +335,7 @@ public final class SpellPracticeScreen {
             if (!isSelectableInPracticeList(spellId)) {
                 return null;
             }
-            if (chara == 2 && !UnlockFlags.isAliceUnlocked()) {
+            if (chara == Player.ALICE && !UnlockFlags.isAliceUnlocked()) {
                 return null;
             }
             return new Result(Result.KIND_START_PRACTICE, chara, type, spellId);
@@ -342,7 +344,7 @@ public final class SpellPracticeScreen {
         return null;
     }
 
-    public void render(Graphics g, ImageBank imgs, SpriteRenderer sprites) {
+    public void render(Graphics g, SpriteRenderer sprites) {
         if (g == null) {
             return;
         }
@@ -354,12 +356,12 @@ public final class SpellPracticeScreen {
 
         int n10 = 70;
         if (sprites != null) {
-            if (chara == 0) {
-                sprites.draw(g, 480, n10 + 6, 180);
-            } else if (chara == 1) {
-                sprites.draw(g, 481, n10 + 10, 180);
+            if (chara == Player.REIMU) {
+                sprites.draw(g, SpriteSheetCatalog.CHARACTER_PORTRAIT_BASE, n10 + 6, 180);
+            } else if (chara == Player.MARISA) {
+                sprites.draw(g, SpriteSheetCatalog.CHARACTER_PORTRAIT_BASE + Player.MARISA, n10 + 10, 180);
             } else {
-                sprites.draw(g, 482, n10 + 2, 180);
+                sprites.draw(g, SpriteSheetCatalog.CHARACTER_PORTRAIT_BASE + Player.ALICE, n10 + 2, 180);
             }
         }
 
@@ -367,7 +369,7 @@ public final class SpellPracticeScreen {
 
         drawCharaInfo(g, font);
 
-        if (scene == 0) {
+        if (scene == SCENE_CHARACTER) {
             UiDraw.fillRectAlpha(g, 0, 10 - effect1, 240, 28, 0x000000, 128);
         } else {
             UiDraw.fillRectAlpha(g, 0, 0, 240, 240, 0x000000, 128);
@@ -375,7 +377,7 @@ public final class SpellPracticeScreen {
 
         UiDraw.drawString2(g, font, UiText.get(TextId.SPELL_PRACTICE_TITLE), 120, 22 - effect1, 1, 0xFF4F4F, 0x771F1F);
 
-        if (scene == 0) {
+        if (scene == SCENE_CHARACTER) {
             UiDraw.drawString2(g, font, UiText.get(TextId.SPELL_PRACTICE_HINT), 130, 34 - effect1, 1, 0xFF4F4F, 0x771F1F);
 
             UiDraw.fillRectAlpha(g, 97 + effect1, 58, 134, 145, 0x000000, 128);
@@ -558,7 +560,7 @@ public final class SpellPracticeScreen {
         if (showComment) {
             if (spellCommentCacheLines == null) {
                 textMeasurer.setFont(font);
-                spellCommentCacheLines = UiTextLayout.wrapWords(comment, commentW, textMeasurer);
+                spellCommentCacheLines = UiTextLayout.wrap(comment, commentW, textMeasurer);
             }
 
             int offY = UiTextLayout.pingPongOffset(
@@ -587,7 +589,7 @@ public final class SpellPracticeScreen {
             }
             String mask = UiTextLayout.repeat('\uff1f', n48);
             textMeasurer.setFont(font);
-            String[] lines = UiTextLayout.wrapWords(mask, commentW, textMeasurer);
+            String[] lines = UiTextLayout.wrap(mask, commentW, textMeasurer);
             if (lines.length > 0) {
                 UiDraw.drawString2(g, font, lines[0], commentX, commentY + 0, 0, 0xFF0000, 0x7F0000);
             }
@@ -621,14 +623,14 @@ public final class SpellPracticeScreen {
         int main2 = 0x7FFF7F;
         int sh2 = 0x003F00;
 
-        if (chara == 1) {
+        if (chara == Player.MARISA) {
             main0 = 0x7F7F7F;
-            sh0 = 0x000000;
+            sh0 = 0xFFFFFF;
             main1 = 0x3F3F3F;
-            sh1 = 0x000000;
+            sh1 = 0xFFFFFF;
             main2 = 0x007F00;
-            sh2 = 0x000000;
-        } else if (chara == 2) {
+            sh2 = 0xFFFFFF;
+        } else if (chara == Player.ALICE) {
             main0 = 0xBFBFFF;
             sh0 = 0x00001F;
             main1 = 0x8F8FFF;
@@ -648,11 +650,11 @@ public final class SpellPracticeScreen {
         effect9 = effect8;
         effectB = effectA;
         switch (chara) {
-            case 0:
+            case Player.REIMU:
                 effect8 = 0xFFFFFF;
                 effectA = 0xFF0000;
                 break;
-            case 1:
+            case Player.MARISA:
                 effect8 = 0x000000;
                 effectA = 0xFFFFFF;
                 break;

@@ -1,5 +1,8 @@
 package touhou;
 
+import touhou.battle.BattleSessionConfig;
+import touhou.stage.StageRuntime;
+
 public final class UnlockFlags {
     private static final int OFFSET_UFLAGS = 106;
     private static final int LEN_UFLAGS = 10;
@@ -77,19 +80,19 @@ public final class UnlockFlags {
         // - Not boss practice start
         // - Normal+ difficulty
         // - No continues used in this run
-        if (clearedStage != 5) {
+        if (clearedStage != StageRuntime.STAGE_6) {
             return false;
         }
-        if (gamemode != 0) {
+        if (gamemode != BattleSessionConfig.MODE_STORY) {
             return false;
         }
-        if (runStartStage != 0) {
+        if (runStartStage != StageRuntime.STAGE_1) {
             return false;
         }
         if (startPracBoss) {
             return false;
         }
-        if (startLevel < 1) {
+        if (startLevel < BattleSessionConfig.DIFFICULTY_NORMAL) {
             return false;
         }
         if (remainingContinues != 3) {
@@ -111,10 +114,10 @@ public final class UnlockFlags {
 
     public static void tryUnlockAliceOnExtraClear(int clearedStage, int gamemode) {
         // PLUS: clear EX stage to unlock Alice.
-        if (clearedStage != 6) {
+        if (clearedStage != StageRuntime.STAGE_EXTRA) {
             return;
         }
-        if (gamemode != 1) {
+        if (gamemode != BattleSessionConfig.MODE_EXTRA) {
             return;
         }
         setAliceUnlocked(true);
@@ -141,7 +144,7 @@ public final class UnlockFlags {
     }
 
     public static void tryUnlockFlag1FromStageOp(int gamemode) {
-        if (gamemode != 3) {
+        if (gamemode != BattleSessionConfig.MODE_SPELL_PRACTICE) {
             setFlag(IDX_FLAG1, true);
         }
     }
