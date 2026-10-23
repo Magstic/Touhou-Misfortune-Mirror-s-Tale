@@ -1,4 +1,4 @@
-[繁體中文](README.md) | [日本語](README_ja.md)
+[繁體中文](README.md) | [简体中文](README_zh_cn.md) | [日本語](README_ja.md)
 
 # 東方氷幻鏡 ～ Misfortune Mirror's Tale
 
@@ -14,24 +14,29 @@ Includes numerous bug fixes and quality-of-life improvements over the original.
 
 See [TODO](https://github.com/Magstic/Touhou_Misfortune_MirrorS_Tale/issues/1).
 
-To improve compatibility with a wider range of real devices, this project will undergo a rewrite of the sprite clip and the gc system (maybe long time).
-
 ---
 
 ## Play
 
+### Minimum specs
+
 | Item | Recommended |  | Item | Recommended |
 |------|------|------|------|------|
-| Platform | *MIDP 2.0, CLDC 1.1* |  | CPU & RAM | *≥ 434 MHz*, *JVM ≥ 1.5 MB* |
-| Screen | *240 x 240* |  |Optional | *JSR-82 (BlueTooth Replay)*|
+| Platform | *MIDP 2.0, CLDC 1.1* |  | CPU & RAM | *≥ 234 MHz*, *JVM ≥ 2.0 MB* |
+| Screen | *240 x 240* |  |Optional | *JSR-82, JSR-75*|
+
+### Recommended specs
+
+| Item | Recommended |  | Item | Recommended |
+|------|------|------|------|------|
+| Platform | *MIDP 2.0, CLDC 1.1* |  | CPU & RAM | *≥ 600 MHz*, *JVM ≥ 4.0 MB* |
+| Screen | *240 x 240* |  |Optional | *JSR-82, JSR-75*|
 
 ---
 
 ### PC
 
-Recommended: customized [**FreeJ2ME-Plus**](https://github.com/Magstic/freej2me-plus/releases/tag/VirtualMIDISynth) + [**VirtualMIDI Synth**](https://coolsoft.altervista.org/en/virtualmidisynth) ([**Nokia 3110c.SF2**](https://musical-artifacts.com/artifacts/828)). This is likely the closest experience to the original Docomo mixing (though VirtualMIDI Synth is Windows-only). Additionally, this fork correctly implements RMS persistence for the ported version.
-
-KEmulatormod runs this port very poorly and does not support in-app VirtualMIDI Synth volume control or MIDI breakpoint playback — not recommended.
+Recommended: customized [**FreeJ2ME-Plus**](https://github.com/Magstic/freej2me-plus/releases/tag/VirtualMIDISynth) + [**Nokia 3110c.dls**](https://musical-artifacts.com/artifacts/828). This may be the closest way to experience Docomo's audio mixing.
 
 ---
 
@@ -41,31 +46,48 @@ KEmulatormod runs this port very poorly and does not support in-app VirtualMIDI 
 
 Of course, I guarantee you won't enjoy playing an STG by tapping glass, let alone the still-garbage mixing on Android even with SF2 lol.
 
-JL-MOD's JSR-82 implementation also has issues, meaning Bluetooth replay send/receive won't work properly (J2ME-Loader can receive but not send — and the sound quality is another story).
+JL-MOD's JSR-82 implementation also has some issues.
 
 ---
 
 ### Real Device
 
-Recommended to play with **sound off** or the **simplified MIDI build**.
+The game has received numerous optimizations for real devices.
 
-Tested on Nokia N86: silent mode maintains `14`–`16` FPS; with sound enabled, FPS ranges from `10`–`16` depending on danmaku density.
+The performance bottleneck is unrelated to heap size: rendering a rain of bullets inevitably consumes most of the CPU's processing power.
 
-Under these conditions, Easy and Normal can be played fairly smoothly.
+The current optimization target is reasonably smooth play on Easy, Normal, and Hard using S60 V3 devices. Some Sony Ericsson models can achieve this too.
 
-Bullet rendering consumes nearly all CPU power; adding MIDI on top makes it even worse.
-
-If your device has CPU ≥ 434 MHz and JVM heap ≥ 2.0 MB, you may be able to run Normal smoothly — or even Hard!
+S40 V5 benefits from hardware-assisted JVM interpretation. Even with a smaller heap and a weaker CPU, Easy and Normal can be played reasonably smoothly with alpha rendering disabled.
 
 ---
 
 ## Build
 
-The build of this project does not require any IDE — the `build.xml` provided in the project root can complete 100% of the work.
+Building this project requires no IDE or SDK installation. The `build.xml` included in the project root handles the entire build.
 
-[English](docs/build_en.md) | [日本語](docs/build_ja.md) | [中文（繁體）](docs/build.md) 
+[中文（繁體）](docs/build.md) | [中文（简体）](docs/build_zh_cn.md) | [English](docs/build_en.md) | [日本語](docs/build_ja.md)
 
 ---
+
+## Staff
+
+**Framework**:
+
+- Magstic: framework design, documentation, and limited code review
+
+**Coder**:
+
+- ChatGPT 5.2: 99% of the code cleanup, refactoring, and final review (2026.01)
+- Claude 4.6 Opus: English/Japanese translation of Markdown documents and in-game glyph checks (2026.02)
+- 5.6 Sol: initial architectural refactoring (2026.08)
+- 6.1 Sol: final architectural refactoring and cleanup, logic fixes, and final review (2026.10)
+- 6 Astra: English/Japanese translation of Markdown documents and in-game glyph checks (2026.10)
+
+**Support**
+
+- SilentTalk: technical support for builds and performance optimization
+
 
 ## Thanks
 
@@ -73,11 +95,9 @@ The build of this project does not require any IDE — the `build.xml` provided 
 
 **Keitai Archive** — Preserved this title
 
-**ChatGPT 5.2** — 99% of the code cleanup, refactoring work, and final review
-
-**Claude 4.6 Opus** — Drafting and translation of some MD documents, and glyph verification
-
 **Fusion Pixel 12Px** — Bitmap font
+
+**Salvation_Jarsis** — Suggested the idea of sharing replays over Bluetooth
 
 ---
 

@@ -1,4 +1,4 @@
-[English](README_en.md) | [繁體中文](README.md)
+[English](README_en.md) | [繁體中文](README.md) | [简体中文](README_zh_cn.md)
 
 # 東方氷幻鏡 ～ Misfortune Mirror's Tale
 
@@ -14,24 +14,29 @@
 
 [TODO](https://github.com/Magstic/Touhou_Misfortune_MirrorS_Tale/issues/1) を参照。
 
-To improve compatibility with a wider range of real devices, this project will undergo a rewrite of the sprite clip and the gc system (maybe long time).
-
 ---
 
 ## Play
 
+### Minimum specs
+
 | Item | Recommended |  | Item | Recommended |
 |------|------|------|------|------|
-| Platform | *MIDP 2.0, CLDC 1.1* |  | CPU & RAM | *≥ 434 MHz*, *JVM ≥ 1.5 MB* |
-| Screen | *240 x 240* |  |Optional | *JSR-82（BlueTooth Replay）*|
+| Platform | *MIDP 2.0, CLDC 1.1* |  | CPU & RAM | *≥ 234 MHz*, *JVM ≥ 2.0 MB* |
+| Screen | *240 x 240* |  |Optional | *JSR-82、JSR-75*|
+
+### Recommended specs
+
+| Item | Recommended |  | Item | Recommended |
+|------|------|------|------|------|
+| Platform | *MIDP 2.0, CLDC 1.1* |  | CPU & RAM | *≥ 600 MHz*, *JVM ≥ 4.0 MB* |
+| Screen | *240 x 240* |  |Optional | *JSR-82、JSR-75*|
 
 ---
 
 ### PC
 
-カスタマイズ版 [**FreeJ2ME-Plus**](https://github.com/Magstic/freej2me-plus/releases/tag/VirtualMIDISynth) + [**VirtualMIDI Synth**](https://coolsoft.altervista.org/en/virtualmidisynth)（[**Nokia 3110c.SF2**](https://musical-artifacts.com/artifacts/828)）の組み合わせを推奨。Docomo のオリジナルミキシングに最も近い再生環境です（ただし VirtualMIDI Synth は Windows 限定）。また、この Fork は移植版の RMS 永続化を正しく実装しています。
-
-KEmulatormod ではこの移植版の動作が非常に重く、アプリ内での VirtualMIDI Synth 音量制御や MIDI のブレークポイント再生にも対応していないため、推奨しません。
+カスタマイズ版 [**FreeJ2ME-Plus**](https://github.com/Magstic/freej2me-plus/releases/tag/VirtualMIDISynth) + [**Nokia 3110c.dls**](https://musical-artifacts.com/artifacts/828) の組み合わせを推奨します。Docomo のミキシングに最も近い環境かもしれません。
 
 ---
 
@@ -41,31 +46,48 @@ KEmulatormod ではこの移植版の動作が非常に重く、アプリ内で�
 
 もちろん、ガラスをタップして STG をプレイしたいとは思わないでしょうし、SF2 を使っても Android のミキシングは相変わらずひどいですが lol。
 
-また、JL-MOD の JSR-82 実装にも問題があり、Bluetooth による Replay の送受信が正常に動作しません（J2ME-Loader は受信可能ですが送信不可 — 音質はまた別の話です）。
+また、JL-MOD の JSR-82 実装にもいくつか問題があります。
 
 ---
 
 ### Real Device
 
-**サウンドオフ** または **簡易 MIDI ビルド** での実機プレイを推奨。
+実機向けに多数の最適化を行っています。
 
-Nokia N86 でのテスト結果：無音時は `14`〜`16` FPS を維持、有音時は弾幕密度に応じて `10`〜`16` FPS。
+パフォーマンスのボトルネックはヒープサイズではなく、雨のような弾幕の描画が CPU 処理能力の大半を消費する点にあります。
 
-この条件下では、Easy と Normal を比較的スムーズにプレイできます。
+現在は、S60 V3 端末で Easy、Normal、Hard を比較的スムーズにプレイできることを最適化の目標としています。一部の Sony Ericsson 端末でも同様にプレイできます。
 
-弾幕の描画が CPU パワーのほぼ全てを消費し、MIDI を加えるとさらに悪化します。
-
-CPU ≥ 434 MHz、JVM ヒープ ≥ 2.0 MB のデバイスであれば、Normal をスムーズに、あるいは Hard でもプレイできるかもしれません！
+S40 V5 には JVM のインタープリターを高速化するハードウェア支援があるため、ヒープが小さく CPU 性能が低めでも、アルファ描画を無効にすれば Easy と Normal を比較的スムーズにプレイできます。
 
 ---
 
 ## Build
 
-本プロジェクトのビルドにはいかなる IDE も必要なく、ルートディレクトリに同梱されている `build.xml` だけで作業を 100% 完了できます。
+本プロジェクトのビルドに IDE や SDK のインストールは不要です。ルートディレクトリに同梱されている `build.xml` で、すべてのビルド作業を実行できます。
 
-[日本語](docs/build_ja.md) | [中文（繁體）](docs/build.md) | [English](docs/build_en.md)
+[中文（繁體）](docs/build.md) | [中文（简体）](docs/build_zh_cn.md) | [English](docs/build_en.md) | [日本語](docs/build_ja.md)
 
 ---
+
+## Staff
+
+**Framework**：
+
+- Magstic：フレームワークの設計、ドキュメント執筆、限定的なコードレビュー
+
+**Coder**：
+
+- ChatGPT 5.2：コード整理・リファクタリング作業の 99%、最終チェック（2026.01）
+- Claude 4.6 Opus：Markdown ドキュメントの英語・日本語翻訳、ゲーム内の字形チェック（2026.02）
+- 5.6 Sol：アーキテクチャの初期リファクタリング（2026.08）
+- 6.1 Sol：アーキテクチャの最終リファクタリングと整理、ロジック修正、最終チェック（2026.10）
+- 6 Astra：Markdown ドキュメントの英語・日本語翻訳、ゲーム内の字形チェック（2026.10）
+
+**Support**
+
+- SilentTalk：ビルドとパフォーマンス最適化に関する技術支援
+
 
 ## Thanks
 
@@ -73,11 +95,9 @@ CPU ≥ 434 MHz、JVM ヒープ ≥ 2.0 MB のデバイスであれば、Normal 
 
 **Keitai Archive** — この作品をアーカイブしてくれた
 
-**ChatGPT 5.2** — コード整理・リファクタリング・最終チェック作業の 99%
-
-**Claude 4.6 Opus** — 一部の MD ドキュメントの草案・翻訳、および字形チェック
-
 **Fusion Pixel 12Px** — ビットマップフォント
+
+**Salvation_Jarsis** — Bluetooth による Replay 共有のアイデアを提供
 
 ---
 

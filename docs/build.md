@@ -1,4 +1,4 @@
-[English](build_en.md) | [日本語](build_ja.md)
+[简体中文](build_zh_cn.md) | [English](build_en.md) | [日本語](build_ja.md)
 
 # Build
 
@@ -66,6 +66,7 @@ Ant 會自動下載 Apache Ivy 2.5.3，再透過 Ivy 取得以下依賴：
 | CLDC 1.1 API | `org.microemu:cldcapi11:2.0.4` |
 | MIDP 2.0 API | `org.microemu:midpapi20:2.0.4` |
 | JSR-82 API | `org.microemu:microemu-jsr-82:2.0.4` |
+| JSR-75 API | `org.microemu:microemu-jsr-75:2.0.4` |
 | ECJ（Eclipse 4.20） | `org.eclipse.jdt:ecj:3.26.0` |
 | ProGuard | `net.sf.proguard:proguard-base:6.0.3` |
 

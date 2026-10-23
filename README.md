@@ -1,4 +1,4 @@
-[日本語](README_ja.md) | [English](README_en.md)
+[简体中文](README_zh_cn.md) | [日本語](README_ja.md) | [English](README_en.md)
 
 # 東方氷幻鏡 ～ Misfortune Mirror's Tale
 
@@ -14,24 +14,29 @@
 
 請見 [TODO](https://github.com/Magstic/Touhou_Misfortune_MirrorS_Tale/issues/1)。
 
-To improve compatibility with a wider range of real devices, this project will undergo a rewrite of the sprite clip and the gc system (maybe long time).
-
 ---
 
 ## Play
 
+### Minimum specs
+
 | Item | Recommended |  | Item | Recommended |
 |------|------|------|------|------|
-| Platform | *MIDP 2.0, CLDC 1.1* |  | CPU & RAM | *≥ 434 MHz*, *JVM ≥ 1.5 MB* |
-| Screen | *240 x 240* |  |Optional | *JSR-82（BlueTooth Replay）*|
+| Platform | *MIDP 2.0, CLDC 1.1* |  | CPU & RAM | *≥ 234 MHz*, *JVM ≥ 2.0 MB* |
+| Screen | *240 x 240* |  |Optional | *JSR-82，JSR-75*|
+
+### Recommended specs
+
+| Item | Recommended |  | Item | Recommended |
+|------|------|------|------|------|
+| Platform | *MIDP 2.0, CLDC 1.1* |  | CPU & RAM | *≥ 600 MHz*, *JVM ≥ 4.0 MB* |
+| Screen | *240 x 240* |  |Optional | *JSR-82，JSR-75*|
 
 ---
 
 ### PC
 
-推薦使用客製化的 [**FreeJ2ME-Plus**](https://github.com/Magstic/freej2me-plus/releases/tag/VirtualMIDISynth) + [**VirtualMIDI Synth**](https://coolsoft.altervista.org/en/virtualmidisynth)（[**Nokia 3110c.SF2**](https://musical-artifacts.com/artifacts/828)），這可能是最接近 Docomo 混音的遊玩方式（不過 VirtualMIDI Synth 僅限 Windows）。此外，該 Fork 也可正確實現移植版 RMS 的持久化。
-
-KEmulatormod 執行該移植版非常卡頓，原因不明，且不支援程式內控制 VirtualMIDI Synth 的音量，MIDI 的斷點播放也無法做到，因此並不推薦用來執行該遊戲。
+推薦使用客製化的 [**FreeJ2ME-Plus**](https://github.com/Magstic/freej2me-plus/releases/tag/VirtualMIDISynth) + [**Nokia 3110c.dls**](https://musical-artifacts.com/artifacts/828)，這可能是最接近 Docomo 混音的遊玩方式。
 
 ---
 
@@ -41,31 +46,48 @@ KEmulatormod 執行該移植版非常卡頓，原因不明，且不支援程式�
 
 當然，我保證你不會想戳玻璃 PLAY STG，更不提儘管有 SF2 加持，但混音依然垃圾的 ANDROID lol。
 
-此外，JL-MOD 的 JSR-82 也有問題，這意味著無法正常使用藍牙收發 Replay（J2ME-Loader 可以接收，但無法發送）。
+此外，JL-MOD 的 JSR-82 也存在一些問題。
 
 ---
 
 ### Real Device
 
-推薦在 **關閉聲音** 或者 **使用 MIDI 降級版** 的條件下使用真機遊玩。
+程式已針對真機進行了諸多最佳化。
 
-使用 Nokia N86 測試，無聲狀態下可以維持 `14`-`16` FPS，但有聲狀態下，則根據彈幕壓力呈現 `10`-`16` FPS。
+效能瓶頸和 Heap 大小無關，彈幕如雨般的渲染註定會吃掉大部分的 CPU。
 
-這種情況下，可以較為流暢地遊玩 Easy 和 Normal 難度。
+現在最佳化的基準是可以使用 S60V3 的裝置較為流暢地遊玩 Easy，Normal，Hard 難度，一些索愛機型也可以做到。
 
-彈幕的渲染會吃掉幾乎全部 CPU 的算力，如果再加上 MIDI，則更為雪上加霜。
-
-如果您有 CPU 效能 ≥ 434 MHz，且 JVM 堆 ≥ 2.0 MB 的裝置，或許可以流暢運行 Normal，甚至 Hrad！
+至於 S40V5，因為其有 JVM 硬體解釋加速，即便 Heap 和 CPU 糟糕了點，也可以在關閉 Alpha 渲染的情況下較為流暢的遊玩 Easy，Normal 難度。
 
 ---
 
 ## Build
 
-本專案的建構無須任何 IDE，根路徑下自帶的 `build.xml` 可以完成 100% 的工作。
+本專案的建構無須任何 IDE 和 SDK，根路徑下自帶的 `build.xml` 可以完成 100% 的工作。
 
-[中文（繁體）](docs/build.md) | [English](docs/build_en.md) | [日本語](docs/build_ja.md)
+[中文（繁體）](docs/build.md) | [中文（简体）](docs/build_zh_cn.md) | [English](docs/build_en.md) | [日本語](docs/build_ja.md)
 
 ---
+
+## Staff
+
+**Framework**：
+
+- Magstic：框架設計，文檔撰寫，有限的程式碼審查
+
+**Coder**：
+
+- ChatGPT 5.2：99% 的程式碼整理，重構工作，最終檢查（2026.01）
+- Claude 4.6 Opus：MD 文檔的英/日翻譯，遊戲内字形的檢查（2026.02）
+- 5.6 Sol：架構的初步重構（2026.08）
+- 6.1 Sol：架構的最終重構、整理，邏輯修復，最終檢查（2026.10）
+- 6 Astra：MD 文檔的英/日翻譯，遊戲内字形的檢查（2026.10）
+
+**Support**
+
+- SilentTalk：構建，效能優化的技術支援
+
 
 ## Thanks
 
@@ -73,11 +95,9 @@ KEmulatormod 執行該移植版非常卡頓，原因不明，且不支援程式�
 
 **Keitai Archive**：存檔了這款作品
 
-**ChatGPT 5.2**：99% 的程式碼整理，重構工作，最終檢查
-
-**Claude 4.6 Opus**：MD 文檔的草案和翻譯，遊戲内字形的檢查
-
 **Fusion Pixel 12Px**：提供位圖字型
+
+**Salvation_Jarsis**：提供了藍牙共享 Replay 的思路
 
 ---
 
