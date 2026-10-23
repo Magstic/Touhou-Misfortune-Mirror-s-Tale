@@ -22,7 +22,6 @@ See [Tree](tree.md).
 |------|------|------|
 | FontDat | `tools/FontDatBuilder.java` | Build bitmap font from TTF |
 | I18nPack | `tools/I18nPackBuilder.java` | Validate UTF-8, file/line/TextId schemas and build deterministic i18n packs |
-| BgmPack | `tools/BgmPackBuilder.java` | Pack original BGM and battle-only lite BGM into separate MIDI bundles |
 
 ### Helper Tools
 

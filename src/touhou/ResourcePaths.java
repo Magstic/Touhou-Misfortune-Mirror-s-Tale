@@ -3,8 +3,8 @@ package touhou;
 public final class ResourcePaths {
     public static final String SPRITE_CATALOG = "/cc.dat";
     public static final String STAGE_DATA = "/stage.dat";
-    public static final String BGM_PACK = "/snd/bgm.dat";
-    public static final String BGM_LITE_PACK = "/snd/bgm-lite.dat";
+    public static final String BGM_ROOT = "/bgm/";
+    public static final String BGM_LITE_ROOT = "/bgm-lite/";
 
     private ResourcePaths() {
     }

@@ -20,7 +20,7 @@ Touhou_Misfortune_MirrorS_Tale/
 │   ├── ResourceLoader.java           #   Single required/optional classpath resource loader
 │   ├── ResourcePaths.java            #   Canonical classpath resource paths
 │   ├── ResourceException.java        #   CLDC-compatible required-resource failure
-│   ├── BgmCatalog.java               #   Current 18-track BGMP schema
+│   ├── BgmCatalog.java               #   BGM track range and segment layout
 │   ├── SpriteCatalog.java           #   Final cc.dat: image table, geometry and reflection modes
 │   ├── SpriteRenderer.java          #   Shared sprite rendering: trim, logical windows, anchor, alpha and clip
 │   ├── BulletSystem.java            #   Shared player/enemy bullet, laser and effect store
@@ -30,7 +30,7 @@ Touhou_Misfortune_MirrorS_Tale/
 │   ├── DropItemSystem.java          #   Drop item pool (power, point, bomb, life, etc.)
 │   ├── Player.java                  #   Player character: movement, shooting, bomb, death/respawn
 │   ├── ScoreSystem.java             #   Score events, graze, life/bomb awards, spell bonus
-│   ├── AudioSystem.java             #   BGM playback (MIDI from bgm.dat)
+│   ├── AudioSystem.java             #   BGM playback from individual MIDI resources
 │   ├── SoundEffectSystem.java       #   SE playback (WAV)
 │   ├── GameOptions.java             #   User settings persistence (RMS)
 │   ├── GameProgress.java            #   Save data: unlocks, high scores (RMS)
@@ -190,7 +190,6 @@ Touhou_Misfortune_MirrorS_Tale/
 ├── tools/                           # ---- Build and resource tools ----
 │   ├── CcDatCropViewer.java         #   cc.dat crop viewer (debug / resource inspection)
 │   ├── I18nPackBuilder.java         #   Packs res/i18n/<lang>/ into <lang>.dat; generates font.dat
-│   ├── BgmPackBuilder.java          #   Packs res/bgm and res/bgm-lite into separate BGMP bundles
 │   ├── BgmLiteBuilder.java          #   Manual lite MIDI generation; not run by ant
 │   ├── FontDatBuilder.java          #   Scans text files for used characters, rasterizes from TTF, outputs font.dat
 │   └── dev/                         #   (gitignored) Dev-only helper tools
@@ -218,10 +217,8 @@ flowchart TD
     INIT --> COMPILE["compile<br/>ECJ 4.20 src/ -> build/classes/<br/>(bootclasspath: Ivy cldc+midp+jsr82)"]
     INIT --> TOOLS["compile-tools-resources<br/>javac resource tools -> build/tools-classes/"]
     TOOLS --> I18N["i18n-pack<br/>validate UTF-8/schema and generate<br/>build/generated-res/i18n/<lang>.dat"]
-    TOOLS --> BGM["bgm-pack<br/>validate res/bgm tracks 0–17 and generate<br/>build/generated-res/snd/bgm.dat"]
     COMPILE --> JAR
     I18N --> JAR
-    BGM --> JAR
     JAR["jar<br/>classes + source res + generated res<br/>resources at JAR root<br/>-> build/raw.jar"] --> PG
     PG["proguard 6.0.3<br/>shrink, obfuscate and CLDC preverify<br/>root ThMirror.class + short class names<br/>-> dist/name.jar"] --> JAD
     JAD["write-jad<br/>generate dist/name.jad"]
@@ -382,7 +379,7 @@ flowchart LR
 | `FixedSlotPool` | Deterministic allocation and recycling contract for fixed-capacity entity stores |
 | `DropItemSystem` | Drop item pool |
 | `Player` | Player character: position, shot type, bomb, death, respawn, graze |
-| `AudioSystem` | BGM: reads `bgm.dat` bundle, plays MIDI tracks via `Manager`/`Player` |
+| `AudioSystem` | BGM: loads individual MIDI segments and plays them via `Manager`/`Player` |
 | `SoundEffectSystem` | SE: plays WAV files from `/se/` |
 | `ScoreSystem` | Event-driven scoring: graze, spell bonus, life/bomb awards, miss penalty |
 | `GameOptions` | User settings (key config, volume, difficulty) persisted to RMS |
@@ -436,7 +433,6 @@ flowchart LR
 |------|------|
 | `I18nPackBuilder` | Scans `res/i18n/<lang>/` and packs resources into `<lang>.dat`; generates font.dat |
 | `FontDatBuilder` | Scans text files for used characters, rasterizes from TTF, outputs font.dat |
-| `BgmPackBuilder` | Packs `res/bgm` and battle-only `res/bgm-lite` into separate BGMP bundles |
 
 ### Helper Tools
 
@@ -453,10 +449,8 @@ flowchart LR
 | `res/stage.dat` | Binary | Stage wave script: enemy type, position, timing, formation |
 | `res/sp/*.png` | Indexed 8-bit PNGs, packaged unchanged | 128 sprite sheets, 000.png ~ 127.png; each filename matches its image index. Indices 128–133 are runtime-generated StageEX variants. |
 | `res/se/*.wav` | WAV | Sound effects |
-| `res/bgm/` | MIDI | Source tracks 0–17; each is either `id.mid` or `id/intro.mid + loop.mid` |
+| `res/bgm/` | MIDI | Tracks 0–17, packaged unchanged as individual `id.mid` or `id/intro.mid + loop.mid` resources |
 | `res/bgm-lite/` | MIDI | Lite battle tracks 1–14 and 17; edited source files are packaged unchanged |
-| `build/generated-res/snd/bgm.dat` | Custom | Generated current 18-track MIDI bundle embedded as `/snd/bgm.dat` |
-| `build/generated-res/snd/bgm-lite.dat` | Custom | Generated lite battle MIDI bundle embedded as `/snd/bgm-lite.dat` |
 | `build/generated-res/i18n/<lang>.dat` | Binary | Generated deterministic I18N pack; contains validated text and `/i18n/<lang>/font/font.dat` |
 | `res/i18n/<lang>/ui.txt` | Text | UI string lines, indexed by `TextId` constants |
 | `res/i18n/<lang>/dialog/` | Text | In-game dialog scripts per stage |

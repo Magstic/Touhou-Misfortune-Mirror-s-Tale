@@ -1,7 +1,5 @@
 package touhou;
 
-import java.io.DataInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
 import javax.microedition.media.Manager;
@@ -14,8 +12,6 @@ public final class AudioSystem implements PlayerListener {
     private static final int STATE_UNREALIZED = 100;
     private static final int STATE_PREFETCHED = 300;
 
-    // Offsets and lengths are read lazily from the BGMP file header.
-    private BgmPack midiPack = new BgmPack(ResourcePaths.BGM_PACK);
     private boolean heavyBgmEnabled = true;
 
     // Some real devices have expensive JSR-135 Player.getState().
@@ -47,9 +43,8 @@ public final class AudioSystem implements PlayerListener {
     private boolean phaseIntro;
     private boolean phaseStarted;
 
-    private int introEntry = -1;
-    private int loopEntry = -1;
-    private int singleEntry = -1;
+    private String introPath;
+    private String loopPath;
 
     private Player player;
 
@@ -81,15 +76,6 @@ public final class AudioSystem implements PlayerListener {
         if (BgmCatalog.isBattleTrack(currentTrack)) {
             stopBgm();
         }
-    }
-
-    private void selectPack(int trackId) {
-        String path = !heavyBgmEnabled && BgmCatalog.isBattleTrack(trackId)
-                ? ResourcePaths.BGM_LITE_PACK : ResourcePaths.BGM_PACK;
-        if (midiPack.resourcePath.equals(path)) {
-            return;
-        }
-        midiPack = new BgmPack(path);
     }
 
     public void toggleBgmEnabled() {
@@ -174,9 +160,8 @@ public final class AudioSystem implements PlayerListener {
         currentTrack = -1;
         phaseIntro = false;
         phaseStarted = false;
-        introEntry = -1;
-        loopEntry = -1;
-        singleEntry = -1;
+        introPath = null;
+        loopPath = null;
         bgmPaused = false;
         bgmPausedMediaTimeValid = false;
         bgmStatePollCnt = 0;
@@ -293,24 +278,21 @@ public final class AudioSystem implements PlayerListener {
     private void switchToTrack(int trackId, boolean loop) {
         closePendingLoopPlayer();
         closePlayer();
-        selectPack(trackId);
 
         currentTrack = trackId;
         currentLoop = loop;
 
-        resolveTrackEntries(trackId);
-        phaseIntro = introEntry >= 0;
+        String root = !heavyBgmEnabled && BgmCatalog.isBattleTrack(trackId)
+                ? ResourcePaths.BGM_LITE_ROOT : ResourcePaths.BGM_ROOT;
+        String trackPath = root + trackId;
+        boolean split = BgmCatalog.isSplitTrack(trackId);
+        introPath = split ? trackPath + "/intro.mid" : null;
+        loopPath = split ? trackPath + "/loop.mid" : trackPath + ".mid";
+        phaseIntro = split;
         phaseStarted = false;
 
         bgmStatePollCnt = 0;
         bgmEndOfMediaPending = false;
-    }
-
-    private void resolveTrackEntries(int trackId) {
-        int base = trackId * BgmCatalog.PART_COUNT;
-        introEntry = resolvePackEntry(base + BgmCatalog.PART_INTRO);
-        loopEntry = resolvePackEntry(base + BgmCatalog.PART_LOOP);
-        singleEntry = resolvePackEntry(base + BgmCatalog.PART_SINGLE);
     }
 
     private boolean switchFromIntroToLoopOrSingle() {
@@ -332,7 +314,7 @@ public final class AudioSystem implements PlayerListener {
         }
 
         // Create synchronously when no pre-created player is available.
-        createPlayerFromEntry(loopOrSingleEntry());
+        createPlayerFromPath(loopPath);
         return player != null;
     }
 
@@ -346,7 +328,7 @@ public final class AudioSystem implements PlayerListener {
             return;
         }
 
-        createPlayerFromEntry(phaseIntro ? introEntry : loopOrSingleEntry());
+        createPlayerFromPath(phaseIntro ? introPath : loopPath);
 
         // Pre-create loop player while intro plays, so intro->loop switch is instant.
         if (player != null && phaseIntro) {
@@ -354,25 +336,14 @@ public final class AudioSystem implements PlayerListener {
         }
     }
 
-    private int loopOrSingleEntry() {
-        if (!currentLoop && singleEntry >= 0) {
-            return singleEntry;
-        }
-        return loopEntry >= 0 ? loopEntry : singleEntry;
-    }
-
-    private int resolvePackEntry(int entryIndex) {
-        return midiPack.hasEntry(entryIndex) ? entryIndex : -1;
-    }
-
-    private void createPlayerFromEntry(int entry) {
-        if (effectiveBgmVol() == 0 || entry < 0) {
+    private void createPlayerFromPath(String path) {
+        if (effectiveBgmVol() == 0 || path == null) {
             return;
         }
 
         InputStream is = null;
         try {
-            is = midiPack.openEntry(entry);
+            is = ResourceLoader.openOptional(path);
             if (is == null) {
                 return;
             }
@@ -424,206 +395,6 @@ public final class AudioSystem implements PlayerListener {
         }
     }
 
-    private static final class LimitedInputStream extends InputStream {
-        private final InputStream in;
-        private int remaining;
-
-        LimitedInputStream(InputStream in, int remaining) {
-            this.in = in;
-            this.remaining = remaining;
-        }
-
-        public int read() throws IOException {
-            if (remaining <= 0) {
-                return -1;
-            }
-            int b = in.read();
-            if (b >= 0) {
-                remaining--;
-            }
-            return b;
-        }
-
-        public int read(byte[] b, int off, int len) throws IOException {
-            if (remaining <= 0) {
-                return -1;
-            }
-            int want = len;
-            if (want > remaining) {
-                want = remaining;
-            }
-            int n = in.read(b, off, want);
-            if (n > 0) {
-                remaining -= n;
-            }
-            return n;
-        }
-
-        public long skip(long n) throws IOException {
-            if (remaining <= 0) {
-                return 0;
-            }
-            long want = n;
-            if (want > remaining) {
-                want = remaining;
-            }
-            long s = in.skip(want);
-            if (s > 0) {
-                remaining -= (int) s;
-            }
-            return s;
-        }
-
-        public int available() throws IOException {
-            int a = in.available();
-            if (a > remaining) {
-                return remaining;
-            }
-            return a;
-        }
-
-        public void close() throws IOException {
-            in.close();
-        }
-    }
-
-    /**
-     * Reads offset/length tables from the BGMP pack file header on first access.
-     * Header layout (big-endian):
-     *   4B magic "BGMP", 2B version, 1B codec, 1B partCount,
-     *   2B trackCount, 2B entryCount, 4B reserved,
-     *   entryCount*4B offsets, entryCount*4B lengths.
-     */
-    private static final class BgmPack {
-        final String resourcePath;
-
-        // Lazily populated from file header
-        private int[] offsets;
-        private int[] lengths;
-        private boolean headerLoaded;
-        private boolean headerFailed;
-
-        BgmPack(String resourcePath) {
-            this.resourcePath = resourcePath;
-        }
-
-        private void ensureHeader() {
-            if (headerLoaded || headerFailed) {
-                return;
-            }
-            InputStream raw = null;
-            try {
-                raw = ResourceLoader.openOptional(resourcePath);
-                if (raw == null) {
-                    headerFailed = true;
-                    return;
-                }
-                DataInputStream dis = new DataInputStream(raw);
-
-                // Validate magic
-                int m = dis.readInt();
-                if (m != BgmCatalog.PACK_MAGIC) {
-                    headerFailed = true;
-                    return;
-                }
-
-                int version = dis.readShort() & 0xFFFF;
-                int codec = dis.readByte() & 0xFF;
-                int partCount = dis.readByte() & 0xFF;
-                int trackCount = dis.readShort() & 0xFFFF;
-                int entryCount = dis.readShort() & 0xFFFF;
-                int reserved = dis.readInt();
-                if (version != BgmCatalog.PACK_VERSION || codec != BgmCatalog.CODEC_MIDI || partCount != BgmCatalog.PART_COUNT
-                        || trackCount != BgmCatalog.TRACK_COUNT
-                        || entryCount != BgmCatalog.TRACK_COUNT * BgmCatalog.PART_COUNT || reserved != 0) {
-                    headerFailed = true;
-                    return;
-                }
-
-                offsets = new int[entryCount];
-                lengths = new int[entryCount];
-                for (int i = 0; i < entryCount; i++) {
-                    offsets[i] = dis.readInt();
-                }
-                for (int i = 0; i < entryCount; i++) {
-                    lengths[i] = dis.readInt();
-                    if (lengths[i] < 0 || (lengths[i] == 0 && offsets[i] != -1) || (lengths[i] > 0 && offsets[i] < 0)) {
-                        headerFailed = true;
-                        return;
-                    }
-                }
-                int dataPosition = BgmCatalog.HEADER_SIZE + entryCount * BgmCatalog.ENTRY_SIZE;
-                for (int i = 0; i < entryCount; i++) {
-                    if (lengths[i] == 0) {
-                        continue;
-                    }
-                    if (offsets[i] != dataPosition || dataPosition > Integer.MAX_VALUE - lengths[i]) {
-                        headerFailed = true;
-                        return;
-                    }
-                    dataPosition += lengths[i];
-                }
-                headerLoaded = true;
-            } catch (Throwable t) {
-                headerFailed = true;
-            } finally {
-                if (raw != null) {
-                    try {
-                        raw.close();
-                    } catch (Throwable ignore) {
-                    }
-                }
-            }
-        }
-
-        boolean hasEntry(int entryIndex) {
-            ensureHeader();
-            return headerLoaded && entryIndex >= 0 && entryIndex < lengths.length && lengths[entryIndex] > 0;
-        }
-
-        InputStream openEntry(int entryIndex) throws IOException {
-            if (!hasEntry(entryIndex)) {
-                return null;
-            }
-
-            InputStream raw = ResourceLoader.openOptional(resourcePath);
-            if (raw == null) {
-                return null;
-            }
-
-            boolean ok = false;
-            try {
-                skipFully(raw, offsets[entryIndex]);
-                InputStream lim = new LimitedInputStream(raw, lengths[entryIndex]);
-                ok = true;
-                return lim;
-            } finally {
-                if (!ok) {
-                    try {
-                        raw.close();
-                    } catch (Throwable ignore) {
-                    }
-                }
-            }
-        }
-    }
-
-    private static void skipFully(InputStream in, int bytes) throws IOException {
-        int remaining = bytes;
-        while (remaining > 0) {
-            long s = in.skip(remaining);
-            if (s <= 0) {
-                int b = in.read();
-                if (b < 0) {
-                    throw new IOException("EOF while skipping");
-                }
-                remaining--;
-            } else {
-                remaining -= (int) s;
-            }
-        }
-    }
-
     private void tryStart() {
         if (player == null) {
             return;
@@ -642,14 +413,13 @@ public final class AudioSystem implements PlayerListener {
         if (pendingLoopPlayer != null) {
             return;
         }
-        int entry = loopOrSingleEntry();
-        if (entry < 0) {
+        if (loopPath == null) {
             return;
         }
 
         InputStream is = null;
         try {
-            is = midiPack.openEntry(entry);
+            is = ResourceLoader.openOptional(loopPath);
             if (is == null) {
                 return;
             }
