@@ -5,6 +5,7 @@ import touhou.ImageBank;
 import touhou.SpriteRenderer;
 import touhou.SpriteSheetCatalog;
 import touhou.battle.BattleVisualState;
+import touhou.i18n.I18n;
 
 /** Shared stage sheets, separate route/boss assets and temporary encounter sheets. */
 public final class StageAssets {
@@ -46,12 +47,19 @@ public final class StageAssets {
     private boolean closeUpAlpha;
     private boolean midbossActive;
     private boolean openingActive;
+    private int[] openingImages;
     private boolean dialogueActive;
     private final boolean[] activeSpellImages = new boolean[SPELL_IMAGES.length];
 
     public void enter(ImageBank images, SpriteRenderer sprites, int stage, int character, int bossStep,
             boolean bossOnly, int[] options) {
         this.stage = stage;
+        openingImages = OPENINGS[stage];
+        if (I18n.getLanguageId() == I18n.LANG_ZHT) {
+            openingImages = new int[] {
+                sprites.getImageIndex(SpriteSheetCatalog.CHINESE_OPENING_BASE + stage * 3), OPENINGS[stage][1]
+            };
+        }
         setBackgroundDarkness(images, stage, 0);
         setBackgroundOpacity(images, stage, GameOptions.isHeavyBgEnabled(options));
         closeUpAlpha = GameOptions.isCloseUpAlphaEnabled(options);
@@ -72,7 +80,7 @@ public final class StageAssets {
         }
         int[][] groups = { COMMON, stage == StageRuntime.STAGE_5 && bossPhase ? STAGE5_BOSS_BACKGROUNDS : BACKGROUNDS[stage],
             PLAYERS[character], bossPhase ? bossImages() : ROUTE,
-            bossOnly ? EMPTY : OPENINGS[stage] };
+            bossOnly ? EMPTY : openingImages };
         images.retain(groups);
         for (int i = 0; i < groups.length; i++) {
             load(images, groups[i]);
@@ -128,7 +136,7 @@ public final class StageAssets {
             boolean dialogueVisible, int[][] effects, int[][] enemies) {
         if (bossMode && !bossPhase) {
             release(images, ROUTE);
-            release(images, OPENINGS[stage]);
+            release(images, openingImages);
             if (stage == StageRuntime.STAGE_5) {
                 images.release(96);
             }
@@ -169,7 +177,7 @@ public final class StageAssets {
             }
         }
         if (openingActive && !visible) {
-            release(images, OPENINGS[stage]);
+            release(images, openingImages);
         }
         openingActive = visible;
     }

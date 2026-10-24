@@ -7,6 +7,7 @@ import javax.microedition.lcdui.Graphics;
 import touhou.GameProgress;
 import touhou.Player;
 import touhou.ResourceException;
+import touhou.SpriteSheetCatalog;
 import touhou.UnlockFlags;
 import touhou.battle.BattleMath;
 import touhou.battle.BattleSessionConfig;
@@ -1097,6 +1098,11 @@ public final class StageRuntime {
             }
             int spriteId = row[spriteIdx];
             if (spriteId != -1) {
+                if (id >= 24 && id <= 36 && (id & 1) == 0 && I18n.getLanguageId() == I18n.LANG_ZHT) {
+                    int openingStage = (id - 24) / 2;
+                    int openingFrame = spriteId - (SpriteSheetCatalog.STAGE_OPENING_TEXT_BASE + openingStage * 6);
+                    spriteId = SpriteSheetCatalog.CHINESE_OPENING_BASE + openingStage * 3 + openingFrame;
+                }
                 host.drawSprite(g, spriteId, x, y);
             }
 

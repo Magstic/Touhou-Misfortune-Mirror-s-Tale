@@ -16,6 +16,7 @@ public final class SpriteSheetCatalog {
     public static final int ITEM_BOMB = 147;
     public static final int ITEM_LIFE = 156;
     public static final int ITEM_CRISIS = 165;
+    public static final int STAGE_OPENING_TEXT_BASE = 403;
     public static final int DIFFICULTY_BASE = 472;
     public static final int EXTRA_DIFFICULTY = 476;
     public static final int CHARACTER_SELECT_BASE = 477;
@@ -51,7 +52,8 @@ public final class SpriteSheetCatalog {
     public static final int MASK_BASE = SINGLE_CUTIN_BASE + 7;
     public static final int CLOCK_FACE = MASK_BASE + 2;
     public static final int BOMB_PORTRAIT_BASE = CLOCK_FACE + 1;
-    public static final int SPRITE_COUNT = BOMB_PORTRAIT_BASE + 3;
+    public static final int CHINESE_OPENING_BASE = BOMB_PORTRAIT_BASE + 3;
+    public static final int SPRITE_COUNT = CHINESE_OPENING_BASE + 7 * 3;
 
     private SpriteSheetCatalog() {
     }
