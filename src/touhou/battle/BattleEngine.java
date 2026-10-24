@@ -193,7 +193,7 @@ public final class BattleEngine {
         player.updateFirepowerDevices(bullets, enemies, power, bossBarrierActive);
 
         if (shooting && sBossf != 1 && !(bombCnt > 0 && currentChara == 1)) {
-            player.waTick(bullets, fi, power);
+            player.fireShots(bullets, fi, power);
         }
     }
 

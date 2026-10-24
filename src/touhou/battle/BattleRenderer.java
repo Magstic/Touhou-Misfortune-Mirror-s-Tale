@@ -826,7 +826,7 @@ public final class BattleRenderer {
         }
 
         boolean boss = a.bossMode();
-        int d0 = boss ? 240 : a.fi() >> 2;
+        int d0 = boss ? 240 : a.frameIndex() >> 2;
         if (d0 > 240) {
             d0 = 240;
         }
@@ -1051,7 +1051,7 @@ public final class BattleRenderer {
             SpriteRenderer sprites = a.sprites();
             int sprite = BattleRenderRules.bossSpellCutInSprite(a.bossSpellCutInStage(), a.gameMode(),
                     a.bossController().host().getSpellPracticeBossStep());
-            int gc = a.fi() - a.bossSpellCutInStartFi();
+            int gc = a.frameIndex() - a.bossSpellCutInStartFi();
             if (gc < 0) {
                 gc = 0;
             }

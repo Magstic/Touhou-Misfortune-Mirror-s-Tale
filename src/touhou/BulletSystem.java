@@ -643,9 +643,6 @@ public final class BulletSystem {
         delta[idx] = accelOrSpeed;
         savedDelta[idx] = accelOrSpeed;
         int initStage = 0;
-        if (isFromPlayer && (mType == 4 || mType == 5) && baseBulletId >= 61 && baseBulletId <= 80) {
-            initStage = 0;
-        }
         if (!isFromPlayer && (mType == 12 || mType == 13 || mType == 14 || mType == 15 || mType == 16
                 || mType == 17 || mType == 18 || mType == 19 || mType == 31 || mType == 33 || mType == 34
                 || mType == 35 || mType == 36 || mType == 37 || mType == 38 || mType == 39 || mType == 42 || mType == 41 || mType == 43
@@ -1757,7 +1754,7 @@ public final class BulletSystem {
                 x[i] = x0[i] + Fixed.mul(c, distFixed);
 
                 int vy = s >> 3;
-                int yInt = BulletSystem.c(y0[i] >> 16, vy, stageFlag[i], tt);
+                int yInt = BulletSystem.acceleratedPosition(y0[i] >> 16, vy, stageFlag[i], tt);
                 y[i] = yInt << 16;
 
                 dist += stageFlag[i];
@@ -3029,11 +3026,11 @@ public final class BulletSystem {
         t[i] = tt + delta[i];
     }
 
-    private static int c(final int n, final int n2, final int n3, final int n4) {
-        long term1 = (long) n2 * (long) n4;
-        long term2 = ((long) n3 * n4 * n4) / 10L;
-        term2 >>= 1;
-        return (int) (term1 + term2 + n);
+    private static int acceleratedPosition(int origin, int velocity, int acceleration, int time) {
+        long distance = (long) velocity * (long) time;
+        long accelerationDistance = ((long) acceleration * time * time) / 10L;
+        accelerationDistance >>= 1;
+        return (int) (distance + accelerationDistance + origin);
     }
 
     private static final byte[] DIR_MODE_TABLE = new byte[1024];

@@ -1,5 +1,4 @@
 import java.awt.Font;
-import java.awt.FontFormatException;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -10,15 +9,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TreeSet;
 
-/**
- * Rasterize a language's source texts into font.dat for I18nPackBuilder.
- */
+/** Rasterize a language's source texts into font.dat for I18nPackBuilder. */
 public final class FontDatBuilder {
     private static final int FORMAT_VERSION = 2;
     private static final int BITS_PER_PIXEL = 1;
@@ -56,23 +53,23 @@ public final class FontDatBuilder {
             throw new IOException("outFile is null");
         }
 
-        TreeSet<Integer> cps = new TreeSet<Integer> ();
+        TreeSet<Integer> cps = new TreeSet<Integer>();
         addAsciiBasic(cps);
 
-        List<File> scannedFiles = new ArrayList<File> ();
+        List<File> scannedFiles = new ArrayList<File>();
 
         scanLanguageTexts(cps, cfg.scanDirectory, scannedFiles);
         if (cps.size() > 65535) {
             throw new IOException("glyphCount too large (u16): " + cps.size());
         }
 
-        Font font = loadTtf(cfg.ttfFile.getAbsolutePath()).deriveFont(Font.PLAIN, cfg.fontSize);
+        Font font = Font.createFont(Font.TRUETYPE_FONT, cfg.ttfFile).deriveFont(Font.PLAIN, cfg.fontSize);
 
-        TreeSet<Integer> filtered = new TreeSet<Integer> ();
-        List<Integer> missing = new ArrayList<Integer> ();
+        TreeSet<Integer> filtered = new TreeSet<Integer>();
+        List<Integer> missing = new ArrayList<Integer>();
         for (Integer v : cps) {
             int cp = v.intValue();
-            if (canDisplay(font, cp)) {
+            if (font.canDisplay(cp)) {
                 filtered.add(v);
             } else {
                 missing.add(v);
@@ -86,17 +83,8 @@ public final class FontDatBuilder {
         FontMetrics fm = measure(font, cfg.cellW, cfg.cellH);
         int baseline = (cfg.baseline != null) ? cfg.baseline.intValue() : fm.getAscent();
         if (cfg.baseline == null) {
-            int maxBase = cfg.cellH - 1;
-            try {
-                maxBase = cfg.cellH - 1 - fm.getDescent();
-            } catch (Throwable ignore) {
-            }
-            if (maxBase < 0) {
-                maxBase = 0;
-            }
-            if (baseline > maxBase) {
-                baseline = maxBase;
-            }
+            int maxBase = Math.max(0, cfg.cellH - 1 - fm.getDescent());
+            baseline = Math.min(baseline, maxBase);
         }
         if (baseline < 0) {
             baseline = 0;
@@ -111,19 +99,8 @@ public final class FontDatBuilder {
         return new BuildResult(missing.size(), missingReport);
     }
 
-    private static boolean canDisplay(Font font, int cp) {
-        if (font == null) {
-            return false;
-        }
-        try {
-            return font.canDisplay(cp);
-        } catch (Throwable t) {
-            return (cp >= 0 && cp <= 0xFFFF) ? font.canDisplay((char) cp) : false;
-        }
-    }
-
     private static String formatMissingList(List<Integer> missing) {
-        StringBuffer out = new StringBuffer();
+        StringBuilder out = new StringBuilder();
         out.append("Missing glyphs:\n");
 
         int limit = 200;
@@ -143,11 +120,8 @@ public final class FontDatBuilder {
         return out.toString();
     }
 
-    private static void appendPrintableChar(StringBuffer out, int cp) {
-        if (out == null) {
-            return;
-        }
-        if (cp < 0 || !Character.isValidCodePoint(cp)) {
+    private static void appendPrintableChar(StringBuilder out, int cp) {
+        if (!Character.isValidCodePoint(cp)) {
             out.append('?');
             return;
         }
@@ -159,11 +133,7 @@ public final class FontDatBuilder {
             out.append('?');
             return;
         }
-        try {
-            out.append(new String(Character.toChars(cp)));
-        } catch (Throwable t) {
-            out.append('?');
-        }
+        out.appendCodePoint(cp);
     }
 
     private static String formatMissingLocations(List<Integer> missing, List<File> files) {
@@ -174,12 +144,12 @@ public final class FontDatBuilder {
             return "";
         }
 
-        TreeSet<Integer> missingSet = new TreeSet<Integer> ();
+        TreeSet<Integer> missingSet = new TreeSet<Integer>();
         for (int i = 0; i < missing.size(); i++) {
             missingSet.add(missing.get(i));
         }
 
-        StringBuffer out = new StringBuffer();
+        StringBuilder out = new StringBuilder();
         out.append("Missing glyph locations (first hits):\n");
 
         int totalHits = 0;
@@ -193,7 +163,7 @@ public final class FontDatBuilder {
             String text;
             try {
                 text = readTextFileUtf8(f);
-            } catch (Throwable t) {
+            } catch (IOException e) {
                 continue;
             }
             if (text == null || text.length() == 0) {
@@ -277,8 +247,9 @@ public final class FontDatBuilder {
         }
     }
 
-    private static void scanLanguageTexts(TreeSet<Integer> cps, File directory, List<File> scannedFiles) throws IOException {
-        List<File> files = new ArrayList<File> ();
+    private static void scanLanguageTexts(TreeSet<Integer> cps, File directory, List<File> scannedFiles)
+            throws IOException {
+        List<File> files = new ArrayList<File>();
         collectFiles(files, directory);
 
         for (int i = 0; i < files.size(); i++) {
@@ -325,56 +296,18 @@ public final class FontDatBuilder {
     }
 
     private static String readTextFileUtf8(File f) throws IOException {
-        byte[] b = readFileBytes(f);
-        if (b == null) {
-            return "";
-        }
-        // Assume UTF-8 for project assets.
-        return new String(b, Charset.forName("UTF-8"));
+        return new String(readFileBytes(f), StandardCharsets.UTF_8);
     }
 
     private static byte[] readFileBytes(File f) throws IOException {
-        BufferedInputStream in = null;
-        try {
-            in = new BufferedInputStream(new FileInputStream(f));
+        try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(f))) {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             byte[] buf = new byte[8192];
-            while (true) {
-                int r = in.read(buf);
-                if (r < 0) {
-                    break;
-                }
-                if (r > 0) {
-                    baos.write(buf, 0, r);
-                }
+            int count;
+            while ((count = in.read(buf)) != -1) {
+                baos.write(buf, 0, count);
             }
             return baos.toByteArray();
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (Throwable ignore) {
-                }
-            }
-        }
-    }
-
-    private static Font loadTtf(String path) throws IOException, FontFormatException {
-        File f = new File(path);
-        if (!f.isFile()) {
-            throw new IOException("ttf not found: " + f.getAbsolutePath());
-        }
-        FileInputStream fis = null;
-        try {
-            fis = new FileInputStream(f);
-            return Font.createFont(Font.TRUETYPE_FONT, fis);
-        } finally {
-            if (fis != null) {
-                try {
-                    fis.close();
-                } catch (Throwable ignore) {
-                }
-            }
         }
     }
 
@@ -505,7 +438,8 @@ public final class FontDatBuilder {
         }
     }
 
-    private static byte[] buildDat(Font font, int baseline, int cellW, int cellH, TreeSet<Integer> cps) throws IOException {
+    private static byte[] buildDat(Font font, int baseline, int cellW, int cellH, TreeSet<Integer> cps)
+            throws IOException {
         int glyphCount = cps.size();
         int strideBytes = (cellW + 7) >> 3;
         int glyphSizeBytes = strideBytes * cellH;
@@ -737,17 +671,8 @@ public final class FontDatBuilder {
     }
 
     private static void writeFile(File f, byte[] data) throws IOException {
-        FileOutputStream os = null;
-        try {
-            os = new FileOutputStream(f);
+        try (FileOutputStream os = new FileOutputStream(f)) {
             os.write(data);
-        } finally {
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (Throwable ignore) {
-                }
-            }
         }
     }
 }

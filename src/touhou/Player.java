@@ -177,7 +177,7 @@ public final class Player {
 
     // Player collision hitbox radius.
     public int getHitboxRadiusFixed() {
-        // Reimu special ability: smaller hitbox. 
+        // Reimu special ability: smaller hitbox.
         // NOTE: In the orig.ver., the hitboxes of 3 player are the same size, which I think is a bug!
         // Fix: 0.75
         return (chara == REIMU) ? REIMU_PLAYER_HITBOX : PLAYER_HITBOX_DEFAULT;
@@ -377,7 +377,7 @@ public final class Player {
 
         lastMoveDir = moveDir;
 
-        updateAnime(moveDir);
+        updateAnimation(moveDir);
     }
 
     public void updateFirepowerDevices(BulletSystem bullets, EnemyTargetRegistry enemies, int power, boolean barrierActive) {
@@ -847,27 +847,27 @@ public final class Player {
     }
 
     // Update movement animation frames.
-    private void updateAnime(int moveDir) {
+    private void updateAnimation(int moveDir) {
         tick++;
-        ed(0);
+        setAnimation(0);
 
         if (moveDir < 0) {
             animeMove += 2;
             if (animeMove < 3) {
-                ed(1);
+                setAnimation(1);
             } else if (animeMove < 6) {
-                ed(2);
+                setAnimation(2);
             } else {
-                ed(3);
+                setAnimation(3);
             }
         } else if (moveDir > 0) {
             animeMove += 2;
             if (animeMove < 3) {
-                ed(4);
+                setAnimation(4);
             } else if (animeMove < 6) {
-                ed(5);
+                setAnimation(5);
             } else {
-                ed(6);
+                setAnimation(6);
             }
         } else {
             animeMove = 0;
@@ -880,11 +880,10 @@ public final class Player {
             animeMove--;
         }
         prevMoveDir = moveDir;
-        fd();
+        advanceAnimation();
     }
 
-    // Switch animation sequence when state changes.
-    private void ed(int newAnimeId) {
+    private void setAnimation(int newAnimeId) {
         if (animeId != newAnimeId) {
             animeId = newAnimeId;
             animeNo = 0;
@@ -892,9 +891,8 @@ public final class Player {
         }
     }
 
-    // Advance animation frame timing.
-    private void fd() {
-        short[] list = ANIMELIST[animeId];
+    private void advanceAnimation() {
+        short[] list = ANIMATION_SEQUENCES[animeId];
         animeCnt++;
         if (animeCnt > list[animeNo * 2]) {
             animeCnt = 0;
@@ -903,7 +901,7 @@ public final class Player {
     }
 
     // Spawn shot patterns based on character, type, and shot level.
-    public void waTick(BulletSystem bullets, int fi, int power) {
+    public void fireShots(BulletSystem bullets, int frameIndex, int power) {
         if (bullets == null) {
             return;
         }
@@ -950,77 +948,77 @@ public final class Player {
                 if (mode == 0) {
                     switch (shotLevel) {
                         case 0:
-                            if ((fi & 1) == 0) {
-                                xaSpawn(bullets, 0, 0, 6, 16, cx, cy - Fixed.fromInt(10));
+                            if ((frameIndex & 1) == 0) {
+                                spawnShot(bullets, 0, 0, 6, 16, cx, cy - Fixed.fromInt(10));
                             }
-                            if (fi % 12 == 0) {
-                                xaSpawn(bullets, 1, 0, 2, 10, opt1x, opt1y - Fixed.fromInt(10));
-                                xaSpawn(bullets, 1, 0, 2, 10, opt0x, opt0y - Fixed.fromInt(10));
+                            if (frameIndex % 12 == 0) {
+                                spawnShot(bullets, 1, 0, 2, 10, opt1x, opt1y - Fixed.fromInt(10));
+                                spawnShot(bullets, 1, 0, 2, 10, opt0x, opt0y - Fixed.fromInt(10));
                             }
                             return;
                         case 1:
-                            if ((fi & 1) == 0) {
-                                xaSpawn(bullets, 0, 0, 4, 16, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 0, 0, 4, 16, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                            if ((frameIndex & 1) == 0) {
+                                spawnShot(bullets, 0, 0, 4, 16, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 0, 0, 4, 16, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
                             }
-                            if ((fi & 7) == 0) {
-                                xaSpawn(bullets, 1, 0, 2, 10, opt1x, opt1y - Fixed.fromInt(10));
-                                xaSpawn(bullets, 1, 0, 2, 10, opt0x, opt0y - Fixed.fromInt(10));
+                            if ((frameIndex & 7) == 0) {
+                                spawnShot(bullets, 1, 0, 2, 10, opt1x, opt1y - Fixed.fromInt(10));
+                                spawnShot(bullets, 1, 0, 2, 10, opt0x, opt0y - Fixed.fromInt(10));
                             }
                             return;
                         case 2:
-                            if ((fi & 1) == 0) {
-                                xaSpawn(bullets, 0, 355, 2, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 0, 0, 7, 16, cx, cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 0, 5, 2, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            if ((frameIndex & 1) == 0) {
+                                spawnShot(bullets, 0, 355, 2, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 0, 0, 7, 16, cx, cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 0, 5, 2, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                             }
-                            if ((fi & 3) == 0) {
-                                xaSpawn(bullets, 1, 0, 2, 10, opt1x, opt1y - Fixed.fromInt(10));
-                                xaSpawn(bullets, 1, 0, 2, 10, opt0x, opt0y - Fixed.fromInt(10));
+                            if ((frameIndex & 3) == 0) {
+                                spawnShot(bullets, 1, 0, 2, 10, opt1x, opt1y - Fixed.fromInt(10));
+                                spawnShot(bullets, 1, 0, 2, 10, opt0x, opt0y - Fixed.fromInt(10));
                             }
                             return;
                         case 3:
-                            if ((fi & 1) == 0) {
-                                xaSpawn(bullets, 0, 355, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 0, 0, 7, 16, cx, cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 0, 5, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            if ((frameIndex & 1) == 0) {
+                                spawnShot(bullets, 0, 355, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 0, 0, 7, 16, cx, cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 0, 5, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                             }
-                            switch (fi % 6) {
+                            switch (frameIndex % 6) {
                                 case 0:
-                                    xaSpawn(bullets, 1, 350, 2, 10, opt1x, opt1y);
-                                    xaSpawn(bullets, 1, 10, 2, 10, opt0x, opt0y);
+                                    spawnShot(bullets, 1, 350, 2, 10, opt1x, opt1y);
+                                    spawnShot(bullets, 1, 10, 2, 10, opt0x, opt0y);
                                     return;
                                 case 2:
-                                    xaSpawn(bullets, 1, 320, 2, 10, opt1x, opt1y);
-                                    xaSpawn(bullets, 1, 40, 2, 10, opt0x, opt0y);
+                                    spawnShot(bullets, 1, 320, 2, 10, opt1x, opt1y);
+                                    spawnShot(bullets, 1, 40, 2, 10, opt0x, opt0y);
                                     return;
                                 case 4:
-                                    xaSpawn(bullets, 1, 290, 2, 10, opt1x, opt1y);
-                                    xaSpawn(bullets, 1, 70, 2, 10, opt0x, opt0y);
+                                    spawnShot(bullets, 1, 290, 2, 10, opt1x, opt1y);
+                                    spawnShot(bullets, 1, 70, 2, 10, opt0x, opt0y);
                                     return;
                                 default:
                                     return;
                             }
                         case 4:
-                            if ((fi & 1) == 0) {
-                                xaSpawn(bullets, 0, 350, 1, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 0, 355, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 0, 0, 7, 16, cx, cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 0, 5, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 0, 10, 1, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            if ((frameIndex & 1) == 0) {
+                                spawnShot(bullets, 0, 350, 1, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 0, 355, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 0, 0, 7, 16, cx, cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 0, 5, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 0, 10, 1, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                             }
-                            switch (fi % 6) {
+                            switch (frameIndex % 6) {
                                 case 0:
-                                    xaSpawn(bullets, 1, 350, 2, 10, opt1x, opt1y);
-                                    xaSpawn(bullets, 1, 10, 2, 10, opt0x, opt0y);
+                                    spawnShot(bullets, 1, 350, 2, 10, opt1x, opt1y);
+                                    spawnShot(bullets, 1, 10, 2, 10, opt0x, opt0y);
                                     return;
                                 case 2:
-                                    xaSpawn(bullets, 1, 320, 2, 10, opt1x, opt1y);
-                                    xaSpawn(bullets, 1, 40, 2, 10, opt0x, opt0y);
+                                    spawnShot(bullets, 1, 320, 2, 10, opt1x, opt1y);
+                                    spawnShot(bullets, 1, 40, 2, 10, opt0x, opt0y);
                                     return;
                                 case 4:
-                                    xaSpawn(bullets, 1, 290, 2, 10, opt1x, opt1y);
-                                    xaSpawn(bullets, 1, 70, 2, 10, opt0x, opt0y);
+                                    spawnShot(bullets, 1, 290, 2, 10, opt1x, opt1y);
+                                    spawnShot(bullets, 1, 70, 2, 10, opt0x, opt0y);
                                     return;
                                 default:
                                     return;
@@ -1033,49 +1031,49 @@ public final class Player {
                 switch (shotLevel) {
                     case 0:
                     case 1:
-                        if (fi % 3 == 0) {
-                            xaSpawn(bullets, 0, 0, 7 + (shotLevel << 1), 16, cx, cy - Fixed.fromInt(10));
+                        if (frameIndex % 3 == 0) {
+                            spawnShot(bullets, 0, 0, 7 + (shotLevel << 1), 16, cx, cy - Fixed.fromInt(10));
                         }
-                        if (fi % 6 == 0) {
-                            xaSpawn(bullets, 2, 0, 7 + (shotLevel << 1), 10, cx, cy);
+                        if (frameIndex % 6 == 0) {
+                            spawnShot(bullets, 2, 0, 7 + (shotLevel << 1), 10, cx, cy);
                         }
                         return;
                     case 2:
-                        if (fi % 3 == 0) {
-                            xaSpawn(bullets, 0, 0, 5, 16, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 0, 5, 16, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                        if (frameIndex % 3 == 0) {
+                            spawnShot(bullets, 0, 0, 5, 16, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 0, 5, 16, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
                         }
-                        if (fi % 6 == 0) {
-                            xaSpawn(bullets, 2, 340, 7, 10, cx, cy);
-                            xaSpawn(bullets, 2, 20, 7, 10, cx, cy);
+                        if (frameIndex % 6 == 0) {
+                            spawnShot(bullets, 2, 340, 7, 10, cx, cy);
+                            spawnShot(bullets, 2, 20, 7, 10, cx, cy);
                         }
                         return;
                     case 3:
-                        if (fi % 3 == 0) {
-                            xaSpawn(bullets, 0, 355, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 0, 8, 16, cx, cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 5, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                        if (frameIndex % 3 == 0) {
+                            spawnShot(bullets, 0, 355, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 0, 8, 16, cx, cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 5, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                         }
-                        if (fi % 6 == 0) {
-                            xaSpawn(bullets, 2, 350, 4, 10, cx, cy);
-                            xaSpawn(bullets, 2, 10, 4, 10, cx, cy);
+                        if (frameIndex % 6 == 0) {
+                            spawnShot(bullets, 2, 350, 4, 10, cx, cy);
+                            spawnShot(bullets, 2, 10, 4, 10, cx, cy);
                         }
-                        if (fi % 10 == 0) {
-                            xaSpawn(bullets, 2, 340, 5, 10, cx, cy);
-                            xaSpawn(bullets, 2, 20, 5, 10, cx, cy);
+                        if (frameIndex % 10 == 0) {
+                            spawnShot(bullets, 2, 340, 5, 10, cx, cy);
+                            spawnShot(bullets, 2, 20, 5, 10, cx, cy);
                         }
                         return;
                     case 4:
-                        if (fi % 3 == 0) {
-                            xaSpawn(bullets, 0, 355, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 0, 8, 16, cx, cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 5, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                        if (frameIndex % 3 == 0) {
+                            spawnShot(bullets, 0, 355, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 0, 8, 16, cx, cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 5, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                         }
-                        if (fi % 6 == 0) {
-                            xaSpawn(bullets, 2, 350, 5, 10, cx, cy);
-                            xaSpawn(bullets, 2, 340, 5, 10, cx, cy);
-                            xaSpawn(bullets, 2, 10, 5, 10, cx, cy);
-                            xaSpawn(bullets, 2, 20, 5, 10, cx, cy);
+                        if (frameIndex % 6 == 0) {
+                            spawnShot(bullets, 2, 350, 5, 10, cx, cy);
+                            spawnShot(bullets, 2, 340, 5, 10, cx, cy);
+                            spawnShot(bullets, 2, 10, 5, 10, cx, cy);
+                            spawnShot(bullets, 2, 20, 5, 10, cx, cy);
                         }
                         return;
                     default:
@@ -1086,79 +1084,79 @@ public final class Player {
             if (mode == 0) {
                 switch (shotLevel) {
                     case 0:
-                        if ((fi & 1) == 0) {
-                            xaSpawn(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
+                        if ((frameIndex & 1) == 0) {
+                            spawnShot(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
                         }
-                        if ((fi & 7) == 0) {
-                            xaSpawn(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
-                            xaSpawn(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
+                        if ((frameIndex & 7) == 0) {
+                            spawnShot(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
+                            spawnShot(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
                         }
                         return;
                     case 1:
-                        if ((fi & 1) == 0) {
-                            xaSpawn(bullets, 0, 0, 3, 16, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 0, 3, 16, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                        if ((frameIndex & 1) == 0) {
+                            spawnShot(bullets, 0, 0, 3, 16, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 0, 3, 16, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
                         }
-                        if (fi % 6 == 0) {
-                            xaSpawn(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
-                            xaSpawn(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
+                        if (frameIndex % 6 == 0) {
+                            spawnShot(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
+                            spawnShot(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
                         }
-                        if (fi % 3 == 0) {
-                            xaSpawn(bullets, 18, 0, 4, 10, cx, cy - Fixed.fromInt(10));
+                        if (frameIndex % 3 == 0) {
+                            spawnShot(bullets, 18, 0, 4, 10, cx, cy - Fixed.fromInt(10));
                         }
                         return;
                     case 2:
-                        if ((fi & 1) == 0) {
-                            xaSpawn(bullets, 0, 352, 2, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 8, 2, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                        if ((frameIndex & 1) == 0) {
+                            spawnShot(bullets, 0, 352, 2, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 8, 2, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                         }
-                        if (fi % 6 == 0) {
-                            xaSpawn(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
-                            xaSpawn(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
+                        if (frameIndex % 6 == 0) {
+                            spawnShot(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
+                            spawnShot(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
                         }
-                        if (fi % 3 == 0) {
-                            xaSpawn(bullets, 18, 0, 4, 10, cx, cy - Fixed.fromInt(10));
+                        if (frameIndex % 3 == 0) {
+                            spawnShot(bullets, 18, 0, 4, 10, cx, cy - Fixed.fromInt(10));
                         }
                         return;
                     case 3:
-                        if ((fi & 1) == 0) {
-                            xaSpawn(bullets, 0, 352, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 8, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                        if ((frameIndex & 1) == 0) {
+                            spawnShot(bullets, 0, 352, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 8, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                         }
-                        if ((fi & 1) == 0) {
-                            xaSpawn(bullets, 18, 0, 4, 10, cx, cy - Fixed.fromInt(10));
+                        if ((frameIndex & 1) == 0) {
+                            spawnShot(bullets, 18, 0, 4, 10, cx, cy - Fixed.fromInt(10));
                         }
-                        if ((fi & 3) == 0) {
-                            xaSpawn(bullets, 18, 0, 4, 10, cx - Fixed.fromInt(8), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 18, 0, 4, 10, cx + Fixed.fromInt(8), cy - Fixed.fromInt(10));
+                        if ((frameIndex & 3) == 0) {
+                            spawnShot(bullets, 18, 0, 4, 10, cx - Fixed.fromInt(8), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 18, 0, 4, 10, cx + Fixed.fromInt(8), cy - Fixed.fromInt(10));
                         }
-                        if (fi % 6 == 0) {
-                            xaSpawn(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
-                            xaSpawn(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
+                        if (frameIndex % 6 == 0) {
+                            spawnShot(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
+                            spawnShot(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
                         }
                         return;
                     case 4:
-                        if ((fi & 1) == 0) {
-                            xaSpawn(bullets, 0, 344, 1, 16, cx - Fixed.fromInt(8), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 352, 2, 16, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 8, 2, 16, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 0, 16, 1, 16, cx + Fixed.fromInt(8), cy - Fixed.fromInt(10));
+                        if ((frameIndex & 1) == 0) {
+                            spawnShot(bullets, 0, 344, 1, 16, cx - Fixed.fromInt(8), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 352, 2, 16, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 8, 2, 16, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 0, 16, 1, 16, cx + Fixed.fromInt(8), cy - Fixed.fromInt(10));
                         }
-                        if ((fi & 1) == 0) {
-                            xaSpawn(bullets, 18, 0, 3, 10, cx, cy - Fixed.fromInt(10));
+                        if ((frameIndex & 1) == 0) {
+                            spawnShot(bullets, 18, 0, 3, 10, cx, cy - Fixed.fromInt(10));
                         }
-                        if ((fi & 3) == 0) {
-                            xaSpawn(bullets, 18, 0, 3, 10, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 18, 0, 3, 10, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 18, 0, 3, 10, cx - Fixed.fromInt(12), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 18, 0, 3, 10, cx + Fixed.fromInt(12), cy - Fixed.fromInt(10));
+                        if ((frameIndex & 3) == 0) {
+                            spawnShot(bullets, 18, 0, 3, 10, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 18, 0, 3, 10, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 18, 0, 3, 10, cx - Fixed.fromInt(12), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 18, 0, 3, 10, cx + Fixed.fromInt(12), cy - Fixed.fromInt(10));
                         }
-                        if (fi % 6 == 0) {
-                            xaSpawn(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
-                            xaSpawn(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
+                        if (frameIndex % 6 == 0) {
+                            spawnShot(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
+                            spawnShot(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
                         }
                         return;
                     default:
@@ -1168,79 +1166,79 @@ public final class Player {
 
             switch (shotLevel) {
                 case 0:
-                    if ((fi & 1) == 0) {
-                        xaSpawn(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
+                    if ((frameIndex & 1) == 0) {
+                        spawnShot(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
                     }
-                    if ((fi & 7) == 0) {
-                        xaSpawn(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
-                        xaSpawn(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
+                    if ((frameIndex & 7) == 0) {
+                        spawnShot(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
+                        spawnShot(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
                     }
                     return;
                 case 1:
-                    if ((fi & 1) == 0) {
-                        xaSpawn(bullets, 0, 0, 3, 16, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 0, 0, 3, 16, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                    if ((frameIndex & 1) == 0) {
+                        spawnShot(bullets, 0, 0, 3, 16, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 0, 0, 3, 16, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
                     }
-                    if (fi % 6 == 0) {
-                        xaSpawn(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
-                        xaSpawn(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
+                    if (frameIndex % 6 == 0) {
+                        spawnShot(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
+                        spawnShot(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
                     }
-                    if (fi % 3 == 0) {
-                        xaSpawn(bullets, 18, 0, 4, 10, cx, cy - Fixed.fromInt(10));
+                    if (frameIndex % 3 == 0) {
+                        spawnShot(bullets, 18, 0, 4, 10, cx, cy - Fixed.fromInt(10));
                     }
                     return;
                 case 2:
-                    if ((fi & 1) == 0) {
-                        xaSpawn(bullets, 0, 355, 2, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 0, 5, 2, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                    if ((frameIndex & 1) == 0) {
+                        spawnShot(bullets, 0, 355, 2, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 0, 5, 2, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                     }
-                    if (fi % 6 == 0) {
-                        xaSpawn(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
-                        xaSpawn(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
+                    if (frameIndex % 6 == 0) {
+                        spawnShot(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
+                        spawnShot(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
                     }
-                    if (fi % 3 == 0) {
-                        xaSpawn(bullets, 18, 0, 4, 10, cx, cy - Fixed.fromInt(10));
+                    if (frameIndex % 3 == 0) {
+                        spawnShot(bullets, 18, 0, 4, 10, cx, cy - Fixed.fromInt(10));
                     }
                     return;
                 case 3:
-                    if ((fi & 1) == 0) {
-                        xaSpawn(bullets, 0, 355, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 0, 5, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                    if ((frameIndex & 1) == 0) {
+                        spawnShot(bullets, 0, 355, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 0, 5, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                     }
-                    if ((fi & 1) == 0) {
-                        xaSpawn(bullets, 18, 0, 4, 10, cx, cy - Fixed.fromInt(10));
+                    if ((frameIndex & 1) == 0) {
+                        spawnShot(bullets, 18, 0, 4, 10, cx, cy - Fixed.fromInt(10));
                     }
-                    if ((fi & 3) == 0) {
-                        xaSpawn(bullets, 18, 0, 4, 10, cx - Fixed.fromInt(8), cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 18, 0, 4, 10, cx + Fixed.fromInt(8), cy - Fixed.fromInt(10));
+                    if ((frameIndex & 3) == 0) {
+                        spawnShot(bullets, 18, 0, 4, 10, cx - Fixed.fromInt(8), cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 18, 0, 4, 10, cx + Fixed.fromInt(8), cy - Fixed.fromInt(10));
                     }
-                    if (fi % 6 == 0) {
-                        xaSpawn(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
-                        xaSpawn(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
+                    if (frameIndex % 6 == 0) {
+                        spawnShot(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
+                        spawnShot(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
                     }
                     return;
                 case 4:
-                    if ((fi & 1) == 0) {
-                        xaSpawn(bullets, 0, 350, 1, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 0, 355, 2, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 0, 5, 2, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 0, 10, 1, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                    if ((frameIndex & 1) == 0) {
+                        spawnShot(bullets, 0, 350, 1, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 0, 355, 2, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 0, 0, 5, 16, cx, cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 0, 5, 2, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 0, 10, 1, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                     }
-                    if ((fi & 1) == 0) {
-                        xaSpawn(bullets, 18, 0, 3, 10, cx, cy - Fixed.fromInt(10));
+                    if ((frameIndex & 1) == 0) {
+                        spawnShot(bullets, 18, 0, 3, 10, cx, cy - Fixed.fromInt(10));
                     }
-                    if ((fi & 3) == 0) {
-                        xaSpawn(bullets, 18, 0, 4, 10, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 18, 0, 4, 10, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 18, 0, 3, 10, cx - Fixed.fromInt(12), cy - Fixed.fromInt(10));
-                        xaSpawn(bullets, 18, 0, 3, 10, cx + Fixed.fromInt(12), cy - Fixed.fromInt(10));
+                    if ((frameIndex & 3) == 0) {
+                        spawnShot(bullets, 18, 0, 4, 10, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 18, 0, 4, 10, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 18, 0, 3, 10, cx - Fixed.fromInt(12), cy - Fixed.fromInt(10));
+                        spawnShot(bullets, 18, 0, 3, 10, cx + Fixed.fromInt(12), cy - Fixed.fromInt(10));
                     }
-                    if (fi % 6 == 0) {
-                        xaSpawn(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
-                        xaSpawn(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
+                    if (frameIndex % 6 == 0) {
+                        spawnShot(bullets, 18, 0, 4, 10, opt1x, opt1y - Fixed.fromInt(10));
+                        spawnShot(bullets, 18, 0, 4, 10, opt0x, opt0y - Fixed.fromInt(10));
                     }
                     return;
                 default:
@@ -1252,66 +1250,66 @@ public final class Player {
         if (chara == MARISA) {
             if (type == SHOT_A) {
                 if (mode == 0) {
-                    if ((fi & 1) == 0) {
+                    if ((frameIndex & 1) == 0) {
                         switch (shotLevel) {
                             case 0:
-                                xaSpawn(bullets, 8, 0, 2, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 0, 2, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 0, 2, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 0, 2, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                                 break;
                             case 1:
                             case 2:
-                                xaSpawn(bullets, 8, -5, shotLevel, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 0, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 0, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 5, shotLevel, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, -5, shotLevel, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 0, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 0, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 5, shotLevel, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
                                 break;
                             case 3:
-                                xaSpawn(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, -5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 0, 3, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 0, 3, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, -5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 0, 3, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 0, 3, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
                                 break;
                             case 4:
-                                xaSpawn(bullets, 8, -10, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, -10, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, -5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 0, 3, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 0, 3, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 10, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                                xaSpawn(bullets, 8, 10, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, -10, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, -10, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, -5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 0, 3, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 0, 3, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 10, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                                spawnShot(bullets, 8, 10, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
                                 break;
                             default:
                                 break;
                         }
                     }
-                } else if ((fi & 1) == 0) {
+                } else if ((frameIndex & 1) == 0) {
                     switch (shotLevel) {
                         case 0:
-                            xaSpawn(bullets, 8, 0, 4, 16, cx, cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 4, 16, cx, cy - Fixed.fromInt(10));
                             break;
                         case 1:
-                            xaSpawn(bullets, 8, 0, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 0, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                             break;
                         case 2:
                         case 3:
-                            xaSpawn(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 0, shotLevel, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 0, shotLevel, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, shotLevel, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, shotLevel, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
                             break;
                         case 4:
-                            xaSpawn(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, -5, 3, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 0, 3, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 0, 3, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 5, 3, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, -5, 3, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 3, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 3, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 5, 3, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
                             break;
                         default:
                             break;
@@ -1324,75 +1322,75 @@ public final class Player {
             }
 
             if (mode == 0) {
-                if ((fi & 1) == 0) {
+                if ((frameIndex & 1) == 0) {
                     switch (shotLevel) {
                         case 0:
-                            xaSpawn(bullets, 8, 0, 2, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 0, 2, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 2, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 2, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                             break;
                         case 1:
                         case 2:
-                            xaSpawn(bullets, 8, -5, shotLevel, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 0, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 0, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 5, shotLevel, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, -5, shotLevel, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 5, shotLevel, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
                             break;
                         case 3:
-                            xaSpawn(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, -5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 0, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 0, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, -5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
                             break;
                         case 4:
-                            xaSpawn(bullets, 8, -10, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, -10, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, -5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 0, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 0, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 10, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                            xaSpawn(bullets, 8, 10, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, -10, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, -10, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, -5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 0, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 10, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                            spawnShot(bullets, 8, 10, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
                             break;
                         default:
                             break;
                     }
                 }
 
-                if (fi % 3 == 0) {
-                    xaSpawn(bullets, 19, 0, 3 + (shotLevel >> 1), 4, opt1x, opt1y - Fixed.fromInt(10));
-                    xaSpawn(bullets, 19, 0, 3 + (shotLevel >> 1), 4, opt0x, opt0y - Fixed.fromInt(10));
+                if (frameIndex % 3 == 0) {
+                    spawnShot(bullets, 19, 0, 3 + (shotLevel >> 1), 4, opt1x, opt1y - Fixed.fromInt(10));
+                    spawnShot(bullets, 19, 0, 3 + (shotLevel >> 1), 4, opt0x, opt0y - Fixed.fromInt(10));
                 }
                 return;
             }
 
-            if ((fi & 1) == 0) {
+            if ((frameIndex & 1) == 0) {
                 if (shotLevel == 0) {
-                    xaSpawn(bullets, 8, 0, 4, 16, cx, cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, 0, 4, 16, cx, cy - Fixed.fromInt(10));
                 } else if (shotLevel == 1) {
-                    xaSpawn(bullets, 8, 0, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, 8, 0, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, 0, 3, 16, cx - Fixed.fromInt(6), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, 0, 3, 16, cx + Fixed.fromInt(6), cy - Fixed.fromInt(10));
                 } else if (shotLevel == 2 || shotLevel == 3) {
-                    xaSpawn(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, 8, 0, shotLevel, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, 8, 0, shotLevel, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, 0, shotLevel, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, 0, shotLevel, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
                 } else {
-                    xaSpawn(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, 8, -5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, 8, 0, 3, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, 8, 0, 3, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, 8, 5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, -5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, -5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, 0, 3, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, 0, 3, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, 5, 2, 16, cx - Fixed.fromInt(5), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, 8, 5, 2, 16, cx + Fixed.fromInt(5), cy - Fixed.fromInt(10));
                 }
             }
 
-            if ((fi & 1) == 0) {
-                xaSpawn(bullets, 19, 0, 1 + (shotLevel >> 1), 4, opt1x, opt1y - Fixed.fromInt(10));
-                xaSpawn(bullets, 19, 0, 1 + (shotLevel >> 1), 4, opt0x, opt0y - Fixed.fromInt(10));
+            if ((frameIndex & 1) == 0) {
+                spawnShot(bullets, 19, 0, 1 + (shotLevel >> 1), 4, opt1x, opt1y - Fixed.fromInt(10));
+                spawnShot(bullets, 19, 0, 1 + (shotLevel >> 1), 4, opt0x, opt0y - Fixed.fromInt(10));
             }
             return;
         }
@@ -1401,55 +1399,55 @@ public final class Player {
         int optLv = this.optLv;
 
         if (type == SHOT_A) {
-            if ((fi & 1) != 0) {
+            if ((frameIndex & 1) != 0) {
                 return;
             }
 
             if (mode == 0) {
                 for (int i = 0; i < optLv; i++) {
-                    xaSpawn(bullets, 13, optbdir, 3, 24, optcx[i], optcy[i] - Fixed.fromInt(8));
+                    spawnShot(bullets, 13, optbdir, 3, 24, optcx[i], optcy[i] - Fixed.fromInt(8));
                 }
                 aliceTarget = -1;
             } else {
                 int optBullet = (aliceTarget != -1) ? 13 : 14;
                 for (int i = 0; i < optLv; i++) {
-                    xaSpawn(bullets, optBullet, optAimArc[i] + 270, optAimPower[i], 24, optcx[i], optcy[i] - Fixed.fromInt(8));
+                    spawnShot(bullets, optBullet, optAimArc[i] + 270, optAimPower[i], 24, optcx[i], optcy[i] - Fixed.fromInt(8));
                 }
             }
 
             int n = (mode == 0) ? 11 : 12;
             switch (shotLevel) {
                 case 0:
-                    xaSpawn(bullets, n, 0, 5, 26, cx, cy - Fixed.fromInt(10));
+                    spawnShot(bullets, n, 0, 5, 26, cx, cy - Fixed.fromInt(10));
                     return;
                 case 1:
-                    xaSpawn(bullets, n, 0, 2, 26, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, n, 0, 2, 26, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, n, 0, 2, 26, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, n, 0, 2, 26, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
                     return;
                 case 2:
                 case 3:
-                    xaSpawn(bullets, n, 0, 3, 26, cx, cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, n, 0, 1, 26, cx + Fixed.fromInt(8), cy - Fixed.fromInt(5));
-                    xaSpawn(bullets, n, 0, 1, 26, cx - Fixed.fromInt(8), cy - Fixed.fromInt(5));
+                    spawnShot(bullets, n, 0, 3, 26, cx, cy - Fixed.fromInt(10));
+                    spawnShot(bullets, n, 0, 1, 26, cx + Fixed.fromInt(8), cy - Fixed.fromInt(5));
+                    spawnShot(bullets, n, 0, 1, 26, cx - Fixed.fromInt(8), cy - Fixed.fromInt(5));
                     return;
                 case 4:
-                    xaSpawn(bullets, n, 0, 1, 26, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, n, 0, 2, 26, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
-                    xaSpawn(bullets, n, 0, 2, 26, cx + Fixed.fromInt(9), cy - Fixed.fromInt(5));
-                    xaSpawn(bullets, n, 0, 1, 26, cx - Fixed.fromInt(9), cy - Fixed.fromInt(5));
+                    spawnShot(bullets, n, 0, 1, 26, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, n, 0, 2, 26, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                    spawnShot(bullets, n, 0, 2, 26, cx + Fixed.fromInt(9), cy - Fixed.fromInt(5));
+                    spawnShot(bullets, n, 0, 1, 26, cx - Fixed.fromInt(9), cy - Fixed.fromInt(5));
                     return;
                 default:
                     return;
             }
         }
 
-        if ((fi & 1) != 0) {
+        if ((frameIndex & 1) != 0) {
             return;
         }
 
         if (mode == 0) {
             for (int i = 0; i < optLv; i++) {
-                xaSpawn(bullets, 13, 0, 3, 24, optcx[i], optcy[i] - Fixed.fromInt(8));
+                spawnShot(bullets, 13, 0, 3, 24, optcx[i], optcy[i] - Fixed.fromInt(8));
             }
         } else {
             int speed = 68;
@@ -1458,30 +1456,30 @@ public final class Player {
                     int arc = optAimArc[i];
                     int se = (int) (((long) Trig.cos(arc) * (long) speed) >> 3);
                     int te = (int) (((long) Trig.sin(arc) * (long) speed) >> 3);
-                    xaSpawn(bullets, 15, arc + 270, 3, 20, optcx[i] - se, optcy[i] - te);
+                    spawnShot(bullets, 15, arc + 270, 3, 20, optcx[i] - se, optcy[i] - te);
                 }
             }
         }
 
         switch (shotLevel) {
             case 0:
-                xaSpawn(bullets, 11, 0, 5, 26, cx, cy - Fixed.fromInt(10));
+                spawnShot(bullets, 11, 0, 5, 26, cx, cy - Fixed.fromInt(10));
                 return;
             case 1:
-                xaSpawn(bullets, 11, 0, 2, 26, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
-                xaSpawn(bullets, 11, 0, 2, 26, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                spawnShot(bullets, 11, 0, 2, 26, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                spawnShot(bullets, 11, 0, 2, 26, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
                 return;
             case 2:
             case 3:
-                xaSpawn(bullets, 11, 0, 3, 26, cx, cy - Fixed.fromInt(10));
-                xaSpawn(bullets, 11, 0, 1, 26, cx + Fixed.fromInt(8), cy - Fixed.fromInt(5));
-                xaSpawn(bullets, 11, 0, 1, 26, cx - Fixed.fromInt(8), cy - Fixed.fromInt(5));
+                spawnShot(bullets, 11, 0, 3, 26, cx, cy - Fixed.fromInt(10));
+                spawnShot(bullets, 11, 0, 1, 26, cx + Fixed.fromInt(8), cy - Fixed.fromInt(5));
+                spawnShot(bullets, 11, 0, 1, 26, cx - Fixed.fromInt(8), cy - Fixed.fromInt(5));
                 return;
             case 4:
-                xaSpawn(bullets, 11, 0, 1, 26, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
-                xaSpawn(bullets, 11, 0, 2, 26, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
-                xaSpawn(bullets, 11, 0, 2, 26, cx + Fixed.fromInt(9), cy - Fixed.fromInt(5));
-                xaSpawn(bullets, 11, 0, 1, 26, cx - Fixed.fromInt(9), cy - Fixed.fromInt(5));
+                spawnShot(bullets, 11, 0, 1, 26, cx + Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                spawnShot(bullets, 11, 0, 2, 26, cx - Fixed.fromInt(4), cy - Fixed.fromInt(10));
+                spawnShot(bullets, 11, 0, 2, 26, cx + Fixed.fromInt(9), cy - Fixed.fromInt(5));
+                spawnShot(bullets, 11, 0, 1, 26, cx - Fixed.fromInt(9), cy - Fixed.fromInt(5));
                 return;
             default:
                 return;
@@ -1535,7 +1533,7 @@ public final class Player {
         }
 
         if (sprites != null) {
-            short[] list = ANIMELIST[animeId];
+            short[] list = ANIMATION_SEQUENCES[animeId];
             int idx = animeNo * 2;
             int frame = list[idx + 1];
             if (slow) {
@@ -1552,13 +1550,12 @@ public final class Player {
         }
     }
 
-    // Player bullet table spawn helper.
-    private static void xaSpawn(BulletSystem bullets, int n, int i, int n2, int n3, int fx, int fy) {
+    private static void spawnShot(BulletSystem bullets, int shotKind, int angle, int power, int speed, int xFixed, int yFixed) {
         int baseBulletId;
         int frames;
         int moveType;
-        int shotPower = n2;
-        switch (n) {
+        int shotPower = power;
+        switch (shotKind) {
             case 0:
                 baseBulletId = 31;
                 frames = 1;
@@ -1578,7 +1575,7 @@ public final class Player {
                 baseBulletId = 60;
                 frames = 1;
                 moveType = 9;
-                shotPower = n2 + 1;
+                shotPower = power + 1;
                 break;
             case 8:
                 baseBulletId = 97;
@@ -1629,13 +1626,13 @@ public final class Player {
                 return;
         }
 
-        int ang = BattleMath.normalizeDeg(i + 270);
-        if (n == 15) {
+        int ang = BattleMath.normalizeDeg(angle + 270);
+        if (shotKind == 15) {
             int d0 = ang % 360;
             int frame = 15 - (((d0 / 22) + 11) & 0xF);
             baseBulletId += frame;
         }
-        bullets.spawnPlayerEx(baseBulletId, frames, moveType, ang, n3, fx, fy, shotPower);
+        bullets.spawnPlayerEx(baseBulletId, frames, moveType, ang, speed, xFixed, yFixed, shotPower);
     }
 
     // Find the closest valid Alice target by X distance.
@@ -1672,7 +1669,7 @@ public final class Player {
     }
 
     // Animation frame table.
-    private static final short[][] ANIMELIST = new short[][] {
+    private static final short[][] ANIMATION_SEQUENCES = new short[][] {
         { 1, 0, 1, 1, 1, 2, 1, 1 },
         { 3, 3 },
         { 3, 4 },
