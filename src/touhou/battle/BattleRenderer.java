@@ -922,10 +922,17 @@ public final class BattleRenderer {
         if (!heavy) {
             g.drawImage(stage6CacheBaseImg, 0, 0, Graphics.TOP | Graphics.LEFT);
             int scroll = (a.bgMoveSpd() >> 1) % stage6CacheOverlayH;
+            int tileWidth = stage6CacheOverlayImg.getWidth();
             int x0 = PLAY_X + a.originX();
-            int y0 = PLAY_Y + a.originY() + scroll;
-            g.drawImage(stage6CacheOverlayImg, x0, y0, Graphics.TOP | Graphics.LEFT);
-            g.drawImage(stage6CacheOverlayImg, x0, y0 - stage6CacheOverlayH, Graphics.TOP | Graphics.LEFT);
+            int y0 = PLAY_Y + (a.originY() + scroll) % stage6CacheOverlayH;
+            if (y0 > PLAY_Y) {
+                y0 -= stage6CacheOverlayH;
+            }
+            for (int y = y0; y < PLAY_Y + PLAY_H; y += stage6CacheOverlayH) {
+                for (int x = x0; x < PLAY_X + PLAY_W; x += tileWidth) {
+                    g.drawImage(stage6CacheOverlayImg, x, y, Graphics.TOP | Graphics.LEFT);
+                }
+            }
             return;
         }
 

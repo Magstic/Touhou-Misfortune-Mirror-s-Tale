@@ -41,7 +41,8 @@ public final class AdditiveBackground {
         }
         byte[] bg = base.pixels, over = overlay.pixels;
         int[] lookup = colors, out = output;
-        int left = Math.max(0, originX), right = Math.min(WIDTH, originX + overlay.width);
+        int left = Math.max(0, originX);
+        int startX = (left - originX) % overlay.width;
         int index = 0;
         for (int y = 0; y < HEIGHT; y++) {
             int b = (8 + y) * base.width;
@@ -49,16 +50,20 @@ public final class AdditiveBackground {
             if (sy < 0) {
                 sy += overlay.height;
             }
-            int s = sy * overlay.width + left - originX;
+            int row = sy * overlay.width;
             int x = 0;
             for (; x < left; x++) {
                 out[index++] = lookup[(bg[b++] & 255) * count];
             }
-            for (; x < right; x++) {
-                out[index++] = lookup[(bg[b++] & 255) * count + (over[s++] & 255)];
-            }
-            for (; x < WIDTH; x++) {
-                out[index++] = lookup[(bg[b++] & 255) * count];
+            // Wrap at tile boundaries without a modulo in the pixel loop.
+            int sx = startX;
+            while (x < WIDTH) {
+                int end = Math.min(WIDTH, x + overlay.width - sx);
+                int s = row + sx;
+                for (; x < end; x++) {
+                    out[index++] = lookup[(bg[b++] & 255) * count + (over[s++] & 255)];
+                }
+                sx = 0;
             }
         }
         g.drawRGB(out, 0, WIDTH, 0, 8, WIDTH, HEIGHT, false);
