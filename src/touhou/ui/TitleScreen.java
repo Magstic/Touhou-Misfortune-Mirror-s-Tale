@@ -3,6 +3,7 @@ package touhou.ui;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
+import touhou.GameOptions;
 import touhou.ImageBank;
 import touhou.SpriteRenderer;
 import touhou.SpriteSheetCatalog;
@@ -34,11 +35,14 @@ public final class TitleScreen {
     private static final int ITEM_OPTIONS = 7;
     private static final int ITEM_QUIT = 8;
     private static final int ITEM_COUNT = 9;
+    private static final int NOTICE_TOP_H = 34;
+    private static final int NOTICE_BOTTOM_H = 6;
 
     private int count;
     private int cursor;
     private boolean extraUnlocked;
     private boolean spellPracticeUnlocked;
+    private String[] noticeLines;
 
     public TitleScreen() {
         reset();
@@ -49,6 +53,11 @@ public final class TitleScreen {
         cursor = 0;
         extraUnlocked = UnlockFlags.isExtraUnlocked();
         spellPracticeUnlocked = UnlockFlags.isSpellPracticeUnlocked();
+        noticeLines = null;
+        if (GameOptions.consumeLowMemoryNotice()) {
+            noticeLines = UiTextLayout.wrap(UiText.get(TextId.STARTUP_LOW_MEMORY_DETECTED) + "\n"
+                    + UiText.get(TextId.STARTUP_EFFECTS_REDUCED), 184, new FontTextMeasurer());
+        }
     }
 
     public void onReturnToTitle() {
@@ -60,9 +69,17 @@ public final class TitleScreen {
         }
     }
 
-    public int update(int pressed) {
+    public int update(int pressed, ImageBank images) {
         if (count < 8) {
             count++;
+        }
+
+        if (noticeLines != null) {
+            if (UiInput.dismiss(pressed) || UiInput.secondary(pressed)) {
+                noticeLines = null;
+                images.release(SpriteSheetCatalog.STARTUP_NOTICE_IMAGE);
+            }
+            return ACTION_NONE;
         }
 
         if (UiInput.cancel(pressed)) {
@@ -108,6 +125,14 @@ public final class TitleScreen {
         }
 
         return ACTION_NONE;
+    }
+
+    public int getLeftSoftkeyTextId() {
+        return noticeLines == null ? TextId.SOFTKEY_HELP : TextId.SOFTKEY_OK;
+    }
+
+    public int getRightSoftkeyTextId() {
+        return noticeLines == null ? TextId.SOFTKEY_STORY : -1;
     }
 
     private int nextCursor(int cur, int delta) {
@@ -179,5 +204,32 @@ public final class TitleScreen {
         }
 
         UiDraw.drawString2(g, null, UiText.get(TextId.TITLE_DESC_0 + cursor), 120, 233, 1, 0x8F7FFF, 0x2F4F7F);
+        if (noticeLines != null) {
+            renderNotice(g, imgs.get(SpriteSheetCatalog.STARTUP_NOTICE_IMAGE));
+        }
+    }
+
+    private void renderNotice(Graphics g, Image background) {
+        int lineH = 20;
+        int boxW = background.getWidth();
+        int boxH = noticeLines.length * lineH + NOTICE_TOP_H + 16;
+        int x = (240 - boxW) >> 1;
+        int y = (240 - boxH) >> 1;
+        int middleH = background.getHeight() - NOTICE_TOP_H - NOTICE_BOTTOM_H;
+        int bottomY = boxH - NOTICE_BOTTOM_H;
+
+        UiDraw.drawRegion(g, background, x, y, 0, 0, boxW, NOTICE_TOP_H);
+        for (int offset = NOTICE_TOP_H; offset < bottomY; offset += middleH) {
+            int h = Math.min(middleH, bottomY - offset);
+            UiDraw.drawRegion(g, background, x, y + offset, 0, NOTICE_TOP_H, boxW, h);
+        }
+        UiDraw.drawRegion(g, background, x, y + bottomY, 0, background.getHeight() - NOTICE_BOTTOM_H,
+                boxW, NOTICE_BOTTOM_H);
+
+        int textH = (noticeLines.length - 1) * lineH + UiDraw.fontHeight(null);
+        int textY = y + ((boxH - textH) >> 1) + UiDraw.fontBaseline(null);
+        for (int i = 0; i < noticeLines.length; i++) {
+            UiDraw.drawStringPlain(g, null, noticeLines[i], 120, textY + i * lineH, 1, 0xF3F1FF);
+        }
     }
 }

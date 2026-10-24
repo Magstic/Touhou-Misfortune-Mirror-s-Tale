@@ -9,6 +9,7 @@ public final class SpriteSheetCatalog {
     public static final int EXTRA_DIFFICULTY_IMAGE = 8;
     public static final int MENU_BACKGROUND_IMAGE = 37;
     public static final int ICE_BACKGROUND_IMAGE = 83;
+    public static final int STARTUP_NOTICE_IMAGE = 141;
     public static final int ITEM_SCORE = 111;
     public static final int ITEM_POWER = 120;
     public static final int ITEM_BIG_POWER = 129;

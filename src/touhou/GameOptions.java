@@ -2,6 +2,8 @@ package touhou;
 
 public final class GameOptions {
     private static final int SP_OFFSET = 3;
+    private static final long LOW_MEMORY_HEAP_BYTES = 2L * 1024L * 1024L;
+    private static boolean lowMemoryNoticePending;
 
     public static final int SIZE = 16;
 
@@ -180,8 +182,18 @@ public final class GameOptions {
             return opt;
         }
         int[] def = defaults();
+        if (Runtime.getRuntime().totalMemory() <= LOW_MEMORY_HEAP_BYTES) {
+            def[IDX_RENDER_MISC_FLAGS] |= RENDER_HEAVY_BG_OFF | RENDER_BLIND_MASK_NO_FADE | RENDER_HIT_SPARK_OFF;
+            lowMemoryNoticePending = true;
+        }
         saveToSp(def);
         return def;
+    }
+
+    public static boolean consumeLowMemoryNotice() {
+        boolean pending = lowMemoryNoticePending;
+        lowMemoryNoticePending = false;
+        return pending;
     }
 
     public static void save(int[] opt) {

@@ -203,7 +203,7 @@ public final class UiController {
     }
 
     private void updateTitle(int pressed) {
-        int action = title.update(pressed);
+        int action = title.update(pressed, images);
         if (action == TitleScreen.ACTION_START) {
             openStartSetup(BattleSessionConfig.MODE_STORY);
         } else if (action == TitleScreen.ACTION_EXTRA_START) {
@@ -553,7 +553,7 @@ public final class UiController {
             case STATE_STARTUP_LANGUAGE:
                 return TextId.SOFTKEY_OK;
             case STATE_TITLE:
-                return TextId.SOFTKEY_HELP;
+                return title.getLeftSoftkeyTextId();
             case STATE_REPLAY_RECEIVE:
                 return replayReceive.getLeftSoftkeyTextId();
             case STATE_REPLAY_SEND:
@@ -568,7 +568,7 @@ public final class UiController {
     public int getRightSoftkeyTextId() {
         switch (state) {
             case STATE_TITLE:
-                return TextId.SOFTKEY_STORY;
+                return title.getRightSoftkeyTextId();
             case STATE_STORY:
                 return TextId.SOFTKEY_NEXT;
             case STATE_SPELL_PRACTICE:

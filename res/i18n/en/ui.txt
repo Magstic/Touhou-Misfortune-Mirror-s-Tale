@@ -633,3 +633,6 @@ Skip
 OK
 Next
 Cancel
+
+Your device has limited performance.
+Some visual effects have been disabled automatically.

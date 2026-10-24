@@ -692,6 +692,10 @@ public final class TextId {
     public static final int SOFTKEY_NEXT = 633;
     public static final int SOFTKEY_CANCEL = 634;
 
+    // First-run compatibility notice
+    public static final int STARTUP_LOW_MEMORY_DETECTED = 636;
+    public static final int STARTUP_EFFECTS_REDUCED = 637;
+
     private TextId() {
     }
 }
