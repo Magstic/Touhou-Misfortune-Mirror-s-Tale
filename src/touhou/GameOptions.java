@@ -3,6 +3,7 @@ package touhou;
 public final class GameOptions {
     private static final int SP_OFFSET = 3;
     private static final long LOW_MEMORY_HEAP_BYTES = 2L * 1024L * 1024L;
+    private static final int HEAP_PROBE_BLOCK_BYTES = 64 * 1024;
     private static boolean lowMemoryNoticePending;
 
     public static final int SIZE = 16;
@@ -183,12 +184,38 @@ public final class GameOptions {
             return opt;
         }
         int[] def = defaults();
-        if (Runtime.getRuntime().totalMemory() <= LOW_MEMORY_HEAP_BYTES) {
+        if (hasLowMemoryHeap()) {
             def[IDX_RENDER_MISC_FLAGS] |= RENDER_HEAVY_BG_OFF | RENDER_BLIND_MASK_NO_FADE | RENDER_HIT_SPARK_OFF;
             lowMemoryNoticePending = true;
         }
         saveToSp(def);
         return def;
+    }
+
+    private static boolean hasLowMemoryHeap() {
+        Runtime runtime = Runtime.getRuntime();
+        if (runtime.totalMemory() > LOW_MEMORY_HEAP_BYTES) {
+            return false;
+        }
+
+        // totalMemory is the current allocation on dynamic heaps such as S60's.
+        byte[][] probe = new byte[(int) (LOW_MEMORY_HEAP_BYTES / HEAP_PROBE_BLOCK_BYTES) + 1][];
+        try {
+            for (int i = 0; i < probe.length; i++) {
+                probe[i] = new byte[HEAP_PROBE_BLOCK_BYTES];
+                if (runtime.totalMemory() > LOW_MEMORY_HEAP_BYTES) {
+                    return false;
+                }
+            }
+            return false;
+        } catch (OutOfMemoryError e) {
+            return true;
+        } finally {
+            for (int i = 0; i < probe.length; i++) {
+                probe[i] = null;
+            }
+            runtime.gc();
+        }
     }
 
     public static boolean consumeLowMemoryNotice() {
