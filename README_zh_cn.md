@@ -2,6 +2,10 @@
 
 # 東方氷幻鏡 ～ Misfortune Mirror's Tale
 
+> [!NOTE]
+> 东方冰幻镜正在重制中！
+> 请见 Ciena 在 X 上的推文：[Tweet](https://x.com/ciena_game/status/2073778918889558485)
+
 ## Info
 
 基于《东方冰幻镜 Plus V1.0.3》进行移植。
@@ -88,6 +92,7 @@
 
 - SilentTalk：构建与性能优化的技术支持
 
+---
 
 ## Thanks
 
@@ -103,10 +108,20 @@
 
 ## About
 
-本项目为《東方氷幻鏡 ～ Misfortune Mirror's Tale》的衍生作品。
+本项目是基于原游戏反编译逻辑的 MIDP 移植作品。
 
-《東方氷幻鏡 ～ Misfortune Mirror's Tale》是《东方 Project》的衍生作品，由同人社团 L-Garden & トッパツプラン 开发，版权归 L-Garden 所有。
+《東方氷幻鏡 ～ Misfortune Mirror's Tale》是《东方 Project》的衍生作品，由同人社团 L-Garden & トッパツプラン 开发。原游戏及《东方 Project》的相关权利分别归各自权利人所有。
 
 若您是 L-Garden 所属，且不希望这种行为，我深感歉意，并随时欢迎使用[主页](https://magstic.art/)的 Email 联系我。
 
-### 若您有兴趣，可 Clone 到本地自行编译游玩，但 **禁止任何形式的 JAR 分发**。
+---
+
+## License
+
+移植版中新增的部分采用[自定义许可协议](LICENSE)。
+
+允许源码阅览、修改及个人构建，但 **禁止以任何形式分发本项目的游戏 JAR，包括修改及重新打包的版本**。
+
+协议以繁体中文正文为准。
+
+原作及其他第三方内容依各自授权处理。各部分的来源、归属与授权状态见[来源与权利清单](docs/provenance.md)。

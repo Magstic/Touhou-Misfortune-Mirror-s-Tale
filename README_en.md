@@ -2,6 +2,10 @@
 
 # 東方氷幻鏡 ～ Misfortune Mirror's Tale
 
+> [!NOTE]
+> Touhou Hyougenkyou is being remade!
+> See Ciena's post on X: [Tweet](https://x.com/ciena_game/status/2073778918889558485)
+
 ## Info
 
 Ported from "Touhou Hyougenkyou Plus V1.0.3".
@@ -88,6 +92,7 @@ Building this project requires no IDE or SDK installation. The `build.xml` inclu
 
 - SilentTalk: technical support for builds and performance optimization
 
+---
 
 ## Thanks
 
@@ -103,10 +108,20 @@ Building this project requires no IDE or SDK installation. The `build.xml` inclu
 
 ## About
 
-This project is a derivative work of "東方氷幻鏡 ～ Misfortune Mirror's Tale".
+This project is a MIDP port based on decompiled logic from the original game.
 
-"東方氷幻鏡 ～ Misfortune Mirror's Tale" is a fan-made derivative of the Touhou Project, developed by doujin circles L-Garden & トッパツプラン. All rights belong to L-Garden.
+"東方氷幻鏡 ～ Misfortune Mirror's Tale" is a Touhou Project fan game developed by L-Garden & トッパツプラン. Rights in the original game and Touhou Project remain with their respective holders.
 
 If you are affiliated with L-Garden and do not wish for this project to exist, I sincerely apologize and welcome you to contact me anytime via the Email on my [homepage](https://magstic.art/).
 
-### You are welcome to clone and build locally for personal play, but **redistribution of JAR files in any form is strictly prohibited**.
+---
+
+## License
+
+Port-specific additions are covered by a [custom license](LICENSE).
+
+Source inspection, modification, and personal builds are permitted, but **distribution of this project's game JARs in any form, including modified or repackaged versions, is prohibited**.
+
+The Traditional Chinese license text is authoritative.
+
+Original-game and other third-party content remain subject to their respective licenses. Sources, ownership, and permission status are listed in the [provenance and rights inventory](docs/provenance.md) (Traditional Chinese).
