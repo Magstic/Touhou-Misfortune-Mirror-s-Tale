@@ -88,7 +88,7 @@
         <javac srcdir="${src.dir}" destdir="${tools.classes.dir}" encoding="UTF-8" includeantruntime="false"
                includes="touhou/i18n/I18nSchema.java,touhou/i18n/TextId.java"/>
         <javac srcdir="tools" destdir="${tools.classes.dir}" encoding="UTF-8" includeantruntime="false"
-               includes="I18nPackBuilder.java,FontDatBuilder.java">
+               includes="I18nPackBuilder.java,FontDatBuilder.java,SpriteVariantBuilder.java">
             <classpath><pathelement location="${tools.classes.dir}"/></classpath>
         </javac>
     </target>
@@ -113,7 +113,15 @@
         </java>
     </target>
 
-    <target name="resources" depends="i18n-pack"/>
+    <target name="sprite-variants" depends="prepare-generated-resources">
+        <java classname="SpriteVariantBuilder" fork="true" failonerror="true">
+            <classpath><pathelement location="${tools.classes.dir}"/></classpath>
+            <arg value="${basedir}"/>
+            <arg value="${generated.res.dir}/sp"/>
+        </java>
+    </target>
+
+    <target name="resources" depends="i18n-pack,sprite-variants"/>
 
     <target name="jar" depends="compile,resources">
         <delete file="${build.dir}/raw.jar" failonerror="false"/>

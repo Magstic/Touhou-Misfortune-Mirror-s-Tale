@@ -6,8 +6,6 @@ import javax.microedition.lcdui.Image;
 
 public final class ImageBank {
     private static final int PNG_PALETTE = 0x504C5445;
-    private static final int PNG_TRANSPARENCY = 0x74524E53;
-    private static final int PNG_IMAGE_DATA = 0x49444154;
     private static final int[][] STAGEEX_TD = new int[][] {
         { 0x0E7625, 0x109325, 0x104C26, 0x0EB71B, 0x12A627, 0x0E8323, 0x16CE2A, 0x0C6322, 0x17EC28, 0x13D920, 0x10F90C, 0x22C44E, 0x26D356,
             0x0A4621, 0x083F1D, 0x073C1B },
@@ -85,9 +83,17 @@ public final class ImageBank {
             return cached;
         }
         try {
-            Image img = catalog.variantBase(imgIndex) >= 0 || darkness[imgIndex] != 0 || tints[imgIndex] != 0 || opacity[imgIndex] != 255
-                    ? buildPaletteImage(imgIndex)
-                    : Image.createImage(catalog.imagePath(imgIndex));
+            Image img;
+            if (opacity[imgIndex] != 255) {
+                // N86 dithers indexed PNG alpha; load the RGBA variant prepared at build time.
+                String path = catalog.imagePath(imgIndex);
+                path = path.substring(0, path.length() - 4) + "_a" + opacity[imgIndex] + "_d" + darkness[imgIndex] + ".png";
+                img = Image.createImage(path);
+            } else {
+                img = catalog.variantBase(imgIndex) >= 0 || darkness[imgIndex] != 0 || tints[imgIndex] != 0
+                        ? buildPaletteImage(imgIndex)
+                        : Image.createImage(catalog.imagePath(imgIndex));
+            }
             images[imgIndex] = img;
             return img;
         } catch (IOException e) {
@@ -359,38 +365,7 @@ public final class ImageBank {
         if (!applyPngPalette(png, palette, darkness[imgIndex], tints[imgIndex])) {
             throw new IOException("Missing PNG palette: " + imgIndex);
         }
-        if (opacity[imgIndex] != 255) {
-            png = applyPngOpacity(png, opacity[imgIndex]);
-        }
         return Image.createImage(png, 0, png.length);
-    }
-
-    /** Scale indexed transparency before decoding, without an opaque image or full-size ARGB buffer. */
-    private static byte[] applyPngOpacity(byte[] png, int alpha) {
-        int offset = 8, colors = 0;
-        while (true) {
-            int length = readPngInt(png, offset);
-            int type = readPngInt(png, offset + 4);
-            if (type == PNG_PALETTE) {
-                colors = length / 3;
-            }
-            if (type == PNG_TRANSPARENCY || type == PNG_IMAGE_DATA) {
-                int oldLength = type == PNG_TRANSPARENCY ? length : 0;
-                int oldSize = type == PNG_TRANSPARENCY ? length + 12 : 0;
-                byte[] result = new byte[png.length - oldSize + colors + 12];
-                System.arraycopy(png, 0, result, 0, offset);
-                writePngInt(result, offset, colors);
-                writePngInt(result, offset + 4, PNG_TRANSPARENCY);
-                for (int i = 0; i < colors; i++) {
-                    int originalAlpha = i < oldLength ? png[offset + 8 + i] & 255 : 255;
-                    result[offset + 8 + i] = (byte) (originalAlpha * alpha / 255);
-                }
-                updatePngCrc(result, offset, colors);
-                System.arraycopy(png, offset + oldSize, result, offset + colors + 12, png.length - offset - oldSize);
-                return result;
-            }
-            offset += length + 12;
-        }
     }
 
     private static boolean applyPngPalette(byte[] pngBytes, int[] palette, int levels, int tint) {
