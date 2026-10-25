@@ -48,11 +48,7 @@ Recommended: customized [**FreeJ2ME-Plus**](https://github.com/Magstic/freej2me-
 
 ### Android
 
-[JL-MOD](https://github.com/woesss/JL-Mod/releases) with custom SF2 soundfont support is the top choice.
-
-Of course, I guarantee you won't enjoy playing an STG by tapping glass, let alone the still-garbage mixing on Android even with SF2 lol.
-
-JL-MOD's JSR-82 implementation also has some issues.
+I don't recommend playing on Android: tapping glass is uncomfortable, and its built-in SONiVOX also performs very poorly at MIDI synthesis.
 
 ---
 
@@ -60,11 +56,9 @@ JL-MOD's JSR-82 implementation also has some issues.
 
 The game has received numerous optimizations for real devices.
 
-The performance bottleneck is unrelated to heap size: rendering a rain of bullets inevitably consumes most of the CPU's processing power.
+Especially S40 V5: its hardware-assisted JVM interpretation is much faster than S60 V3's. Even with a smaller heap and a weaker CPU, Easy, Normal, Hard, and Extra run very smoothly with fancy backgrounds disabled (to avoid OOM) and SFX turned off!
 
-The current optimization target is reasonably smooth play on Easy, Normal, and Hard using S60 V3 devices. Some Sony Ericsson models can achieve this too.
-
-S40 V5 benefits from hardware-assisted JVM interpretation. Even with a smaller heap and a weaker CPU, Easy and Normal can be played reasonably smoothly with alpha rendering disabled.
+This also applies to some Sony Ericsson models.
 
 ---
 
