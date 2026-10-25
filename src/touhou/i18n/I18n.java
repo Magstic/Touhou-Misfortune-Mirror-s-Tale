@@ -9,8 +9,9 @@ public final class I18n {
     public static final int LANG_JA = 0;
     public static final int LANG_EN = 1;
     public static final int LANG_ZHT = 2;
+    public static final int LANG_ZHS = 3;
 
-    private static final String[] LANG_CODES = new String[] { "ja", "en", "zht" };
+    private static final String[] LANG_CODES = new String[] { "ja", "en", "zht", "zhs" };
 
     private static int languageId = LANG_JA;
 
@@ -30,6 +31,14 @@ public final class I18n {
 
     public static String getLanguageCode() {
         return LANG_CODES[languageId];
+    }
+
+    public static int getLanguageCount() {
+        return LANG_CODES.length;
+    }
+
+    public static boolean isChinese() {
+        return languageId == LANG_ZHT || languageId == LANG_ZHS;
     }
 
     public static String loadText(String relativePath) {

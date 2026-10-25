@@ -72,7 +72,7 @@ DoJa 版《東方氷幻鏡 Plus》1.0.3：
 | `res/icon.png` | 原作內容 | 經 `icon48.gif` 轉檔 |
 | `res/sp/000.png` 至 `126.png` | 原作衍生 | 原版圖像的拆分、裁切、調色、索引色轉換及重編號 |
 | `res/sp/043_zh.png`、`057_zh.png`、`069_zh.png`、`089_zh.png`、`094_zh.png`、`109_zh.png`、`116_zh.png` | 混合來源 | 原版開幕文字的中文翻譯修圖，與新增美術編排 |
-| `res/sp/127.png` | 移植新增 | 語言選擇圖的編排與文字製作，使用字型為 Fusion Pixel 12Px（OFL1.1 許可） |
+| `res/sp/127_ja.png`、`127_en.png`、`127_zht.png`、`127_zhs.png` | 移植新增 | 語言選擇圖的編排與文字製作，使用字型為 Fusion Pixel 12Px（OFL1.1 許可） |
 | `res/sp/128.png`、`129.png` | 移植新增 | 維護者自行繪製的軟鍵背景及初始化提示框 |
 | `res/bgm/**` | 原作衍生 | 原遊戲 MLD 音樂的 MIDI 轉換，含前奏/循環分段 |
 | `res/bgm-lite/**` | 原作衍生 | 上述 MIDI 刪減聲部的簡化版本 |
@@ -81,7 +81,7 @@ DoJa 版《東方氷幻鏡 Plus》1.0.3：
 | `res/i18n/ja/dialog/**`、`spcard.dat`、`sprac.dat` | 原作內容 | 日文對話及符卡資料的編碼轉換/整理 |
 | `res/i18n/ja/story.txt` | 原作內容 | L-Garden 官網 Story 文字的整理 |
 | `res/i18n/ja/ending_*.txt` | 原作內容 | 原遊戲結局文字的移植整理 |
-| `res/i18n/en/**`、`res/i18n/zht/**` | 混合來源 | 原版內容的翻譯、校訂及移植新增文字 |
+| `res/i18n/en/**`、`res/i18n/zht/**`、`res/i18n/zhs/**` | 混合來源 | 原版內容的翻譯、校訂及移植新增文字 |
 | `res/i18n/*/ui.txt` | 混合來源 | 原版 UI/製作名單，翻譯與新增設定、檔案操作及相容性提示文字 |
 
 

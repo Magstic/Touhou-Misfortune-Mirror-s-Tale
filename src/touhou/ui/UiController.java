@@ -429,7 +429,9 @@ public final class UiController {
         switch (nextState) {
             case STATE_STARTUP_LANGUAGE:
                 sheets = new int[] { SpriteSheetCatalog.TITLE_BACKGROUND_IMAGE, SpriteSheetCatalog.TITLE_GLYPHS_IMAGE,
-                    SpriteSheetCatalog.TITLE_CAPTION_IMAGE, SpriteSheetCatalog.TITLE_PORTRAIT_IMAGE, 127 };
+                    SpriteSheetCatalog.TITLE_CAPTION_IMAGE, SpriteSheetCatalog.TITLE_PORTRAIT_IMAGE,
+                    SpriteSheetCatalog.LANGUAGE_JA_IMAGE, SpriteSheetCatalog.LANGUAGE_EN_IMAGE,
+                    SpriteSheetCatalog.LANGUAGE_ZHT_IMAGE, SpriteSheetCatalog.LANGUAGE_ZHS_IMAGE };
                 break;
             case STATE_TITLE:
             case STATE_QUIT:

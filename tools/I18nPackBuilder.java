@@ -23,7 +23,7 @@ import touhou.i18n.TextId;
 public final class I18nPackBuilder {
     private static final int FORMAT_MAGIC = 0x4931384E; // 'I18N'
     private static final int FORMAT_VERSION = 1;
-    private static final String[] DEFAULT_LANGUAGES = new String[] { "en", "ja", "zht" };
+    private static final String[] DEFAULT_LANGUAGES = new String[] { "en", "ja", "zht", "zhs" };
 
     private I18nPackBuilder() {
     }
@@ -226,7 +226,8 @@ public final class I18nPackBuilder {
     }
 
     private static byte[] buildFont(File root, String language, File scanDirectory) throws Exception {
-        File fontFile = new File(new File(root, "font"), "ja".equals(language) ? "ja.ttf" : "zh_hant.ttf");
+        String fontName = "ja".equals(language) ? "ja.ttf" : "zhs".equals(language) ? "zh_hans.ttf" : "zh_hant.ttf";
+        File fontFile = new File(new File(root, "font"), fontName);
         File generated = new File(new File(new File(root, "build"), "i18n-font"), language + "-font.dat");
         FontDatBuilder.BuildConfig config = new FontDatBuilder.BuildConfig();
         config.ttfFile = fontFile;

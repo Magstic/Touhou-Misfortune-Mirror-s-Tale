@@ -153,7 +153,7 @@ Touhou_Misfortune_MirrorS_Tale/
 │   ├── icon.png                     #   MIDlet icon
 │   ├── cc.dat                       #   Sprite crop table (spriteId -> imgIndex + srcRect + anchor)
 │   ├── stage.dat                    #   Stage wave script (enemy type, position, timing)
-│   ├── sp/                          #   128 indexed 8-bit PNG sprite sheets: 000.png ~ 127.png; image indices 128–133 are runtime-generated StageEX variants
+│   ├── sp/                          #   Indexed 8-bit PNG sprite sheets; language labels split into 127_ja/en/zht/zhs.png
 │   ├── bgm/                         #   Source MIDI, tracks 0–17 (packed, not copied into the JAR)
 │   │   ├── <id>/intro.mid + loop.mid #     Split looping track
 │   │   └── <id>.mid                  #     Single-file track
@@ -168,7 +168,7 @@ Touhou_Misfortune_MirrorS_Tale/
 │   │   ├── pause.wav                #     Pause
 │   │   └── cd.wav                   #     Countdown
 │   └── i18n/                        #   Localization source (per-language)
-│       ├── en/ ja/ zht/             #     Each contains:
+│       ├── en/ ja/ zht/ zhs/        #     Each contains:
 │       │   ├── ui.txt               #       UI text lines (indexed by TextId)
 │       │   ├── story.txt            #       Story text
 │       │   ├── ending_*.txt         #       Per-character ending text
@@ -447,7 +447,7 @@ flowchart LR
 |------|--------|------|
 | `res/cc.dat` | CC01 binary, packaged unchanged | Image table and all 891 sprite records (13 shorts each); the sole filename/geometry/reflection definition |
 | `res/stage.dat` | Binary | Stage wave script: enemy type, position, timing, formation |
-| `res/sp/*.png` | Indexed 8-bit PNGs, packaged unchanged | 128 sprite sheets, 000.png ~ 127.png; each filename matches its image index. Indices 128–133 are runtime-generated StageEX variants. |
+| `res/sp/*.png` | Indexed 8-bit PNGs, packaged unchanged | Sprite sheets include separate `127_ja.png`, `127_en.png`, `127_zht.png` and `127_zhs.png` language labels; filenames and image indices are mapped by `cc.dat`. Indices 128–133 are runtime-generated StageEX variants. |
 | `res/se/*.wav` | WAV | Sound effects |
 | `res/bgm/` | MIDI | Tracks 0–17, packaged unchanged as individual `id.mid` or `id/intro.mid + loop.mid` resources |
 | `res/bgm-lite/` | MIDI | Lite battle tracks 1–14 and 17; edited source files are packaged unchanged |

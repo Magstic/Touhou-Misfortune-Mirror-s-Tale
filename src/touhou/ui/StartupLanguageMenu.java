@@ -6,6 +6,7 @@ import touhou.GameOptions;
 import touhou.ImageBank;
 import touhou.SpriteRenderer;
 import touhou.SpriteSheetCatalog;
+import touhou.i18n.I18n;
 import touhou.i18n.I18nBootstrap;
 
 public final class StartupLanguageMenu {
@@ -31,7 +32,7 @@ public final class StartupLanguageMenu {
 
         int[] opt = GameOptions.load();
         cursor = opt[GameOptions.IDX_LANGUAGE];
-        if (cursor < 0 || cursor >= 3) {
+        if (cursor < 0 || cursor >= I18n.getLanguageCount()) {
             cursor = 0;
         }
     }
@@ -42,9 +43,9 @@ public final class StartupLanguageMenu {
         }
 
         if (UiInput.down(pressed)) {
-            cursor = MenuCursor.move(cursor, 1, 3);
+            cursor = MenuCursor.move(cursor, 1, I18n.getLanguageCount());
         } else if (UiInput.up(pressed)) {
-            cursor = MenuCursor.move(cursor, -1, 3);
+            cursor = MenuCursor.move(cursor, -1, I18n.getLanguageCount());
         } else if (UiInput.dismiss(pressed) || UiInput.secondary(pressed)) {
             commit();
             return true;
@@ -90,10 +91,10 @@ public final class StartupLanguageMenu {
         UiDraw.fillRectAlpha(g, 0, 0, 240, 240, TINT_RGB, TINT_ALPHA);
 
         int menuAreaH = TITLE_MENU_STEP * TITLE_MENU_ROWS;
-        int listH = ITEM_H + (ITEM_STEP_Y * 2);
+        int listH = ITEM_H + ITEM_STEP_Y * (I18n.getLanguageCount() - 1);
         int y0 = TITLE_MENU_Y0 + ((menuAreaH - listH) >> 1);
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < I18n.getLanguageCount(); i++) {
             int x;
             if ((i & 1) == 0) {
                 x = 143 - i * 3 + wob + 8;
@@ -102,7 +103,13 @@ public final class StartupLanguageMenu {
             }
             int y = y0 + i * ITEM_STEP_Y;
 
-            sprites.draw(g, SpriteSheetCatalog.LANGUAGE_ITEM_BASE + (i == cursor ? 3 : 0) + i, x, y);
+            int spriteId;
+            if (i == I18n.LANG_ZHS) {
+                spriteId = SpriteSheetCatalog.SIMPLIFIED_LANGUAGE_ITEM_BASE + (i == cursor ? 1 : 0);
+            } else {
+                spriteId = SpriteSheetCatalog.LANGUAGE_ITEM_BASE + (i == cursor ? 3 : 0) + i;
+            }
+            sprites.draw(g, spriteId, x, y);
         }
     }
 

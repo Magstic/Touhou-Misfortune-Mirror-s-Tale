@@ -9,7 +9,11 @@ public final class SpriteSheetCatalog {
     public static final int EXTRA_DIFFICULTY_IMAGE = 8;
     public static final int MENU_BACKGROUND_IMAGE = 37;
     public static final int ICE_BACKGROUND_IMAGE = 83;
+    public static final int LANGUAGE_JA_IMAGE = 127;
     public static final int STARTUP_NOTICE_IMAGE = 141;
+    public static final int LANGUAGE_EN_IMAGE = 142;
+    public static final int LANGUAGE_ZHT_IMAGE = 143;
+    public static final int LANGUAGE_ZHS_IMAGE = 144;
     public static final int ITEM_SCORE = 111;
     public static final int ITEM_POWER = 120;
     public static final int ITEM_BIG_POWER = 129;
@@ -54,7 +58,8 @@ public final class SpriteSheetCatalog {
     public static final int CLOCK_FACE = MASK_BASE + 2;
     public static final int BOMB_PORTRAIT_BASE = CLOCK_FACE + 1;
     public static final int CHINESE_OPENING_BASE = BOMB_PORTRAIT_BASE + 3;
-    public static final int SPRITE_COUNT = CHINESE_OPENING_BASE + 7 * 3;
+    public static final int SIMPLIFIED_LANGUAGE_ITEM_BASE = CHINESE_OPENING_BASE + 7 * 3;
+    public static final int SPRITE_COUNT = SIMPLIFIED_LANGUAGE_ITEM_BASE + 2;
 
     private SpriteSheetCatalog() {
     }

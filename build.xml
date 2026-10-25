@@ -109,6 +109,7 @@
             <arg value="en"/>
             <arg value="ja"/>
             <arg value="zht"/>
+            <arg value="zhs"/>
         </java>
     </target>
 

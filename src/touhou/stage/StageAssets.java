@@ -55,7 +55,7 @@ public final class StageAssets {
             boolean bossOnly, int[] options) {
         this.stage = stage;
         openingImages = OPENINGS[stage];
-        if (I18n.getLanguageId() == I18n.LANG_ZHT) {
+        if (I18n.isChinese()) {
             openingImages = new int[] {
                 sprites.getImageIndex(SpriteSheetCatalog.CHINESE_OPENING_BASE + stage * 3), OPENINGS[stage][1]
             };

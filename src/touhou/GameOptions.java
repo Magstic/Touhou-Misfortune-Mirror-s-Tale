@@ -28,6 +28,7 @@ public final class GameOptions {
     public static final int LANG_JA = 0;
     public static final int LANG_EN = 1;
     public static final int LANG_ZHT = 2;
+    public static final int LANG_ZHS = 3;
 
     // Rendering and debug switches packed into opt[3].
     private static final int IDX_RENDER_FLAGS = 3;
@@ -284,7 +285,7 @@ public final class GameOptions {
         if ((opt[IDX_RENDER_MISC_FLAGS] & ~RENDER_MISC_MASK) != 0) {
             return false;
         }
-        if (opt[IDX_LANGUAGE] > LANG_ZHT) {
+        if (opt[IDX_LANGUAGE] > LANG_ZHS) {
             return false;
         }
         return true;

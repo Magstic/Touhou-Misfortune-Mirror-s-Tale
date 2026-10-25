@@ -1098,7 +1098,7 @@ public final class StageRuntime {
             }
             int spriteId = row[spriteIdx];
             if (spriteId != -1) {
-                if (id >= 24 && id <= 36 && (id & 1) == 0 && I18n.getLanguageId() == I18n.LANG_ZHT) {
+                if (id >= 24 && id <= 36 && (id & 1) == 0 && I18n.isChinese()) {
                     int openingStage = (id - 24) / 2;
                     int openingFrame = spriteId - (SpriteSheetCatalog.STAGE_OPENING_TEXT_BASE + openingStage * 6);
                     spriteId = SpriteSheetCatalog.CHINESE_OPENING_BASE + openingStage * 3 + openingFrame;
