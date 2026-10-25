@@ -48,11 +48,7 @@
 
 ### Android
 
-支援自訂 SF2 音源的 [JL-MOD](https://github.com/woesss/JL-Mod/releases) 是至高選擇。
-
-當然，我保證你不會想戳玻璃 PLAY STG，更不提儘管有 SF2 加持，但混音依然垃圾的 ANDROID lol。
-
-此外，JL-MOD 的 JSR-82 也存在一些問題。
+我不推薦使用 Adnroid，因為戳玻璃不但難受，其內建的 SONiVOX 在 MIDI 合成方面也非常糟糕。
 
 ---
 
@@ -60,11 +56,9 @@
 
 程式已針對真機進行了諸多最佳化。
 
-效能瓶頸和 Heap 大小無關，彈幕如雨般的渲染註定會吃掉大部分的 CPU。
+特別是 S40V5。因其在 JVM 上有著遠勝於 S60V3 的硬體解釋加速，即便 Heap 和 CPU 糟糕了點，也可以在關閉華麗背景（避免 OOM）和 SFX 的情況下極為流暢的遊玩 Easy，Normal，Hard，Extra！
 
-現在最佳化的基準是可以使用 S60V3 的裝置較為流暢地遊玩 Easy，Normal，Hard 難度，一些索愛機型也可以做到。
-
-至於 S40V5，因為其有 JVM 硬體解釋加速，即便 Heap 和 CPU 糟糕了點，也可以在關閉 Alpha 渲染的情況下較為流暢的遊玩 Easy，Normal 難度。
+這當然也適用於一些索愛機型。
 
 ---
 

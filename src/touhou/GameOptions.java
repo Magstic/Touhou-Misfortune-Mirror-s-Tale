@@ -54,13 +54,16 @@ public final class GameOptions {
     private GameOptions() {
     }
 
-    // Heuristic: emulator heaps are typically much larger than real devices.
+    // Identify the runtime independently of the current heap allocation.
     public static boolean isProbablyEmulator() {
+        return hasRuntimeClass("org.recompile.mobile.Mobile") || hasRuntimeClass("emulator.custom.subclass.SubTimerTask");
+    }
+
+    private static boolean hasRuntimeClass(String name) {
         try {
-            Runtime rt = Runtime.getRuntime();
-            long total = rt.totalMemory();
-            return total >= (8L * 1024L * 1024L);
-        } catch (Throwable t) {
+            Class.forName(name);
+            return true;
+        } catch (ClassNotFoundException e) {
             return false;
         }
     }
