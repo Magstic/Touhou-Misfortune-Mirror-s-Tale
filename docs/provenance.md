@@ -50,13 +50,13 @@ DoJa 版《東方氷幻鏡 Plus》1.0.3：
 | `src/touhou/MainMidlet.java`、`SceneController.java` | 接入的原有遊戲流程 | MIDP 入口及場景生命週期 |
 | `src/touhou/ResourceLoader.java`、`ResourcePaths.java`、`ResourceException.java`、`StorageException.java` | 引用的資源名稱 | 資源存取及錯誤處理 |
 | `src/touhou/FixedSlotPool.java`、`EnemyTargetRegistry.java`、`Debug.java` | 引用的戰鬥資料 | 池管理，資產投影及偵錯實作 |
-| `src/touhou/replay/*.java` | 錄製與重播流程/亂數/編碼容量/對戰快照語義 | 控制器拆分，儲存與完整性管理 |
+| `src/touhou/replay/*.java` | 錄製與重播流程/RLE 編碼及容量 | 自訂亂數，64 位元組標頭，關卡快照格式，控制器拆分，儲存與完整性管理 |
 | `src/touhou/replay/ReplayFileService.java`、`ReplayShareCodec.java`、`ReplayShareService.java` | 引用的 Replay 欄位及遊戲狀態 | REP 檔案存取與分享封裝 |
 | `src/touhou/bt/BtSppLink.java` | —— | JSR-82 SPP 通訊，技術思路的提供者為「Salvation_Jarsis」 |
 | `src/touhou/i18n/*.java` | `TextId`/`SpellText` /結構描述所引用的文字/符卡與資料順序 | 語言選擇，文字載入與資源包機制 |
 | `src/touhou/ui/*.java` | 原畫面/選項/內容/場景切換規則 | MIDP 適配，Replay，新增 Story（文字來自 L-Garden 官網）,字型及動畫 |
 | `src/touhou/ui/SoftkeyBar.java`、`StartupLanguageMenu.java`、`ReplayFileScreen.java` | 使用的原版文字及素材 | 螢幕軟鍵,初次語言選擇及 REP 檔案選擇介面 |
-| `src/touhou/font/BitmapFont.java`、`src/touhou/ui/UiTextLayout.java`、`src/touhou/ui/FontTextMeasurer.java`、`src/touhou/ui/UiDraw.java` 的字型支援 | —— | 位圖字型與排版實作，核心程式碼提供者為「SilentTalk」 |
+| `src/touhou/font/BitmapFont.java`、`src/touhou/ui/UiTextLayout.java`、`src/touhou/ui/FontTextMeasurer.java`、`src/touhou/ui/UiDraw.java` 的字型支援 | SilentTalk 提供的字型核心程式碼 | 字型與排版的適配，整合及改寫 |
 | `tools/FontDatBuilder.java`、`I18nPackBuilder.java`、`CcDatCropViewer.java` | 讀取的原版精靈與文字資料 | 字型建置，語言包建置與裁切檢視工具 |
 | `tools/BgmLiteBuilder.java` | 原曲聲部配置 | MIDI 簡化工具 |
 | `build.xml`、`ivy.xml`、`ivysettings.xml`、`.gitignore`、`.gitattributes` | —— | 建置及程式碼庫維護 |
@@ -79,7 +79,8 @@ DoJa 版《東方氷幻鏡 Plus》1.0.3：
 | `res/se/alice.wav`、`res/se/shot.wav` | 移植新增 | 維護者自行錄製 |
 | `res/se/back.wav`、`cd.wav`、`crash.wav`、`crash2.wav`、`graze.wav`、`life.wav`、`marisa.wav`、`nav.wav`、`pause.wav`、`power.wav`、`reimu.wav`、`select.wav` | 原作衍生 | 錄製自原遊戲+修音處理的音效 |
 | `res/i18n/ja/dialog/**`、`spcard.dat`、`sprac.dat` | 原作內容 | 日文對話及符卡資料的編碼轉換/整理 |
-| `res/i18n/ja/story.txt`、`ending_*.txt` | 原作內容 | 故事與結局文字的移植整理 |
+| `res/i18n/ja/story.txt` | 原作內容 | L-Garden 官網 Story 文字的整理 |
+| `res/i18n/ja/ending_*.txt` | 原作內容 | 原遊戲結局文字的移植整理 |
 | `res/i18n/en/**`、`res/i18n/zht/**` | 混合來源 | 原版內容的翻譯、校訂及移植新增文字 |
 | `res/i18n/*/ui.txt` | 混合來源 | 原版 UI/製作名單，翻譯與新增設定、檔案操作及相容性提示文字 |
 
