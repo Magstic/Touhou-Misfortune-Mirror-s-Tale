@@ -23,27 +23,40 @@ ant
 
 ## Android
 
-**Termux** をインストールします：[GitHub](https://github.com/termux/termux-app) | [F-Droid](https://f-droid.org/zh_Hant/packages/com.termux/)
+**Termux** をインストールします：[GitHub](https://github.com/termux/termux-app) | [F-Droid](https://f-droid.org/ja/packages/com.termux/)
 
-必要な権限を付与した後、Termux 内で必要な依存パッケージをインストールします。
+Termux 内でパッケージを更新し、必要な依存パッケージをインストールします。
 
 ```bash
 pkg update
+pkg upgrade
 pkg install git ant openjdk-21 openjdk-21-x fontconfig
 ```
 
-プロジェクトをローカルにクローンし、ビルドします。
+プロジェクトをローカルにクローンします。
 
 ```bash
 git clone https://github.com/Magstic/Touhou-Misfortune-Mirror-s-Tale.git
 cd Touhou-Misfortune-Mirror-s-Tale
+```
+
+プロジェクトのルートディレクトリで Java のパスを一時的に設定し、ビルドします。
+
+```bash
+export JAVA_HOME="$PREFIX/lib/jvm/java-21-openjdk"
+export JAVACMD="$JAVA_HOME/bin/java"
 ant
 ```
 
-ビルド完了後、成果物を Android 端末の Download フォルダーにコピーします。
+ビルド完了後、共有ストレージへのアクセス権限を設定します。
 
 ```bash
 termux-setup-storage
+```
+
+ビルド成果物を Android 端末の Download フォルダーにコピーします。
+
+```bash
 cp dist/*.jar dist/*.jad ~/storage/downloads/
 ```
 

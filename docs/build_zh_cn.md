@@ -25,25 +25,38 @@ ant
 
 安装 **Termux**：[GitHub](https://github.com/termux/termux-app) | [F-Droid](https://f-droid.org/zh_Hans/packages/com.termux/)
 
-授予必要权限后，在 Termux 内安装所需依赖：
+在 Termux 内更新软件包并安装所需依赖：
 
 ```bash
 pkg update
+pkg upgrade
 pkg install git ant openjdk-21 openjdk-21-x fontconfig
 ```
 
-克隆项目到本地并构建：
+克隆项目到本地：
 
 ```bash
 git clone https://github.com/Magstic/Touhou-Misfortune-Mirror-s-Tale.git
 cd Touhou-Misfortune-Mirror-s-Tale
+```
+
+在项目根目录设置临时的 Java 路径，并构建：
+
+```bash
+export JAVA_HOME="$PREFIX/lib/jvm/java-21-openjdk"
+export JAVACMD="$JAVA_HOME/bin/java"
 ant
 ```
 
-构建完成后，将构建产物复制到 Android 设备的 Download 文件夹：
+构建完成后，设置共享存储空间的访问权限：
 
 ```bash
 termux-setup-storage
+```
+
+将构建产物复制到 Android 设备的 Download 文件夹：
+
+```bash
 cp dist/*.jar dist/*.jad ~/storage/downloads/
 ```
 
