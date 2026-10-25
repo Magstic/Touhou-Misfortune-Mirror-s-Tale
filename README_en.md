@@ -12,6 +12,8 @@ Ported from "Touhou Hyougenkyou Plus V1.0.3".
 
 Includes numerous bug fixes and quality-of-life improvements over the original.
 
+![](./img.webp)
+
 ---
 
 ## Item
